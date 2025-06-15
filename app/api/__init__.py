@@ -3,8 +3,11 @@ from flask import Blueprint, jsonify, request, session
 from flask_login import login_required, current_user
 import json
 import logging
+from datetime import datetime
 
-from app.models import db, ChatHistory, InquiryTheme, Class, StudentEvaluation, User, Subject
+from app.models import (db, ChatHistory, InquiryTheme, Class, StudentEvaluation, User, Subject,
+                      CurriculumUnit, StudentUnitSelection, UnitItemMapping, ClassLearningSettings,
+                      AIRecommendation, ReviewSet, ReviewSetItem, StudentWeakness)
 from app.ai import generate_chat_response
 from app.utils.rate_limiting import smart_ai_limit, api_limit
 
@@ -374,3 +377,763 @@ def get_stats():
         }
     
     return jsonify(stats)
+
+# ========================
+# 自由進度学習 API エンドポイント  
+# ========================
+
+@api_bp.route('/units', methods=['GET'])
+@login_required
+@api_limit()
+def get_units():
+    """単元一覧取得API"""
+    if current_user.role != 'student':
+        return jsonify({'error': '学生のみアクセス可能です'}), 403
+    
+    try:
+        # パラメータ取得
+        include_progress = request.args.get('include_progress', 'true').lower() == 'true'
+        difficulty_filter = request.args.get('difficulty', type=int)
+        page = request.args.get('page', 1, type=int)
+        per_page = min(request.args.get('per_page', 20, type=int), 100)  # 最大100件まで
+        
+        # 基本クエリ
+        query = CurriculumUnit.query
+        
+        # 難易度フィルタ
+        if difficulty_filter:
+            query = query.filter(CurriculumUnit.difficulty_level == difficulty_filter)
+        
+        # ページネーション
+        units_pagination = query.order_by(CurriculumUnit.order_index).paginate(
+            page=page, per_page=per_page, error_out=False)
+        
+        units_data = []
+        for unit in units_pagination.items:
+            unit_dict = {
+                'id': unit.id,
+                'title': unit.title,
+                'description': unit.description,
+                'difficulty_level': unit.difficulty_level,
+                'estimated_minutes': unit.estimated_minutes,
+                'order_index': unit.order_index,
+                'prerequisites': unit.prerequisites or []
+            }
+            
+            # 進捗情報を含める場合
+            if include_progress:
+                selection = StudentUnitSelection.query.filter_by(
+                    student_id=current_user.id,
+                    unit_id=unit.id
+                ).first()
+                
+                if selection:
+                    unit_dict['progress'] = {
+                        'status': selection.status,
+                        'percentage': float(selection.progress_percentage),
+                        'completed_items': selection.completed_items,
+                        'total_items': selection.total_items,
+                        'study_time_minutes': selection.study_time_minutes,
+                        'last_activity_at': selection.last_activity_at.isoformat() if selection.last_activity_at else None
+                    }
+                else:
+                    unit_dict['progress'] = {
+                        'status': 'not_started',
+                        'percentage': 0.0,
+                        'completed_items': 0,
+                        'total_items': 0,
+                        'study_time_minutes': 0,
+                        'last_activity_at': None
+                    }
+            
+            units_data.append(unit_dict)
+        
+        return jsonify({
+            'status': 'success',
+            'data': {
+                'units': units_data,
+                'total': units_pagination.total,
+                'pages': units_pagination.pages,
+                'current_page': page,
+                'per_page': per_page
+            }
+        })
+        
+    except Exception as e:
+        logging.error(f"単元一覧取得エラー: {str(e)}")
+        return jsonify({
+            'status': 'error',
+            'message': '単元一覧の取得に失敗しました'
+        }), 500
+
+@api_bp.route('/units/select', methods=['POST'])
+@login_required
+@api_limit()
+def select_unit():
+    """単元選択API"""
+    if current_user.role != 'student':
+        return jsonify({'error': '学生のみアクセス可能です'}), 403
+    
+    try:
+        data = request.get_json()
+        unit_id = data.get('unit_id')
+        class_id = data.get('class_id')
+        selection_reason = data.get('selection_reason', 'self_selected')
+        
+        if not unit_id:
+            return jsonify({
+                'status': 'error',
+                'message': '単元IDが必要です'
+            }), 400
+        
+        # 単元の存在確認
+        unit = CurriculumUnit.query.get(unit_id)
+        if not unit:
+            return jsonify({
+                'status': 'error',
+                'message': '指定された単元が見つかりません'
+            }), 404
+        
+        # 既存の選択履歴をチェック
+        existing_selection = StudentUnitSelection.query.filter_by(
+            student_id=current_user.id,
+            unit_id=unit_id,
+            class_id=class_id
+        ).first()
+        
+        if existing_selection:
+            # 既に選択済みの場合は状態を更新
+            if existing_selection.status == 'completed':
+                return jsonify({
+                    'status': 'error',
+                    'message': 'この単元は既に完了しています'
+                }), 400
+            else:
+                existing_selection.status = 'in_progress'
+                existing_selection.last_activity_at = datetime.utcnow()
+        else:
+            # 新規選択
+            # 単元の問題数を計算
+            total_items = UnitItemMapping.query.filter_by(unit_id=unit_id).count()
+            
+            new_selection = StudentUnitSelection(
+                student_id=current_user.id,
+                unit_id=unit_id,
+                class_id=class_id,
+                status='in_progress',
+                total_items=total_items,
+                started_at=datetime.utcnow(),
+                last_activity_at=datetime.utcnow()
+            )
+            db.session.add(new_selection)
+        
+        db.session.commit()
+        
+        # ログ記録
+        logging.info(f"User {current_user.id} selected unit {unit_id} via {selection_reason}")
+        
+        return jsonify({
+            'status': 'success',
+            'message': f'単元「{unit.title}」を選択しました',
+            'data': {
+                'unit_id': unit_id,
+                'title': unit.title,
+                'status': 'in_progress'
+            }
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        logging.error(f"単元選択エラー: {str(e)}")
+        return jsonify({
+            'status': 'error',
+            'message': '単元の選択に失敗しました'
+        }), 500
+
+@api_bp.route('/units/<int:unit_id>/progress', methods=['POST'])
+@login_required
+@api_limit()
+def update_unit_progress(unit_id):
+    """単元進捗更新API"""
+    if current_user.role != 'student':
+        return jsonify({'error': '学生のみアクセス可能です'}), 403
+    
+    try:
+        data = request.get_json()
+        completed_items = data.get('completed_items', 0)
+        correct_items = data.get('correct_items', 0)
+        study_time_minutes = data.get('study_time_minutes', 0)
+        
+        # 選択履歴を取得
+        selection = StudentUnitSelection.query.filter_by(
+            student_id=current_user.id,
+            unit_id=unit_id
+        ).first()
+        
+        if not selection:
+            return jsonify({
+                'status': 'error',
+                'message': 'この単元は選択されていません'
+            }), 404
+        
+        # 進捗を更新
+        selection.completed_items = completed_items
+        selection.correct_items = correct_items
+        selection.study_time_minutes += study_time_minutes
+        selection.last_activity_at = datetime.utcnow()
+        
+        # 進捗率を計算
+        if selection.total_items > 0:
+            selection.progress_percentage = (completed_items / selection.total_items) * 100
+        
+        # 完了判定
+        if selection.progress_percentage >= 80:  # 80%以上で完了とする
+            selection.status = 'completed'
+            selection.completed_at = datetime.utcnow()
+        
+        db.session.commit()
+        
+        return jsonify({
+            'status': 'success',
+            'message': '進捗を更新しました',
+            'data': {
+                'progress_percentage': float(selection.progress_percentage),
+                'status': selection.status,
+                'completed_items': selection.completed_items,
+                'correct_items': selection.correct_items,
+                'study_time_minutes': selection.study_time_minutes
+            }
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        logging.error(f"単元進捗更新エラー: {str(e)}")
+        return jsonify({
+            'status': 'error',
+            'message': '進捗の更新に失敗しました'
+        }), 500
+
+@api_bp.route('/speech/transcribe', methods=['POST'])
+@login_required
+@api_limit()
+def transcribe_speech():
+    """音声入力保存API"""
+    try:
+        data = request.get_json()
+        transcription = data.get('transcription', '')
+        usage_context = data.get('usage_context', 'chat')
+        duration = data.get('duration', 0)
+        
+        if not transcription:
+            return jsonify({
+                'status': 'error',
+                'message': '音声テキストが空です'
+            }), 400
+        
+        # 音声入力履歴を保存
+        from app.models import SpeechTranscription
+        speech_record = SpeechTranscription(
+            user_id=current_user.id,
+            transcription=transcription,
+            usage_context=usage_context
+        )
+        db.session.add(speech_record)
+        db.session.commit()
+        
+        return jsonify({
+            'status': 'success',
+            'data': {
+                'id': speech_record.id,
+                'saved_at': speech_record.created_at.isoformat()
+            }
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        logging.error(f"音声入力保存エラー: {str(e)}")
+        return jsonify({
+            'status': 'error',
+            'message': '音声入力の保存に失敗しました'
+        }), 500
+
+# ========================
+# AI推薦機能 API エンドポイント  
+# ========================
+
+@api_bp.route('/recommendations', methods=['GET'])
+@login_required
+@api_limit()
+def get_recommendations():
+    """AI推薦取得API"""
+    if current_user.role != 'student':
+        return jsonify({'error': '学生のみアクセス可能です'}), 403
+    
+    try:
+        # パラメータ取得
+        recommendation_type = request.args.get('type', 'unit')
+        max_recommendations = min(request.args.get('max', 5, type=int), 10)
+        force_regenerate = request.args.get('force', 'false').lower() == 'true'
+        
+        # AI推薦エンジンを初期化
+        from app.services.ai_recommender import AIRecommendationEngine
+        recommender = AIRecommendationEngine()
+        
+        # 推薦を生成
+        recommendations = recommender.generate_recommendations(
+            student_id=current_user.id,
+            recommendation_type=recommendation_type,
+            max_recommendations=max_recommendations,
+            force_regenerate=force_regenerate
+        )
+        
+        return jsonify({
+            'status': 'success',
+            'data': {
+                'recommendations': recommendations,
+                'type': recommendation_type,
+                'generated_at': datetime.utcnow().isoformat(),
+                'total_count': len(recommendations)
+            }
+        })
+        
+    except Exception as e:
+        logging.error(f"AI推薦取得エラー: {str(e)}")
+        return jsonify({
+            'status': 'error',
+            'message': 'AI推薦の取得に失敗しました'
+        }), 500
+
+@api_bp.route('/recommendations/<int:recommendation_id>/feedback', methods=['POST'])
+@login_required
+@api_limit()
+def submit_recommendation_feedback(recommendation_id):
+    """AI推薦フィードバック送信API"""
+    if current_user.role != 'student':
+        return jsonify({'error': '学生のみアクセス可能です'}), 403
+    
+    try:
+        data = request.get_json()
+        is_accepted = data.get('is_accepted', False)
+        is_effective = data.get('is_effective')
+        feedback_text = data.get('feedback_text', '')
+        
+        # 推薦の存在確認と権限チェック
+        recommendation = AIRecommendation.query.get(recommendation_id)
+        if not recommendation:
+            return jsonify({
+                'status': 'error',
+                'message': '推薦が見つかりません'
+            }), 404
+        
+        if recommendation.student_id != current_user.id:
+            return jsonify({'error': '権限がありません'}), 403
+        
+        # AI推薦エンジンでフィードバックを処理
+        from app.services.ai_recommender import AIRecommendationEngine
+        recommender = AIRecommendationEngine()
+        
+        recommender.get_recommendation_feedback(
+            recommendation_id=recommendation_id,
+            is_accepted=is_accepted,
+            is_effective=is_effective,
+            feedback_text=feedback_text
+        )
+        
+        return jsonify({
+            'status': 'success',
+            'message': 'フィードバックを記録しました'
+        })
+        
+    except Exception as e:
+        logging.error(f"推薦フィードバックエラー: {str(e)}")
+        return jsonify({
+            'status': 'error',
+            'message': 'フィードバックの送信に失敗しました'
+        }), 500
+
+@api_bp.route('/recommendations/settings', methods=['GET', 'POST'])
+@login_required
+@api_limit()
+def recommendation_settings():
+    """推薦設定API"""
+    if current_user.role != 'student':
+        return jsonify({'error': '学生のみアクセス可能です'}), 403
+    
+    from app.models import RecommendationSettings
+    
+    if request.method == 'GET':
+        # 設定取得
+        try:
+            settings = RecommendationSettings.query.filter_by(
+                student_id=current_user.id
+            ).first()
+            
+            if settings:
+                settings_data = {
+                    'enable_ai_recommendations': settings.enable_ai_recommendations,
+                    'recommendation_frequency': settings.recommendation_frequency,
+                    'max_recommendations_per_session': settings.max_recommendations_per_session,
+                    'preferred_difficulty_adjustment': float(settings.preferred_difficulty_adjustment),
+                    'enable_challenge_problems': settings.enable_challenge_problems,
+                    'enable_review_recommendations': settings.enable_review_recommendations,
+                    'privacy_level': settings.privacy_level,
+                    'feedback_required': settings.feedback_required
+                }
+            else:
+                # デフォルト設定
+                settings_data = {
+                    'enable_ai_recommendations': True,
+                    'recommendation_frequency': 'daily',
+                    'max_recommendations_per_session': 5,
+                    'preferred_difficulty_adjustment': 0.0,
+                    'enable_challenge_problems': True,
+                    'enable_review_recommendations': True,
+                    'privacy_level': 'full',
+                    'feedback_required': False
+                }
+            
+            return jsonify({
+                'status': 'success',
+                'data': settings_data
+            })
+            
+        except Exception as e:
+            logging.error(f"推薦設定取得エラー: {str(e)}")
+            return jsonify({
+                'status': 'error',
+                'message': '設定の取得に失敗しました'
+            }), 500
+    
+    else:  # POST
+        # 設定更新
+        try:
+            data = request.get_json()
+            
+            from app.services.ai_recommender import AIRecommendationEngine
+            recommender = AIRecommendationEngine()
+            
+            recommender.update_recommendation_settings(
+                student_id=current_user.id,
+                settings_data=data
+            )
+            
+            return jsonify({
+                'status': 'success',
+                'message': '設定を更新しました'
+            })
+            
+        except Exception as e:
+            logging.error(f"推薦設定更新エラー: {str(e)}")
+            return jsonify({
+                'status': 'error',
+                'message': '設定の更新に失敗しました'
+            }), 500
+
+@api_bp.route('/recommendations/analytics', methods=['GET'])
+@login_required
+@api_limit()
+def recommendation_analytics():
+    """推薦分析データ取得API"""
+    if current_user.role != 'student':
+        return jsonify({'error': '学生のみアクセス可能です'}), 403
+    
+    try:
+        from app.services.ai_recommender import RecommendationAnalytics
+        
+        metrics = RecommendationAnalytics.get_recommendation_metrics(
+            student_id=current_user.id
+        )
+        
+        return jsonify({
+            'status': 'success',
+            'data': metrics
+        })
+        
+    except Exception as e:
+        logging.error(f"推薦分析データ取得エラー: {str(e)}")
+        return jsonify({
+            'status': 'error',
+            'message': '分析データの取得に失敗しました'
+        }), 500
+
+# ========================
+# 復習問題生成機能 API エンドポイント  
+# ========================
+
+@api_bp.route('/review/weaknesses', methods=['GET'])
+@login_required
+@api_limit()
+def get_weaknesses():
+    """弱点分析取得API"""
+    if current_user.role != 'student':
+        return jsonify({'error': '学生のみアクセス可能です'}), 403
+    
+    try:
+        force_update = request.args.get('force', 'false').lower() == 'true'
+        
+        from app.services.weakness_analyzer import WeaknessAnalyzer
+        analyzer = WeaknessAnalyzer()
+        
+        weaknesses = analyzer.analyze_student_weaknesses(
+            student_id=current_user.id,
+            force_update=force_update
+        )
+        
+        # サマリー情報も取得
+        summary = analyzer.get_weakness_summary(current_user.id)
+        
+        return jsonify({
+            'status': 'success',
+            'data': {
+                'weaknesses': weaknesses,
+                'summary': summary,
+                'analyzed_at': datetime.utcnow().isoformat()
+            }
+        })
+        
+    except Exception as e:
+        logging.error(f"弱点分析取得エラー: {str(e)}")
+        return jsonify({
+            'status': 'error',
+            'message': '弱点分析の取得に失敗しました'
+        }), 500
+
+@api_bp.route('/review/sets', methods=['GET', 'POST'])
+@login_required
+@api_limit()
+def review_sets():
+    """復習セット管理API"""
+    if current_user.role != 'student':
+        return jsonify({'error': '学生のみアクセス可能です'}), 403
+    
+    if request.method == 'GET':
+        # 復習セット一覧取得
+        try:
+            page = request.args.get('page', 1, type=int)
+            per_page = min(request.args.get('per_page', 10, type=int), 50)
+            status_filter = request.args.get('status')
+            
+            query = ReviewSet.query.filter_by(student_id=current_user.id)
+            
+            if status_filter:
+                query = query.filter(ReviewSet.status == status_filter)
+            
+            review_sets_pagination = query.order_by(
+                ReviewSet.created_at.desc()
+            ).paginate(page=page, per_page=per_page, error_out=False)
+            
+            sets_data = []
+            for review_set in review_sets_pagination.items:
+                # 進捗情報を計算
+                completed_items = ReviewSetItem.query.filter_by(
+                    review_set_id=review_set.id,
+                    is_completed=True
+                ).count()
+                
+                sets_data.append({
+                    'id': review_set.id,
+                    'title': review_set.title,
+                    'description': review_set.description,
+                    'review_type': review_set.review_type,
+                    'status': review_set.status,
+                    'total_problems': review_set.total_problems,
+                    'completed_problems': completed_items,
+                    'estimated_time_minutes': review_set.estimated_time_minutes,
+                    'expires_at': review_set.expires_at.isoformat() if review_set.expires_at else None,
+                    'created_at': review_set.created_at.isoformat()
+                })
+            
+            return jsonify({
+                'status': 'success',
+                'data': {
+                    'review_sets': sets_data,
+                    'total': review_sets_pagination.total,
+                    'pages': review_sets_pagination.pages,
+                    'current_page': page,
+                    'per_page': per_page
+                }
+            })
+            
+        except Exception as e:
+            logging.error(f"復習セット一覧取得エラー: {str(e)}")
+            return jsonify({
+                'status': 'error',
+                'message': '復習セット一覧の取得に失敗しました'
+            }), 500
+    
+    else:  # POST
+        # 復習セット作成
+        try:
+            data = request.get_json()
+            review_type = data.get('review_type', 'spaced_repetition')
+            target_problems = min(data.get('target_problems', 20), 50)  # 最大50問
+            focus_weaknesses = data.get('focus_weaknesses', True)
+            
+            from app.services.spaced_repetition import SpacedRepetitionEngine
+            engine = SpacedRepetitionEngine()
+            
+            review_set = engine.create_review_set(
+                student_id=current_user.id,
+                review_type=review_type,
+                target_problems=target_problems,
+                focus_weaknesses=focus_weaknesses
+            )
+            
+            return jsonify({
+                'status': 'success',
+                'message': '復習セットを作成しました',
+                'data': {
+                    'id': review_set.id,
+                    'title': review_set.title,
+                    'total_problems': review_set.total_problems,
+                    'estimated_time_minutes': review_set.estimated_time_minutes
+                }
+            })
+            
+        except Exception as e:
+            logging.error(f"復習セット作成エラー: {str(e)}")
+            return jsonify({
+                'status': 'error',
+                'message': '復習セットの作成に失敗しました'
+            }), 500
+
+@api_bp.route('/review/sets/<int:set_id>/items', methods=['GET'])
+@login_required
+@api_limit()
+def get_review_set_items(set_id):
+    """復習セット問題取得API"""
+    if current_user.role != 'student':
+        return jsonify({'error': '学生のみアクセス可能です'}), 403
+    
+    try:
+        # 復習セットの存在確認と権限チェック
+        review_set = ReviewSet.query.get(set_id)
+        if not review_set:
+            return jsonify({
+                'status': 'error',
+                'message': '復習セットが見つかりません'
+            }), 404
+        
+        if review_set.student_id != current_user.id:
+            return jsonify({'error': '権限がありません'}), 403
+        
+        # 復習問題一覧を取得
+        items = ReviewSetItem.query.filter_by(
+            review_set_id=set_id
+        ).order_by(ReviewSetItem.order_index).all()
+        
+        items_data = []
+        for item in items:
+            items_data.append({
+                'id': item.id,
+                'problem_id': item.problem_id,
+                'order_index': item.order_index,
+                'weight': float(item.weight),
+                'expected_difficulty': float(item.expected_difficulty) if item.expected_difficulty else 2.5,
+                'weakness_category': item.weakness_category,
+                'selection_reason': item.selection_reason,
+                'is_completed': item.is_completed,
+                'is_correct': item.is_correct,
+                'time_spent_seconds': item.time_spent_seconds,
+                'attempts_count': item.attempts_count,
+                'completed_at': item.completed_at.isoformat() if item.completed_at else None
+            })
+        
+        return jsonify({
+            'status': 'success',
+            'data': {
+                'review_set': {
+                    'id': review_set.id,
+                    'title': review_set.title,
+                    'description': review_set.description,
+                    'review_type': review_set.review_type,
+                    'status': review_set.status
+                },
+                'items': items_data,
+                'total_count': len(items)
+            }
+        })
+        
+    except Exception as e:
+        logging.error(f"復習問題取得エラー: {str(e)}")
+        return jsonify({
+            'status': 'error',
+            'message': '復習問題の取得に失敗しました'
+        }), 500
+
+@api_bp.route('/review/items/<int:item_id>/submit', methods=['POST'])
+@login_required
+@api_limit()
+def submit_review_answer(item_id):
+    """復習問題回答送信API"""
+    if current_user.role != 'student':
+        return jsonify({'error': '学生のみアクセス可能です'}), 403
+    
+    try:
+        data = request.get_json()
+        student_answer = data.get('student_answer', '')
+        is_correct = data.get('is_correct', False)
+        time_spent_seconds = data.get('time_spent_seconds', 0)
+        confidence_level = data.get('confidence_level', 3)
+        
+        # 復習問題の存在確認と権限チェック
+        review_item = ReviewSetItem.query.get(item_id)
+        if not review_item:
+            return jsonify({
+                'status': 'error',
+                'message': '復習問題が見つかりません'
+            }), 404
+        
+        if review_item.review_set.student_id != current_user.id:
+            return jsonify({'error': '権限がありません'}), 403
+        
+        # 間隔反復エンジンで結果を処理
+        from app.services.spaced_repetition import SpacedRepetitionEngine
+        engine = SpacedRepetitionEngine()
+        
+        result = engine.process_review_result(
+            review_set_item_id=item_id,
+            student_answer=student_answer,
+            is_correct=is_correct,
+            time_spent_seconds=time_spent_seconds,
+            confidence_level=confidence_level
+        )
+        
+        return jsonify({
+            'status': 'success',
+            'message': '回答を記録しました',
+            'data': result
+        })
+        
+    except Exception as e:
+        logging.error(f"復習問題回答エラー: {str(e)}")
+        return jsonify({
+            'status': 'error',
+            'message': '回答の記録に失敗しました'
+        }), 500
+
+@api_bp.route('/review/statistics', methods=['GET'])
+@login_required
+@api_limit()
+def get_review_statistics():
+    """復習統計取得API"""
+    if current_user.role != 'student':
+        return jsonify({'error': '学生のみアクセス可能です'}), 403
+    
+    try:
+        from app.services.spaced_repetition import SpacedRepetitionEngine
+        engine = SpacedRepetitionEngine()
+        
+        statistics = engine.get_review_statistics(current_user.id)
+        
+        return jsonify({
+            'status': 'success',
+            'data': statistics
+        })
+        
+    except Exception as e:
+        logging.error(f"復習統計取得エラー: {str(e)}")
+        return jsonify({
+            'status': 'error',
+            'message': '統計データの取得に失敗しました'
+        }), 500

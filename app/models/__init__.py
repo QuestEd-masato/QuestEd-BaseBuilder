@@ -2,6 +2,7 @@
 from flask_login import UserMixin
 from datetime import datetime
 from extensions import db
+import json
 
 # モデル定義
 class User(UserMixin, db.Model):
@@ -351,8 +352,275 @@ class Milestone(db.Model):
     # クラスとの関連付け
     class_obj = db.relationship('Class', backref=db.backref('milestones', lazy=True))
 
+# 自由進度学習機能用のモデル
+
+class CurriculumUnit(db.Model):
+    """学習単元モデル"""
+    __tablename__ = 'curriculum_units'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.Text)
+    parent_id = db.Column(db.Integer, db.ForeignKey('curriculum_units.id'), nullable=True)
+    order_index = db.Column(db.Integer, default=0)
+    estimated_minutes = db.Column(db.Integer, default=30)
+    difficulty_level = db.Column(db.Integer, default=2)  # 1:基礎, 2:標準, 3:応用
+    prerequisites = db.Column(db.JSON)  # 前提単元IDリスト
+    legacy_curriculum_id = db.Column(db.Integer, db.ForeignKey('curriculums.id'), nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # 階層構造のリレーションシップ
+    parent = db.relationship('CurriculumUnit', remote_side=[id], backref='children')
+    legacy_curriculum = db.relationship('Curriculum', backref='units')
+    
+    # 単元選択履歴
+    selections = db.relationship('StudentUnitSelection', backref='unit', lazy=True, cascade='all, delete-orphan')
+
+class StudentUnitSelection(db.Model):
+    """生徒の単元選択履歴モデル"""
+    __tablename__ = 'student_unit_selections'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    student_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    unit_id = db.Column(db.Integer, db.ForeignKey('curriculum_units.id'), nullable=False)
+    class_id = db.Column(db.Integer, db.ForeignKey('classes.id'), nullable=True)
+    status = db.Column(db.Enum('not_started', 'in_progress', 'completed', 'paused'), default='not_started')
+    progress_percentage = db.Column(db.Numeric(5,2), default=0.00)
+    total_items = db.Column(db.Integer, default=0)
+    completed_items = db.Column(db.Integer, default=0)
+    correct_items = db.Column(db.Integer, default=0)
+    started_at = db.Column(db.DateTime, nullable=True)
+    completed_at = db.Column(db.DateTime, nullable=True)
+    last_activity_at = db.Column(db.DateTime, nullable=True)
+    study_time_minutes = db.Column(db.Integer, default=0)
+    notes = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # ユニーク制約
+    __table_args__ = (db.UniqueConstraint('student_id', 'unit_id', 'class_id'),)
+    
+    # リレーションシップ
+    student = db.relationship('User', backref='unit_selections')
+    class_obj = db.relationship('Class', backref='unit_selections')
+
+class SpeechTranscription(db.Model):
+    """音声入力履歴モデル"""
+    __tablename__ = 'speech_transcriptions'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    transcription = db.Column(db.Text, nullable=False)
+    usage_context = db.Column(db.String(50), default='chat')  # chat/activity/quiz
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # リレーションシップ
+    user = db.relationship('User', backref='speech_transcriptions')
+    
+    # インデックス
+    __table_args__ = (db.Index('idx_user_created', 'user_id', 'created_at'),)
+
+class UnitItemMapping(db.Model):
+    """単元と問題の紐付けモデル"""
+    __tablename__ = 'unit_item_mappings'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    unit_id = db.Column(db.Integer, db.ForeignKey('curriculum_units.id'), nullable=False)
+    item_id = db.Column(db.Integer, nullable=False)  # basic_knowledge_itemsのID
+    weight = db.Column(db.Numeric(3,2), default=1.00)
+    order_index = db.Column(db.Integer, default=0)
+    is_required = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # ユニーク制約
+    __table_args__ = (db.UniqueConstraint('unit_id', 'item_id'),)
+    
+    # リレーションシップ
+    unit = db.relationship('CurriculumUnit', backref='item_mappings')
+
+class ClassLearningSettings(db.Model):
+    """クラス別学習設定モデル"""
+    __tablename__ = 'class_learning_settings'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    class_id = db.Column(db.Integer, db.ForeignKey('classes.id'), nullable=False)
+    allow_free_progress = db.Column(db.Boolean, default=True)
+    require_unit_order = db.Column(db.Boolean, default=False)
+    max_concurrent_units = db.Column(db.Integer, default=3)
+    min_completion_rate = db.Column(db.Numeric(5,2), default=80.00)
+    allow_unit_skip = db.Column(db.Boolean, default=False)
+    show_difficulty_level = db.Column(db.Boolean, default=True)
+    enable_peer_comparison = db.Column(db.Boolean, default=False)
+    created_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # ユニーク制約
+    __table_args__ = (db.UniqueConstraint('class_id'),)
+    
+    # リレーションシップ
+    class_obj = db.relationship('Class', backref='learning_settings')
+    creator = db.relationship('User', backref='created_learning_settings')
+
 # Import Subject model
 from app.models.subject import Subject
+
+# Import BaseBuilder models for unified access
+from basebuilder.models import (
+    ProblemCategory, BasicKnowledgeItem, AnswerRecord, ProficiencyRecord,
+    TextSet, TextDelivery, LearningPath, PathAssignment, WordProficiency,
+    TextProficiencyRecord, KnowledgeThemeRelation
+)
+
+# AI推薦機能用のモデル
+
+class AIRecommendation(db.Model):
+    """AI推薦履歴モデル"""
+    __tablename__ = 'ai_recommendations'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    student_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    recommendation_type = db.Column(db.Enum('unit', 'problem', 'study_path', 'review', 'challenge'), nullable=False)
+    context_data = db.Column(db.JSON)
+    ai_model = db.Column(db.String(50), default='gpt-4')
+    prompt_template = db.Column(db.Text)
+    ai_response = db.Column(db.Text)
+    recommended_items = db.Column(db.JSON)
+    confidence_score = db.Column(db.Numeric(3,2), default=0.00)
+    reasoning = db.Column(db.Text)
+    is_accepted = db.Column(db.Boolean, default=None)
+    is_effective = db.Column(db.Boolean, default=None)
+    feedback_text = db.Column(db.Text)
+    session_id = db.Column(db.String(100))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # リレーションシップ
+    student = db.relationship('User', backref='ai_recommendations')
+
+class LearningPattern(db.Model):
+    """学習パターン分析モデル"""
+    __tablename__ = 'learning_patterns'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    student_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    pattern_type = db.Column(db.Enum('time_preference', 'difficulty_preference', 'subject_strength', 'learning_style'), nullable=False)
+    pattern_data = db.Column(db.JSON, nullable=False)
+    confidence_level = db.Column(db.Numeric(3,2), default=0.00)
+    last_analyzed_at = db.Column(db.DateTime, default=datetime.utcnow)
+    sample_size = db.Column(db.Integer, default=0)
+    is_active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # ユニーク制約
+    __table_args__ = (db.UniqueConstraint('student_id', 'pattern_type'),)
+    
+    # リレーションシップ
+    student = db.relationship('User', backref='learning_patterns')
+
+class RecommendationSettings(db.Model):
+    """推薦設定モデル"""
+    __tablename__ = 'recommendation_settings'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    student_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    enable_ai_recommendations = db.Column(db.Boolean, default=True)
+    recommendation_frequency = db.Column(db.Enum('real_time', 'daily', 'weekly', 'on_demand'), default='daily')
+    max_recommendations_per_session = db.Column(db.Integer, default=5)
+    preferred_difficulty_adjustment = db.Column(db.Numeric(3,2), default=0.00)
+    enable_challenge_problems = db.Column(db.Boolean, default=True)
+    enable_review_recommendations = db.Column(db.Boolean, default=True)
+    privacy_level = db.Column(db.Enum('full', 'limited', 'minimal'), default='full')
+    feedback_required = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # ユニーク制約
+    __table_args__ = (db.UniqueConstraint('student_id'),)
+    
+    # リレーションシップ
+    student = db.relationship('User', backref='recommendation_settings')
+
+# 復習問題生成機能用のモデル
+
+class ReviewSet(db.Model):
+    """復習セットモデル"""
+    __tablename__ = 'review_sets'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    student_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    title = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.Text)
+    generation_type = db.Column(db.Enum('automatic', 'manual', 'ai_generated'), default='automatic')
+    target_weakness_areas = db.Column(db.JSON)
+    difficulty_level = db.Column(db.Integer, default=3)
+    total_problems = db.Column(db.Integer, nullable=False, default=0)
+    estimated_time_minutes = db.Column(db.Integer, default=30)
+    review_type = db.Column(db.Enum('spaced_repetition', 'weakness_focused', 'comprehensive', 'exam_prep'), default='weakness_focused')
+    status = db.Column(db.Enum('draft', 'active', 'completed', 'expired'), default='draft')
+    expires_at = db.Column(db.DateTime)
+    generated_by_ai = db.Column(db.Boolean, default=False)
+    ai_generation_params = db.Column(db.JSON)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # リレーションシップ
+    student = db.relationship('User', backref='review_sets')
+    items = db.relationship('ReviewSetItem', backref='review_set', lazy=True, cascade='all, delete-orphan')
+
+class ReviewSetItem(db.Model):
+    """復習セット問題モデル"""
+    __tablename__ = 'review_set_items'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    review_set_id = db.Column(db.Integer, db.ForeignKey('review_sets.id'), nullable=False)
+    problem_id = db.Column(db.Integer, nullable=False)  # basic_knowledge_itemsのID
+    order_index = db.Column(db.Integer, nullable=False)
+    weight = db.Column(db.Numeric(3,2), default=1.00)
+    expected_difficulty = db.Column(db.Numeric(3,2))
+    weakness_category = db.Column(db.String(100))
+    selection_reason = db.Column(db.Text)
+    is_completed = db.Column(db.Boolean, default=False)
+    student_answer = db.Column(db.Text)
+    is_correct = db.Column(db.Boolean)
+    time_spent_seconds = db.Column(db.Integer)
+    attempts_count = db.Column(db.Integer, default=0)
+    completed_at = db.Column(db.DateTime)
+    
+    # ユニーク制約
+    __table_args__ = (db.UniqueConstraint('review_set_id', 'problem_id'),)
+
+class StudentWeakness(db.Model):
+    """生徒弱点分析モデル"""
+    __tablename__ = 'student_weaknesses'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    student_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    subject_id = db.Column(db.Integer, db.ForeignKey('subjects.id'))
+    category = db.Column(db.String(100), nullable=False)
+    subcategory = db.Column(db.String(100))
+    weakness_type = db.Column(db.Enum('concept', 'skill', 'knowledge', 'application'), default='concept')
+    severity_level = db.Column(db.Integer, default=3)
+    confidence_score = db.Column(db.Numeric(3,2), default=0.00)
+    total_attempts = db.Column(db.Integer, default=0)
+    correct_attempts = db.Column(db.Integer, default=0)
+    accuracy_rate = db.Column(db.Numeric(5,2), default=0.00)
+    last_attempt_at = db.Column(db.DateTime)
+    improvement_trend = db.Column(db.Enum('improving', 'stable', 'declining'), default='stable')
+    recommended_actions = db.Column(db.JSON)
+    analysis_data = db.Column(db.JSON)
+    is_active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # ユニーク制約
+    __table_args__ = (db.UniqueConstraint('student_id', 'category', 'subcategory'),)
+    
+    # リレーションシップ
+    student = db.relationship('User', backref='weaknesses')
+    subject = db.relationship('Subject', backref='student_weaknesses')
 
 # Export all models
 __all__ = [
@@ -360,5 +628,12 @@ __all__ = [
     'Class', 'ClassEnrollment', 'MainTheme', 'InquiryTheme', 'InterestSurvey',
     'PersonalitySurvey', 'ActivityLog', 'Todo', 'Goal', 'StudentEvaluation',
     'Curriculum', 'RubricTemplate', 'Group', 'GroupMembership', 'ChatHistory',
-    'Milestone', 'Subject'
+    'Milestone', 'Subject', 'CurriculumUnit', 'StudentUnitSelection',
+    'SpeechTranscription', 'UnitItemMapping', 'ClassLearningSettings',
+    'AIRecommendation', 'LearningPattern', 'RecommendationSettings',
+    'ReviewSet', 'ReviewSetItem', 'StudentWeakness',
+    # BaseBuilder models
+    'ProblemCategory', 'BasicKnowledgeItem', 'AnswerRecord', 'ProficiencyRecord',
+    'TextSet', 'TextDelivery', 'LearningPath', 'PathAssignment', 'WordProficiency',
+    'TextProficiencyRecord', 'KnowledgeThemeRelation'
 ]

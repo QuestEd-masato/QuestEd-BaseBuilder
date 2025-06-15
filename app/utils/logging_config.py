@@ -8,11 +8,22 @@ class StructuredFormatter(logging.Formatter):
     """構造化ログフォーマッター"""
     
     def format(self, record):
+        # 本番環境では機密情報をログから除外
+        message = record.getMessage()
+        if os.getenv('FLASK_ENV') == 'production':
+            # 機密情報のパターンを除外
+            sensitive_patterns = ['password', 'token', 'key', 'secret', 'api_key', 'email']
+            message_lower = message.lower()
+            for pattern in sensitive_patterns:
+                if pattern in message_lower:
+                    message = '[SENSITIVE DATA REDACTED]'
+                    break
+        
         log_entry = {
             'timestamp': datetime.utcnow().isoformat(),
             'level': record.levelname,
             'logger': record.name,
-            'message': record.getMessage(),
+            'message': message,
             'module': record.module,
             'function': record.funcName,
             'line': record.lineno

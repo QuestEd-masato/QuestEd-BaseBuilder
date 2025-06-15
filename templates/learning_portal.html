@@ -1,0 +1,497 @@
+{% extends 'base.html' %}
+
+{% block title %}自由進度学習ポータル | QuestEd{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/speech_input.css') }}">
+<style>
+/* Chromebook最適化レイアウト (1366x768) */
+.learning-portal-container {
+    max-width: 1320px;
+    margin: 0 auto;
+    padding: 1rem;
+}
+
+/* 推薦セクション */
+.recommendations-section {
+    background: linear-gradient(135deg, #0056b3 0%, #004494 100%);
+    color: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.recommendations-section h2 {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+}
+
+.recommendations-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.recommendation-card {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.recommendation-card:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px);
+}
+
+.difficulty-stars {
+    display: flex;
+    gap: 2px;
+    margin-bottom: 0.5rem;
+}
+
+.star {
+    color: #ffd700;
+    font-size: 0.9rem;
+}
+
+.star.empty {
+    color: rgba(255, 255, 255, 0.3);
+}
+
+/* メインコンテンツエリア */
+.main-content {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+/* フィルターサイドバー */
+.filter-sidebar {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    height: fit-content;
+    position: sticky;
+    top: 2rem;
+}
+
+.filter-group {
+    margin-bottom: 1.5rem;
+}
+
+.filter-group label {
+    display: block;
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 0.5rem;
+}
+
+.filter-group select,
+.filter-group input {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 0.9rem;
+}
+
+/* 単元一覧 */
+.units-section {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.units-section h2 {
+    color: #0056b3;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.units-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.5rem;
+}
+
+.unit-card {
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+}
+
+.unit-card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    transform: translateY(-2px);
+}
+
+.unit-card.completed {
+    border-color: #28a745;
+    background: #f8fff9;
+}
+
+.unit-card.in-progress {
+    border-color: #007bff;
+    background: #f8f9ff;
+}
+
+.unit-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+}
+
+.unit-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #212529;
+    margin: 0;
+    line-height: 1.3;
+}
+
+.unit-difficulty {
+    background: #6c757d;
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    white-space: nowrap;
+}
+
+.unit-difficulty.easy { background: #28a745; }
+.unit-difficulty.normal { background: #007bff; }
+.unit-difficulty.hard { background: #dc3545; }
+
+.unit-description {
+    color: #6c757d;
+    font-size: 0.9rem;
+    line-height: 1.4;
+    margin-bottom: 1rem;
+}
+
+.unit-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.8rem;
+    color: #6c757d;
+    margin-bottom: 1rem;
+}
+
+.progress-section {
+    margin-top: 1rem;
+}
+
+.progress-bar {
+    background: #e9ecef;
+    border-radius: 10px;
+    height: 8px;
+    overflow: hidden;
+    margin-bottom: 0.5rem;
+}
+
+.progress-fill {
+    background: #007bff;
+    height: 100%;
+    border-radius: 10px;
+    transition: width 0.3s ease;
+}
+
+.progress-fill.completed {
+    background: #28a745;
+}
+
+.progress-text {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8rem;
+    color: #6c757d;
+}
+
+.unit-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+.btn-unit {
+    flex: 1;
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-start {
+    background: #007bff;
+    color: white;
+}
+
+.btn-start:hover {
+    background: #0056b3;
+}
+
+.btn-continue {
+    background: #28a745;
+    color: white;
+}
+
+.btn-continue:hover {
+    background: #1e7e34;
+}
+
+.btn-review {
+    background: #6c757d;
+    color: white;
+}
+
+.btn-review:hover {
+    background: #545b62;
+}
+
+/* ローディング状態 */
+.loading {
+    text-align: center;
+    padding: 2rem;
+    color: #6c757d;
+}
+
+.spinner {
+    display: inline-block;
+    width: 32px;
+    height: 32px;
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #007bff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* レスポンシブ対応 */
+@media (max-width: 1400px) {
+    .recommendations-grid {
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    }
+}
+
+@media (max-width: 1200px) {
+    .main-content {
+        grid-template-columns: 250px 1fr;
+        gap: 1.5rem;
+    }
+    
+    .units-grid {
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    .main-content {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .filter-sidebar {
+        position: static;
+    }
+    
+    .recommendations-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .units-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .unit-header {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .learning-portal-container {
+        padding: 0.5rem;
+    }
+    
+    .recommendations-section,
+    .filter-sidebar,
+    .units-section {
+        padding: 1rem;
+    }
+}
+
+/* 空状態 */
+.empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: #6c757d;
+}
+
+.empty-state i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+.empty-state h3 {
+    color: #495057;
+    margin-bottom: 0.5rem;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="learning-portal-container">
+    <!-- AI推薦セクション -->
+    <div class="recommendations-section" id="recommendations-section">
+        <h2><i class="fas fa-robot"></i> あなたへのおすすめ</h2>
+        <p>AIがあなたの学習状況を分析して最適な単元を推薦します</p>
+        
+        <div class="recommendations-grid" id="recommendations-grid">
+            <!-- 推薦カードがJavaScriptで動的に挿入される -->
+            <div class="loading">
+                <div class="spinner"></div>
+                <p>推薦を生成しています...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- メインコンテンツ -->
+    <div class="main-content">
+        <!-- フィルターサイドバー -->
+        <div class="filter-sidebar">
+            <h3><i class="fas fa-filter"></i> フィルター</h3>
+            
+            <div class="filter-group">
+                <label for="search-input">検索</label>
+                <div style="position: relative;">
+                    <input type="text" id="search-input" placeholder="単元名で検索..." class="form-control" style="padding-right: 40px;">
+                    <button type="button" id="search-speech-btn" class="search-speech-btn" 
+                            title="音声で検索" aria-label="音声で検索">
+                        <i class="fas fa-microphone"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="filter-group">
+                <label for="difficulty-filter">難易度</label>
+                <select id="difficulty-filter" class="form-select">
+                    <option value="">すべて</option>
+                    <option value="1">基礎 ⭐</option>
+                    <option value="2">標準 ⭐⭐</option>
+                    <option value="3">応用 ⭐⭐⭐</option>
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <label for="status-filter">進捗状況</label>
+                <select id="status-filter" class="form-select">
+                    <option value="">すべて</option>
+                    <option value="not_started">未開始</option>
+                    <option value="in_progress">学習中</option>
+                    <option value="completed">完了</option>
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <label for="time-filter">学習時間</label>
+                <select id="time-filter" class="form-select">
+                    <option value="">すべて</option>
+                    <option value="short">短時間 (～30分)</option>
+                    <option value="medium">中程度 (30-60分)</option>
+                    <option value="long">長時間 (60分～)</option>
+                </select>
+            </div>
+            
+            <button class="btn btn-outline-primary w-100 mt-3" onclick="clearFilters()">
+                <i class="fas fa-undo"></i> フィルターをクリア
+            </button>
+        </div>
+
+        <!-- 単元一覧 -->
+        <div class="units-section">
+            <h2><i class="fas fa-book"></i> 学習単元一覧</h2>
+            
+            <div class="units-grid" id="units-grid">
+                <!-- 単元カードがJavaScriptで動的に挿入される -->
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>単元を読み込んでいます...</p>
+                </div>
+            </div>
+            
+            <!-- ページネーション -->
+            <nav aria-label="単元ページナビゲーション" class="mt-4">
+                <ul class="pagination justify-content-center" id="pagination">
+                    <!-- ページネーションがJavaScriptで動的に挿入される -->
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+<!-- 単元詳細モーダル -->
+<div class="modal fade" id="unitModal" tabindex="-1" aria-labelledby="unitModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="unitModalLabel">単元詳細</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="閉じる"></button>
+            </div>
+            <div class="modal-body" id="unitModalBody">
+                <!-- 単元詳細がJavaScriptで動的に挿入される -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">キャンセル</button>
+                <button type="button" class="btn btn-primary" id="selectUnitBtn">この単元を選択</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/speech_input.js') }}"></script>
+<script src="{{ url_for('static', filename='js/learning_portal.js') }}"></script>
+<script>
+// 音声入力機能の初期化
+document.addEventListener('DOMContentLoaded', function() {
+    // 検索フィールド用音声入力を初期化
+    const searchSpeechButton = initSpeechInput('#search-speech-btn', '#search-input', {
+        context: 'search',
+        language: 'ja-JP',
+        continuous: false,
+        interimResults: true
+    });
+    
+    // 音声入力が利用できない場合は非表示
+    if (!searchSpeechButton) {
+        document.body.classList.add('speech-not-supported');
+    }
+});
+</script>
+{% endblock %}

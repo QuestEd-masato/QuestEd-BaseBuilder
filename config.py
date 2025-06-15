@@ -20,7 +20,10 @@ class Config:
         import secrets
         SECRET_KEY = secrets.token_hex(32)
         import logging
-        logging.warning("SECRET_KEY not set in environment. Generated temporary key. Set SECRET_KEY for production!")
+        logging.critical("SECRET_KEY not set in environment! Generated temporary key. This is a SECURITY RISK in production!")
+        # 本番環境では起動を停止
+        if os.getenv('FLASK_ENV') == 'production':
+            raise ValueError("本番環境でSECRET_KEYが設定されていません。セキュリティ上の理由により起動を停止します。")
     
     # データベース設定（デフォルト値付き）
     DB_USERNAME = os.getenv('DB_USERNAME', 'quested_user')
@@ -44,9 +47,19 @@ class Config:
     SESSION_COOKIE_HTTPONLY = True  # JavaScript経由でのCookieアクセス無効
     SESSION_COOKIE_SAMESITE = 'Lax'  # CSRF攻撃対策
     
+    # AI機能設定
+    OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
+    if not OPENAI_API_KEY:
+        import logging
+        logging.warning("OPENAI_API_KEY not set in environment. AI features will be disabled!")
+    
     # 追加の設定（必要に応じて）
     DEBUG = os.getenv('FLASK_DEBUG', 'False').lower() == 'true'
     TESTING = False
+    
+    # 本番環境では強制的にDEBUGをFalseに
+    if os.getenv('FLASK_ENV') == 'production':
+        DEBUG = False
     
     # Celery configuration
     CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL', 'redis://localhost:6379/0')

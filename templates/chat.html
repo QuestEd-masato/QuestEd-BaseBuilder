@@ -3,6 +3,7 @@
 {% block title %}AIチャットボット | QuestEd{% endblock %}
 
 {% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/speech_input.css') }}">
 <style>
     .chat-message {
         margin-bottom: 15px;
@@ -174,6 +175,10 @@
                         <div class="input-group">
                             <textarea name="message" id="message-input" class="form-control" rows="2" placeholder="メッセージを入力..."></textarea>
                             <div class="input-group-append">
+                                <button type="button" id="speech-btn" class="btn btn-outline-secondary speech-btn chat-speech-btn" 
+                                        title="音声入力（現在無効）" aria-label="音声入力（現在無効）" style="display: none;">
+                                    <i class="fas fa-microphone"></i>
+                                </button>
                                 <button type="submit" class="btn btn-primary">送信</button>
                             </div>
                         </div>
@@ -186,7 +191,27 @@
 {% endblock %}
 
 {% block extra_js %}
+<script src="{{ url_for('static', filename='js/speech_input.js') }}"></script>
 <script src="{{ url_for('static', filename='js/chat.js') }}"></script>
+<script>
+// 音声入力機能の初期化（一時無効化中）
+/*
+document.addEventListener('DOMContentLoaded', function() {
+    // チャット用音声入力を初期化
+    const speechButton = initSpeechInput('#speech-btn', '#message-input', {
+        context: 'chat',
+        language: 'ja-JP',
+        continuous: false,
+        interimResults: true
+    });
+    
+    // 音声入力が利用できない場合は非表示
+    if (!speechButton) {
+        document.body.classList.add('speech-not-supported');
+    }
+});
+*/
+</script>
 {% if current_user.role == 'teacher' %}
 <script>
     // 教師用は常に自由記述モードを使用

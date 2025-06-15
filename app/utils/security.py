@@ -1,27 +1,95 @@
 """
-セキュリティユーティリティ
+QuestEd セキュリティユーティリティモジュール
+
+このモジュールは、QuestEdアプリケーションの包括的なセキュリティ機能を提供します。
+新規開発者向けに詳細なコメントとドキュメントを含んでいます。
+
+主な機能:
+- セキュアなトークン生成
+- パスワード強度検証
+- 入力データのサニタイゼーション
+- セキュリティイベントのログ記録
+- レート制限チェック
+- セキュリティヘッダーの設定
+
+セキュリティのベストプラクティス:
+1. 全ての外部入力は検証・サニタイズする
+2. 機密データは適切にハッシュ化する
+3. セキュリティイベントをログに記録する
+4. レート制限でDoS攻撃を防ぐ
+5. セキュリティヘッダーでクライアント側攻撃を防ぐ
+
+Author: QuestEd Development Team
+Created: 2025
+Last Modified: 2025-01-15
+Version: 2.0.0
 """
+
 import secrets
 import hashlib
 import re
+import time
+from datetime import datetime, timedelta
 from urllib.parse import urlparse, urljoin
 from flask import request, url_for, current_app
 import logging
+from typing import Tuple, List, Optional, Dict, Any
 
 class SecurityUtils:
-    """セキュリティ関連のユーティリティクラス"""
+    """
+    セキュリティ関連のユーティリティクラス
+    
+    このクラスは、QuestEdアプリケーション全体で使用されるセキュリティ機能を
+    静的メソッドとして提供します。全てのメソッドは独立して使用でき、
+    外部依存を最小限に抑えています。
+    
+    使用例:
+        # セキュアなトークン生成
+        token = SecurityUtils.generate_secure_token()
+        
+        # パスワード強度チェック
+        is_valid, errors = SecurityUtils.validate_password_strength("password123")
+        
+        # ファイル名のサニタイズ
+        safe_name = SecurityUtils.sanitize_filename("../../../etc/passwd")
+    """
+    
+    # クラス定数: セキュリティ設定のデフォルト値
+    DEFAULT_TOKEN_LENGTH = 32
+    MIN_PASSWORD_LENGTH = 12
+    MAX_FILENAME_LENGTH = 255
+    RATE_LIMIT_WINDOW = 3600  # 1時間（秒）
     
     @staticmethod
-    def generate_secure_token(length=32):
+    def generate_secure_token(length: int = DEFAULT_TOKEN_LENGTH) -> str:
         """
-        セキュアなトークンを生成
+        暗号学的に安全なランダムトークンを生成
+        
+        このメソッドは、セッショントークン、CSRFトークン、
+        パスワードリセットトークンなどの生成に使用されます。
+        
+        セキュリティ上の注意:
+        - secrets.token_urlsafe()を使用して予測不可能なトークンを生成
+        - 長さは最低32文字を推奨（エントロピー確保のため）
+        - URLセーフな文字のみ使用（Base64エンコード）
         
         Args:
-            length (int): トークンの長さ
+            length (int): トークンの長さ（デフォルト: 32文字）
             
         Returns:
-            str: セキュアなトークン
+            str: Base64エンコードされたセキュアなトークン
+            
+        Raises:
+            ValueError: 長さが8文字未満の場合
+            
+        Example:
+            >>> token = SecurityUtils.generate_secure_token()
+            >>> len(token) >= 32
+            True
         """
+        if length < 8:
+            raise ValueError("トークンの長さは最低8文字である必要があります")
+        
         return secrets.token_urlsafe(length)
     
     @staticmethod

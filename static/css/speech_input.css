@@ -1,0 +1,334 @@
+/**
+ * 音声入力機能用CSS
+ * QuestEd 新機能実装
+ */
+
+/* 音声入力ボタンの基本スタイル */
+.speech-btn {
+    position: relative;
+    background: #007bff;
+    color: white;
+    border: 2px solid #007bff;
+    border-radius: 8px;
+    padding: 0.5rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 40px;
+    height: 40px;
+    font-size: 1rem;
+}
+
+.speech-btn:hover {
+    background: #0056b3;
+    border-color: #0056b3;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3);
+}
+
+.speech-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(0, 123, 255, 0.3);
+}
+
+.speech-btn:disabled {
+    background: #6c757d;
+    border-color: #6c757d;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+/* 録音中のスタイル */
+.speech-btn.recording {
+    background: #dc3545;
+    border-color: #dc3545;
+    animation: recording-pulse 1.5s infinite;
+}
+
+.speech-btn.recording:hover {
+    background: #c82333;
+    border-color: #c82333;
+}
+
+/* パルスアニメーション */
+.speech-btn.pulse {
+    animation: pulse 1s infinite;
+}
+
+@keyframes recording-pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(220, 53, 69, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(220, 53, 69, 0);
+    }
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+/* 入力グループ内での配置 */
+.input-group .speech-btn {
+    border-left: none;
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+}
+
+.input-group .form-control + .speech-btn {
+    margin-left: -1px;
+}
+
+/* テキストエリアとの組み合わせ */
+.speech-input-container {
+    position: relative;
+    display: flex;
+    gap: 0.5rem;
+    align-items: flex-start;
+}
+
+.speech-input-container .form-control {
+    flex: 1;
+}
+
+.speech-input-container .speech-btn {
+    align-self: flex-start;
+    margin-top: 0;
+}
+
+/* 音声認識状態インジケーター */
+.speech-status {
+    position: absolute;
+    top: -25px;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 0.8rem;
+    color: #6c757d;
+    background: white;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    z-index: 1000;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+}
+
+.speech-status.show {
+    opacity: 1;
+}
+
+.speech-status.recording {
+    color: #dc3545;
+    background: #fff5f5;
+    border: 1px solid #fecaca;
+}
+
+.speech-status.processing {
+    color: #0956d6;
+    background: #f0f8ff;
+    border: 1px solid #bfdbfe;
+}
+
+.speech-status.error {
+    color: #dc3545;
+    background: #fff5f5;
+    border: 1px solid #fecaca;
+}
+
+/* 中間結果表示 */
+.interim {
+    color: #6c757d;
+    font-style: italic;
+}
+
+/* チャット用音声入力ボタン */
+.chat-speech-btn {
+    background: transparent;
+    color: #007bff;
+    border: 1px solid #007bff;
+    padding: 0.4rem;
+    min-width: 36px;
+    height: 36px;
+    font-size: 0.9rem;
+}
+
+.chat-speech-btn:hover {
+    background: #007bff;
+    color: white;
+}
+
+.chat-speech-btn.recording {
+    background: #dc3545;
+    color: white;
+    border-color: #dc3545;
+}
+
+/* アクティビティログ用音声入力 */
+.activity-speech-btn {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    z-index: 10;
+    background: rgba(0, 123, 255, 0.9);
+    border: none;
+    border-radius: 50%;
+    width: 35px;
+    height: 35px;
+    font-size: 0.8rem;
+}
+
+.activity-speech-btn:hover {
+    background: rgba(0, 86, 179, 0.9);
+}
+
+/* 検索フィールド用音声入力 */
+.search-speech-btn {
+    position: absolute;
+    right: 0.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    color: #6c757d;
+    border: none;
+    padding: 0.3rem;
+    min-width: 30px;
+    height: 30px;
+    font-size: 0.8rem;
+    border-radius: 4px;
+}
+
+.search-speech-btn:hover {
+    background: #f8f9fa;
+    color: #007bff;
+}
+
+.search-speech-btn.recording {
+    color: #dc3545;
+    background: #fff5f5;
+}
+
+/* レスポンシブ対応 */
+@media (max-width: 768px) {
+    .speech-btn {
+        min-width: 44px;
+        height: 44px;
+        font-size: 1.1rem;
+    }
+    
+    .chat-speech-btn {
+        min-width: 40px;
+        height: 40px;
+        font-size: 1rem;
+    }
+    
+    .speech-input-container {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+    
+    .speech-input-container .speech-btn {
+        align-self: stretch;
+        height: 44px;
+    }
+}
+
+/* ダークモード対応 */
+@media (prefers-color-scheme: dark) {
+    .speech-status {
+        background: #2d3748;
+        color: #e2e8f0;
+    }
+    
+    .speech-status.recording {
+        background: #2d1b1b;
+        color: #fed7d7;
+        border-color: #fc8181;
+    }
+    
+    .speech-status.processing {
+        background: #1a2332;
+        color: #bee3f8;
+        border-color: #63b3ed;
+    }
+    
+    .search-speech-btn:hover {
+        background: #4a5568;
+        color: #63b3ed;
+    }
+}
+
+/* アクセシビリティ */
+.speech-btn:focus {
+    outline: 2px solid #007bff;
+    outline-offset: 2px;
+}
+
+.speech-btn[aria-pressed="true"] {
+    background: #dc3545;
+    border-color: #dc3545;
+}
+
+/* 音声入力非対応ブラウザ用の非表示クラス */
+.speech-not-supported .speech-btn,
+.speech-not-supported .speech-input-container .speech-btn {
+    display: none !important;
+}
+
+/* ローディングスピナー */
+.speech-btn .spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid transparent;
+    border-top: 2px solid currentColor;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* ツールチップスタイル */
+.speech-btn[title]:hover::after {
+    content: attr(title);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #333;
+    color: white;
+    padding: 0.4rem 0.8rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    white-space: nowrap;
+    z-index: 1001;
+    margin-bottom: 5px;
+}
+
+.speech-btn[title]:hover::before {
+    content: '';
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 5px solid transparent;
+    border-top-color: #333;
+    z-index: 1001;
+}

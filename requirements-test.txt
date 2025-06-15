@@ -1,0 +1,70 @@
+# テスト用依存関係
+# 既存のrequirements.txtに加えて、テスト実行に必要なパッケージ
+
+# テストフレームワーク
+pytest==7.4.3
+pytest-flask==1.3.0
+pytest-cov==4.1.0
+pytest-mock==3.12.0
+pytest-xdist==3.5.0  # 並列テスト実行
+pytest-html==4.1.1  # HTMLレポート生成
+pytest-json-report==1.5.0  # JSONレポート生成
+
+# ファクトリボーイ（テストデータ生成）
+factory-boy==3.3.0
+
+# HTTPリクエストのモック
+responses==0.24.1
+requests-mock==1.11.0
+
+# データベーステスト用
+pytest-postgresql==5.0.0  # PostgreSQL用（必要に応じて）
+testing.postgresql==1.3.0
+
+# セキュリティテスト用
+bandit==1.7.5  # セキュリティ脆弱性検出
+safety==2.3.5  # 依存関係の脆弱性チェック
+
+# パフォーマンステスト用
+pytest-benchmark==4.0.0
+memory-profiler==0.61.0
+
+# E2Eテスト用（ブラウザ自動化）
+selenium==4.15.2
+pytest-selenium==4.1.0
+
+# APIテスト用
+tavern==2.3.0  # API テストフレームワーク
+
+# カバレッジ可視化
+coverage-badge==1.1.0
+
+# テストレポート
+allure-pytest==2.13.2
+
+# モック作成支援
+freezegun==1.2.2  # 時間のモック
+faker==20.1.0  # ダミーデータ生成
+
+# 追加のテストユーティリティ
+pytest-timeout==2.2.0  # テストタイムアウト
+pytest-repeat==0.9.3  # テスト繰り返し実行
+pytest-randomly==3.15.0  # ランダムなテスト順序
+
+# 並列実行とCI/CD用
+pytest-parallel==0.1.1
+tox==4.11.4  # 複数環境でのテスト
+
+# デバッグ支援
+pytest-pdb==0.2.0
+pytest-pudb==0.7.0
+
+# Lint and Code Quality (テスト環境でも使用)
+flake8==6.1.0
+black==23.11.0
+isort==5.12.0
+mypy==1.7.1
+
+# パフォーマンス監視
+py-spy==0.3.14
+scalene==1.5.26

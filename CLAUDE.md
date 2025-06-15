@@ -109,18 +109,31 @@ Create a `.env` file with:
 - Teacher approval for student accounts
 - Role-based access control (admin, teacher, student)
 - Password reset via email tokens
+- JWT token-based API authentication
+- Session management with security headers
 
 #### AI Integration
 - OpenAI GPT-4 for curriculum generation
 - AI-powered theme suggestions
 - Student evaluation assistance
 - Chat interface for educational support
+- Personalized learning recommendations
+- Automated weakness analysis and review generation
 
 #### Data Import/Export
 - CSV import for users and students
 - Curriculum import/export
 - Activity log export to PDF
 - Evaluation export to CSV
+
+#### Security Enhancements (New)
+- Comprehensive input validation and sanitization
+- XSS and SQL injection protection
+- Rate limiting for API endpoints
+- Secure error handling with detailed logging
+- Database query auditing and monitoring
+- Encrypted storage for sensitive data
+- CORS configuration for secure API access
 
 ### Common Patterns
 
@@ -149,6 +162,30 @@ except Exception as e:
 - Filename sanitization with timestamps
 - Allowed extensions: jpg, jpeg, png, gif
 - Max file size: 16MB
+
+#### Security Utilities (New)
+```python
+# Input validation and sanitization
+from app.utils.input_validator import InputValidator
+validated_data = InputValidator.validate_and_sanitize(form_data, validation_rules)
+
+# Secure error handling
+from app.utils.error_handler import ErrorHandler
+response_data, status_code = ErrorHandler.handle_exception(error)
+
+# Database security
+from app.utils.database_security import SecureQueryBuilder
+query, params = SecureQueryBuilder.build_safe_select('users', ['id', 'username'], {'role': 'student'})
+
+# API security decorators
+from app.utils.api_security import APISecurityDecorator
+
+@APISecurityDecorator.require_api_auth(['teacher', 'admin'])
+@APISecurityDecorator.rate_limit(limit=100, window=3600)
+@APISecurityDecorator.log_api_access()
+def secure_api_endpoint():
+    return jsonify({'data': 'secure response'})
+```
 
 ### Testing
 Currently no automated tests. To add tests:

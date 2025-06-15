@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/responsive.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/modern-responsive.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/button-overrides.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/speech_input.css') }}">
     <style>
         /* 共通スタイル */
         header {
@@ -1204,6 +1205,7 @@
     </script>
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
     <script src="{{ url_for('static', filename='js/responsive-tables.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/speech_fallback.js') }}"></script>
     {% block extra_js %}{% endblock %}
 </body>
 </html>

@@ -131,9 +131,18 @@
         
         <div style="margin-bottom: 20px;">
           <label for="text-answer" style="display: block; margin-bottom: 8px; font-weight: 500; color: #495057;">答えを入力してください:</label>
-          <input type="text" name="answer" id="text-answer" required autocomplete="off" autofocus
-                 style="width: 100%; padding: 12px 15px; border: 2px solid #e9ecef; border-radius: 8px; 
-                        font-size: 1rem; transition: all 0.3s ease;">
+          <div style="position: relative;">
+            <input type="text" name="answer" id="text-answer" required autocomplete="off" autofocus
+                   style="width: 100%; padding: 12px 45px 12px 15px; border: 2px solid #e9ecef; border-radius: 8px; 
+                          font-size: 1rem; transition: all 0.3s ease;">
+            <!-- 音声入力ボタン（一時無効化中） -->
+            <button type="button" id="answer-speech-btn" class="btn btn-outline-secondary speech-btn activity-speech-btn" 
+                    title="音声入力（現在無効）" aria-label="音声入力（現在無効）"
+                    style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); 
+                           border: none; background: none; padding: 6px; border-radius: 4px; display: none;">
+              <i class="fas fa-microphone"></i>
+            </button>
+          </div>
         </div>
         
         <div style="margin-top: 25px; display: grid; gap: 10px;">
@@ -358,5 +367,23 @@ var textInput = document.getElementById('text-answer');
 if (textInput) {
   textInput.focus();
 }
+
+// 音声入力機能の初期化（記述問題のみ）
+document.addEventListener('DOMContentLoaded', function() {
+  if (document.getElementById('answer-speech-btn')) {
+    // BaseBuilder記述問題用音声入力を初期化
+    const speechButton = initSpeechInput('#answer-speech-btn', '#text-answer', {
+      context: 'basebuilder_answer',
+      language: 'ja-JP',
+      continuous: false,
+      interimResults: true
+    });
+    
+    // 音声入力が利用できない場合の処理
+    if (!speechButton) {
+      document.body.classList.add('speech-not-supported');
+    }
+  }
+});
 </script>
 {% endblock %}

@@ -324,6 +324,94 @@
         </div>
     </div>
     
+    <!-- 自由進度学習 -->
+    <div class="dashboard-card">
+        <h3>📚 自由進度学習</h3>
+        
+        <p style="font-size: 0.9rem; margin-bottom: 15px; color: #666;">
+            自分のペースで学習単元を選択し、進捗を管理できます。AIがあなたに最適な学習内容を推薦します。
+        </p>
+        
+        <!-- 学習統計 -->
+        {% if total_units is defined and total_units > 0 %}
+        <div style="background: #f0f8ff; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; text-align: center;">
+                <div>
+                    <div style="font-size: 1.5rem; font-weight: bold; color: #28a745;">
+                        {{ completed_units or 0 }}
+                    </div>
+                    <div style="font-size: 0.75rem; color: #666;">完了単元</div>
+                </div>
+                
+                <div>
+                    <div style="font-size: 1.5rem; font-weight: bold; color: #007bff;">
+                        {{ in_progress_units or 0 }}
+                    </div>
+                    <div style="font-size: 0.75rem; color: #666;">学習中</div>
+                </div>
+                
+                <div>
+                    <div style="font-size: 1.5rem; font-weight: bold; color: #ff9800;">
+                        {{ completion_rate or 0 }}%
+                    </div>
+                    <div style="font-size: 0.75rem; color: #666;">完了率</div>
+                </div>
+            </div>
+            
+            <!-- プログレスバー -->
+            <div style="margin-top: 12px;">
+                <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: #666;">
+                    <span>全体の進捗</span>
+                    <span>{{ completed_units or 0 }} / {{ total_units or 0 }} 単元</span>
+                </div>
+                <div style="background: #e0e0e0; height: 6px; border-radius: 3px; overflow: hidden; margin-top: 4px;">
+                    <div style="width: {{ completion_rate or 0 }}%; background: linear-gradient(90deg, #007bff, #0056b3); height: 100%;"></div>
+                </div>
+            </div>
+            
+            {% if total_study_time is defined and total_study_time > 0 %}
+            <div style="margin-top: 8px; text-align: center; font-size: 0.8rem; color: #666;">
+                総学習時間: {{ total_study_time }}分
+            </div>
+            {% endif %}
+        </div>
+        {% else %}
+        <div style="text-align: center; padding: 20px 0; background: #f8f9fa; border-radius: 8px; margin-bottom: 15px;">
+            <div style="font-size: 2.5rem; margin-bottom: 10px;">🎯</div>
+            <p style="color: #666; margin: 0; font-size: 0.9rem;">
+                自分のペースで学習を始めましょう！<br>
+                AIがあなたに最適な単元を推薦します。
+            </p>
+        </div>
+        {% endif %}
+        
+        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+            <a href="{{ url_for('student.learning_portal') }}" 
+               style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1rem; 
+                      background: linear-gradient(135deg, #007bff, #0056b3); color: white; 
+                      border-radius: 8px; text-decoration: none; font-size: 0.9rem; font-weight: 500;
+                      transition: all 0.2s; pointer-events: auto !important; z-index: 1000; position: relative;"
+               onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 12px rgba(0,123,255,0.3)';"
+               onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+                <i class="fas fa-graduation-cap"></i>
+                学習ポータル
+            </a>
+            
+            {% if in_progress_units is defined and in_progress_units > 0 %}
+            <a href="{{ url_for('student.learning_portal') }}#continue-learning" 
+               style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1rem; 
+                      background: transparent; color: #28a745; border: 1px solid #28a745;
+                      border-radius: 8px; text-decoration: none; font-size: 0.9rem;
+                      transition: all 0.2s; pointer-events: auto !important; z-index: 1000; position: relative;"
+               onmouseover="this.style.background='#28a745'; this.style.color='white';"
+               onmouseout="this.style.background='transparent'; this.style.color='#28a745';">
+                <i class="fas fa-play"></i>
+                続きから
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    
     <!-- アンケート状況 -->
     <div class="dashboard-card">
         <h3>📋 アンケート状況</h3>

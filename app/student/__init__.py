@@ -30,7 +30,8 @@ except ImportError:
 from app.models import (
     db, User, Class, ClassEnrollment, MainTheme, InquiryTheme,
     InterestSurvey, PersonalitySurvey, ActivityLog, Todo, Goal,
-    Milestone, Group, GroupMembership, ChatHistory
+    Milestone, Group, GroupMembership, ChatHistory,
+    CurriculumUnit, StudentUnitSelection
 )
 from app.ai import generate_personal_themes_with_ai
 from app.utils.rate_limiting import upload_limit, api_limit
@@ -719,6 +720,37 @@ def dashboard():
             context['weekly_words_learned'] = 0
             context['total_words_attempted'] = 0
             context['mastery_rate'] = 0
+        
+        # 自由進度学習の統計データを追加
+        try:
+            # 総単元数
+            context['total_units'] = CurriculumUnit.query.count()
+            
+            # 学生の学習進捗を取得
+            student_selections = StudentUnitSelection.query.filter_by(
+                student_id=current_user.id
+            ).all()
+            
+            context['completed_units'] = len([s for s in student_selections if s.status == 'completed'])
+            context['in_progress_units'] = len([s for s in student_selections if s.status == 'in_progress'])
+            
+            # 総学習時間を計算
+            context['total_study_time'] = sum(s.study_time_minutes for s in student_selections)
+            
+            # 完了率を計算
+            if context['total_units'] > 0:
+                context['completion_rate'] = round((context['completed_units'] / context['total_units'] * 100), 1)
+            else:
+                context['completion_rate'] = 0
+                
+        except Exception as e:
+            current_app.logger.error(f"Free-pace learning stats error: {str(e)}")
+            # デフォルト値を設定
+            context['total_units'] = 0
+            context['completed_units'] = 0
+            context['in_progress_units'] = 0
+            context['total_study_time'] = 0
+            context['completion_rate'] = 0
         
     except Exception as e:
         current_app.logger.error(f"Dashboard error: {str(e)}")
@@ -2547,3 +2579,86 @@ def debug_routes():
             })
     
     return render_template('student/debug_routes.html', routes=routes)
+
+# ========================
+# 自由進度学習機能のルート
+# ========================
+
+@student_bp.route('/learning-portal')
+@login_required
+@student_required
+def learning_portal():
+    """自由進度学習ポータル"""
+    try:
+        # 学習統計情報を取得
+        total_units = CurriculumUnit.query.count()
+        
+        # 学生の学習進捗を取得
+        student_selections = StudentUnitSelection.query.filter_by(
+            student_id=current_user.id
+        ).all()
+        
+        completed_units = len([s for s in student_selections if s.status == 'completed'])
+        in_progress_units = len([s for s in student_selections if s.status == 'in_progress'])
+        
+        # 総学習時間を計算
+        total_study_time = sum(s.study_time_minutes for s in student_selections)
+        
+        context = {
+            'total_units': total_units,
+            'completed_units': completed_units,
+            'in_progress_units': in_progress_units,
+            'total_study_time': total_study_time,
+            'completion_rate': round((completed_units / total_units * 100), 1) if total_units > 0 else 0
+        }
+        
+        return render_template('learning_portal.html', **context)
+        
+    except Exception as e:
+        logging.error(f"学習ポータル表示エラー: {str(e)}")
+        flash('学習ポータルの読み込みに失敗しました。', 'error')
+        return redirect(url_for('student.dashboard'))
+
+@student_bp.route('/learning/unit/<int:unit_id>')
+@login_required
+@student_required  
+def learning_unit(unit_id):
+    """個別単元学習ページ"""
+    try:
+        # 単元情報を取得
+        unit = CurriculumUnit.query.get_or_404(unit_id)
+        
+        # 学生の選択履歴を取得
+        selection = StudentUnitSelection.query.filter_by(
+            student_id=current_user.id,
+            unit_id=unit_id
+        ).first()
+        
+        # 選択履歴がない場合は自動作成
+        if not selection:
+            selection = StudentUnitSelection(
+                student_id=current_user.id,
+                unit_id=unit_id,
+                status='in_progress',
+                started_at=datetime.utcnow(),
+                last_activity_at=datetime.utcnow()
+            )
+            db.session.add(selection)
+            db.session.commit()
+        
+        # 復習モードかどうかを判定
+        review_mode = request.args.get('mode') == 'review'
+        
+        context = {
+            'unit': unit,
+            'selection': selection,
+            'review_mode': review_mode
+        }
+        
+        # 実際の学習画面テンプレートを返す（現在は仮実装）
+        return render_template('learning_unit.html', **context)
+        
+    except Exception as e:
+        logging.error(f"単元学習ページエラー: {str(e)}")
+        flash('学習ページの読み込みに失敗しました。', 'error')
+        return redirect(url_for('student.learning_portal'))

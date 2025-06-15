@@ -2,6 +2,8 @@
 from flask import Flask, redirect, url_for, send_from_directory, abort, make_response
 from flask_login import current_user, login_required
 import os
+import logging
+import logging.handlers
 
 from config import get_config
 from extensions import db, migrate, login_manager, admin, csrf, limiter
@@ -103,6 +105,9 @@ def create_app(config_object=None):
         
         # シェルコンテキストプロセッサを登録
         register_shell_context(app)
+        
+        # エラーハンドリングとセキュリティ機能を設定
+        setup_error_handling_and_security(app)
     
     return app
 
@@ -239,3 +244,85 @@ def register_shell_context(app):
             'ChatHistory': ChatHistory,
             'Milestone': Milestone
         }
+
+
+def setup_error_handling_and_security(app):
+    """
+    エラーハンドリングとセキュリティ機能を設定
+    
+    この関数は、アプリケーション全体のセキュリティとエラーハンドリングを
+    統一的に設定し、本番環境での安全性を確保します。
+    """
+    # ログ設定の初期化
+    setup_logging(app)
+    
+    # エラーハンドラーの設定
+    from app.utils.error_handler import setup_error_handlers
+    setup_error_handlers(app)
+    
+    # セキュリティヘッダーの設定
+    from app.utils.security import setup_security_headers
+    setup_security_headers(app)
+    
+    # データベースセキュリティの設定
+    from app.utils.database_security import setup_database_security
+    setup_database_security(app)
+    
+    # APIセキュリティの設定
+    from app.utils.api_security import setup_api_security
+    setup_api_security(app)
+    
+    # リクエストコンテキストロガーの設定
+    from app.utils.error_handler import RequestContextLogger
+    
+    @app.before_request
+    def log_request_start():
+        """各リクエスト開始時のログ記録"""
+        RequestContextLogger.log_request_start()
+    
+    @app.after_request
+    def log_request_end(response):
+        """各リクエスト終了時のログ記録"""
+        return RequestContextLogger.log_request_end(response)
+    
+    logging.info("エラーハンドリングとセキュリティ機能を初期化しました")
+
+
+def setup_logging(app):
+    """
+    ログ設定の初期化
+    
+    開発環境と本番環境で適切なログレベルとフォーマットを設定します。
+    セキュリティイベントと通常のアプリケーションログを分離して記録します。
+    """
+    if not app.debug and not app.testing:
+        # 本番環境でのログ設定
+        if not os.path.exists('logs'):
+            os.mkdir('logs')
+        
+        # メインアプリケーションログ
+        file_handler = logging.handlers.RotatingFileHandler(
+            'logs/questeD.log', maxBytes=10240000, backupCount=10)
+        file_handler.setFormatter(logging.Formatter(
+            '%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'))
+        file_handler.setLevel(logging.INFO)
+        app.logger.addHandler(file_handler)
+        
+        # セキュリティイベント専用ログ
+        security_handler = logging.handlers.RotatingFileHandler(
+            'logs/security.log', maxBytes=10240000, backupCount=10)
+        security_handler.setFormatter(logging.Formatter(
+            '%(asctime)s SECURITY: %(message)s'))
+        security_handler.setLevel(logging.WARNING)
+        
+        # セキュリティロガーの設定
+        security_logger = logging.getLogger('security')
+        security_logger.addHandler(security_handler)
+        security_logger.setLevel(logging.WARNING)
+        
+        app.logger.setLevel(logging.INFO)
+        app.logger.info('QuestEdアプリケーションが起動しました')
+    else:
+        # 開発環境でのログ設定
+        app.logger.setLevel(logging.DEBUG)
+        logging.basicConfig(level=logging.DEBUG)

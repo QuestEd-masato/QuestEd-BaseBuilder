@@ -1,0 +1,272 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ unit.title }} | QuestEd{% endblock %}
+
+{% block extra_css %}
+<style>
+.learning-container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.unit-header {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+    color: white;
+    padding: 2rem;
+    border-radius: 12px;
+    margin-bottom: 2rem;
+}
+
+.unit-header h1 {
+    margin: 0 0 0.5rem 0;
+    font-size: 2rem;
+}
+
+.unit-meta {
+    display: flex;
+    gap: 2rem;
+    font-size: 0.9rem;
+    opacity: 0.9;
+}
+
+.progress-section {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    margin-bottom: 2rem;
+}
+
+.progress-bar {
+    background: #e9ecef;
+    border-radius: 10px;
+    height: 12px;
+    overflow: hidden;
+    margin: 1rem 0;
+}
+
+.progress-fill {
+    background: #007bff;
+    height: 100%;
+    border-radius: 10px;
+    transition: width 0.3s ease;
+}
+
+.learning-content {
+    background: white;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    margin-bottom: 2rem;
+}
+
+.placeholder-content {
+    text-align: center;
+    padding: 3rem;
+    color: #6c757d;
+}
+
+.placeholder-content i {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin-top: 2rem;
+}
+
+.btn-action {
+    padding: 0.75rem 2rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-primary {
+    background: #007bff;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #0056b3;
+    transform: translateY(-2px);
+}
+
+.btn-secondary {
+    background: #6c757d;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background: #545b62;
+    color: white;
+    text-decoration: none;
+}
+
+@media (max-width: 768px) {
+    .learning-container {
+        padding: 1rem;
+    }
+    
+    .unit-header {
+        padding: 1.5rem;
+    }
+    
+    .unit-header h1 {
+        font-size: 1.5rem;
+    }
+    
+    .unit-meta {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .action-buttons {
+        flex-direction: column;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="learning-container">
+    <!-- 単元ヘッダー -->
+    <div class="unit-header">
+        <h1>{{ unit.title }}</h1>
+        <div class="unit-meta">
+            <span><i class="fas fa-star"></i> 難易度: 
+                {% if unit.difficulty_level == 1 %}基礎 ⭐
+                {% elif unit.difficulty_level == 2 %}標準 ⭐⭐
+                {% else %}応用 ⭐⭐⭐
+                {% endif %}
+            </span>
+            <span><i class="fas fa-clock"></i> 推定時間: {{ unit.estimated_minutes }}分</span>
+            {% if review_mode %}
+            <span><i class="fas fa-redo"></i> 復習モード</span>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- 進捗セクション -->
+    {% if selection %}
+    <div class="progress-section">
+        <h3><i class="fas fa-chart-line"></i> 学習進捗</h3>
+        <div class="progress-bar">
+            <div class="progress-fill" style="width: {{ selection.progress_percentage }}%"></div>
+        </div>
+        <div class="d-flex justify-content-between">
+            <span>完了問題: {{ selection.completed_items }}/{{ selection.total_items }}</span>
+            <span>{{ selection.progress_percentage|round(1) }}%</span>
+        </div>
+        
+        {% if selection.study_time_minutes > 0 %}
+        <p class="mt-2 text-muted">
+            <i class="fas fa-hourglass-half"></i> 学習時間: {{ selection.study_time_minutes }}分
+        </p>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- 学習コンテンツ -->
+    <div class="learning-content">
+        {% if unit.description %}
+        <div class="mb-4">
+            <h3>単元について</h3>
+            <p>{{ unit.description }}</p>
+        </div>
+        {% endif %}
+
+        <!-- プレースホルダーコンテンツ（実際の学習機能はここに実装） -->
+        <div class="placeholder-content">
+            <i class="fas fa-graduation-cap"></i>
+            <h3>学習コンテンツ</h3>
+            <p>ここに実際の学習コンテンツ（問題、解説等）が表示されます。</p>
+            <p class="text-sm">現在は仮実装のため、プレースホルダーを表示しています。</p>
+            
+            {% if review_mode %}
+            <div class="alert alert-info mt-3">
+                <i class="fas fa-info-circle"></i>
+                復習モードでは、間違えた問題や苦手な分野を重点的に学習できます。
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- アクションボタン -->
+    <div class="action-buttons">
+        {% if not review_mode %}
+        <button class="btn-action btn-primary" onclick="startLearning()">
+            <i class="fas fa-play"></i>
+            学習を開始
+        </button>
+        {% else %}
+        <button class="btn-action btn-primary" onclick="startReview()">
+            <i class="fas fa-redo"></i>
+            復習を開始
+        </button>
+        {% endif %}
+        
+        <a href="{{ url_for('student.learning_portal') }}" class="btn-action btn-secondary">
+            <i class="fas fa-arrow-left"></i>
+            ポータルに戻る
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function startLearning() {
+    // 実際の学習開始処理（現在は仮実装）
+    alert('学習を開始します。\n\n※現在は仮実装のため、実際の学習機能はまだ実装されていません。');
+    
+    // 実装例：
+    // window.location.href = `/learning/unit/{{ unit.id }}/practice`;
+}
+
+function startReview() {
+    // 実際の復習開始処理（現在は仮実装）
+    alert('復習を開始します。\n\n※現在は仮実装のため、実際の復習機能はまだ実装されていません。');
+    
+    // 実装例：
+    // window.location.href = `/learning/unit/{{ unit.id }}/review`;
+}
+
+// 進捗更新のサンプル関数
+function updateProgress(completedItems, totalItems, studyTimeMinutes) {
+    fetch(`/api/units/{{ unit.id }}/progress`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            completed_items: completedItems,
+            study_time_minutes: studyTimeMinutes
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            console.log('進捗が更新されました:', data.data);
+            // UI更新処理
+        } else {
+            console.error('進捗更新エラー:', data.message);
+        }
+    })
+    .catch(error => {
+        console.error('API呼び出しエラー:', error);
+    });
+}
+</script>
+{% endblock %}
