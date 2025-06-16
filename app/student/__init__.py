@@ -2049,35 +2049,7 @@ def ranking():
                          student_classes=student_classes)
 
 
-@student_bp.route('/api/ranking/<ranking_type>')
-@login_required
-@student_required
-def api_ranking(ranking_type):
-    """ランキングAPI（AJAX用）"""
-    from app.services.ranking_service import RankingService
-    
-    scope = request.args.get('scope', 'school')
-    class_id = request.args.get('class_id', type=int)
-    limit = request.args.get('limit', type=int, default=50)
-    
-    # 権限チェック
-    if scope == 'class' and class_id:
-        enrollment = ClassEnrollment.query.filter_by(
-            student_id=current_user.id,
-            class_id=class_id,
-            is_active=True
-        ).first()
-        if not enrollment:
-            return {'error': 'アクセス権限がありません'}, 403
-    
-    scope_id = class_id if scope == 'class' else current_user.school_id
-    ranking_data = RankingService.get_ranking(ranking_type, scope, scope_id, limit)
-    
-    # 自分のランキング情報も含める
-    my_rank = RankingService.get_student_rank(current_user.id, ranking_type, scope, scope_id)
-    ranking_data['my_rank'] = my_rank
-    
-    return ranking_data
+# 注意: この関数は削除されました。新しい /api/rankings/<ranking_type> エンドポイントを使用してください。
 
 @student_bp.route('/generate_theme_ai', methods=['POST'])
 @login_required

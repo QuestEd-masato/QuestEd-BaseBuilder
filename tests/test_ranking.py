@@ -295,7 +295,7 @@ class RankingRouteTestCase(unittest.TestCase):
         
         response = self.client.get('/student/ranking')
         self.assertEqual(response.status_code, 200)
-        self.assertIn(b'<title>学習ランキング | QuestEd</title>', response.data)
+        self.assertIn('<title>学習ランキング | QuestEd</title>'.encode('utf-8'), response.data)
     
     def test_teacher_ranking_analysis_page(self):
         """教師ランキング分析ページテスト"""
@@ -303,7 +303,7 @@ class RankingRouteTestCase(unittest.TestCase):
         
         response = self.client.get('/teacher/ranking_analysis')
         self.assertEqual(response.status_code, 200)
-        self.assertIn(b'<title>ランキング分析 | QuestEd</title>', response.data)
+        self.assertIn('<title>ランキング分析 | QuestEd</title>'.encode('utf-8'), response.data)
     
     def test_student_access_teacher_page_denied(self):
         """学生が教師ページにアクセス拒否テスト"""
