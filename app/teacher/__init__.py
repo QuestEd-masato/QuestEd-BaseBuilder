@@ -852,7 +852,8 @@ def generate_curriculum(class_id):
             class_id=class_id,
             title=curriculum_content.get('title', data.get('title')),
             description=curriculum_content.get('description', ''),
-            created_by=current_user.id
+            content=curriculum_content.get('content', ''),
+            teacher_id=current_user.id
         )
         db.session.add(new_curriculum)
         db.session.commit()
@@ -860,12 +861,12 @@ def generate_curriculum(class_id):
         # フォームからのリクエストの場合はリダイレクト
         if not request.is_json:
             flash('カリキュラムが作成されました。', 'success')
-            return redirect(url_for('teacher.class_curriculums', class_id=class_id))
+            return redirect(url_for('teacher.view_curriculums', class_id=class_id))
         
         # JSONリクエストの場合
         return jsonify({
             'success': True,
-            'redirect': url_for('teacher.class_curriculums', class_id=class_id)
+            'redirect': url_for('teacher.view_curriculums', class_id=class_id)
         })
         
     except Exception as e:
@@ -874,7 +875,7 @@ def generate_curriculum(class_id):
         
         if not request.is_json:
             flash('カリキュラムの生成に失敗しました。', 'error')
-            return redirect(url_for('teacher.class_curriculums', class_id=class_id))
+            return redirect(url_for('teacher.create_curriculum', class_id=class_id))
         
         return jsonify({
             'error': 'カリキュラムの生成に失敗しました',
