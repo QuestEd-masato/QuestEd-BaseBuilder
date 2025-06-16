@@ -43,6 +43,50 @@ class StructuredFormatter(logging.Formatter):
             
         return json.dumps(log_entry, ensure_ascii=False)
 
+class SecurityAuditLogger:
+    """セキュリティ監査ログ専用クラス"""
+    
+    def __init__(self, log_file='logs/security_audit.log'):
+        self.logger = logging.getLogger('security_audit')
+        self.logger.setLevel(logging.INFO)
+        
+        # ログファイルのディレクトリを作成
+        os.makedirs(os.path.dirname(log_file), exist_ok=True)
+        
+        # ローテーティングファイルハンドラー
+        handler = RotatingFileHandler(
+            log_file, 
+            maxBytes=10*1024*1024,  # 10MB
+            backupCount=5
+        )
+        
+        # 構造化フォーマッター使用
+        handler.setFormatter(StructuredFormatter())
+        self.logger.addHandler(handler)
+    
+    def log_ranking_access(self, user_id: int, ranking_type: str, scope: str, scope_id: int = None):
+        """ランキングアクセスを記録"""
+        from flask import request
+        extra = {
+            'user_id': user_id,
+            'ip_address': request.remote_addr if request else 'unknown',
+            'ranking_type': ranking_type,
+            'scope': scope,
+            'scope_id': scope_id
+        }
+        self.logger.info("ランキングデータアクセス", extra=extra)
+    
+    def log_security_event(self, event_type: str, details: dict):
+        """セキュリティイベントを記録"""
+        from flask import request, current_user
+        extra = {
+            'user_id': getattr(current_user, 'id', 'anonymous'),
+            'ip_address': request.remote_addr if request else 'unknown',
+            'event_type': event_type,
+            'details': details
+        }
+        self.logger.warning(f"セキュリティイベント: {event_type}", extra=extra)
+
 def setup_logging(app):
     """ログ設定のセットアップ"""
     

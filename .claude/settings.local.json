@@ -22,7 +22,9 @@
       "Bash(PYTHONDONTWRITEBYTECODE=1 /mnt/c/Users/masat/AppData/Local/Programs/Python/Python313/python.exe run.py)",
       "Bash(git add:*)",
       "Bash(git commit:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(sudo systemctl:*)",
+      "Bash(chmod:*)"
     ],
     "deny": []
   }

@@ -32,11 +32,17 @@ from app.models import (
     User, School, Class, Ranking, RankingCache,
     ActivityLog
 )
-# StudentUnitSelectionはコンディショナルインポート
+# コンディショナルインポート
 try:
     from app.models import StudentUnitSelection
 except ImportError:
     StudentUnitSelection = None
+
+try:
+    from app.utils.validators import validate_ranking_params
+except ImportError:
+    def validate_ranking_params(ranking_type, scope, scope_id, limit):
+        return {'ranking_type': ranking_type, 'scope': scope, 'scope_id': scope_id, 'limit': limit}
 
 # BaseBuilderモデルのコンディショナルインポート
 try:
@@ -119,12 +125,17 @@ class RankingService:
             return ranking_data
             
         except Exception as e:
-            logger.error(f"ランキング取得エラー: {str(e)}")
+            logger.error(f"ランキング取得エラー: {str(e)}", exc_info=True)
+            # セキュリティ: 本番環境では詳細なエラー情報を隠す
+            error_msg = 'ランキングデータの取得に失敗しました'
+            if current_app.debug:
+                error_msg += f' (詳細: {str(e)})'
+            
             return {
                 'rankings': [],
                 'total_participants': 0,
                 'last_updated': datetime.utcnow().isoformat(),
-                'error': 'ランキングデータの取得に失敗しました'
+                'error': error_msg
             }
 
     @classmethod
@@ -218,8 +229,9 @@ class RankingService:
             ).outerjoin(
                 answer_points_subquery, points_subquery.c.user_id == answer_points_subquery.c.student_id
             ).subquery()
-        except:
+        except Exception as e:
             # BaseBuilderモジュールが利用できない場合はActivityLogベースのみ
+            logger.warning(f"BaseBuilderモジュール利用不可、ActivityLogベースで計算: {e}")
             pass
         
         # ランキングクエリ

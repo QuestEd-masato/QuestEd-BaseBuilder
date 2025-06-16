@@ -147,7 +147,7 @@ class QuestEdRanking {
                 params.append('scope_id', this.currentClassId);
             }
             
-            const response = await fetch(`/api/ranking/${this.currentRankingType}?${params.toString()}`);
+            const response = await fetch(`/api/rankings/${this.currentRankingType}?${params.toString()}`);
             const data = await response.json();
             
             if (data.status === 'success') {
@@ -352,7 +352,7 @@ class QuestEdRanking {
             contentElement.innerHTML = `
                 <div class="no-data">
                     <i class="fas fa-exclamation-triangle fa-3x" style="color: #dc2626; margin-bottom: 1rem;"></i>
-                    <p>${message}</p>
+                    <p>${this.escapeHtml(message)}</p>
                     <button class="refresh-btn" onclick="rankingManager.refreshRanking()">
                         <i class="fas fa-sync-alt"></i> 再試行
                     </button>
@@ -398,7 +398,7 @@ class QuestEdRanking {
                 params.append('class_id', this.currentClassId);
             }
             
-            const response = await fetch(`/api/ranking/export?${params.toString()}`);
+            const response = await fetch(`/api/rankings/export?${params.toString()}`);
             
             if (response.ok) {
                 const blob = await response.blob();

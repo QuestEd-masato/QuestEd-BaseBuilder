@@ -214,6 +214,17 @@
 </style>
 
 <script>
+// HTMLエスケープ関数
+function escapeHtml(unsafe) {
+    if (typeof unsafe !== 'string') return unsafe;
+    return unsafe
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     loadRankingWidget();
 });
@@ -226,10 +237,10 @@ async function loadRankingWidget() {
     try {
         let apiUrl;
         if (userRole === 'student') {
-            apiUrl = '/student/api/ranking/total_points?scope=school&limit=10';
+            apiUrl = '/student/api/rankings/total_points?scope=school&limit=10';
         } else {
             // 教師の場合は最初のクラスのランキングを取得
-            apiUrl = '/api/ranking/total_points?scope=class&limit=10';
+            apiUrl = '/api/rankings/total_points?scope=class&limit=10';
         }
         
         const response = await fetch(apiUrl);
@@ -244,6 +255,16 @@ async function loadRankingWidget() {
         console.error('ランキングウィジェット読み込みエラー:', error);
         content.innerHTML = `<div class="error-message">通信エラーが発生しました</div>`;
     }
+}
+
+function escapeHtml(unsafe) {
+    if (typeof unsafe !== 'string') return unsafe;
+    return unsafe
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
 }
 
 function renderRankingWidget(rankingData, userRole) {
@@ -296,8 +317,8 @@ function renderRankingWidget(rankingData, userRole) {
                 <li class="ranking-item ${isCurrentUser ? 'current-user' : ''}">
                     <div class="student-info">
                         <div class="rank-number rank-${student.rank <= 3 ? student.rank : ''}">${student.rank}</div>
-                        <div class="student-avatar">${student.student_name ? student.student_name[0].toUpperCase() : '?'}</div>
-                        <div class="student-name">${student.student_name || '不明'}</div>
+                        <div class="student-avatar">${student.student_name ? escapeHtml(student.student_name)[0].toUpperCase() : '?'}</div>
+                        <div class="student-name">${escapeHtml(student.student_name) || '不明'}</div>
                     </div>
                     <div class="student-score">${Math.round(student.score)}pt</div>
                 </li>

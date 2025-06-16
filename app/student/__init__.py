@@ -2744,3 +2744,57 @@ def learning_unit(unit_id):
         logging.error(f"単元学習ページエラー: {str(e)}")
         flash('学習ページの読み込みに失敗しました。', 'error')
         return redirect(url_for('student.learning_portal'))
+
+@student_bp.route('/api/rankings/<ranking_type>')
+@login_required
+@student_required
+def api_ranking(ranking_type):
+    """学生向けランキングAPI"""
+    from app.utils.validators import validate_ranking_params, ValidationError
+    
+    try:
+        # パラメータ取得
+        scope = request.args.get('scope', 'school')
+        scope_id = request.args.get('scope_id', type=int)
+        limit = request.args.get('limit', type=int, default=50)
+        
+        # パラメータ検証
+        validated_params = validate_ranking_params(ranking_type, scope, scope_id, limit)
+        
+        # スコープIDの設定
+        if scope == 'school' and not scope_id:
+            scope_id = current_user.school_id
+        elif scope == 'class' and scope_id:
+            # 学生が該当クラスに所属しているかチェック
+            enrollment = ClassEnrollment.query.filter_by(
+                student_id=current_user.id,
+                class_id=scope_id,
+                is_active=True
+            ).first()
+            if not enrollment:
+                return jsonify({'error': 'アクセス権限がありません'}), 403
+        
+        # ランキングサービスからデータ取得
+        from app.services.ranking_service import RankingService
+        ranking_data = RankingService.get_ranking(ranking_type, scope, scope_id, limit)
+        
+        # 学生の個人ランキング情報も追加
+        my_rank = RankingService.get_student_rank(current_user.id, ranking_type, scope, scope_id)
+        ranking_data['my_rank'] = my_rank
+        
+        return jsonify({
+            'status': 'success',
+            'data': ranking_data
+        })
+        
+    except ValidationError as e:
+        return jsonify({
+            'status': 'error',
+            'error': str(e)
+        }), 400
+    except Exception as e:
+        logging.error(f"学生ランキングAPI エラー: {str(e)}")
+        return jsonify({
+            'status': 'error',
+            'error': 'ランキングデータの取得に失敗しました'
+        }), 500

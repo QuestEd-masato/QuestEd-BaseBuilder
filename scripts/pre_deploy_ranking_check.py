@@ -88,10 +88,10 @@ def check_template_syntax():
                 
             # 基本的なJinja2構文チェック
             if '{{' in content and '}}' not in content:
-                print(f"❌ {template_path}: 閉じられていない{{があります")
+                print(f"❌ {template_path}: 閉じられていない{{{{があります")
                 return False
             if '{%' in content and '%}' not in content:
-                print(f"❌ {template_path}: 閉じられていない{%があります")
+                print(f"❌ {template_path}: 閉じられていない{{%があります")
                 return False
             
             # XSS対策チェック

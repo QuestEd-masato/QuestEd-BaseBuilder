@@ -1,13 +1,13 @@
 # app/api/__init__.py
-from flask import Blueprint, jsonify, request, session
+from flask import Blueprint, jsonify, request, session, make_response
 from flask_login import login_required, current_user
 import json
 import logging
 from datetime import datetime
 
-from app.models import (db, ChatHistory, InquiryTheme, Class, StudentEvaluation, User, Subject,
+from app.models import (db, ChatHistory, InquiryTheme, Class, ClassEnrollment, StudentEvaluation, User, Subject,
                       CurriculumUnit, StudentUnitSelection, UnitItemMapping, ClassLearningSettings,
-                      AIRecommendation, ReviewSet, ReviewSetItem, StudentWeakness)
+                      AIRecommendation, ReviewSet, ReviewSetItem, StudentWeakness, School, Ranking, RankingCache)
 from app.ai import generate_chat_response
 from app.utils.rate_limiting import smart_ai_limit, api_limit
 
@@ -1140,7 +1140,7 @@ def get_review_statistics():
 
 
 # ランキングAPI
-@api_bp.route('/ranking/<ranking_type>')
+@api_bp.route('/rankings/<ranking_type>')
 @login_required
 @api_limit()
 def get_ranking(ranking_type):
@@ -1148,23 +1148,27 @@ def get_ranking(ranking_type):
     from app.services.ranking_service import RankingService
     
     try:
-        # 入力値検証
-        valid_ranking_types = ['total_points', 'weekly_points', 'monthly_points', 
-                              'accuracy_rate', 'study_time', 'consistency']
-        if ranking_type not in valid_ranking_types:
-            return jsonify({'error': '無効なランキング種類です'}), 400
-        
+        # パラメータ取得
         scope = request.args.get('scope', 'school')
         scope_id = request.args.get('scope_id', type=int)
         limit = request.args.get('limit', type=int, default=50)
         
-        # スコープ検証
-        if scope not in ['school', 'class']:
-            return jsonify({'error': '無効なスコープです'}), 400
-        
-        # 制限値検証
-        if limit < 1 or limit > 1000:
-            return jsonify({'error': '無効な取得件数です'}), 400
+        # 入力値検証
+        try:
+            from app.utils.validators import validate_ranking_params
+            validated_params = validate_ranking_params(ranking_type, scope, scope_id, limit)
+        except ImportError:
+            # validators モジュールがない場合の基本検証
+            valid_ranking_types = ['total_points', 'weekly_points', 'monthly_points', 
+                                  'accuracy_rate', 'study_time', 'consistency']
+            if ranking_type not in valid_ranking_types:
+                return jsonify({'error': '無効なランキング種類です'}), 400
+            
+            if scope not in ['school', 'class']:
+                return jsonify({'error': '無効なスコープです'}), 400
+            
+            if limit < 1 or limit > 1000:
+                return jsonify({'error': '無効な取得件数です'}), 400
         
         # 権限チェック
         if scope == 'class' and scope_id:
@@ -1211,7 +1215,7 @@ def get_ranking(ranking_type):
         }), 500
 
 
-@api_bp.route('/ranking/student/<int:student_id>')
+@api_bp.route('/rankings/student/<int:student_id>')
 @login_required
 @api_limit()
 def get_student_ranking(student_id):
@@ -1257,7 +1261,7 @@ def get_student_ranking(student_id):
         }), 500
 
 
-@api_bp.route('/ranking/analytics/<int:class_id>')
+@api_bp.route('/rankings/analytics/<int:class_id>')
 @login_required
 @api_limit()
 def get_ranking_analytics(class_id):
@@ -1295,7 +1299,7 @@ def get_ranking_analytics(class_id):
         }), 500
 
 
-@api_bp.route('/ranking/cache/clear', methods=['POST'])
+@api_bp.route('/rankings/cache/clear', methods=['POST'])
 @login_required
 @api_limit()
 def clear_ranking_cache():
@@ -1319,4 +1323,67 @@ def clear_ranking_cache():
         return jsonify({
             'status': 'error',
             'message': 'キャッシュクリアに失敗しました'
+        }), 500
+
+@api_bp.route('/rankings/export')
+@login_required
+@api_limit()
+def export_ranking():
+    """ランキングデータエクスポートAPI"""
+    try:
+        ranking_type = request.args.get('type', 'total_points')
+        scope = request.args.get('scope', 'school')
+        scope_id = request.args.get('scope_id', type=int)
+        format_type = request.args.get('format', 'csv')
+        
+        # 基本的な検証
+        if format_type not in ['csv', 'json']:
+            return jsonify({'error': '無効なフォーマットです'}), 400
+        
+        # 権限チェック
+        if current_user.role not in ['teacher', 'admin']:
+            return jsonify({'error': 'エクスポート権限がありません'}), 403
+        
+        # ランキングデータ取得
+        from app.services.ranking_service import RankingService
+        ranking_data = RankingService.get_ranking(ranking_type, scope, scope_id, 100)
+        
+        if format_type == 'csv':
+            import csv
+            import io
+            
+            output = io.StringIO()
+            writer = csv.writer(output)
+            
+            # ヘッダー行
+            writer.writerow(['順位', '学生名', 'スコア', '学校名', 'クラス名'])
+            
+            # データ行
+            for student in ranking_data.get('rankings', []):
+                writer.writerow([
+                    student.get('rank', ''),
+                    student.get('student_name', ''),
+                    student.get('score', ''),
+                    student.get('school_name', ''),
+                    student.get('class_name', '')
+                ])
+            
+            output.seek(0)
+            
+            response = make_response(output.getvalue())
+            response.headers['Content-Type'] = 'text/csv'
+            response.headers['Content-Disposition'] = f'attachment; filename=ranking_{ranking_type}.csv'
+            return response
+        
+        else:  # JSON
+            response = make_response(jsonify(ranking_data))
+            response.headers['Content-Type'] = 'application/json'
+            response.headers['Content-Disposition'] = f'attachment; filename=ranking_{ranking_type}.json'
+            return response
+            
+    except Exception as e:
+        logging.error(f"ランキングエクスポートエラー: {str(e)}")
+        return jsonify({
+            'status': 'error',
+            'message': 'エクスポートに失敗しました'
         }), 500
