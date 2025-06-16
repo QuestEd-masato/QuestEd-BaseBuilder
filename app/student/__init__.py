@@ -1997,6 +1997,88 @@ def create_personal_theme_new():
     
     return redirect(url_for('student.view_themes', class_id=class_id))
 
+
+# ランキング機能
+@student_bp.route('/ranking')
+@login_required
+@student_required
+def ranking():
+    """ランキングページ表示"""
+    from app.services.ranking_service import RankingService
+    
+    # クエリパラメータを取得
+    ranking_type = request.args.get('type', 'total_points')
+    scope = request.args.get('scope', 'school')
+    class_id = request.args.get('class_id', type=int)
+    
+    # 学生が所属するクラス一覧を取得
+    student_classes = db.session.query(Class).join(ClassEnrollment).filter(
+        ClassEnrollment.student_id == current_user.id,
+        ClassEnrollment.is_active == True,
+        Class.is_active == True
+    ).all()
+    
+    # スコープの決定
+    if scope == 'class' and class_id:
+        # 学生が該当クラスに所属しているかチェック
+        if not any(c.id == class_id for c in student_classes):
+            flash('選択されたクラスにアクセスする権限がありません。')
+            scope = 'school'
+            class_id = None
+    elif scope == 'class':
+        # クラス指定だが class_id が無い場合、最初のクラスを使用
+        if student_classes:
+            class_id = student_classes[0].id
+        else:
+            scope = 'school'
+            class_id = None
+    
+    # ランキングデータを取得
+    scope_id = class_id if scope == 'class' else current_user.school_id
+    ranking_data = RankingService.get_ranking(ranking_type, scope, scope_id)
+    
+    # 自分のランキング情報を取得
+    my_rank = RankingService.get_student_rank(current_user.id, ranking_type, scope, scope_id)
+    
+    return render_template('student/ranking.html',
+                         ranking_data=ranking_data,
+                         my_rank=my_rank,
+                         ranking_type=ranking_type,
+                         scope=scope,
+                         class_id=class_id,
+                         student_classes=student_classes)
+
+
+@student_bp.route('/api/ranking/<ranking_type>')
+@login_required
+@student_required
+def api_ranking(ranking_type):
+    """ランキングAPI（AJAX用）"""
+    from app.services.ranking_service import RankingService
+    
+    scope = request.args.get('scope', 'school')
+    class_id = request.args.get('class_id', type=int)
+    limit = request.args.get('limit', type=int, default=50)
+    
+    # 権限チェック
+    if scope == 'class' and class_id:
+        enrollment = ClassEnrollment.query.filter_by(
+            student_id=current_user.id,
+            class_id=class_id,
+            is_active=True
+        ).first()
+        if not enrollment:
+            return {'error': 'アクセス権限がありません'}, 403
+    
+    scope_id = class_id if scope == 'class' else current_user.school_id
+    ranking_data = RankingService.get_ranking(ranking_type, scope, scope_id, limit)
+    
+    # 自分のランキング情報も含める
+    my_rank = RankingService.get_student_rank(current_user.id, ranking_type, scope, scope_id)
+    ranking_data['my_rank'] = my_rank
+    
+    return ranking_data
+
 @student_bp.route('/generate_theme_ai', methods=['POST'])
 @login_required
 @student_required

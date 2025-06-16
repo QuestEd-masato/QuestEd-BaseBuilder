@@ -1,0 +1,325 @@
+<!-- ランキングウィジェット（ダッシュボード用） -->
+<div class="ranking-widget" data-user-role="{{ current_user.role }}">
+    <div class="widget-header">
+        <h3>
+            <i class="fas fa-trophy"></i>
+            {% if current_user.role == 'student' %}学習ランキング{% else %}クラスランキング{% endif %}
+        </h3>
+        <a href="{% if current_user.role == 'student' %}{{ url_for('student.ranking') }}{% else %}{{ url_for('teacher.ranking_analysis') }}{% endif %}" 
+           class="widget-link">
+            詳細を見る <i class="fas fa-arrow-right"></i>
+        </a>
+    </div>
+    
+    <div class="widget-content" id="ranking-widget-content">
+        <div class="loading-placeholder">
+            <i class="fas fa-spinner fa-spin"></i>
+            <span>読み込み中...</span>
+        </div>
+    </div>
+</div>
+
+<style>
+.ranking-widget {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    overflow: hidden;
+    height: 400px;
+    display: flex;
+    flex-direction: column;
+}
+
+.widget-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 1rem 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.widget-header h3 {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.widget-link {
+    color: white;
+    text-decoration: none;
+    font-size: 0.9rem;
+    opacity: 0.9;
+    transition: opacity 0.2s;
+}
+
+.widget-link:hover {
+    opacity: 1;
+    text-decoration: underline;
+}
+
+.widget-content {
+    flex: 1;
+    padding: 1rem;
+    overflow-y: auto;
+}
+
+.loading-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: #6b7280;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.my-rank-summary {
+    background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+    color: white;
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+.my-rank-number {
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin-bottom: 0.25rem;
+}
+
+.my-rank-details {
+    font-size: 0.9rem;
+    opacity: 0.9;
+}
+
+.ranking-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.ranking-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem;
+    margin-bottom: 0.5rem;
+    border-radius: 8px;
+    background: #f9fafb;
+    transition: background 0.2s;
+}
+
+.ranking-item:hover {
+    background: #f3f4f6;
+}
+
+.ranking-item.current-user {
+    background: #fef3c7;
+    border: 2px solid #fbbf24;
+}
+
+.student-info {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.rank-number {
+    font-weight: bold;
+    color: #374151;
+    min-width: 30px;
+    text-align: center;
+}
+
+.rank-1 { color: #fbbf24; }
+.rank-2 { color: #9ca3af; }
+.rank-3 { color: #cd7c2f; }
+
+.student-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #667eea;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 0.8rem;
+}
+
+.student-name {
+    font-weight: 600;
+    color: #374151;
+    font-size: 0.9rem;
+}
+
+.student-score {
+    font-weight: 600;
+    color: #059669;
+    font-size: 0.9rem;
+}
+
+.analytics-summary {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.stat-card {
+    background: #f9fafb;
+    padding: 1rem;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.stat-value {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #059669;
+    margin-bottom: 0.25rem;
+}
+
+.stat-label {
+    font-size: 0.8rem;
+    color: #6b7280;
+}
+
+.widget-footer {
+    padding: 0.75rem 1rem;
+    background: #f8fafc;
+    border-top: 1px solid #e5e7eb;
+    text-align: center;
+}
+
+.update-time {
+    font-size: 0.8rem;
+    color: #6b7280;
+}
+
+.error-message {
+    text-align: center;
+    color: #dc2626;
+    padding: 2rem;
+}
+
+.no-data-message {
+    text-align: center;
+    color: #6b7280;
+    padding: 2rem;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    loadRankingWidget();
+});
+
+async function loadRankingWidget() {
+    const widget = document.querySelector('.ranking-widget');
+    const content = document.getElementById('ranking-widget-content');
+    const userRole = widget.dataset.userRole;
+    
+    try {
+        let apiUrl;
+        if (userRole === 'student') {
+            apiUrl = '/student/api/ranking/total_points?scope=school&limit=10';
+        } else {
+            // 教師の場合は最初のクラスのランキングを取得
+            apiUrl = '/api/ranking/total_points?scope=class&limit=10';
+        }
+        
+        const response = await fetch(apiUrl);
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+            renderRankingWidget(data.data, userRole);
+        } else {
+            content.innerHTML = `<div class="error-message">データの取得に失敗しました</div>`;
+        }
+    } catch (error) {
+        console.error('ランキングウィジェット読み込みエラー:', error);
+        content.innerHTML = `<div class="error-message">通信エラーが発生しました</div>`;
+    }
+}
+
+function renderRankingWidget(rankingData, userRole) {
+    const content = document.getElementById('ranking-widget-content');
+    let html = '';
+    
+    if (userRole === 'student' && rankingData.my_rank && rankingData.my_rank.rank) {
+        // 学生の場合は自分のランキング情報を表示
+        html += `
+            <div class="my-rank-summary">
+                <div class="my-rank-number">
+                    ${rankingData.my_rank.rank <= 3 ? 
+                        (rankingData.my_rank.rank === 1 ? '🥇' : 
+                         rankingData.my_rank.rank === 2 ? '🥈' : '🥉') : ''
+                    }
+                    ${rankingData.my_rank.rank}位
+                </div>
+                <div class="my-rank-details">
+                    スコア: ${rankingData.my_rank.score} | 全${rankingData.my_rank.total_participants}人中
+                </div>
+            </div>
+        `;
+    } else if (userRole === 'teacher' && rankingData.analytics) {
+        // 教師の場合はクラス分析サマリーを表示
+        html += `
+            <div class="analytics-summary">
+                <div class="stat-card">
+                    <div class="stat-value">${rankingData.analytics.class_average || 0}</div>
+                    <div class="stat-label">クラス平均</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${rankingData.analytics.participation_rate || 0}%</div>
+                    <div class="stat-label">参加率</div>
+                </div>
+            </div>
+        `;
+    }
+    
+    if (rankingData.rankings && rankingData.rankings.length > 0) {
+        html += '<ul class="ranking-list">';
+        
+        const currentUserId = {{ current_user.id }};
+        const displayLimit = Math.min(rankingData.rankings.length, 8);
+        
+        for (let i = 0; i < displayLimit; i++) {
+            const student = rankingData.rankings[i];
+            const isCurrentUser = student.student_id === currentUserId;
+            
+            html += `
+                <li class="ranking-item ${isCurrentUser ? 'current-user' : ''}">
+                    <div class="student-info">
+                        <div class="rank-number rank-${student.rank <= 3 ? student.rank : ''}">${student.rank}</div>
+                        <div class="student-avatar">${student.student_name ? student.student_name[0].toUpperCase() : '?'}</div>
+                        <div class="student-name">${student.student_name || '不明'}</div>
+                    </div>
+                    <div class="student-score">${Math.round(student.score)}pt</div>
+                </li>
+            `;
+        }
+        
+        html += '</ul>';
+    } else {
+        html += '<div class="no-data-message">ランキングデータがありません</div>';
+    }
+    
+    html += `
+        <div class="widget-footer">
+            <div class="update-time">
+                最終更新: ${new Date(rankingData.last_updated).toLocaleString('ja-JP')}
+            </div>
+        </div>
+    `;
+    
+    content.innerHTML = html;
+}
+
+// 5分ごとに自動更新
+setInterval(loadRankingWidget, 300000);
+</script>

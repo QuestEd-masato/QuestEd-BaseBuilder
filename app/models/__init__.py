@@ -622,6 +622,92 @@ class StudentWeakness(db.Model):
     student = db.relationship('User', backref='weaknesses')
     subject = db.relationship('Subject', backref='student_weaknesses')
 
+
+class Ranking(db.Model):
+    """
+    学習ランキングモデル
+    
+    学生の学習成果をランキング形式で管理し、
+    様々な指標に基づいてランキングを生成します。
+    """
+    __tablename__ = 'rankings'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    student_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    school_id = db.Column(db.Integer, db.ForeignKey('schools.id'), nullable=False)
+    class_id = db.Column(db.Integer, db.ForeignKey('classes.id'))
+    
+    # ランキング種類
+    ranking_type = db.Column(db.Enum(
+        'total_points',      # 総合ポイント
+        'weekly_points',     # 週間ポイント
+        'monthly_points',    # 月間ポイント
+        'accuracy_rate',     # 正答率
+        'study_time',        # 学習時間
+        'consistency'        # 継続性
+    ), nullable=False)
+    
+    # ランキング期間
+    period_start = db.Column(db.DateTime, nullable=False)
+    period_end = db.Column(db.DateTime, nullable=False)
+    
+    # ランキングデータ
+    rank_position = db.Column(db.Integer, nullable=False)
+    score = db.Column(db.Numeric(10,2), nullable=False)
+    total_participants = db.Column(db.Integer, nullable=False)
+    
+    # 詳細データ
+    detailed_stats = db.Column(db.JSON)  # 詳細統計情報
+    
+    # メタデータ
+    calculated_at = db.Column(db.DateTime, default=datetime.utcnow)
+    is_current = db.Column(db.Boolean, default=True)
+    
+    # インデックス用制約
+    __table_args__ = (
+        db.Index('idx_ranking_type_period', 'ranking_type', 'period_start', 'period_end'),
+        db.Index('idx_ranking_student_type', 'student_id', 'ranking_type'),
+        db.Index('idx_ranking_class_type', 'class_id', 'ranking_type'),
+        db.Index('idx_ranking_current', 'is_current', 'ranking_type'),
+    )
+    
+    # リレーションシップ
+    student = db.relationship('User', backref='rankings')
+    school = db.relationship('School', backref='rankings')
+    class_obj = db.relationship('Class', backref='rankings')
+
+
+class RankingCache(db.Model):
+    """
+    ランキングキャッシュモデル
+    
+    計算済みのランキングデータをキャッシュして
+    パフォーマンスを向上させます。
+    """
+    __tablename__ = 'ranking_cache'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    cache_key = db.Column(db.String(200), unique=True, nullable=False)
+    ranking_type = db.Column(db.String(50), nullable=False)
+    scope = db.Column(db.Enum('school', 'class'), nullable=False)
+    scope_id = db.Column(db.Integer, nullable=False)  # school_id or class_id
+    
+    # キャッシュデータ
+    ranking_data = db.Column(db.JSON, nullable=False)
+    participant_count = db.Column(db.Integer, nullable=False)
+    
+    # キャッシュメタデータ
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    expires_at = db.Column(db.DateTime, nullable=False)
+    last_updated = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # インデックス
+    __table_args__ = (
+        db.Index('idx_cache_key', 'cache_key'),
+        db.Index('idx_cache_type_scope', 'ranking_type', 'scope', 'scope_id'),
+        db.Index('idx_cache_expires', 'expires_at'),
+    )
+
 # Export all models
 __all__ = [
     'db', 'User', 'School', 'SchoolYear', 'ClassGroup', 'StudentEnrollment',
@@ -631,7 +717,7 @@ __all__ = [
     'Milestone', 'Subject', 'CurriculumUnit', 'StudentUnitSelection',
     'SpeechTranscription', 'UnitItemMapping', 'ClassLearningSettings',
     'AIRecommendation', 'LearningPattern', 'RecommendationSettings',
-    'ReviewSet', 'ReviewSetItem', 'StudentWeakness',
+    'ReviewSet', 'ReviewSetItem', 'StudentWeakness', 'Ranking', 'RankingCache',
     # BaseBuilder models
     'ProblemCategory', 'BasicKnowledgeItem', 'AnswerRecord', 'ProficiencyRecord',
     'TextSet', 'TextDelivery', 'LearningPath', 'PathAssignment', 'WordProficiency',

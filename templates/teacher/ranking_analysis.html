@@ -1,0 +1,478 @@
+{% extends 'base.html' %}
+
+{% block title %}ランキング分析 | QuestEd{% endblock %}
+
+{% block extra_css %}
+<style>
+    .analysis-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+    
+    .analysis-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 12px;
+        margin-bottom: 2rem;
+        text-align: center;
+    }
+    
+    .controls-panel {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        margin-bottom: 2rem;
+    }
+    
+    .control-group {
+        display: flex;
+        gap: 2rem;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+    
+    .analytics-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
+        margin-bottom: 2rem;
+    }
+    
+    .analytics-card {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+    
+    .card-header {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+        color: #374151;
+        font-weight: 600;
+    }
+    
+    .stat-value {
+        font-size: 2.5rem;
+        font-weight: bold;
+        color: #059669;
+        margin-bottom: 0.5rem;
+    }
+    
+    .stat-label {
+        color: #6b7280;
+        font-size: 0.9rem;
+    }
+    
+    .comparison-bar {
+        background: #f3f4f6;
+        height: 8px;
+        border-radius: 4px;
+        margin: 0.5rem 0;
+        overflow: hidden;
+    }
+    
+    .comparison-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #10b981, #059669);
+        transition: width 0.3s ease;
+    }
+    
+    .performance-list {
+        max-height: 300px;
+        overflow-y: auto;
+    }
+    
+    .student-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.75rem;
+        margin-bottom: 0.5rem;
+        background: #f9fafb;
+        border-radius: 8px;
+    }
+    
+    .student-info {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .student-avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: #667eea;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 0.8rem;
+    }
+    
+    .student-score {
+        font-weight: 600;
+        color: #059669;
+    }
+    
+    .improvement-needed .student-score {
+        color: #dc2626;
+    }
+    
+    .ranking-section {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        overflow: hidden;
+    }
+    
+    .section-header {
+        background: #f8fafc;
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid #e5e7eb;
+        font-weight: 600;
+        color: #374151;
+    }
+    
+    .ranking-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    .ranking-table th {
+        background: #f8fafc;
+        padding: 1rem;
+        text-align: left;
+        font-weight: 600;
+        color: #374151;
+        border-bottom: 2px solid #e5e7eb;
+    }
+    
+    .ranking-table td {
+        padding: 1rem;
+        border-bottom: 1px solid #f3f4f6;
+    }
+    
+    .ranking-table tr:hover {
+        background: #f9fafb;
+    }
+    
+    .rank-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        font-weight: bold;
+        color: white;
+    }
+    
+    .rank-1 { background: #fbbf24; }
+    .rank-2 { background: #9ca3af; }
+    .rank-3 { background: #cd7c2f; }
+    .rank-other { background: #6b7280; }
+    
+    .export-btn {
+        background: #059669;
+        color: white;
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 0.9rem;
+        transition: background 0.2s;
+    }
+    
+    .export-btn:hover {
+        background: #047857;
+    }
+    
+    .no-data {
+        text-align: center;
+        padding: 3rem;
+        color: #6b7280;
+    }
+    
+    @media (max-width: 1200px) {
+        .analytics-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .analysis-container {
+            padding: 1rem;
+        }
+        
+        .control-group {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        
+        .ranking-table {
+            font-size: 0.9rem;
+        }
+        
+        .ranking-table th,
+        .ranking-table td {
+            padding: 0.75rem 0.5rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="analysis-container">
+    <div class="analysis-header">
+        <h1>ランキング分析</h1>
+        <p>クラスの学習状況を詳細に分析し、指導に活用しましょう</p>
+    </div>
+    
+    <!-- コントロールパネル -->
+    <div class="controls-panel">
+        <div class="control-group">
+            <div>
+                <label for="class-select">対象クラス:</label>
+                <select id="class-select" onchange="updateAnalysis()">
+                    {% for class_obj in teacher_classes %}
+                        <option value="{{ class_obj.id }}" 
+                                {% if class_id == class_obj.id %}selected{% endif %}>
+                            {{ class_obj.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div>
+                <label for="ranking-type-select">ランキング種類:</label>
+                <select id="ranking-type-select" onchange="updateAnalysis()">
+                    <option value="total_points" {% if ranking_type == 'total_points' %}selected{% endif %}>総合ポイント</option>
+                    <option value="weekly_points" {% if ranking_type == 'weekly_points' %}selected{% endif %}>週間ポイント</option>
+                    <option value="monthly_points" {% if ranking_type == 'monthly_points' %}selected{% endif %}>月間ポイント</option>
+                    <option value="accuracy_rate" {% if ranking_type == 'accuracy_rate' %}selected{% endif %}>正答率</option>
+                    <option value="study_time" {% if ranking_type == 'study_time' %}selected{% endif %}>学習時間</option>
+                    <option value="consistency" {% if ranking_type == 'consistency' %}selected{% endif %}>継続性</option>
+                </select>
+            </div>
+            
+            <button class="export-btn" onclick="exportAnalysis()">
+                <i class="fas fa-download"></i> エクスポート
+            </button>
+        </div>
+    </div>
+    
+    {% if class_analytics %}
+    <!-- 分析カード -->
+    <div class="analytics-grid">
+        <!-- クラス平均 -->
+        <div class="analytics-card">
+            <div class="card-header">
+                <i class="fas fa-chart-bar"></i>
+                クラス平均
+            </div>
+            <div class="stat-value">{{ class_analytics.class_average }}</div>
+            <div class="stat-label">
+                {% if ranking_type == 'accuracy_rate' %}正答率{% elif ranking_type == 'study_time' %}分{% else %}ポイント{% endif %}
+            </div>
+            
+            <div style="margin-top: 1rem;">
+                <div style="display: flex; justify-content: space-between; font-size: 0.9rem; margin-bottom: 0.25rem;">
+                    <span>学校平均との比較</span>
+                    <span>{{ class_analytics.school_average }}</span>
+                </div>
+                <div class="comparison-bar">
+                    <div class="comparison-fill" 
+                         style="width: {{ ((class_analytics.class_average / class_analytics.school_average * 100) if class_analytics.school_average > 0 else 0) | round }}%"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 参加率 -->
+        <div class="analytics-card">
+            <div class="card-header">
+                <i class="fas fa-users"></i>
+                参加率
+            </div>
+            <div class="stat-value">{{ class_analytics.participation_rate }}%</div>
+            <div class="stat-label">アクティブな学習者の割合</div>
+            
+            <div style="margin-top: 1rem;">
+                <div class="comparison-bar">
+                    <div class="comparison-fill" style="width: {{ class_analytics.participation_rate }}%"></div>
+                </div>
+                <div style="font-size: 0.8rem; color: #6b7280; margin-top: 0.5rem;">
+                    目標: 80%以上
+                </div>
+            </div>
+        </div>
+        
+        <!-- トップパフォーマー -->
+        <div class="analytics-card">
+            <div class="card-header">
+                <i class="fas fa-star"></i>
+                トップパフォーマー
+            </div>
+            {% if class_analytics.top_performers %}
+                <div class="performance-list">
+                    {% for student in class_analytics.top_performers %}
+                        <div class="student-item">
+                            <div class="student-info">
+                                <div class="student-avatar">{{ student.student_name[0] if student.student_name else '?' }}</div>
+                                <div>
+                                    <div style="font-weight: 600;">{{ student.student_name }}</div>
+                                    <div style="font-size: 0.8rem; color: #6b7280;">{{ student.rank }}位</div>
+                                </div>
+                            </div>
+                            <div class="student-score">{{ student.score }}</div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="no-data">データなし</div>
+            {% endif %}
+        </div>
+        
+        <!-- 改善が必要な学習者 -->
+        <div class="analytics-card">
+            <div class="card-header">
+                <i class="fas fa-exclamation-triangle"></i>
+                要支援学習者
+            </div>
+            {% if class_analytics.improvement_needed %}
+                <div class="performance-list">
+                    {% for student in class_analytics.improvement_needed %}
+                        <div class="student-item improvement-needed">
+                            <div class="student-info">
+                                <div class="student-avatar">{{ student.student_name[0] if student.student_name else '?' }}</div>
+                                <div>
+                                    <div style="font-weight: 600;">{{ student.student_name }}</div>
+                                    <div style="font-size: 0.8rem; color: #6b7280;">{{ student.rank }}位</div>
+                                </div>
+                            </div>
+                            <div class="student-score">{{ student.score }}</div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="no-data">データなし</div>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- ランキングテーブル -->
+    {% if ranking_data and ranking_data.rankings %}
+    <div class="ranking-section">
+        <div class="section-header">
+            <i class="fas fa-trophy"></i>
+            クラスランキング詳細
+        </div>
+        
+        <table class="ranking-table">
+            <thead>
+                <tr>
+                    <th style="width: 80px; text-align: center;">順位</th>
+                    <th>学習者</th>
+                    <th style="width: 150px; text-align: center;">スコア</th>
+                    {% if ranking_type == 'accuracy_rate' %}
+                    <th style="width: 120px; text-align: center;">回答数</th>
+                    {% elif ranking_type == 'study_time' %}
+                    <th style="width: 120px; text-align: center;">時間</th>
+                    {% elif ranking_type == 'consistency' %}
+                    <th style="width: 120px; text-align: center;">継続率</th>
+                    {% endif %}
+                    <th style="width: 120px; text-align: center;">アクション</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for student in ranking_data.rankings %}
+                <tr>
+                    <td style="text-align: center;">
+                        <div class="rank-badge rank-{{ student.rank if student.rank <= 3 else 'other' }}">
+                            {{ student.rank }}
+                        </div>
+                    </td>
+                    
+                    <td>
+                        <div class="student-info">
+                            <div class="student-avatar">{{ student.student_name[0] if student.student_name else '?' }}</div>
+                            <div style="font-weight: 600;">{{ student.student_name }}</div>
+                        </div>
+                    </td>
+                    
+                    <td style="text-align: center; font-weight: 600; color: #059669;">
+                        {{ student.score }}
+                        {% if ranking_type == 'accuracy_rate' %}%
+                        {% elif ranking_type == 'study_time' %}分
+                        {% elif ranking_type != 'consistency' %}pt
+                        {% endif %}
+                    </td>
+                    
+                    {% if ranking_type == 'accuracy_rate' %}
+                    <td style="text-align: center; color: #6b7280;">{{ student.total_answers }}問</td>
+                    {% elif ranking_type == 'study_time' %}
+                    <td style="text-align: center; color: #6b7280;">{{ "%.1f"|format(student.hours) }}h</td>
+                    {% elif ranking_type == 'consistency' %}
+                    <td style="text-align: center; color: #6b7280;">{{ "%.1f"|format(student.consistency_rate) }}%</td>
+                    {% endif %}
+                    
+                    <td style="text-align: center;">
+                        <button class="export-btn" style="font-size: 0.8rem; padding: 0.25rem 0.5rem;" 
+                                onclick="viewStudentDetail({{ student.student_id }})">
+                            詳細
+                        </button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="no-data">
+        <i class="fas fa-chart-line fa-3x" style="color: #d1d5db; margin-bottom: 1rem;"></i>
+        <p>ランキングデータがありません</p>
+    </div>
+    {% endif %}
+</div>
+
+<!-- JavaScript -->
+<script>
+function updateAnalysis() {
+    const classId = document.getElementById('class-select').value;
+    const rankingType = document.getElementById('ranking-type-select').value;
+    
+    const params = new URLSearchParams({
+        class_id: classId,
+        type: rankingType
+    });
+    
+    window.location.href = `{{ url_for('teacher.ranking_analysis') }}?${params.toString()}`;
+}
+
+function exportAnalysis() {
+    const classId = document.getElementById('class-select').value;
+    const rankingType = document.getElementById('ranking-type-select').value;
+    
+    // CSVエクスポート機能の実装
+    alert('エクスポート機能は準備中です');
+}
+
+function viewStudentDetail(studentId) {
+    // 学生詳細ページへの遷移
+    window.open(`/teacher/student_detail/${studentId}`, '_blank');
+}
+
+// 定期的な自動更新（10分ごと）
+setInterval(() => {
+    window.location.reload();
+}, 600000);
+</script>
+{% endblock %}

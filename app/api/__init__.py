@@ -1137,3 +1137,186 @@ def get_review_statistics():
             'status': 'error',
             'message': '統計データの取得に失敗しました'
         }), 500
+
+
+# ランキングAPI
+@api_bp.route('/ranking/<ranking_type>')
+@login_required
+@api_limit()
+def get_ranking(ranking_type):
+    """ランキング取得API"""
+    from app.services.ranking_service import RankingService
+    
+    try:
+        # 入力値検証
+        valid_ranking_types = ['total_points', 'weekly_points', 'monthly_points', 
+                              'accuracy_rate', 'study_time', 'consistency']
+        if ranking_type not in valid_ranking_types:
+            return jsonify({'error': '無効なランキング種類です'}), 400
+        
+        scope = request.args.get('scope', 'school')
+        scope_id = request.args.get('scope_id', type=int)
+        limit = request.args.get('limit', type=int, default=50)
+        
+        # スコープ検証
+        if scope not in ['school', 'class']:
+            return jsonify({'error': '無効なスコープです'}), 400
+        
+        # 制限値検証
+        if limit < 1 or limit > 1000:
+            return jsonify({'error': '無効な取得件数です'}), 400
+        
+        # 権限チェック
+        if scope == 'class' and scope_id:
+            if current_user.role == 'student':
+                # 学生は所属クラスのみアクセス可能
+                enrollment = ClassEnrollment.query.filter_by(
+                    student_id=current_user.id,
+                    class_id=scope_id,
+                    is_active=True
+                ).first()
+                if not enrollment:
+                    return jsonify({'error': 'アクセス権限がありません'}), 403
+            elif current_user.role == 'teacher':
+                # 教師は担当クラスのみアクセス可能
+                class_obj = Class.query.filter_by(
+                    id=scope_id,
+                    teacher_id=current_user.id,
+                    is_active=True
+                ).first()
+                if not class_obj:
+                    return jsonify({'error': 'アクセス権限がありません'}), 403
+        
+        # スコープIDの設定
+        if scope == 'school' and not scope_id:
+            scope_id = current_user.school_id
+        
+        ranking_data = RankingService.get_ranking(ranking_type, scope, scope_id, limit)
+        
+        # 学生の場合は自分のランキング情報も追加
+        if current_user.role == 'student':
+            my_rank = RankingService.get_student_rank(current_user.id, ranking_type, scope, scope_id)
+            ranking_data['my_rank'] = my_rank
+        
+        return jsonify({
+            'status': 'success',
+            'data': ranking_data
+        })
+        
+    except Exception as e:
+        logging.error(f"ランキング取得エラー: {str(e)}")
+        return jsonify({
+            'status': 'error',
+            'message': 'ランキングデータの取得に失敗しました'
+        }), 500
+
+
+@api_bp.route('/ranking/student/<int:student_id>')
+@login_required
+@api_limit()
+def get_student_ranking(student_id):
+    """特定学生のランキング情報取得API"""
+    from app.services.ranking_service import RankingService
+    
+    try:
+        # 権限チェック
+        if current_user.role == 'student' and current_user.id != student_id:
+            return jsonify({'error': '他の学生の情報は閲覧できません'}), 403
+        elif current_user.role == 'teacher':
+            # 教師は担当クラスの学生のみ閲覧可能
+            student = User.query.get(student_id)
+            if not student or student.role != 'student':
+                return jsonify({'error': '学生が見つかりません'}), 404
+            
+            # 教師のクラスに所属している学生かチェック
+            teacher_classes = [c.id for c in Class.query.filter_by(teacher_id=current_user.id, is_active=True).all()]
+            student_classes = [e.class_id for e in ClassEnrollment.query.filter_by(student_id=student_id, is_active=True).all()]
+            
+            if not any(c in teacher_classes for c in student_classes):
+                return jsonify({'error': 'アクセス権限がありません'}), 403
+        
+        ranking_type = request.args.get('type', 'total_points')
+        scope = request.args.get('scope', 'school')
+        scope_id = request.args.get('scope_id', type=int)
+        
+        if scope == 'school' and not scope_id:
+            scope_id = current_user.school_id
+        
+        ranking_info = RankingService.get_student_rank(student_id, ranking_type, scope, scope_id)
+        
+        return jsonify({
+            'status': 'success',
+            'data': ranking_info
+        })
+        
+    except Exception as e:
+        logging.error(f"学生ランキング取得エラー: {str(e)}")
+        return jsonify({
+            'status': 'error',
+            'message': '学生ランキング情報の取得に失敗しました'
+        }), 500
+
+
+@api_bp.route('/ranking/analytics/<int:class_id>')
+@login_required
+@api_limit()
+def get_ranking_analytics(class_id):
+    """ランキング分析データ取得API（教師専用）"""
+    if current_user.role != 'teacher':
+        return jsonify({'error': '教師のみアクセス可能です'}), 403
+    
+    try:
+        # 教師の権限チェック
+        class_obj = Class.query.filter_by(
+            id=class_id,
+            teacher_id=current_user.id,
+            is_active=True
+        ).first()
+        
+        if not class_obj:
+            return jsonify({'error': 'アクセス権限がありません'}), 403
+        
+        ranking_type = request.args.get('type', 'total_points')
+        
+        # 分析データを生成
+        from app.teacher import _generate_class_analytics
+        analytics = _generate_class_analytics(class_id, ranking_type)
+        
+        return jsonify({
+            'status': 'success',
+            'data': analytics
+        })
+        
+    except Exception as e:
+        logging.error(f"ランキング分析取得エラー: {str(e)}")
+        return jsonify({
+            'status': 'error',
+            'message': '分析データの取得に失敗しました'
+        }), 500
+
+
+@api_bp.route('/ranking/cache/clear', methods=['POST'])
+@login_required
+@api_limit()
+def clear_ranking_cache():
+    """ランキングキャッシュクリアAPI（管理者専用）"""
+    if current_user.role != 'admin':
+        return jsonify({'error': '管理者のみアクセス可能です'}), 403
+    
+    try:
+        from app.services.ranking_service import RankingService
+        
+        ranking_type = request.json.get('ranking_type') if request.json else None
+        RankingService.clear_cache(ranking_type)
+        
+        return jsonify({
+            'status': 'success',
+            'message': 'ランキングキャッシュをクリアしました'
+        })
+        
+    except Exception as e:
+        logging.error(f"キャッシュクリアエラー: {str(e)}")
+        return jsonify({
+            'status': 'error',
+            'message': 'キャッシュクリアに失敗しました'
+        }), 500

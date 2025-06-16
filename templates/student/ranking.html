@@ -1,0 +1,370 @@
+{% extends 'base.html' %}
+
+{% block title %}学習ランキング | QuestEd{% endblock %}
+
+{% block extra_css %}
+<style>
+    .ranking-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+    
+    .ranking-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 12px;
+        margin-bottom: 2rem;
+        text-align: center;
+    }
+    
+    .ranking-controls {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        margin-bottom: 2rem;
+    }
+    
+    .control-group {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+    
+    .ranking-type-buttons {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+    
+    .ranking-type-btn {
+        padding: 0.5rem 1rem;
+        border: 2px solid #e0e7ff;
+        background: #f8fafc;
+        color: #475569;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-size: 0.9rem;
+        font-weight: 500;
+    }
+    
+    .ranking-type-btn.active {
+        background: #667eea;
+        color: white;
+        border-color: #667eea;
+    }
+    
+    .ranking-type-btn:hover {
+        background: #e0e7ff;
+    }
+    
+    .scope-selector {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+    }
+    
+    .my-rank-card {
+        background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+        color: white;
+        padding: 1.5rem;
+        border-radius: 12px;
+        margin-bottom: 2rem;
+        text-align: center;
+    }
+    
+    .my-rank-number {
+        font-size: 2.5rem;
+        font-weight: bold;
+        margin: 0.5rem 0;
+    }
+    
+    .my-rank-score {
+        font-size: 1.2rem;
+        opacity: 0.9;
+    }
+    
+    .ranking-table-container {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        overflow: hidden;
+    }
+    
+    .ranking-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    .ranking-table th {
+        background: #f8fafc;
+        padding: 1rem;
+        text-align: left;
+        font-weight: 600;
+        color: #374151;
+        border-bottom: 2px solid #e5e7eb;
+    }
+    
+    .ranking-table td {
+        padding: 1rem;
+        border-bottom: 1px solid #f3f4f6;
+    }
+    
+    .ranking-table tr:hover {
+        background: #f9fafb;
+    }
+    
+    .rank-number {
+        font-size: 1.5rem;
+        font-weight: bold;
+        text-align: center;
+        width: 80px;
+    }
+    
+    .rank-1 { color: #fbbf24; }
+    .rank-2 { color: #9ca3af; }
+    .rank-3 { color: #cd7c2f; }
+    
+    .medal {
+        font-size: 1.2rem;
+        margin-right: 0.5rem;
+    }
+    
+    .student-info {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    .student-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: #667eea;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+    }
+    
+    .score-display {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: #059669;
+    }
+    
+    .loading {
+        text-align: center;
+        padding: 3rem;
+        color: #6b7280;
+    }
+    
+    .no-data {
+        text-align: center;
+        padding: 3rem;
+        color: #6b7280;
+    }
+    
+    .refresh-btn {
+        background: #667eea;
+        color: white;
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 0.9rem;
+        transition: background 0.2s;
+    }
+    
+    .refresh-btn:hover {
+        background: #5a67d8;
+    }
+    
+    .last-updated {
+        font-size: 0.8rem;
+        color: #6b7280;
+        text-align: center;
+        margin-top: 1rem;
+    }
+    
+    @media (max-width: 768px) {
+        .ranking-container {
+            padding: 1rem;
+        }
+        
+        .control-group {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        
+        .ranking-type-buttons {
+            justify-content: center;
+        }
+        
+        .ranking-table {
+            font-size: 0.9rem;
+        }
+        
+        .ranking-table th,
+        .ranking-table td {
+            padding: 0.75rem 0.5rem;
+        }
+        
+        .student-info {
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="ranking-container">
+    <div class="ranking-header">
+        <h1>学習ランキング</h1>
+        <p>みんなで切磋琢磨して学習を頑張ろう！</p>
+    </div>
+    
+    <!-- コントロールパネル -->
+    <div class="ranking-controls">
+        <div class="control-group">
+            <div>
+                <label>ランキング種類:</label>
+                <div class="ranking-type-buttons" data-current="{{ ranking_type }}">
+                    <button class="ranking-type-btn" data-type="total_points">総合ポイント</button>
+                    <button class="ranking-type-btn" data-type="weekly_points">週間ポイント</button>
+                    <button class="ranking-type-btn" data-type="monthly_points">月間ポイント</button>
+                    <button class="ranking-type-btn" data-type="accuracy_rate">正答率</button>
+                    <button class="ranking-type-btn" data-type="study_time">学習時間</button>
+                    <button class="ranking-type-btn" data-type="consistency">継続性</button>
+                </div>
+            </div>
+            
+            <div class="scope-selector">
+                <label>表示範囲:</label>
+                <select id="scope-select" data-current="{{ scope }}">
+                    <option value="school">学校全体</option>
+                    {% if student_classes %}
+                        <optgroup label="クラス別">
+                            {% for class_obj in student_classes %}
+                                <option value="class_{{ class_obj.id }}" 
+                                        {% if scope == 'class' and class_id == class_obj.id %}selected{% endif %}>
+                                    {{ class_obj.name }}
+                                </option>
+                            {% endfor %}
+                        </optgroup>
+                    {% endif %}
+                </select>
+                
+                <button class="refresh-btn" onclick="refreshRanking()">
+                    <i class="fas fa-sync-alt"></i> 更新
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 自分のランキング表示 -->
+    {% if my_rank and my_rank.rank %}
+    <div class="my-rank-card">
+        <h3>あなたの順位</h3>
+        <div class="my-rank-number">
+            {% if my_rank.rank <= 3 %}
+                {% if my_rank.rank == 1 %}🥇{% elif my_rank.rank == 2 %}🥈{% else %}🥉{% endif %}
+            {% endif %}
+            {{ my_rank.rank }}位
+        </div>
+        <div class="my-rank-score">
+            スコア: {{ my_rank.score }}
+            {% if ranking_type == 'accuracy_rate' %}%{% elif ranking_type == 'study_time' %}分{% endif %}
+        </div>
+        <p>全{{ my_rank.total_participants }}人中 (上位{{ my_rank.percentile }}%)</p>
+    </div>
+    {% endif %}
+    
+    <!-- ランキングテーブル -->
+    <div class="ranking-table-container">
+        <div id="ranking-content">
+            {% if ranking_data and ranking_data.rankings %}
+                {% include 'components/ranking_table.html' %}
+            {% else %}
+                <div class="no-data">
+                    <i class="fas fa-chart-line fa-3x" style="color: #d1d5db; margin-bottom: 1rem;"></i>
+                    <p>ランキングデータがありません</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 現在のランキング種類をアクティブにする
+    const currentType = document.querySelector('.ranking-type-buttons').dataset.current;
+    document.querySelector(`[data-type="${currentType}"]`).classList.add('active');
+    
+    // ランキング種類ボタンのイベント
+    document.querySelectorAll('.ranking-type-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.ranking-type-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            updateRanking();
+        });
+    });
+    
+    // スコープ選択のイベント
+    document.getElementById('scope-select').addEventListener('change', updateRanking);
+});
+
+function updateRanking() {
+    const rankingType = document.querySelector('.ranking-type-btn.active').dataset.type;
+    const scopeSelect = document.getElementById('scope-select');
+    const scopeValue = scopeSelect.value;
+    
+    let scope = 'school';
+    let classId = null;
+    
+    if (scopeValue.startsWith('class_')) {
+        scope = 'class';
+        classId = scopeValue.split('_')[1];
+    }
+    
+    // URLパラメータを構築
+    const params = new URLSearchParams({
+        type: rankingType,
+        scope: scope
+    });
+    
+    if (classId) {
+        params.append('class_id', classId);
+    }
+    
+    // ページを更新
+    window.location.href = `{{ url_for('student.ranking') }}?${params.toString()}`;
+}
+
+function refreshRanking() {
+    // ローディング表示
+    document.getElementById('ranking-content').innerHTML = `
+        <div class="loading">
+            <i class="fas fa-spinner fa-spin fa-2x"></i>
+            <p>更新中...</p>
+        </div>
+    `;
+    
+    setTimeout(() => {
+        updateRanking();
+    }, 500);
+}
+
+// 定期的な自動更新（5分ごと）
+setInterval(() => {
+    refreshRanking();
+}, 300000);
+</script>
+{% endblock %}

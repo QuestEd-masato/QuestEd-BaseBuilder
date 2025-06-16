@@ -530,6 +530,46 @@ class AccessControl:
         return query
 
 
+class DatabaseSecurityManager:
+    """
+    データベースセキュリティマネージャークラス
+    
+    データベースセキュリティの統合管理を行います。
+    """
+    
+    def __init__(self, app=None):
+        self.app = app
+        if app:
+            self.init_app(app)
+    
+    def init_app(self, app):
+        """アプリケーションの初期化"""
+        self.app = app
+        DatabaseSecurity.setup_database_security(app)
+        
+        # 暗号化キーの確認
+        if not app.config.get('ENCRYPTION_KEY'):
+            logger.warning("暗号化キーが設定されていません。機密データの暗号化が無効になります。")
+        
+        logger.info("DatabaseSecurityManagerが正常に初期化されました")
+    
+    def validate_query(self, query: str) -> bool:
+        """クエリの妥当性検証"""
+        return not DatabaseSecurity._detect_sql_injection_patterns(query)
+    
+    def encrypt_data(self, data: str) -> str:
+        """データの暗号化"""
+        return DataEncryption.encrypt_sensitive_data(data)
+    
+    def decrypt_data(self, encrypted_data: str) -> str:
+        """データの復号化"""
+        return DataEncryption.decrypt_sensitive_data(encrypted_data)
+    
+    def check_access(self, table_name: str, operation: str, user_role: str, user_id: int = None) -> bool:
+        """アクセス権限の確認"""
+        return AccessControl.check_table_access(table_name, operation, user_role, user_id)
+
+
 def setup_database_security(app):
     """
     データベースセキュリティの初期化

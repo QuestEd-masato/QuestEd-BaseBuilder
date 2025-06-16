@@ -113,6 +113,18 @@
                </div>
            </div>
         </div>
+        
+        <!-- ランキング分析セクション -->
+        <div class="dashboard-section ranking-analysis">
+            <div class="section-header">
+                <h3>ランキング分析</h3>
+                <a href="{{ url_for('teacher.ranking_analysis') }}" class="btn btn-sm btn-primary">詳細分析へ</a>
+            </div>
+            
+            <div style="max-height: 400px;">
+                {% include 'components/ranking_widget.html' %}
+            </div>
+        </div>
 
         <div class="dashboard-section recent-activities">
             <div class="section-header">

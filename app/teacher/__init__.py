@@ -588,13 +588,13 @@ def create_milestone(class_id):
         
         if not title or not due_date_str:
             flash('タイトルと期限日は必須です。')
-            return render_template('create_milestone.html', class_obj=class_obj)
+            return render_template('create_milestone.html', class_=class_obj, now=datetime.now())
         
         try:
             due_date = datetime.strptime(due_date_str, '%Y-%m-%d').date()
         except ValueError:
             flash('日付の形式が正しくありません。')
-            return render_template('create_milestone.html', class_obj=class_obj)
+            return render_template('create_milestone.html', class_=class_obj, now=datetime.now())
         
         new_milestone = Milestone(
             class_id=class_id,
@@ -609,7 +609,7 @@ def create_milestone(class_id):
         flash('マイルストーンが作成されました。')
         return redirect(url_for('teacher.class_details', class_id=class_id))
     
-    return render_template('create_milestone.html', class_obj=class_obj)
+    return render_template('create_milestone.html', class_=class_obj, now=datetime.now())
 
 @teacher_bp.route('/edit_milestone/<int:milestone_id>', methods=['GET', 'POST'])
 @login_required
@@ -1388,3 +1388,119 @@ def download_curriculum_template():
     )
     
     return response
+
+
+# ランキング分析機能
+@teacher_bp.route('/ranking_analysis')
+@login_required
+@teacher_required
+def ranking_analysis():
+    """ランキング分析ページ"""
+    from app.services.ranking_service import RankingService
+    
+    # 教師が担当するクラス一覧を取得
+    teacher_classes = Class.query.filter_by(
+        teacher_id=current_user.id,
+        is_active=True
+    ).all()
+    
+    # クエリパラメータを取得
+    ranking_type = request.args.get('type', 'total_points')
+    class_id = request.args.get('class_id', type=int)
+    
+    # デフォルトで最初のクラスを選択
+    if not class_id and teacher_classes:
+        class_id = teacher_classes[0].id
+    
+    ranking_data = {}
+    class_analytics = {}
+    
+    if class_id:
+        # 選択されたクラスのランキングデータを取得
+        ranking_data = RankingService.get_ranking(ranking_type, 'class', class_id)
+        
+        # クラス分析データを作成
+        class_analytics = _generate_class_analytics(class_id, ranking_type)
+    
+    return render_template('teacher/ranking_analysis.html',
+                         ranking_data=ranking_data,
+                         class_analytics=class_analytics,
+                         ranking_type=ranking_type,
+                         class_id=class_id,
+                         teacher_classes=teacher_classes)
+
+
+@teacher_bp.route('/api/class_ranking/<int:class_id>/<ranking_type>')
+@login_required
+@teacher_required
+def api_class_ranking(class_id, ranking_type):
+    """クラスランキングAPI"""
+    from app.services.ranking_service import RankingService
+    
+    # 教師の権限チェック
+    class_obj = Class.query.filter_by(
+        id=class_id,
+        teacher_id=current_user.id,
+        is_active=True
+    ).first()
+    
+    if not class_obj:
+        return {'error': 'アクセス権限がありません'}, 403
+    
+    ranking_data = RankingService.get_ranking(ranking_type, 'class', class_id)
+    
+    # 詳細分析データを追加
+    analytics = _generate_class_analytics(class_id, ranking_type)
+    ranking_data['analytics'] = analytics
+    
+    return ranking_data
+
+
+def _generate_class_analytics(class_id: int, ranking_type: str) -> dict:
+    """クラス分析データを生成"""
+    from app.services.ranking_service import RankingService
+    
+    analytics = {
+        'class_average': 0,
+        'school_average': 0,
+        'top_performers': [],
+        'improvement_needed': [],
+        'trends': {},
+        'participation_rate': 0
+    }
+    
+    try:
+        # クラスのランキングデータを取得
+        class_ranking = RankingService.get_ranking(ranking_type, 'class', class_id, limit=100)
+        
+        if class_ranking['rankings']:
+            # クラス平均を計算
+            scores = [r['score'] for r in class_ranking['rankings']]
+            analytics['class_average'] = round(sum(scores) / len(scores), 2)
+            
+            # トップパフォーマーと改善が必要な学生を特定
+            sorted_rankings = sorted(class_ranking['rankings'], key=lambda x: x['score'], reverse=True)
+            
+            analytics['top_performers'] = sorted_rankings[:3]  # 上位3名
+            analytics['improvement_needed'] = sorted_rankings[-3:] if len(sorted_rankings) >= 3 else []  # 下位3名
+            
+            # 参加率を計算
+            from app.models import ClassEnrollment
+            total_students = ClassEnrollment.query.filter_by(
+                class_id=class_id,
+                is_active=True
+            ).count()
+            
+            if total_students > 0:
+                analytics['participation_rate'] = round((len(class_ranking['rankings']) / total_students) * 100, 1)
+        
+        # 学校全体の平均と比較
+        school_ranking = RankingService.get_ranking(ranking_type, 'school', None, limit=1000)
+        if school_ranking['rankings']:
+            school_scores = [r['score'] for r in school_ranking['rankings']]
+            analytics['school_average'] = round(sum(school_scores) / len(school_scores), 2)
+        
+    except Exception as e:
+        logger.error(f"クラス分析データ生成エラー: {str(e)}")
+    
+    return analytics
