@@ -7,8 +7,8 @@
     <h2>マイルストーンの作成</h2>
     
     <div class="class-info">
-        <h3>クラス: {{ class_.name }}</h3>
-        {% if class_.description %}
+        <h3>クラス: {{ class_.name if class_ else '不明' }}</h3>
+        {% if class_ and class_.description %}
         <p>{{ class_.description }}</p>
         {% endif %}
     </div>
@@ -34,7 +34,7 @@
         
         <div class="form-actions">
             <button type="submit" class="btn btn-primary">マイルストーンを作成</button>
-            <a href="{{ url_for('teacher.view_class', class_id=class_.id) }}" class="btn btn-secondary">キャンセル</a>
+            <a href="{{ url_for('teacher.view_class', class_id=class_.id) if class_ else url_for('teacher.index') }}" class="btn btn-secondary">キャンセル</a>
         </div>
     </form>
     

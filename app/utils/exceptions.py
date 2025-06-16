@@ -61,3 +61,8 @@ class PermissionError(QuestEdBaseException):
 class ConfigurationError(QuestEdBaseException):
     """設定エラー"""
     pass
+
+
+class SecurityError(QuestEdBaseException):
+    """セキュリティ関連のエラー"""
+    pass
