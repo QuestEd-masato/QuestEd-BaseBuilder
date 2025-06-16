@@ -24,7 +24,8 @@
       "Bash(git commit:*)",
       "Bash(git push:*)",
       "Bash(sudo systemctl:*)",
-      "Bash(chmod:*)"
+      "Bash(chmod:*)",
+      "Bash(tree:*)"
     ],
     "deny": []
   }

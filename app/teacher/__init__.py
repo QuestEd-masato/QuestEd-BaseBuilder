@@ -1272,16 +1272,27 @@ def view_curriculum(curriculum_id):
         flash('このカリキュラムを閲覧する権限がありません。')
         return redirect(url_for('teacher.dashboard'))
     
-    # カリキュラム内容をJSONから解析
+    # CurriculumServiceを使用してデータを取得
     try:
-        curriculum_content = json.loads(curriculum.content) if curriculum.content else {}
-    except:
-        curriculum_content = {}
+        from app.services.curriculum_service import CurriculumService
+        curriculum_display_data = CurriculumService.get_curriculum_display_data(curriculum)
+        
+        return render_template('view_curriculum.html', 
+                             curriculum=curriculum,
+                             class_obj=class_obj,
+                             curriculum_content=curriculum_display_data,
+                             **curriculum_display_data)
     
-    return render_template('view_curriculum.html', 
-                         curriculum=curriculum,
-                         class_obj=class_obj,
-                         curriculum_content=curriculum_content)
+    except Exception as e:
+        logging.error(f"Curriculum display error for ID {curriculum_id}: {str(e)}")
+        flash('カリキュラムデータの読み込みに問題が発生しました。', 'warning')
+        
+        # フォールバック処理
+        return render_template('view_curriculum.html', 
+                             curriculum=curriculum,
+                             class_obj=class_obj,
+                             curriculum_content={},
+                             error_occurred=True)
 
 @teacher_bp.route('/curriculum/<int:curriculum_id>/edit', methods=['GET', 'POST'])
 @login_required
@@ -1297,34 +1308,81 @@ def edit_curriculum(curriculum_id):
         return redirect(url_for('teacher.dashboard'))
     
     if request.method == 'POST':
-        curriculum.title = request.form.get('title', curriculum.title)
-        curriculum.description = request.form.get('description', curriculum.description)
-        curriculum.total_hours = int(request.form.get('total_hours', curriculum.total_hours))
-        curriculum.has_fieldwork = 'has_fieldwork' in request.form
-        curriculum.fieldwork_count = int(request.form.get('fieldwork_count', 0)) if curriculum.has_fieldwork else 0
-        curriculum.has_presentation = 'has_presentation' in request.form
-        curriculum.presentation_format = request.form.get('presentation_format', curriculum.presentation_format)
-        curriculum.group_work_level = request.form.get('group_work_level', curriculum.group_work_level)
-        curriculum.external_collaboration = 'external_collaboration' in request.form
-        
-        # カリキュラム内容の更新
-        content_data = request.form.get('content')
-        if content_data:
-            try:
-                curriculum.content = json.dumps(json.loads(content_data), ensure_ascii=False)
-            except:
-                flash('カリキュラム内容の形式が正しくありません。')
-                return render_template('edit_curriculum.html',
-                                     curriculum=curriculum,
-                                     class_obj=class_obj)
-        
-        db.session.commit()
-        flash('カリキュラムを更新しました。')
-        return redirect(url_for('teacher.view_curriculum', curriculum_id=curriculum_id))
+        try:
+            from app.services.curriculum_service import CurriculumService
+            
+            # 基本情報の更新
+            curriculum.title = request.form.get('title', curriculum.title)
+            curriculum.description = request.form.get('description', curriculum.description)
+            
+            # カリキュラム内容の更新
+            content_data = {}
+            
+            # フォームからのデータを収集
+            if request.form.get('total_hours'):
+                content_data['total_hours'] = int(request.form.get('total_hours', 0))
+            
+            content_data['has_fieldwork'] = 'has_fieldwork' in request.form
+            if content_data['has_fieldwork']:
+                content_data['fieldwork_count'] = int(request.form.get('fieldwork_count', 0))
+            
+            content_data['has_presentation'] = 'has_presentation' in request.form
+            if content_data['has_presentation']:
+                content_data['presentation_format'] = request.form.get('presentation_format', '')
+            
+            content_data['group_work_level'] = request.form.get('group_work_level', 'medium')
+            content_data['external_collaboration'] = 'external_collaboration' in request.form
+            
+            # 直接JSON内容が送信された場合の処理
+            raw_content = request.form.get('content')
+            if raw_content:
+                import json
+                try:
+                    parsed_content = json.loads(raw_content)
+                    content_data.update(parsed_content)
+                except json.JSONDecodeError:
+                    flash('カリキュラム内容の形式が正しくありません。')
+                    # エラー時でも現在のデータを表示
+                    curriculum_display_data = CurriculumService.get_curriculum_display_data(curriculum)
+                    return render_template('edit_curriculum.html',
+                                         curriculum=curriculum,
+                                         class_obj=class_obj,
+                                         curriculum_content=curriculum_display_data,
+                                         **curriculum_display_data)
+            
+            # CurriculumServiceを使用してコンテンツを更新
+            if CurriculumService.update_curriculum_content(curriculum, content_data):
+                flash('カリキュラムを更新しました。')
+                return redirect(url_for('teacher.view_curriculum', curriculum_id=curriculum_id))
+            else:
+                flash('カリキュラムの更新に失敗しました。', 'error')
+                
+        except Exception as e:
+            logging.error(f"Curriculum update error for ID {curriculum_id}: {str(e)}")
+            flash('カリキュラムの更新中にエラーが発生しました。', 'error')
+            db.session.rollback()
     
-    return render_template('edit_curriculum.html',
-                         curriculum=curriculum,
-                         class_obj=class_obj)
+    # GET時または更新失敗時の表示処理
+    try:
+        from app.services.curriculum_service import CurriculumService
+        curriculum_display_data = CurriculumService.get_curriculum_display_data(curriculum)
+        
+        return render_template('edit_curriculum.html',
+                             curriculum=curriculum,
+                             class_obj=class_obj,
+                             curriculum_content=curriculum_display_data,
+                             **curriculum_display_data)
+    
+    except Exception as e:
+        logging.error(f"Curriculum edit display error for ID {curriculum_id}: {str(e)}")
+        flash('カリキュラムデータの読み込みに問題が発生しました。', 'warning')
+        
+        # フォールバック処理
+        return render_template('edit_curriculum.html',
+                             curriculum=curriculum,
+                             class_obj=class_obj,
+                             curriculum_content={},
+                             error_occurred=True)
 
 @teacher_bp.route('/curriculum/<int:curriculum_id>/delete', methods=['POST'])
 @login_required
