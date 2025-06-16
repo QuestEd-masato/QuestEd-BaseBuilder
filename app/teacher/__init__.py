@@ -811,48 +811,75 @@ def create_curriculum_form(class_id):
 @login_required
 @teacher_required
 def generate_curriculum(class_id):
-    """カリキュラムAI生成"""
-    class_obj = Class.query.get_or_404(class_id)
-    
-    # 権限チェック
-    if class_obj.teacher_id != current_user.id:
-        return jsonify({'error': '権限がありません'}), 403
-    
-    # フォームデータを取得
-    data = request.get_json()
-    
-    # AIでカリキュラムを生成
+    """AIによるカリキュラム生成"""
     try:
-        curriculum_content = generate_curriculum_with_ai(data)
+        class_obj = Class.query.get_or_404(class_id)
+        # 権限チェック
+        if class_obj.teacher_id != current_user.id:
+            return jsonify({'error': '権限がありません'}), 403
+        
+        # フォームデータとJSONデータの両方に対応
+        if request.is_json:
+            data = request.get_json()
+        else:
+            # 通常のフォームデータの場合
+            data = {
+                'title': request.form.get('title', ''),
+                'subject': request.form.get('subject', ''),
+                'grade': request.form.get('grade', ''),
+                'duration': request.form.get('duration', ''),
+                'focus_areas': request.form.get('focus_areas', '')
+            }
+        
+        if not data or not data.get('title'):
+            return jsonify({'error': 'タイトルは必須です'}), 400
+        
+        # AIでカリキュラムを生成
+        try:
+            from app.ai import generate_curriculum_with_ai
+            curriculum_content = generate_curriculum_with_ai(data)
+        except Exception as ai_error:
+            current_app.logger.error(f"AI generation error: {str(ai_error)}")
+            # フォールバック
+            curriculum_content = {
+                'title': data.get('title'),
+                'description': f"{class_obj.name}のカリキュラム",
+                'content': '1. 基礎学習\n2. 応用学習\n3. 発展学習'
+            }
         
         # カリキュラムを保存
         new_curriculum = Curriculum(
             class_id=class_id,
-            teacher_id=current_user.id,
-            title=data.get('title', f'{class_obj.name}のカリキュラム'),
-            description=data.get('description', ''),
-            total_hours=int(data.get('total_hours', 35)),
-            has_fieldwork=data.get('has_fieldwork', False),
-            fieldwork_count=int(data.get('fieldwork_count', 0)),
-            has_presentation=data.get('has_presentation', True),
-            presentation_format=data.get('presentation_format', 'プレゼンテーション'),
-            group_work_level=data.get('group_work_level', 'ハイブリッド'),
-            external_collaboration=data.get('external_collaboration', False),
-            content=json.dumps(curriculum_content, ensure_ascii=False)
+            title=curriculum_content.get('title', data.get('title')),
+            description=curriculum_content.get('description', ''),
+            created_by=current_user.id
         )
-        
         db.session.add(new_curriculum)
         db.session.commit()
         
+        # フォームからのリクエストの場合はリダイレクト
+        if not request.is_json:
+            flash('カリキュラムが作成されました。', 'success')
+            return redirect(url_for('teacher.class_curriculums', class_id=class_id))
+        
+        # JSONリクエストの場合
         return jsonify({
             'success': True,
-            'curriculum_id': new_curriculum.id,
-            'content': curriculum_content
+            'redirect': url_for('teacher.class_curriculums', class_id=class_id)
         })
         
     except Exception as e:
-        logging.error(f"カリキュラム生成エラー: {e}")
-        return jsonify({'error': 'カリキュラムの生成に失敗しました'}), 500
+        current_app.logger.error(f"Curriculum generation error: {str(e)}")
+        db.session.rollback()
+        
+        if not request.is_json:
+            flash('カリキュラムの生成に失敗しました。', 'error')
+            return redirect(url_for('teacher.class_curriculums', class_id=class_id))
+        
+        return jsonify({
+            'error': 'カリキュラムの生成に失敗しました',
+            'details': str(e)
+        }), 500
 
 # グループ管理
 @teacher_bp.route('/class/<int:class_id>/groups')
