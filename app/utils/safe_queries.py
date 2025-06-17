@@ -58,10 +58,10 @@ class SafeAnalyticsQueries:
             School.school_code.label('school_code'),
             func.count(User.id.distinct()).label('user_count'),
             func.sum(
-                func.case([(User.role == 'teacher', 1)], else_=0)
+                func.case((User.role == 'teacher', 1), else_=0)  # SQLAlchemy 2.0: タプル形式
             ).label('teacher_count'),
             func.sum(
-                func.case([(User.role == 'student', 1)], else_=0)
+                func.case((User.role == 'student', 1), else_=0)  # SQLAlchemy 2.0: タプル形式
             ).label('student_count'),
             func.count(Class.id.distinct()).label('class_count'),
             func.count(ActivityLog.id.distinct()).label('activity_count')
@@ -102,9 +102,10 @@ class SafeAnalyticsQueries:
             func.count(ActivityLog.student_id.distinct()).label('active_students'),
             func.count(ActivityLog.id).label('total_activities'),
             func.avg(
-                func.case([
-                    (ActivityLog.timestamp >= week_ago, 1.0)
-                ], else_=0.0)
+                func.case(
+                    (ActivityLog.timestamp >= week_ago, 1.0),  # SQLAlchemy 2.0: タプル形式
+                    else_=0.0
+                )
             ).label('weekly_activity_rate')
         ).outerjoin(
             User, School.id == User.school_id

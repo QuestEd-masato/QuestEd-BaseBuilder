@@ -72,6 +72,7 @@ def safe_get_user_classes(user) -> List[int]:
 def mysql_nulls_last(column, direction='asc'):
     """
     MySQL用のNULLS LAST実装
+    SQLAlchemy 2.0対応版
     
     Args:
         column: SQLAlchemyカラムオブジェクト
@@ -82,12 +83,12 @@ def mysql_nulls_last(column, direction='asc'):
     """
     if direction == 'asc':
         return [
-            case([(column.is_(None), 1)], else_=0),
+            case((column.is_(None), 1), else_=0),  # SQLAlchemy 2.0: タプル形式
             column.asc()
         ]
     else:
         return [
-            case([(column.is_(None), 0)], else_=1),
+            case((column.is_(None), 0), else_=1),  # SQLAlchemy 2.0: タプル形式
             column.desc()
         ]
 
@@ -95,6 +96,7 @@ def mysql_nulls_last(column, direction='asc'):
 def mysql_nulls_first(column, direction='asc'):
     """
     MySQL用のNULLS FIRST実装
+    SQLAlchemy 2.0対応版
     
     Args:
         column: SQLAlchemyカラムオブジェクト
@@ -105,12 +107,12 @@ def mysql_nulls_first(column, direction='asc'):
     """
     if direction == 'asc':
         return [
-            case([(column.is_(None), 0)], else_=1),
+            case((column.is_(None), 0), else_=1),  # SQLAlchemy 2.0: タプル形式
             column.asc()
         ]
     else:
         return [
-            case([(column.is_(None), 1)], else_=0),
+            case((column.is_(None), 1), else_=0),  # SQLAlchemy 2.0: タプル形式
             column.desc()
         ]
 
@@ -261,3 +263,64 @@ def safe_update_model(model_instance, update_data: dict, allowed_fields: List[st
         import logging
         logging.error(f"Model update failed: {e}")
         return False
+
+
+def safe_order_by_with_nulls(query, column, direction='asc', nulls='last'):
+    """
+    安全なNULL処理付きORDER BY
+    SQLAlchemy 2.0完全対応版
+    
+    Args:
+        query: SQLAlchemyクエリオブジェクト
+        column: ソート対象カラム
+        direction: ソート方向 ('asc' または 'desc')
+        nulls: NULL値の位置 ('last' または 'first')
+        
+    Returns:
+        修正されたクエリオブジェクト
+    """
+    try:
+        if nulls == 'last':
+            return query.order_by(*mysql_nulls_last(column, direction))
+        elif nulls == 'first':
+            return query.order_by(*mysql_nulls_first(column, direction))
+        else:
+            # デフォルトソート
+            if direction == 'asc':
+                return query.order_by(column.asc())
+            else:
+                return query.order_by(column.desc())
+    except Exception as e:
+        import logging
+        logging.warning(f"Order by failed, using default sort: {e}")
+        return query.order_by(column.asc())
+
+
+def validate_sqlalchemy_compatibility():
+    """
+    SQLAlchemy 2.0互換性の検証
+    
+    Returns:
+        Dict[str, Any]: 検証結果
+    """
+    try:
+        from sqlalchemy import __version__ as sqlalchemy_version
+        from sqlalchemy import case, func
+        
+        # case()構文のテスト
+        test_case = case((True, 1), else_=0)
+        
+        return {
+            'sqlalchemy_version': sqlalchemy_version,
+            'case_syntax_compatible': True,
+            'mysql_nulls_helper_available': True,
+            'status': 'compatible'
+        }
+    except Exception as e:
+        return {
+            'sqlalchemy_version': 'unknown',
+            'case_syntax_compatible': False,
+            'mysql_nulls_helper_available': False,
+            'status': 'incompatible',
+            'error': str(e)
+        }
