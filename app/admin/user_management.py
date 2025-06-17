@@ -195,25 +195,41 @@ def import_users():
 @admin_required
 def download_user_template():
     """ユーザーインポート用CSVテンプレートダウンロード"""
-    # CSVデータを作成
-    csv_data = io.StringIO()
-    csv_writer = csv.writer(csv_data)
+    from app.utils.csv_helper import export_to_csv_utf8_bom
     
-    # ヘッダー行
-    csv_writer.writerow(['username', 'full_name', 'email', 'password', 'role', 'school_id'])
+    # サンプルデータを作成
+    template_data = [
+        {
+            'username': 'taro_yamada',
+            'full_name': '山田太郎',
+            'email': 'taro@example.com',
+            'password': 'password123',
+            'role': 'student',
+            'school_id': '1'
+        },
+        {
+            'username': 'hanako_tanaka',
+            'full_name': '田中花子',
+            'email': 'hanako@example.com',
+            'password': 'password456',
+            'role': 'teacher',
+            'school_id': '1'
+        },
+        {
+            'username': 'admin_user',
+            'full_name': '管理者',
+            'email': 'admin@example.com',
+            'password': 'adminpass',
+            'role': 'admin',
+            'school_id': ''
+        }
+    ]
     
-    # サンプル行
-    csv_writer.writerow(['taro_yamada', '山田太郎', 'taro@example.com', 'password123', 'student', '1'])
-    csv_writer.writerow(['hanako_tanaka', '田中花子', 'hanako@example.com', 'password456', 'teacher', '1'])
-    csv_writer.writerow(['admin_user', '管理者', 'admin@example.com', 'adminpass', 'admin', ''])
-    
-    # CSVデータを取得
-    csv_data.seek(0)
-    output = make_response(csv_data.getvalue())
-    output.headers["Content-Disposition"] = "attachment; filename=user_import_template.csv"
-    output.headers["Content-type"] = "text/csv"
-    
-    return output
+    return export_to_csv_utf8_bom(
+        template_data,
+        'user_import_template.csv',
+        headers=['username', 'full_name', 'email', 'password', 'role', 'school_id']
+    )
 
 # 管理者アクセスページ
 @admin_bp.route('/access')

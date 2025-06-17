@@ -429,27 +429,20 @@ def add_students(class_id):
 @teacher_required
 def download_student_template():
     """生徒追加用CSVテンプレートダウンロード"""
-    from flask import make_response
+    from app.utils.csv_helper import export_to_csv_utf8_bom
     
-    # CSVデータを作成
-    csv_data = io.StringIO()
-    csv_writer = csv.writer(csv_data)
+    # サンプルデータを作成
+    template_data = [
+        {'username': 'taro_yamada'},
+        {'username': 'hanako_tanaka'},
+        {'username': 'jiro_suzuki'}
+    ]
     
-    # ヘッダー行
-    csv_writer.writerow(['username'])
-    
-    # サンプル行
-    csv_writer.writerow(['taro_yamada'])
-    csv_writer.writerow(['hanako_tanaka'])
-    csv_writer.writerow(['jiro_suzuki'])
-    
-    # CSVデータを取得
-    csv_data.seek(0)
-    output = make_response(csv_data.getvalue())
-    output.headers["Content-Disposition"] = "attachment; filename=student_add_template.csv"
-    output.headers["Content-type"] = "text/csv; charset=utf-8"
-    
-    return output
+    return export_to_csv_utf8_bom(
+        template_data,
+        'student_add_template.csv',
+        headers=['username']
+    )
 
 @teacher_bp.route('/class/<int:class_id>/remove_student/<int:student_id>', methods=['POST'])
 @login_required
@@ -1422,38 +1415,21 @@ def export_curriculum(curriculum_id):
         flash('このカリキュラムをエクスポートする権限がありません。')
         return redirect(url_for('teacher.dashboard'))
     
-    # カリキュラム内容をCSV形式でエクスポート
-    output = io.StringIO()
-    writer = csv.writer(output)
-    
-    # ヘッダー行
-    writer.writerow(['週', '時限', 'テーマ', '活動内容', '評価方法'])
-    
-    # カリキュラム内容を解析
+    # CurriculumServiceを使用してデータを取得
     try:
-        content = json.loads(curriculum.content) if curriculum.content else []
-        for item in content:
-            writer.writerow([
-                item.get('week', ''),
-                item.get('hour', ''),
-                item.get('theme', ''),
-                item.get('activity', ''),
-                item.get('evaluation', '')
-            ])
-    except:
-        pass
-    
-    # レスポンスを作成
-    output.seek(0)
-    response = Response(
-        output.getvalue(),
-        mimetype='text/csv',
-        headers={
-            'Content-Disposition': f'attachment; filename=curriculum_{curriculum.id}.csv'
-        }
-    )
-    
-    return response
+        from app.services.curriculum_service import CurriculumService
+        from app.utils.csv_helper import export_curriculum_to_csv
+        
+        curriculum_display_data = CurriculumService.get_curriculum_display_data(curriculum)
+        
+        return export_curriculum_to_csv(
+            curriculum_display_data,
+            curriculum.title,
+            encoding='utf-8-bom'
+        )
+    except Exception as e:
+        flash(f'カリキュラムのエクスポートに失敗しました: {str(e)}')
+        return redirect(url_for('teacher.view_curriculum', curriculum_id=curriculum_id))
 
 @teacher_bp.route('/curriculum/download_template')
 @login_required

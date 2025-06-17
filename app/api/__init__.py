@@ -1349,31 +1349,9 @@ def export_ranking():
         ranking_data = RankingService.get_ranking(ranking_type, scope, scope_id, 100)
         
         if format_type == 'csv':
-            import csv
-            import io
-            
-            output = io.StringIO()
-            writer = csv.writer(output)
-            
-            # ヘッダー行
-            writer.writerow(['順位', '学生名', 'スコア', '学校名', 'クラス名'])
-            
-            # データ行
-            for student in ranking_data.get('rankings', []):
-                writer.writerow([
-                    student.get('rank', ''),
-                    student.get('student_name', ''),
-                    student.get('score', ''),
-                    student.get('school_name', ''),
-                    student.get('class_name', '')
-                ])
-            
-            output.seek(0)
-            
-            response = make_response(output.getvalue())
-            response.headers['Content-Type'] = 'text/csv'
-            response.headers['Content-Disposition'] = f'attachment; filename=ranking_{ranking_type}.csv'
-            return response
+            # 文字化け対策版CSVエクスポートを使用
+            from app.utils.csv_helper import export_ranking_to_csv
+            return export_ranking_to_csv(ranking_data, ranking_type, encoding='utf-8-bom')
         
         else:  # JSON
             response = make_response(jsonify(ranking_data))

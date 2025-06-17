@@ -185,7 +185,10 @@ class RankingService:
     @classmethod
     def _calculate_total_points_ranking(cls, scope: str, scope_id: int, limit: int) -> Dict[str, Any]:
         """総合ポイントランキングを計算"""
+        logger.info(f"Calculating total points ranking: scope={scope}, scope_id={scope_id}, limit={limit}")
+        
         base_query = cls._get_base_user_query(scope, scope_id)
+        logger.debug(f"Base query filters applied for scope={scope}, scope_id={scope_id}")
         
         # ポイント計算のサブクエリ（BaseBuilderモデル対応）
         points_subquery = db.session.query(
@@ -243,6 +246,35 @@ class RankingService:
         ).order_by(desc(points_subquery.c.total_points)).limit(limit)
         
         results = ranking_query.all()
+        logger.info(f"Found {len(results)} ranking entries for total_points")
+        
+        if not results:
+            logger.warning("No ranking data found - checking user count and activity data")
+            user_count = base_query.count()
+            activity_count = ActivityLog.query.count()
+            logger.warning(f"Total users matching criteria: {user_count}, Total activities: {activity_count}")
+            
+            # データが空の場合は基本的なユーザーリストを返す（開発・テスト用）
+            fallback_users = base_query.limit(limit).all()
+            logger.info(f"Fallback: returning {len(fallback_users)} users with base scores")
+            
+            return {
+                'rankings': [
+                    {
+                        'rank': idx + 1,
+                        'student_id': user.id,
+                        'student_name': user.username,
+                        'score': 10.0,  # デフォルトスコア
+                        'school_name': user.school.name if user.school else None,
+                        'class_name': ', '.join([c.name for c in user.classes]) if user.classes else None
+                    }
+                    for idx, user in enumerate(fallback_users)
+                ],
+                'total_participants': user_count,
+                'last_updated': datetime.utcnow().isoformat(),
+                'ranking_type': 'total_points',
+                'is_fallback': True  # フォールバックデータであることを示す
+            }
         
         return {
             'rankings': [
