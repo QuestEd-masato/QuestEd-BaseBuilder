@@ -16,6 +16,7 @@ from app.models import (
     ActivityLog, Goal, Todo, Subject
 )
 from app.ai import generate_student_evaluation, generate_curriculum_with_ai
+from app.utils.model_helpers import mysql_nulls_last
 
 # Conditional import to avoid circular imports
 try:
@@ -80,7 +81,7 @@ def dashboard():
         # 次回のマイルストーンを取得
         next_milestone = Milestone.query.filter_by(class_id=class_obj.id)\
             .filter(Milestone.due_date >= datetime.utcnow().date())\
-            .order_by(Milestone.due_date).first()
+            .order_by(*mysql_nulls_last(Milestone.due_date, 'asc')).first()
         
         class_info.append({
             'class': class_obj,
@@ -260,7 +261,7 @@ def class_details(class_id):
     main_themes = MainTheme.query.filter_by(class_id=class_id).all()
     
     # マイルストーンを取得
-    milestones = Milestone.query.filter_by(class_id=class_id).order_by(Milestone.due_date).all()
+    milestones = Milestone.query.filter_by(class_id=class_id).order_by(*mysql_nulls_last(Milestone.due_date, 'asc')).all()
     
     return render_template('class_details.html', 
                          class_obj=class_obj, 
@@ -1489,10 +1490,10 @@ def ranking_analysis():
     """ランキング分析ページ"""
     from app.services.ranking_service import RankingService
     
-    # 教師が担当するクラス一覧を取得
+    # 教師が担当するクラス一覧を取得  
+    # Note: Class.is_activeフィールドが存在しないため、フィルタを削除
     teacher_classes = Class.query.filter_by(
-        teacher_id=current_user.id,
-        is_active=True
+        teacher_id=current_user.id
     ).all()
     
     # クエリパラメータを取得

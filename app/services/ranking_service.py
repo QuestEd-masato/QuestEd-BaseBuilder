@@ -22,7 +22,7 @@ Version: 1.0.0
 import logging
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Tuple, Any
-from sqlalchemy import func, text, desc, and_, or_
+from sqlalchemy import func, text, desc, and_, or_, case
 from flask import current_app
 import hashlib
 import json
@@ -198,9 +198,9 @@ class RankingService:
                 # 単元完了ポイント
                 func.coalesce(
                     func.sum(
-                        func.case(
-                            [(StudentUnitSelection.progress_percentage >= 100, 
-                              cls.POINTS_CONFIG['unit_completion'])],
+                        case(
+                            (StudentUnitSelection.progress_percentage >= 100, 
+                              cls.POINTS_CONFIG['unit_completion']),
                             else_=0
                         )
                     ), 0
@@ -274,18 +274,18 @@ class RankingService:
             (
                 func.coalesce(
                     func.sum(
-                        func.case(
-                            [(AnswerRecord.created_at >= week_start,
-                              AnswerRecord.is_correct * cls.POINTS_CONFIG['correct_answer'])],
+                        case(
+                            (AnswerRecord.created_at >= week_start,
+                              AnswerRecord.is_correct * cls.POINTS_CONFIG['correct_answer']),
                             else_=0
                         )
                     ), 0
                 ) +
                 func.coalesce(
                     func.sum(
-                        func.case(
-                            [(ActivityLog.created_at >= week_start,
-                              0)],  # study_durationフィールドが存在しないためゼロで置き換え
+                        case(
+                            (ActivityLog.created_at >= week_start,
+                              0),  # study_durationフィールドが存在しないためゼロで置き換え
                             else_=0
                         )
                     ), 0
@@ -338,18 +338,18 @@ class RankingService:
             (
                 func.coalesce(
                     func.sum(
-                        func.case(
-                            [(AnswerRecord.created_at >= month_start,
-                              AnswerRecord.is_correct * cls.POINTS_CONFIG['correct_answer'])],
+                        case(
+                            (AnswerRecord.created_at >= month_start,
+                              AnswerRecord.is_correct * cls.POINTS_CONFIG['correct_answer']),
                             else_=0
                         )
                     ), 0
                 ) +
                 func.coalesce(
                     func.sum(
-                        func.case(
-                            [(ActivityLog.created_at >= month_start,
-                              0)],  # study_durationフィールドが存在しないためゼロで置き換え
+                        case(
+                            (ActivityLog.created_at >= month_start,
+                              0),  # study_durationフィールドが存在しないためゼロで置き換え
                             else_=0
                         )
                     ), 0

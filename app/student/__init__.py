@@ -16,6 +16,7 @@ import imghdr
 import uuid
 import traceback
 from sqlalchemy import text, func
+from app.utils.model_helpers import mysql_nulls_last
 
 # ReportLabを条件付きでインポート（PDF生成用）
 try:
@@ -350,7 +351,7 @@ def dashboard():
                 student_id=current_user.id,
                 is_completed=False
             ).order_by(
-                Todo.due_date.asc().nullslast(),
+                *mysql_nulls_last(Todo.due_date, 'asc'),
                 Todo.created_at.desc()
             ).first()
             
@@ -369,7 +370,7 @@ def dashboard():
                 student_id=current_user.id,
                 is_completed=False
             ).order_by(
-                Goal.due_date.asc().nullslast(),
+                *mysql_nulls_last(Goal.due_date, 'asc'),
                 Goal.updated_at.desc()
             ).first()
             
@@ -428,7 +429,7 @@ def dashboard():
                         class_id=class_obj.id,
                         is_completed=False
                     ).order_by(
-                        Todo.due_date.asc().nullslast(),
+                        *mysql_nulls_last(Todo.due_date, 'asc'),
                         Todo.created_at.desc()
                     ).first()
                     
@@ -445,7 +446,7 @@ def dashboard():
                         class_id=class_obj.id,
                         is_completed=False
                     ).order_by(
-                        Goal.due_date.asc().nullslast(),
+                        *mysql_nulls_last(Goal.due_date, 'asc'),
                         Goal.updated_at.desc()
                     ).first()
                     
@@ -1305,7 +1306,7 @@ def export_activities(format):
 def todos():
     """To Do一覧"""
     todos = Todo.query.filter_by(student_id=current_user.id)\
-        .order_by(Todo.is_completed, Todo.due_date, Todo.created_at.desc())\
+        .order_by(Todo.is_completed, *mysql_nulls_last(Todo.due_date, 'asc'), Todo.created_at.desc())\
         .all()
     
     # 選択中のテーマを取得（表示用）
@@ -1444,7 +1445,7 @@ def toggle_todo(todo_id):
 def goals():
     """目標一覧"""
     goals = Goal.query.filter_by(student_id=current_user.id)\
-        .order_by(Goal.is_completed, Goal.goal_type, Goal.due_date)\
+        .order_by(Goal.is_completed, Goal.goal_type, *mysql_nulls_last(Goal.due_date, 'asc'))\
         .all()
     
     # 選択中のテーマを取得（表示用）
