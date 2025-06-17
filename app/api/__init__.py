@@ -1233,7 +1233,7 @@ def get_student_ranking(student_id):
                 return jsonify({'error': '学生が見つかりません'}), 404
             
             # 教師のクラスに所属している学生かチェック
-            teacher_classes = [c.id for c in Class.query.filter_by(teacher_id=current_user.id, is_active=True).all()]
+            teacher_classes = [c.id for c in Class.query.filter_by(teacher_id=current_user.id).all()]
             student_classes = [e.class_id for e in ClassEnrollment.query.filter_by(student_id=student_id, is_active=True).all()]
             
             if not any(c in teacher_classes for c in student_classes):

@@ -370,7 +370,7 @@ def dashboard():
                 is_completed=False
             ).order_by(
                 Goal.due_date.asc().nullslast(),
-                Goal.last_updated.desc()
+                Goal.updated_at.desc()
             ).first()
             
         except Exception as e:
@@ -446,7 +446,7 @@ def dashboard():
                         is_completed=False
                     ).order_by(
                         Goal.due_date.asc().nullslast(),
-                        Goal.last_updated.desc()
+                        Goal.updated_at.desc()
                     ).first()
                     
                     if latest_goal:
@@ -2018,8 +2018,7 @@ def ranking():
     # 学生が所属するクラス一覧を取得
     student_classes = db.session.query(Class).join(ClassEnrollment).filter(
         ClassEnrollment.student_id == current_user.id,
-        ClassEnrollment.is_active == True,
-        Class.is_active == True
+        ClassEnrollment.is_active == True
     ).all()
     
     # スコープの決定
@@ -2753,7 +2752,22 @@ def api_ranking(ranking_type):
         if params['scope'] == 'school':
             scope_id = current_user.school_id
         elif params['scope'] == 'class':
-            scope_id = current_user.class_id
+            # ユーザーのクラスIDを安全に取得
+            scope_id = None
+            
+            if current_user.role == 'teacher':
+                # 教師の場合は担当クラスから取得
+                teacher_class = Class.query.filter_by(teacher_id=current_user.id).first()
+                scope_id = teacher_class.id if teacher_class else None
+            else:
+                # 生徒の場合
+                if hasattr(current_user, 'class_id'):
+                    scope_id = current_user.class_id
+                else:
+                    # ClassEnrollmentから取得
+                    enrollment = ClassEnrollment.query.filter_by(student_id=current_user.id).first()
+                    scope_id = enrollment.class_id if enrollment else None
+            
             if not scope_id:
                 return jsonify({
                     'success': False,

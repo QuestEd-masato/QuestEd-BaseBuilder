@@ -193,7 +193,7 @@ class RankingService:
             (
                 # 学習時間ポイント（分）
                 func.coalesce(
-                    func.sum(ActivityLog.study_duration * cls.POINTS_CONFIG['study_minute']), 0
+                    func.sum(0), 0  # study_durationフィールドが存在しないためゼロで置き換え
                 ) +
                 # 単元完了ポイント
                 func.coalesce(
@@ -285,7 +285,7 @@ class RankingService:
                     func.sum(
                         func.case(
                             [(ActivityLog.created_at >= week_start,
-                              ActivityLog.study_duration * cls.POINTS_CONFIG['study_minute'])],
+                              0)],  # study_durationフィールドが存在しないためゼロで置き換え
                             else_=0
                         )
                     ), 0
@@ -349,7 +349,7 @@ class RankingService:
                     func.sum(
                         func.case(
                             [(ActivityLog.created_at >= month_start,
-                              ActivityLog.study_duration * cls.POINTS_CONFIG['study_minute'])],
+                              0)],  # study_durationフィールドが存在しないためゼロで置き換え
                             else_=0
                         )
                     ), 0
@@ -445,7 +445,7 @@ class RankingService:
         
         study_time_subquery = db.session.query(
             User.id.label('user_id'),
-            func.sum(ActivityLog.study_duration).label('total_study_time')
+            func.sum(1).label('total_study_time')  # study_durationフィールドが存在しないため活動数で代用
         ).join(
             ActivityLog, User.id == ActivityLog.student_id
         ).filter(
@@ -670,7 +670,7 @@ class RankingService:
                 cls.get_ranking(ranking_type, 'school', None)
                 
                 # 各クラスのランキングを計算
-                classes = Class.query.filter_by(is_active=True).all()
+                classes = Class.query.all()
                 for class_obj in classes:
                     cls.get_ranking(ranking_type, 'class', class_obj.id)
                 

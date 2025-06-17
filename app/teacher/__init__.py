@@ -1281,6 +1281,7 @@ def view_curriculum(curriculum_id):
                              curriculum=curriculum,
                              class_obj=class_obj,
                              curriculum_content=curriculum_display_data,
+                             curriculum_data=curriculum_display_data,
                              **curriculum_display_data)
     
     except Exception as e:
@@ -1292,6 +1293,7 @@ def view_curriculum(curriculum_id):
                              curriculum=curriculum,
                              class_obj=class_obj,
                              curriculum_content={},
+                             curriculum_data={},
                              error_occurred=True)
 
 @teacher_bp.route('/curriculum/<int:curriculum_id>/edit', methods=['GET', 'POST'])
@@ -1348,6 +1350,7 @@ def edit_curriculum(curriculum_id):
                                          curriculum=curriculum,
                                          class_obj=class_obj,
                                          curriculum_content=curriculum_display_data,
+                                         curriculum_data=curriculum_display_data,
                                          **curriculum_display_data)
             
             # CurriculumServiceを使用してコンテンツを更新
@@ -1371,6 +1374,7 @@ def edit_curriculum(curriculum_id):
                              curriculum=curriculum,
                              class_obj=class_obj,
                              curriculum_content=curriculum_display_data,
+                             curriculum_data=curriculum_display_data,
                              **curriculum_display_data)
     
     except Exception as e:
@@ -1382,6 +1386,7 @@ def edit_curriculum(curriculum_id):
                              curriculum=curriculum,
                              class_obj=class_obj,
                              curriculum_content={},
+                             curriculum_data={},
                              error_occurred=True)
 
 @teacher_bp.route('/curriculum/<int:curriculum_id>/delete', methods=['POST'])
