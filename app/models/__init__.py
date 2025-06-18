@@ -280,6 +280,7 @@ class Curriculum(db.Model):
     group_work_level = db.Column(db.String(50), default='ハイブリッド')
     external_collaboration = db.Column(db.Boolean, default=False)
     content = db.Column(db.Text)  # JSONとして保存されたカリキュラム内容
+    format = db.Column(db.String(20), default='json')  # データ形式: json(レガシー) | table(新形式)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     

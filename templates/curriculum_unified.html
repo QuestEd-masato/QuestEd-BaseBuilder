@@ -190,6 +190,7 @@
     <!-- カリキュラム内容 -->
     <div class="curriculum-section">
         <form id="curriculumForm" method="POST" style="display: none;">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
             <!-- 基本情報編集 -->
             <div class="edit-mode mb-4">
                 <div class="row">

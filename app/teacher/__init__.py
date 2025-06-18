@@ -1257,9 +1257,7 @@ def import_curriculum(class_id):
 @login_required
 def view_curriculum(curriculum_id):
     """統合されたカリキュラム表示・編集画面"""
-    from app.services.curriculum_service import CurriculumService
-    from app.services.curriculum_service_v2 import CurriculumServiceV2
-    from basebuilder.models import ProblemCategory, TextSet
+    from app.models import ProblemCategory, TextSet
     from sqlalchemy import text
     
     curriculum = Curriculum.query.get_or_404(curriculum_id)
@@ -1281,6 +1279,11 @@ def view_curriculum(curriculum_id):
         if not enrollment:
             flash('このカリキュラムにアクセスする権限がありません。', 'error')
             return redirect(url_for('student.dashboard'))
+    else:
+        # その他のユーザーはアクセス不可
+        if current_user.role != 'teacher':
+            flash('このページへのアクセス権限がありません。', 'error')
+            return redirect(url_for('main.index'))
     
     # クラス情報を取得
     class_obj = Class.query.get_or_404(curriculum.class_id)
@@ -1292,39 +1295,57 @@ def view_curriculum(curriculum_id):
             curriculum.title = request.form.get('title', '').strip()
             curriculum.description = request.form.get('description', '').strip()
             
-            # フォーマットに応じた処理
-            if curriculum.format == 'table' or not curriculum.format:
-                # v2形式（テーブル）での保存
+            # formatがtableまたは未設定の場合の処理
+            if not hasattr(curriculum, 'format') or curriculum.format == 'table' or not curriculum.format:
+                # テーブル形式での保存
                 items_count = int(request.form.get('items_count', 0))
-                items = []
                 
+                # 既存アイテムをクリア
+                db.session.execute(text("""
+                    DELETE FROM curriculum_items WHERE curriculum_id = :curriculum_id
+                """), {'curriculum_id': curriculum_id})
+                
+                # 新規アイテムを保存
                 for i in range(items_count):
-                    item = {
-                        'phase': request.form.get(f'phase_{i}', ''),
-                        'week': request.form.get(f'week_{i}', ''),
-                        'hours': int(request.form.get(f'hours_{i}', 0) or 0),
-                        'category': request.form.get(f'category_{i}', ''),
-                        'activity': request.form.get(f'activity_{i}', ''),
-                        'teacher_support': request.form.get(f'teacher_support_{i}', ''),
-                        'evaluation_method': request.form.get(f'evaluation_method_{i}', '')
-                    }
-                    if any(item.values()):  # 空でない項目のみ保存
-                        items.append(item)
+                    phase = request.form.get(f'phase_{i}', '')
+                    week = request.form.get(f'week_{i}', '')
+                    hours = request.form.get(f'hours_{i}', '0')
+                    category = request.form.get(f'category_{i}', '')
+                    activity = request.form.get(f'activity_{i}', '')
+                    teacher_support = request.form.get(f'teacher_support_{i}', '')
+                    evaluation_method = request.form.get(f'evaluation_method_{i}', '')
+                    
+                    if phase or week or activity:  # 少なくとも1つのフィールドに値がある場合
+                        db.session.execute(text("""
+                            INSERT INTO curriculum_items 
+                            (curriculum_id, phase, week, hours, category, activity, 
+                             teacher_support, evaluation_method, order_index)
+                            VALUES 
+                            (:curriculum_id, :phase, :week, :hours, :category, 
+                             :activity, :teacher_support, :evaluation_method, :order_index)
+                        """), {
+                            'curriculum_id': curriculum_id,
+                            'phase': phase,
+                            'week': week,
+                            'hours': int(hours) if hours.isdigit() else 0,
+                            'category': category,
+                            'activity': activity,
+                            'teacher_support': teacher_support,
+                            'evaluation_method': evaluation_method,
+                            'order_index': i
+                        })
                 
-                # v2サービスで保存
-                success, message = CurriculumServiceV2.save_curriculum_items(curriculum_id, items)
-                if success:
+                # formatを更新
+                if hasattr(curriculum, 'format'):
                     curriculum.format = 'table'
-                    curriculum.updated_at = datetime.utcnow()
-                    db.session.commit()
-                    flash('カリキュラムを更新しました。', 'success')
-                else:
-                    flash(f'保存エラー: {message}', 'error')
-            else:
-                # レガシーJSON形式での保存
-                # 元のCurriculumServiceを使用
-                pass
+                curriculum.updated_at = datetime.utcnow()
+                db.session.commit()
+                flash('カリキュラムを更新しました。', 'success')
             
+            else:
+                # レガシーJSON形式の処理（既存のまま）
+                flash('JSON形式のカリキュラムは現在サポートされていません。', 'warning')
+                
         except Exception as e:
             db.session.rollback()
             flash(f'保存中にエラーが発生しました: {str(e)}', 'error')
@@ -1335,30 +1356,38 @@ def view_curriculum(curriculum_id):
     # GET処理（表示）
     curriculum_items = []
     problem_categories = []
-    text_sets = []
     
     try:
-        # BaseBuilder連携データの取得
+        # カリキュラム項目の取得
+        items = db.session.execute(text("""
+            SELECT id, phase, week, hours, category, activity, 
+                   teacher_support, evaluation_method, order_index
+            FROM curriculum_items
+            WHERE curriculum_id = :curriculum_id
+            ORDER BY order_index, id
+        """), {'curriculum_id': curriculum_id}).fetchall()
+        
+        for item in items:
+            curriculum_items.append({
+                'id': item.id,
+                'phase': item.phase,
+                'week': item.week,
+                'hours': item.hours,
+                'category': item.category,
+                'activity': item.activity,
+                'teacher_support': item.teacher_support,
+                'evaluation_method': item.evaluation_method
+            })
+        
+        # 問題カテゴリの取得
         problem_categories = ProblemCategory.query.filter(
-            (ProblemCategory.school_id == current_user.school_id) |
+            (ProblemCategory.school_id == current_user.school_id) | 
             (ProblemCategory.school_id.is_(None))
         ).order_by(ProblemCategory.name).all()
         
-        text_sets = TextSet.query.filter(
-            (TextSet.school_id == current_user.school_id) |
-            (TextSet.school_id.is_(None))
-        ).order_by(TextSet.title).all()
-        
-        # カリキュラム項目の取得
-        if curriculum.format == 'table':
-            curriculum_items = CurriculumServiceV2.get_curriculum_items(curriculum_id)
-        else:
-            # レガシー形式の場合は空のテンプレートを提供
-            curriculum_items = []
-            
     except Exception as e:
         current_app.logger.error(f"Error loading curriculum data: {str(e)}")
-        flash('一部のデータ読み込みでエラーが発生しました。', 'warning')
+        flash('データの読み込み中にエラーが発生しました。', 'warning')
     
     # 表示データの準備
     context = {
@@ -1366,9 +1395,7 @@ def view_curriculum(curriculum_id):
         'class_obj': class_obj,
         'curriculum_items': curriculum_items,
         'problem_categories': problem_categories,
-        'text_sets': text_sets,
-        'can_edit': can_edit,
-        'now': datetime.now()
+        'can_edit': can_edit
     }
     
     return render_template('curriculum_unified.html', **context)
