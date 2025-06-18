@@ -1,0 +1,721 @@
+{% extends "base.html" %}
+{% block title %}カリキュラム編集 - {{ curriculum.title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+.edit-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.edit-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 2rem;
+    border-radius: 12px;
+    margin-bottom: 2rem;
+}
+
+.edit-header h1 {
+    margin: 0;
+    font-size: 1.8rem;
+    font-weight: 600;
+}
+
+.section-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    margin-bottom: 2rem;
+    overflow: hidden;
+}
+
+.section-header {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    padding: 1.5rem;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.section-header h3 {
+    margin: 0;
+    color: #495057;
+    font-size: 1.2rem;
+}
+
+.section-body {
+    padding: 1.5rem;
+}
+
+.basic-form .form-control, .basic-form .form-select {
+    border-radius: 8px;
+    border: 2px solid #e9ecef;
+    padding: 0.75rem;
+    transition: border-color 0.3s ease;
+}
+
+.basic-form .form-control:focus, .basic-form .form-select:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+
+.csv-operations {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+@media (max-width: 768px) {
+    .csv-operations {
+        grid-template-columns: 1fr;
+    }
+}
+
+.csv-card {
+    background: white;
+    border: 2px dashed #dee2e6;
+    border-radius: 12px;
+    padding: 2rem;
+    text-align: center;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.csv-card:hover {
+    border-color: #667eea;
+    background: #f8f9ff;
+}
+
+.csv-card i {
+    font-size: 2rem;
+    color: #667eea;
+    margin-bottom: 1rem;
+}
+
+.edit-table {
+    width: 100%;
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+}
+
+.edit-table th {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 1rem;
+    font-weight: 500;
+    text-align: left;
+    border: none;
+}
+
+.edit-table td {
+    padding: 0.5rem;
+    border-bottom: 1px solid #f1f3f4;
+    vertical-align: top;
+}
+
+.edit-table input, .edit-table textarea {
+    width: 100%;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    padding: 0.5rem;
+    font-size: 0.9rem;
+    transition: border-color 0.3s ease;
+}
+
+.edit-table input:focus, .edit-table textarea:focus {
+    border-color: #667eea;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
+}
+
+.edit-table textarea {
+    resize: vertical;
+    min-height: 60px;
+}
+
+.add-row-section {
+    background: #f8f9ff;
+    border: 2px dashed #667eea;
+    border-radius: 12px;
+    margin-top: 1rem;
+    transition: all 0.3s ease;
+}
+
+.add-row-btn {
+    width: 100%;
+    padding: 1.5rem;
+    background: transparent;
+    border: none;
+    color: #667eea;
+    font-size: 1.1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.add-row-btn:hover {
+    background: rgba(102, 126, 234, 0.1);
+    color: #5a67d8;
+}
+
+.action-bar {
+    position: sticky;
+    bottom: 0;
+    background: white;
+    padding: 1.5rem;
+    border-top: 1px solid #e9ecef;
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.1);
+    z-index: 100;
+}
+
+.btn-modern {
+    padding: 0.75rem 2rem;
+    border-radius: 8px;
+    font-weight: 500;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.btn-success {
+    background: linear-gradient(135deg, #56ab2f 0%, #a8e6cf 100%);
+    color: white;
+}
+
+.btn-secondary {
+    background: #6c757d;
+    color: white;
+}
+
+.btn-outline-primary {
+    border: 2px solid #667eea;
+    color: #667eea;
+    background: transparent;
+}
+
+.btn-outline-success {
+    border: 2px solid #56ab2f;
+    color: #56ab2f;
+    background: transparent;
+}
+
+.btn-modern:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    text-decoration: none;
+}
+
+.btn-danger {
+    background: #dc3545;
+    color: white;
+    padding: 0.4rem 0.8rem;
+    font-size: 0.8rem;
+}
+
+.custom-file-input {
+    opacity: 0;
+    position: absolute;
+}
+
+.custom-file-label {
+    background: #f8f9fa;
+    border: 2px dashed #dee2e6;
+    border-radius: 8px;
+    padding: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: center;
+    margin-bottom: 1rem;
+}
+
+.custom-file-label:hover {
+    border-color: #667eea;
+    background: #f8f9ff;
+}
+
+.table-container {
+    max-height: 70vh;
+    overflow-y: auto;
+    border-radius: 12px;
+}
+
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+.loading-content {
+    background: white;
+    padding: 2rem;
+    border-radius: 12px;
+    text-align: center;
+}
+
+@media (max-width: 768px) {
+    .edit-table {
+        font-size: 0.8rem;
+    }
+    
+    .edit-table th,
+    .edit-table td {
+        padding: 0.5rem 0.3rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="edit-container">
+    <!-- ヘッダー -->
+    <div class="edit-header">
+        <h1><i class="fas fa-edit me-2"></i>カリキュラム編集</h1>
+        <p class="mb-0">{{ curriculum.title }} - {{ class_obj.name }}</p>
+    </div>
+
+    <!-- 基本情報編集 -->
+    <div class="section-card">
+        <div class="section-header">
+            <h3><i class="fas fa-info-circle me-2"></i>基本情報</h3>
+        </div>
+        <div class="section-body">
+            <div class="basic-form">
+                <div class="row">
+                    <div class="col-md-8 mb-3">
+                        <label class="form-label">タイトル <span class="text-danger">*</span></label>
+                        <input type="text" id="title" class="form-control" value="{{ curriculum.title }}" required>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">フォーマット</label>
+                        <input type="text" class="form-control" value="テーブル形式 (v2)" readonly>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">説明</label>
+                    <textarea id="description" class="form-control" rows="2">{{ curriculum.description or '' }}</textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CSV操作 -->
+    <div class="section-card">
+        <div class="section-header">
+            <h3><i class="fas fa-file-csv me-2"></i>CSV操作</h3>
+        </div>
+        <div class="section-body">
+            <div class="csv-operations">
+                <div class="csv-card" onclick="exportToCSV()">
+                    <i class="fas fa-download"></i>
+                    <h5>CSVダウンロード</h5>
+                    <p class="text-muted mb-0">現在のデータをCSV形式で出力</p>
+                </div>
+                <div class="csv-card" onclick="document.getElementById('csvFile').click()">
+                    <i class="fas fa-upload"></i>
+                    <h5>CSVアップロード</h5>
+                    <p class="text-muted mb-0">CSVファイルから一括インポート</p>
+                </div>
+            </div>
+            
+            <input type="file" id="csvFile" class="custom-file-input" accept=".csv" onchange="handleFileSelect(this)">
+            <div id="file-info" style="display: none;">
+                <div class="alert alert-info">
+                    <i class="fas fa-file-csv me-2"></i>
+                    <span id="file-name"></span>
+                    <button class="btn btn-outline-success btn-sm ms-2" onclick="importFromCSV()">
+                        <i class="fas fa-upload"></i> インポート実行
+                    </button>
+                    <button class="btn btn-outline-secondary btn-sm ms-1" onclick="cancelFileSelect()">
+                        キャンセル
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- カリキュラム項目編集 -->
+    <div class="section-card">
+        <div class="section-header">
+            <h3><i class="fas fa-table me-2"></i>カリキュラム項目</h3>
+        </div>
+        <div class="section-body p-0">
+            <div class="table-container">
+                <table class="edit-table">
+                    <thead>
+                        <tr>
+                            <th width="12%">フェーズ</th>
+                            <th width="8%">週</th>
+                            <th width="6%">時間</th>
+                            <th width="15%">カテゴリ</th>
+                            <th width="23%">活動内容</th>
+                            <th width="20%">教師のサポート</th>
+                            <th width="13%">評価方法</th>
+                            <th width="3%"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="items-tbody">
+                        {% for item in curriculum_items %}
+                        <tr data-id="{{ item.id }}">
+                            <td><input type="text" name="phase" value="{{ item.phase }}" placeholder="準備期"></td>
+                            <td><input type="text" name="week" value="{{ item.week }}" placeholder="第1週"></td>
+                            <td><input type="number" name="hours" value="{{ item.hours }}" min="0" max="10"></td>
+                            <td><input type="text" name="category" value="{{ item.category }}" placeholder="カテゴリ" list="categories"></td>
+                            <td><textarea name="activity" placeholder="活動内容">{{ item.activity }}</textarea></td>
+                            <td><textarea name="teacher_support" placeholder="教師のサポート">{{ item.teacher_support }}</textarea></td>
+                            <td><textarea name="evaluation_method" placeholder="評価方法">{{ item.evaluation_method }}</textarea></td>
+                            <td>
+                                <button class="btn btn-danger btn-sm" onclick="removeRow(this)" title="削除">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- 行追加 -->
+            <div class="add-row-section">
+                <button class="add-row-btn" onclick="addRow()">
+                    <i class="fas fa-plus me-2"></i>新しい項目を追加
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- アクションバー -->
+    <div class="action-bar">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <a href="{{ url_for('teacher.view_curriculum_simple', curriculum_id=curriculum.id) }}" 
+                   class="btn-modern btn-secondary">
+                    <i class="fas fa-arrow-left"></i> キャンセル
+                </a>
+            </div>
+            <div>
+                <button class="btn-modern btn-success me-2" onclick="saveDraft()">
+                    <i class="fas fa-save"></i> 下書き保存
+                </button>
+                <button class="btn-modern btn-primary" onclick="saveData()">
+                    <i class="fas fa-check"></i> 保存して完了
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- カテゴリ候補 -->
+<datalist id="categories">
+    <option value="プログラミング基礎">
+    <option value="アルゴリズム">
+    <option value="データ構造">
+    <option value="Web開発">
+    <option value="データベース">
+    <option value="ネットワーク">
+    <option value="セキュリティ">
+    <option value="AI・機械学習">
+    <option value="数学基礎">
+    <option value="統計学">
+    <option value="課題研究">
+    <option value="発表準備">
+    <option value="グループワーク">
+    <option value="個人研究">
+</datalist>
+
+<!-- ローディングオーバーレイ -->
+<div class="loading-overlay" id="loading">
+    <div class="loading-content">
+        <i class="fas fa-spinner fa-spin fa-2x mb-3"></i>
+        <h5>処理中...</h5>
+        <p class="mb-0">しばらくお待ちください</p>
+    </div>
+</div>
+
+<script>
+const curriculumId = {{ curriculum.id }};
+let hasUnsavedChanges = false;
+
+// ページ離脱時の警告
+window.addEventListener('beforeunload', function(e) {
+    if (hasUnsavedChanges) {
+        e.preventDefault();
+        e.returnValue = '';
+    }
+});
+
+// 変更検知
+document.addEventListener('input', function() {
+    hasUnsavedChanges = true;
+});
+
+// 行追加
+function addRow() {
+    const tbody = document.getElementById('items-tbody');
+    const newRow = document.createElement('tr');
+    newRow.innerHTML = `
+        <td><input type="text" name="phase" placeholder="準備期"></td>
+        <td><input type="text" name="week" placeholder="第1週"></td>
+        <td><input type="number" name="hours" value="2" min="0" max="10"></td>
+        <td><input type="text" name="category" placeholder="カテゴリ" list="categories"></td>
+        <td><textarea name="activity" placeholder="活動内容"></textarea></td>
+        <td><textarea name="teacher_support" placeholder="教師のサポート"></textarea></td>
+        <td><textarea name="evaluation_method" placeholder="評価方法"></textarea></td>
+        <td>
+            <button class="btn btn-danger btn-sm" onclick="removeRow(this)" title="削除">
+                <i class="fas fa-trash"></i>
+            </button>
+        </td>
+    `;
+    tbody.appendChild(newRow);
+    
+    // 新しく追加した行の最初の入力欄にフォーカス
+    newRow.querySelector('input').focus();
+    hasUnsavedChanges = true;
+}
+
+// 行削除
+function removeRow(btn) {
+    if (confirm('この項目を削除しますか？')) {
+        btn.closest('tr').remove();
+        hasUnsavedChanges = true;
+    }
+}
+
+// データ収集
+function collectData() {
+    const items = [];
+    const rows = document.querySelectorAll('#items-tbody tr');
+    
+    rows.forEach((row, index) => {
+        const item = {
+            id: row.dataset.id,
+            phase: row.querySelector('[name="phase"]').value.trim(),
+            week: row.querySelector('[name="week"]').value.trim(),
+            hours: parseInt(row.querySelector('[name="hours"]').value) || 0,
+            category: row.querySelector('[name="category"]').value.trim(),
+            activity: row.querySelector('[name="activity"]').value.trim(),
+            teacher_support: row.querySelector('[name="teacher_support"]').value.trim(),
+            evaluation_method: row.querySelector('[name="evaluation_method"]').value.trim(),
+            order_index: index
+        };
+        
+        // 空の行は除外（すべてのフィールドが空）
+        if (item.phase || item.week || item.hours || item.category || 
+            item.activity || item.teacher_support || item.evaluation_method) {
+            items.push(item);
+        }
+    });
+    
+    return {
+        title: document.getElementById('title').value.trim(),
+        description: document.getElementById('description').value.trim(),
+        items: items
+    };
+}
+
+// データ保存
+function saveData() {
+    const data = collectData();
+    
+    if (!data.title) {
+        alert('タイトルは必須です');
+        document.getElementById('title').focus();
+        return;
+    }
+    
+    if (data.items.length === 0) {
+        if (!confirm('カリキュラム項目が空です。保存しますか？')) {
+            return;
+        }
+    }
+    
+    showLoading(true);
+    
+    fetch(`/curriculum/${curriculumId}/edit-v2`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token() }}'
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(result => {
+        showLoading(false);
+        if (result.success) {
+            hasUnsavedChanges = false;
+            alert('保存しました');
+            window.location.href = `/curriculum/${curriculumId}/view-v2`;
+        } else {
+            alert(result.message || '保存に失敗しました');
+        }
+    })
+    .catch(error => {
+        showLoading(false);
+        alert('エラーが発生しました');
+        console.error(error);
+    });
+}
+
+// 下書き保存
+function saveDraft() {
+    const data = collectData();
+    showLoading(true);
+    
+    fetch(`/curriculum/${curriculumId}/edit-v2`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token() }}'
+        },
+        body: JSON.stringify({...data, draft: true})
+    })
+    .then(response => response.json())
+    .then(result => {
+        showLoading(false);
+        if (result.success) {
+            hasUnsavedChanges = false;
+            // 保存成功のフィードバック
+            const btn = event.target;
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-check"></i> 保存済み';
+            btn.style.background = '#28a745';
+            setTimeout(() => {
+                btn.innerHTML = originalText;
+                btn.style.background = '';
+            }, 2000);
+        } else {
+            alert(result.message || '下書き保存に失敗しました');
+        }
+    })
+    .catch(error => {
+        showLoading(false);
+        alert('エラーが発生しました');
+        console.error(error);
+    });
+}
+
+// CSVエクスポート
+function exportToCSV() {
+    const data = collectData();
+    
+    if (data.items.length === 0) {
+        alert('エクスポートするデータがありません');
+        return;
+    }
+    
+    const rows = [['フェーズ', '週', '時間数', 'カテゴリ', '活動内容', '教師のサポート', '評価方法']];
+    
+    data.items.forEach(item => {
+        rows.push([
+            item.phase,
+            item.week,
+            item.hours,
+            item.category,
+            item.activity,
+            item.teacher_support,
+            item.evaluation_method
+        ]);
+    });
+    
+    const csv = rows.map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
+    const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `curriculum_${curriculumId}_${new Date().getTime()}.csv`;
+    link.click();
+}
+
+// ファイル選択処理
+function handleFileSelect(input) {
+    if (input.files.length > 0) {
+        const file = input.files[0];
+        document.getElementById('file-name').textContent = file.name;
+        document.getElementById('file-info').style.display = 'block';
+    }
+}
+
+function cancelFileSelect() {
+    document.getElementById('csvFile').value = '';
+    document.getElementById('file-info').style.display = 'none';
+}
+
+// CSVインポート
+function importFromCSV() {
+    const file = document.getElementById('csvFile').files[0];
+    if (!file) {
+        alert('CSVファイルを選択してください');
+        return;
+    }
+    
+    if (!confirm('現在の内容がCSVデータで置き換えられます。続行しますか？')) {
+        return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const content = e.target.result;
+        showLoading(true);
+        
+        fetch(`/curriculum/${curriculumId}/import-v2`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token() }}'
+            },
+            body: JSON.stringify({ csv_content: content })
+        })
+        .then(response => response.json())
+        .then(result => {
+            showLoading(false);
+            if (result.success) {
+                alert(result.message);
+                location.reload();
+            } else {
+                alert(result.message || 'インポートに失敗しました');
+            }
+        })
+        .catch(error => {
+            showLoading(false);
+            alert('エラーが発生しました');
+            console.error(error);
+        });
+    };
+    reader.readAsText(file);
+}
+
+// ローディング表示
+function showLoading(show) {
+    document.getElementById('loading').style.display = show ? 'flex' : 'none';
+}
+
+// キーボードショートカット
+document.addEventListener('keydown', function(e) {
+    if (e.ctrlKey || e.metaKey) {
+        if (e.key === 's') {
+            e.preventDefault();
+            saveData();
+        }
+    }
+});
+</script>
+{% endblock %}

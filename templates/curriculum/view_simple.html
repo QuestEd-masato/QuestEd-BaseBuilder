@@ -1,0 +1,467 @@
+{% extends "base.html" %}
+{% block title %}{{ curriculum.title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+.curriculum-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.curriculum-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 2rem;
+    border-radius: 12px;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+}
+
+.curriculum-header h1 {
+    margin: 0 0 0.5rem 0;
+    font-size: 2rem;
+    font-weight: 600;
+}
+
+.curriculum-header .subtitle {
+    margin: 0;
+    opacity: 0.9;
+    font-size: 1.1rem;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin-bottom: 2rem;
+}
+
+.btn-modern {
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 500;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.btn-success {
+    background: linear-gradient(135deg, #56ab2f 0%, #a8e6cf 100%);
+    color: white;
+}
+
+.btn-secondary {
+    background: #6c757d;
+    color: white;
+}
+
+.btn-warning {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    color: white;
+}
+
+.btn-modern:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    color: white;
+    text-decoration: none;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    text-align: center;
+    border-left: 4px solid #667eea;
+}
+
+.stat-card .number {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #667eea;
+    margin-bottom: 0.5rem;
+}
+
+.stat-card .label {
+    color: #6c757d;
+    font-size: 0.9rem;
+}
+
+.curriculum-table {
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    margin-bottom: 2rem;
+}
+
+.curriculum-table table {
+    width: 100%;
+    margin: 0;
+}
+
+.curriculum-table th {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    font-weight: 500;
+    padding: 1rem;
+    text-align: left;
+    border: none;
+    font-size: 0.9rem;
+}
+
+.curriculum-table td {
+    padding: 1rem;
+    border-bottom: 1px solid #f1f3f4;
+    vertical-align: top;
+}
+
+.curriculum-table tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+.phase-header {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    font-weight: 600;
+    color: #495057;
+}
+
+.category-badge {
+    display: inline-block;
+    padding: 0.4rem 0.8rem;
+    background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+    color: #1565c0;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+}
+
+.category-badge:hover {
+    background: linear-gradient(135deg, #bbdefb 0%, #90caf9 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(21, 101, 192, 0.2);
+    color: #0d47a1;
+    text-decoration: none;
+}
+
+.problem-link {
+    margin-left: 0.5rem;
+    color: #667eea;
+    text-decoration: none;
+    font-size: 0.8rem;
+    opacity: 0.8;
+}
+
+.problem-link:hover {
+    opacity: 1;
+    text-decoration: underline;
+}
+
+.no-data {
+    text-align: center;
+    padding: 3rem;
+    color: #6c757d;
+}
+
+.no-data i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    color: #dee2e6;
+}
+
+@media (max-width: 768px) {
+    .curriculum-table {
+        font-size: 0.8rem;
+    }
+    
+    .curriculum-table th,
+    .curriculum-table td {
+        padding: 0.5rem;
+    }
+    
+    .action-buttons {
+        justify-content: center;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="curriculum-container">
+    <!-- ヘッダー -->
+    <div class="curriculum-header">
+        <h1>{{ curriculum.title }}</h1>
+        <p class="subtitle">{{ class_obj.name }} | 更新日: {{ curriculum.updated_at.strftime('%Y年%m月%d日') }}</p>
+        {% if curriculum.description %}
+        <p style="margin-top: 1rem; opacity: 0.9;">{{ curriculum.description }}</p>
+        {% endif %}
+    </div>
+
+    <!-- アクションボタン -->
+    <div class="action-buttons">
+        <a href="{{ url_for('teacher.view_curriculums', class_id=class_obj.id) }}" class="btn-modern btn-secondary">
+            <i class="fas fa-arrow-left"></i> 一覧に戻る
+        </a>
+        {% if current_user.role == 'teacher' and current_user.id == curriculum.teacher_id %}
+        <a href="{{ url_for('teacher.edit_curriculum_simple', curriculum_id=curriculum.id) }}" class="btn-modern btn-primary">
+            <i class="fas fa-edit"></i> 編集
+        </a>
+        {% endif %}
+        <a href="{{ url_for('teacher.export_curriculum_v2', curriculum_id=curriculum.id) }}" class="btn-modern btn-success">
+            <i class="fas fa-file-csv"></i> CSV出力
+        </a>
+        {% if curriculum.format == 'json' %}
+        <button onclick="migrateToNewFormat()" class="btn-modern btn-warning">
+            <i class="fas fa-sync-alt"></i> 新形式に移行
+        </button>
+        {% endif %}
+    </div>
+
+    <!-- 統計情報 -->
+    {% if curriculum_stats %}
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="number">{{ curriculum_stats.total_items }}</div>
+            <div class="label">項目数</div>
+        </div>
+        <div class="stat-card">
+            <div class="number">{{ curriculum_stats.total_hours }}</div>
+            <div class="label">総時間数</div>
+        </div>
+        <div class="stat-card">
+            <div class="number">{{ curriculum_stats.phases | length }}</div>
+            <div class="label">フェーズ数</div>
+        </div>
+        <div class="stat-card">
+            <div class="number">{{ curriculum_stats.categories | length }}</div>
+            <div class="label">カテゴリ数</div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- カリキュラム内容テーブル -->
+    {% if curriculum_items %}
+    <div class="curriculum-table">
+        <table>
+            <thead>
+                <tr>
+                    <th width="12%">フェーズ</th>
+                    <th width="8%">週</th>
+                    <th width="6%">時間</th>
+                    <th width="15%">カテゴリ</th>
+                    <th width="25%">活動内容</th>
+                    <th width="20%">教師のサポート</th>
+                    <th width="14%">評価方法</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% set current_phase = None %}
+                {% for item in curriculum_items %}
+                <tr {% if item.phase != current_phase %}class="phase-header"{% endif %}>
+                    <td>
+                        {% if item.phase != current_phase %}
+                            <strong>{{ item.phase }}</strong>
+                            {% set current_phase = item.phase %}
+                        {% endif %}
+                    </td>
+                    <td>{{ item.week }}</td>
+                    <td>
+                        {% if item.hours %}
+                        <strong>{{ item.hours }}</strong>時間
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if item.category %}
+                        <span class="category-badge" 
+                              onclick="showRelatedProblems('{{ item.category }}', {{ item.id }})">
+                            {{ item.category }}
+                        </span>
+                        {% if item.problem_count > 0 %}
+                        <a href="#" class="problem-link" 
+                           onclick="showRelatedProblems('{{ item.category }}', {{ item.id }})">
+                            ({{ item.problem_count }}問)
+                        </a>
+                        {% endif %}
+                        {% endif %}
+                    </td>
+                    <td>{{ item.activity or '-' }}</td>
+                    <td>{{ item.teacher_support or '-' }}</td>
+                    <td>{{ item.evaluation_method or '-' }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="no-data">
+        <i class="fas fa-table"></i>
+        <h4>カリキュラムデータがありません</h4>
+        <p>カリキュラムの内容がまだ設定されていません。</p>
+        {% if current_user.role == 'teacher' and current_user.id == curriculum.teacher_id %}
+        <a href="{{ url_for('teacher.edit_curriculum_simple', curriculum_id=curriculum.id) }}" class="btn-modern btn-primary">
+            <i class="fas fa-plus"></i> 内容を追加
+        </a>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+
+<!-- 関連問題モーダル -->
+<div class="modal fade" id="problemModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">関連問題・練習</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="problem-content">
+                <div class="text-center">
+                    <i class="fas fa-spinner fa-spin"></i> 読み込み中...
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" id="start-practice-btn" style="display: none;">
+                    <i class="fas fa-play"></i> 練習開始
+                </button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    閉じる
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// 関連問題表示
+function showRelatedProblems(category, itemId) {
+    const modal = new bootstrap.Modal(document.getElementById('problemModal'));
+    modal.show();
+    
+    // 関連問題を取得
+    fetch(`/api/curriculum/problems?category=${encodeURIComponent(category)}&item_id=${itemId}`)
+        .then(response => response.json())
+        .then(data => {
+            const content = document.getElementById('problem-content');
+            const practiceBtn = document.getElementById('start-practice-btn');
+            
+            if (data.problems && data.problems.length > 0) {
+                content.innerHTML = `
+                    <h6><i class="fas fa-tag"></i> カテゴリ: ${category}</h6>
+                    <div class="list-group">
+                        ${data.problems.map(p => `
+                            <div class="list-group-item">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <strong>${p.category_name}</strong>
+                                    <span class="badge bg-info">${p.total_problems}問</span>
+                                </div>
+                                <div class="progress mt-2" style="height: 8px;">
+                                    <div class="progress-bar ${getScoreColor(p.avg_score)}" 
+                                         style="width: ${p.avg_score}%"
+                                         title="平均正答率: ${p.avg_score.toFixed(1)}%">
+                                    </div>
+                                </div>
+                                <small class="text-muted">平均正答率: ${p.avg_score.toFixed(1)}%</small>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+                
+                if (data.review_problems && data.review_problems.length > 0) {
+                    content.innerHTML += `
+                        <h6 class="mt-3"><i class="fas fa-redo"></i> 復習推奨問題</h6>
+                        <div class="row">
+                            ${data.review_problems.slice(0, 4).map(p => `
+                                <div class="col-md-6 mb-2">
+                                    <div class="card">
+                                        <div class="card-body p-2">
+                                            <small class="text-muted">${p.title}</small>
+                                            <div class="progress mt-1" style="height: 4px;">
+                                                <div class="progress-bar ${getScoreColor(p.correct_rate)}" 
+                                                     style="width: ${p.correct_rate}%"></div>
+                                            </div>
+                                            <small>${p.correct_rate.toFixed(1)}%</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                }
+                
+                // 練習開始ボタンの設定
+                practiceBtn.style.display = 'inline-block';
+                practiceBtn.onclick = function() {
+                    window.open(`/basebuilder/practice?category=${encodeURIComponent(category)}`, '_blank');
+                };
+            } else {
+                content.innerHTML = `
+                    <div class="text-center">
+                        <i class="fas fa-search fa-2x text-muted mb-2"></i>
+                        <p>「${category}」に関連する問題が見つかりませんでした。</p>
+                        <small class="text-muted">BaseBuilderで問題を作成するか、カテゴリ名を確認してください。</small>
+                    </div>
+                `;
+                practiceBtn.style.display = 'none';
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            document.getElementById('problem-content').innerHTML = 
+                '<div class="alert alert-danger"><i class="fas fa-exclamation-triangle"></i> エラーが発生しました。</div>';
+        });
+}
+
+// スコアに応じた色を取得
+function getScoreColor(score) {
+    if (score >= 80) return 'bg-success';
+    if (score >= 60) return 'bg-warning';
+    return 'bg-danger';
+}
+
+// 新形式への移行
+function migrateToNewFormat() {
+    if (confirm('JSONフォーマットから新しいテーブル形式に移行しますか？\n（この操作は元に戻せません）')) {
+        fetch(`/curriculum/{{ curriculum.id }}/migrate`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token() }}'
+            }
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.success) {
+                alert(result.message);
+                location.reload();
+            } else {
+                alert('移行に失敗しました: ' + result.message);
+            }
+        })
+        .catch(error => {
+            alert('エラーが発生しました');
+            console.error(error);
+        });
+    }
+}
+</script>
+{% endblock %}

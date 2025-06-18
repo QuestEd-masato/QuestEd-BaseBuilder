@@ -1583,3 +1583,204 @@ def _generate_class_analytics(class_id: int, ranking_type: str) -> dict:
         logger.error(f"クラス分析データ生成エラー: {str(e)}")
     
     return analytics
+
+
+# ========================================
+# カリキュラム機能 v2 - シンプル設計
+# ========================================
+
+@teacher_bp.route('/curriculum/<int:curriculum_id>/view-v2')
+@login_required
+def view_curriculum_simple(curriculum_id):
+    """シンプルなカリキュラム表示 (v2)"""
+    from app.services.curriculum_service_v2 import CurriculumServiceV2
+    
+    curriculum = Curriculum.query.get_or_404(curriculum_id)
+    class_obj = Class.query.get_or_404(curriculum.class_id)
+    
+    # 権限チェック
+    if not (current_user.role == 'teacher' and current_user.id == curriculum.teacher_id):
+        if current_user.role == 'student':
+            # 生徒の場合はクラス所属チェック
+            enrollment = ClassEnrollment.query.filter_by(
+                student_id=current_user.id,
+                class_id=curriculum.class_id
+            ).first()
+            if not enrollment:
+                flash('このカリキュラムを閲覧する権限がありません。', 'error')
+                return redirect(url_for('main.index'))
+        else:
+            flash('権限がありません', 'error')
+            return redirect(url_for('main.index'))
+    
+    # カリキュラム項目取得
+    curriculum_items = CurriculumServiceV2.get_curriculum_items(curriculum_id)
+    curriculum_stats = CurriculumServiceV2.get_curriculum_stats(curriculum_id)
+    
+    return render_template('curriculum/view_simple.html',
+                         curriculum=curriculum,
+                         class_obj=class_obj,
+                         curriculum_items=curriculum_items,
+                         curriculum_stats=curriculum_stats,
+                         now=datetime.now())
+
+@teacher_bp.route('/curriculum/<int:curriculum_id>/edit-v2', methods=['GET', 'POST'])
+@login_required
+@teacher_required
+def edit_curriculum_simple(curriculum_id):
+    """シンプルなカリキュラム編集 (v2)"""
+    from app.services.curriculum_service_v2 import CurriculumServiceV2
+    
+    curriculum = Curriculum.query.get_or_404(curriculum_id)
+    class_obj = Class.query.get_or_404(curriculum.class_id)
+    
+    if curriculum.teacher_id != current_user.id:
+        flash('編集権限がありません', 'error')
+        return redirect(url_for('teacher.dashboard'))
+    
+    if request.method == 'POST':
+        data = request.get_json()
+        
+        try:
+            # 基本情報更新
+            curriculum.title = data.get('title', curriculum.title)
+            curriculum.description = data.get('description', curriculum.description)
+            curriculum.updated_at = datetime.utcnow()
+            
+            # 項目の更新
+            items = data.get('items', [])
+            success, message = CurriculumServiceV2.save_curriculum_items(curriculum_id, items)
+            
+            if success:
+                db.session.commit()
+                logger.info(f"Curriculum {curriculum_id} updated successfully by user {current_user.id}")
+                return jsonify({'success': True, 'message': message})
+            else:
+                db.session.rollback()
+                return jsonify({'success': False, 'message': message}), 500
+                
+        except Exception as e:
+            db.session.rollback()
+            logger.error(f"Curriculum update error for ID {curriculum_id}: {str(e)}")
+            return jsonify({'success': False, 'message': 'エラーが発生しました'}), 500
+    
+    # GET: 編集画面表示
+    curriculum_items = CurriculumServiceV2.get_curriculum_items(curriculum_id)
+    return render_template('curriculum/edit_simple.html',
+                         curriculum=curriculum,
+                         class_obj=class_obj,
+                         curriculum_items=curriculum_items,
+                         now=datetime.now())
+
+@teacher_bp.route('/curriculum/<int:curriculum_id>/import-v2', methods=['POST'])
+@login_required
+@teacher_required
+def import_curriculum_v2(curriculum_id):
+    """CSVインポート (v2)"""
+    from app.services.curriculum_service_v2 import CurriculumServiceV2
+    
+    curriculum = Curriculum.query.get_or_404(curriculum_id)
+    
+    if curriculum.teacher_id != current_user.id:
+        return jsonify({'success': False, 'message': '権限がありません'}), 403
+    
+    data = request.get_json()
+    csv_content = data.get('csv_content', '')
+    
+    success, message = CurriculumServiceV2.import_from_csv(curriculum_id, csv_content)
+    
+    if success:
+        logger.info(f"CSV imported for curriculum {curriculum_id} by user {current_user.id}")
+    
+    return jsonify({'success': success, 'message': message})
+
+@teacher_bp.route('/curriculum/<int:curriculum_id>/export-v2')
+@login_required
+def export_curriculum_v2(curriculum_id):
+    """CSVエクスポート (v2)"""
+    from app.services.curriculum_service_v2 import CurriculumServiceV2
+    from app.utils.csv_helper import export_to_csv_utf8_bom
+    
+    curriculum = Curriculum.query.get_or_404(curriculum_id)
+    
+    # 権限チェック（教師または所属学生）
+    if current_user.role == 'teacher':
+        if curriculum.teacher_id != current_user.id:
+            flash('エクスポート権限がありません', 'error')
+            return redirect(url_for('teacher.dashboard'))
+    elif current_user.role == 'student':
+        enrollment = ClassEnrollment.query.filter_by(
+            student_id=current_user.id,
+            class_id=curriculum.class_id
+        ).first()
+        if not enrollment:
+            flash('エクスポート権限がありません', 'error')
+            return redirect(url_for('main.index'))
+    else:
+        flash('権限がありません', 'error')
+        return redirect(url_for('main.index'))
+    
+    # CSVデータ生成
+    csv_data, error_message = CurriculumServiceV2.export_to_csv(curriculum_id)
+    
+    if error_message:
+        flash(f'エクスポートエラー: {error_message}', 'error')
+        return redirect(url_for('teacher.view_curriculum_simple', curriculum_id=curriculum_id))
+    
+    if not csv_data:
+        flash('エクスポートするデータがありません。', 'warning')
+        return redirect(url_for('teacher.view_curriculum_simple', curriculum_id=curriculum_id))
+    
+    # ファイル名生成
+    safe_title = curriculum.title.replace(' ', '_').replace('/', '_')
+    filename = f'curriculum_{safe_title}_{curriculum_id}.csv'
+    
+    return export_to_csv_utf8_bom(
+        csv_data,
+        filename,
+        field_order=['フェーズ', '週', '時間数', 'カテゴリ', '活動内容', '教師のサポート', '評価方法']
+    )
+
+@teacher_bp.route('/curriculum/<int:curriculum_id>/migrate', methods=['POST'])
+@login_required
+@teacher_required
+def migrate_curriculum_to_v2(curriculum_id):
+    """JSONフォーマットから新フォーマットへの移行"""
+    from app.services.curriculum_service_v2 import CurriculumServiceV2
+    
+    curriculum = Curriculum.query.get_or_404(curriculum_id)
+    
+    if curriculum.teacher_id != current_user.id:
+        return jsonify({'success': False, 'message': '権限がありません'}), 403
+    
+    success, message = CurriculumServiceV2.migrate_from_json(curriculum_id)
+    
+    if success:
+        logger.info(f"Curriculum {curriculum_id} migrated to v2 format by user {current_user.id}")
+    
+    return jsonify({'success': success, 'message': message})
+
+@teacher_bp.route('/api/curriculum/problems')
+@login_required
+def get_curriculum_problems():
+    """カテゴリに関連する問題を取得"""
+    from app.services.curriculum_service_v2 import CurriculumServiceV2
+    
+    category = request.args.get('category', '')
+    item_id = request.args.get('item_id', type=int)
+    
+    if not category:
+        return jsonify({'problems': [], 'review_problems': []})
+    
+    # 関連問題を取得
+    problems = CurriculumServiceV2.get_related_problems(category, current_user.id)
+    
+    # 復習推奨問題も取得
+    review_problems = []
+    if item_id and current_user.role == 'student':
+        review_problems = CurriculumServiceV2.generate_review_problems(item_id, current_user.id)
+    
+    return jsonify({
+        'problems': problems,
+        'review_problems': review_problems
+    })
