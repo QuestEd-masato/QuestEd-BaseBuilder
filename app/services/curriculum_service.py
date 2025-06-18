@@ -397,3 +397,191 @@ class CurriculumService:
             errors.append('総時間数は0以上の数値で入力してください')
         
         return len(errors) == 0, errors
+    
+    @staticmethod
+    def get_curriculum_safe(curriculum_id: int, user_id: int = None) -> tuple[Optional[Curriculum], Optional[Dict[str, Any]], Optional[str]]:
+        """
+        カリキュラムデータの安全な取得
+        
+        Args:
+            curriculum_id: カリキュラムID
+            user_id: ユーザーID（権限チェック用）
+            
+        Returns:
+            (curriculum, curriculum_data, error_message)
+        """
+        logger = logging.getLogger(__name__)
+        
+        try:
+            # カリキュラム取得
+            curriculum = Curriculum.query.get(curriculum_id)
+            if not curriculum:
+                logger.error(f"Curriculum {curriculum_id} not found")
+                return None, None, "カリキュラムが見つかりません"
+            
+            # 権限チェック（必要に応じて）
+            if user_id:
+                from app.models import User
+                user = User.query.get(user_id)
+                if user and user.role == 'teacher' and curriculum.teacher_id != user_id:
+                    return None, None, "このカリキュラムにアクセスする権限がありません"
+            
+            # コンテンツのパース
+            curriculum_data = CurriculumService.parse_curriculum_content(curriculum)
+            
+            return curriculum, curriculum_data, None
+            
+        except Exception as e:
+            logger.error(f"Error getting curriculum data: {str(e)}", exc_info=True)
+            return None, None, "データ読み込み中にエラーが発生しました"
+    
+    @staticmethod
+    def update_curriculum_safe(curriculum_id: int, update_data: Dict[str, Any], user_id: int = None) -> tuple[bool, str]:
+        """
+        カリキュラムの安全な更新
+        
+        Args:
+            curriculum_id: カリキュラムID
+            update_data: 更新データ
+            user_id: ユーザーID（権限チェック用）
+            
+        Returns:
+            (success, message)
+        """
+        logger = logging.getLogger(__name__)
+        
+        try:
+            curriculum = Curriculum.query.get(curriculum_id)
+            if not curriculum:
+                return False, "カリキュラムが見つかりません"
+            
+            # 権限チェック
+            if user_id:
+                from app.models import User
+                user = User.query.get(user_id)
+                if user and user.role == 'teacher' and curriculum.teacher_id != user_id:
+                    return False, "編集権限がありません"
+            
+            # 基本情報の更新
+            if 'title' in update_data and update_data['title']:
+                curriculum.title = update_data['title']
+            if 'description' in update_data:
+                curriculum.description = update_data['description']
+            
+            # カリキュラム設定の更新
+            curriculum_fields = [
+                'total_hours', 'has_fieldwork', 'fieldwork_count', 
+                'has_presentation', 'presentation_format', 
+                'group_work_level', 'external_collaboration'
+            ]
+            
+            for field in curriculum_fields:
+                if field in update_data:
+                    setattr(curriculum, field, update_data[field])
+            
+            # コンテンツの更新
+            if 'content' in update_data:
+                content_data = update_data['content']
+                if isinstance(content_data, str):
+                    try:
+                        # JSON検証
+                        json.loads(content_data)
+                        curriculum.content = content_data
+                    except json.JSONDecodeError:
+                        return False, "コンテンツの形式が正しくありません"
+                else:
+                    curriculum.content = json.dumps(content_data, ensure_ascii=False)
+            
+            curriculum.updated_at = datetime.utcnow()
+            db.session.commit()
+            
+            logger.info(f"Curriculum {curriculum_id} updated successfully")
+            return True, "更新しました"
+            
+        except Exception as e:
+            db.session.rollback()
+            logger.error(f"Error updating curriculum {curriculum_id}: {str(e)}", exc_info=True)
+            return False, "更新中にエラーが発生しました"
+    
+    @staticmethod
+    def export_curriculum_to_csv(curriculum_id: int) -> tuple[Optional[List[Dict[str, Any]]], Optional[str]]:
+        """
+        カリキュラムのCSVエクスポート用データ生成
+        
+        Args:
+            curriculum_id: カリキュラムID
+            
+        Returns:
+            (csv_data, error_message)
+        """
+        logger = logging.getLogger(__name__)
+        
+        try:
+            curriculum, curriculum_data, error = CurriculumService.get_curriculum_safe(curriculum_id)
+            if error:
+                return None, error
+            
+            csv_data = []
+            
+            # フェーズデータを展開
+            phases = curriculum_data.get('phases', [])
+            if not phases:
+                # フェーズがない場合は基本情報のみ
+                csv_data.append({
+                    'カリキュラム名': curriculum.title,
+                    '説明': curriculum.description or '',
+                    '総時間数': curriculum_data.get('total_hours', curriculum.total_hours),
+                    'フィールドワーク': '有り' if curriculum_data.get('has_fieldwork') else '無し',
+                    'フィールドワーク回数': curriculum_data.get('fieldwork_count', 0),
+                    '発表会': '有り' if curriculum_data.get('has_presentation') else '無し',
+                    '発表形式': curriculum_data.get('presentation_format', ''),
+                    'グループワーク': curriculum_data.get('group_work_level', ''),
+                    '外部連携': '有り' if curriculum_data.get('external_collaboration') else '無し'
+                })
+            else:
+                # フェーズとウィークデータを展開
+                for phase_idx, phase in enumerate(phases):
+                    phase_name = phase.get('name', phase.get('phase', f'フェーズ{phase_idx + 1}'))
+                    weeks = phase.get('weeks', [])
+                    
+                    if not weeks:
+                        # ウィークがない場合はフェーズ情報のみ
+                        csv_data.append({
+                            'フェーズ番号': phase_idx + 1,
+                            'フェーズ名': phase_name,
+                            '説明': phase.get('description', ''),
+                            '週': '',
+                            '時間数': '',
+                            'テーマ': '',
+                            '活動内容': '',
+                            '教師のサポート': '',
+                            '評価方法': ''
+                        })
+                    else:
+                        for week_idx, week in enumerate(weeks):
+                            csv_data.append({
+                                'フェーズ番号': phase_idx + 1,
+                                'フェーズ名': phase_name,
+                                '説明': phase.get('description', '') if week_idx == 0 else '',
+                                '週': week.get('week', f'{week_idx + 1}週目'),
+                                '時間数': week.get('hours', ''),
+                                'テーマ': week.get('theme', ''),
+                                '活動内容': week.get('activities', ''),
+                                '教師のサポート': week.get('teacher_support', ''),
+                                '評価方法': week.get('evaluation', '')
+                            })
+            
+            # データがない場合のフォールバック
+            if not csv_data:
+                csv_data = [{
+                    'カリキュラム名': curriculum.title,
+                    '状態': 'データなし',
+                    'メッセージ': 'カリキュラムの詳細データがまだ設定されていません'
+                }]
+            
+            logger.info(f"Generated CSV data for curriculum {curriculum_id}: {len(csv_data)} rows")
+            return csv_data, None
+            
+        except Exception as e:
+            logger.error(f"Error exporting curriculum {curriculum_id}: {str(e)}", exc_info=True)
+            return None, "エクスポート中にエラーが発生しました"

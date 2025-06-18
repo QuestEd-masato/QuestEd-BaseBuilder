@@ -1258,130 +1258,141 @@ def import_curriculum(class_id):
 @teacher_required
 def view_curriculum(curriculum_id):
     """カリキュラム詳細表示"""
-    curriculum = Curriculum.query.get_or_404(curriculum_id)
-    class_obj = Class.query.get_or_404(curriculum.class_id)
+    from app.services.curriculum_service import CurriculumService
     
-    # 権限チェック
-    if class_obj.teacher_id != current_user.id:
-        flash('このカリキュラムを閲覧する権限がありません。')
+    # CurriculumServiceの安全な取得メソッドを使用
+    curriculum, curriculum_data, error_message = CurriculumService.get_curriculum_safe(
+        curriculum_id, current_user.id
+    )
+    
+    if error_message:
+        flash(error_message, 'error')
         return redirect(url_for('teacher.dashboard'))
     
-    # CurriculumServiceを使用してデータを取得
-    try:
-        from app.services.curriculum_service import CurriculumService
-        curriculum_display_data = CurriculumService.get_curriculum_display_data(curriculum)
-        
-        return render_template('view_curriculum.html', 
-                             curriculum=curriculum,
-                             class_obj=class_obj,
-                             curriculum_content=curriculum_display_data,
-                             curriculum_data=curriculum_display_data,
-                             **curriculum_display_data)
+    # クラス情報を取得
+    class_obj = Class.query.get_or_404(curriculum.class_id)
     
-    except Exception as e:
-        logging.error(f"Curriculum display error for ID {curriculum_id}: {str(e)}")
-        flash('カリキュラムデータの読み込みに問題が発生しました。', 'warning')
-        
-        # フォールバック処理
-        return render_template('view_curriculum.html', 
-                             curriculum=curriculum,
-                             class_obj=class_obj,
-                             curriculum_content={},
-                             curriculum_data={},
-                             error_occurred=True)
+    # 表示用データの準備
+    display_data = CurriculumService.get_curriculum_display_data(curriculum)
+    now = datetime.now()
+    
+    return render_template('view_curriculum.html', 
+                         curriculum=curriculum,
+                         class_obj=class_obj,
+                         curriculum_content=curriculum_data,
+                         curriculum_data=display_data,
+                         now=now,
+                         **display_data)
 
 @teacher_bp.route('/curriculum/<int:curriculum_id>/edit', methods=['GET', 'POST'])
 @login_required
 @teacher_required
 def edit_curriculum(curriculum_id):
     """カリキュラム編集"""
-    curriculum = Curriculum.query.get_or_404(curriculum_id)
-    class_obj = Class.query.get_or_404(curriculum.class_id)
-    
-    # 権限チェック
-    if class_obj.teacher_id != current_user.id:
-        flash('このカリキュラムを編集する権限がありません。')
-        return redirect(url_for('teacher.dashboard'))
+    from app.services.curriculum_service import CurriculumService
     
     if request.method == 'POST':
-        try:
-            from app.services.curriculum_service import CurriculumService
-            
-            # 基本情報の更新
-            curriculum.title = request.form.get('title', curriculum.title)
-            curriculum.description = request.form.get('description', curriculum.description)
-            
-            # カリキュラム内容の更新
-            content_data = {}
-            
-            # フォームからのデータを収集
-            if request.form.get('total_hours'):
-                content_data['total_hours'] = int(request.form.get('total_hours', 0))
-            
-            content_data['has_fieldwork'] = 'has_fieldwork' in request.form
-            if content_data['has_fieldwork']:
-                content_data['fieldwork_count'] = int(request.form.get('fieldwork_count', 0))
-            
-            content_data['has_presentation'] = 'has_presentation' in request.form
-            if content_data['has_presentation']:
-                content_data['presentation_format'] = request.form.get('presentation_format', '')
-            
-            content_data['group_work_level'] = request.form.get('group_work_level', 'medium')
-            content_data['external_collaboration'] = 'external_collaboration' in request.form
-            
-            # 直接JSON内容が送信された場合の処理
-            raw_content = request.form.get('content')
-            if raw_content:
+        # 更新データの準備
+        update_data = {
+            'title': request.form.get('title', '').strip(),
+            'description': request.form.get('description', '').strip()
+        }
+        
+        # カリキュラム設定の収集
+        curriculum_settings = {}
+        
+        # 基本設定
+        if request.form.get('total_hours'):
+            try:
+                curriculum_settings['total_hours'] = int(request.form.get('total_hours', 0))
+            except ValueError:
+                curriculum_settings['total_hours'] = 0
+        
+        # フィールドワーク設定
+        curriculum_settings['has_fieldwork'] = 'has_fieldwork' in request.form
+        if curriculum_settings['has_fieldwork']:
+            try:
+                curriculum_settings['fieldwork_count'] = int(request.form.get('fieldwork_count', 0))
+            except ValueError:
+                curriculum_settings['fieldwork_count'] = 0
+        
+        # 発表設定
+        curriculum_settings['has_presentation'] = 'has_presentation' in request.form
+        if curriculum_settings['has_presentation']:
+            curriculum_settings['presentation_format'] = request.form.get('presentation_format', '')
+        
+        # その他設定
+        curriculum_settings['group_work_level'] = request.form.get('group_work_level', 'medium')
+        curriculum_settings['external_collaboration'] = 'external_collaboration' in request.form
+        
+        # JSON コンテンツの処理
+        raw_content = request.form.get('content')
+        if raw_content:
+            try:
                 import json
-                try:
-                    parsed_content = json.loads(raw_content)
-                    content_data.update(parsed_content)
-                except json.JSONDecodeError:
-                    flash('カリキュラム内容の形式が正しくありません。')
-                    # エラー時でも現在のデータを表示
-                    curriculum_display_data = CurriculumService.get_curriculum_display_data(curriculum)
-                    return render_template('edit_curriculum.html',
-                                         curriculum=curriculum,
-                                         class_obj=class_obj,
-                                         curriculum_content=curriculum_display_data,
-                                         curriculum_data=curriculum_display_data,
-                                         **curriculum_display_data)
-            
-            # CurriculumServiceを使用してコンテンツを更新
-            if CurriculumService.update_curriculum_content(curriculum, content_data):
-                flash('カリキュラムを更新しました。')
-                return redirect(url_for('teacher.view_curriculum', curriculum_id=curriculum_id))
-            else:
-                flash('カリキュラムの更新に失敗しました。', 'error')
+                parsed_content = json.loads(raw_content)
+                curriculum_settings.update(parsed_content)
+            except json.JSONDecodeError:
+                flash('カリキュラム内容の形式が正しくありません。', 'error')
+                # エラー時は再表示
+                curriculum, curriculum_data, error = CurriculumService.get_curriculum_safe(
+                    curriculum_id, current_user.id
+                )
+                if error:
+                    flash(error, 'error')
+                    return redirect(url_for('teacher.dashboard'))
                 
-        except Exception as e:
-            logging.error(f"Curriculum update error for ID {curriculum_id}: {str(e)}")
-            flash('カリキュラムの更新中にエラーが発生しました。', 'error')
-            db.session.rollback()
+                class_obj = Class.query.get_or_404(curriculum.class_id)
+                display_data = CurriculumService.get_curriculum_display_data(curriculum)
+                now = datetime.now()
+                
+                return render_template('edit_curriculum.html',
+                                     curriculum=curriculum,
+                                     class_obj=class_obj,
+                                     curriculum_content=curriculum_data,
+                                     curriculum_data=display_data,
+                                     now=now,
+                                     error_occurred=True,
+                                     **display_data)
+        
+        # コンテンツ設定をupdate_dataに追加
+        if curriculum_settings:
+            update_data['content'] = curriculum_settings
+        
+        # CurriculumServiceの安全な更新メソッドを使用
+        success, message = CurriculumService.update_curriculum_safe(
+            curriculum_id, update_data, current_user.id
+        )
+        
+        if success:
+            flash(message, 'success')
+            return redirect(url_for('teacher.view_curriculum', curriculum_id=curriculum_id))
+        else:
+            flash(message, 'error')
     
     # GET時または更新失敗時の表示処理
-    try:
-        from app.services.curriculum_service import CurriculumService
-        curriculum_display_data = CurriculumService.get_curriculum_display_data(curriculum)
-        
-        return render_template('edit_curriculum.html',
-                             curriculum=curriculum,
-                             class_obj=class_obj,
-                             curriculum_content=curriculum_display_data,
-                             curriculum_data=curriculum_display_data,
-                             **curriculum_display_data)
+    curriculum, curriculum_data, error_message = CurriculumService.get_curriculum_safe(
+        curriculum_id, current_user.id
+    )
     
-    except Exception as e:
-        logging.error(f"Curriculum edit display error for ID {curriculum_id}: {str(e)}")
-        flash('カリキュラムデータの読み込みに問題が発生しました。', 'warning')
-        
-        # フォールバック処理
-        return render_template('edit_curriculum.html',
-                             curriculum=curriculum,
-                             class_obj=class_obj,
-                             curriculum_content={},
-                             curriculum_data={},
-                             error_occurred=True)
+    if error_message:
+        flash(error_message, 'error')
+        return redirect(url_for('teacher.dashboard'))
+    
+    # クラス情報を取得
+    class_obj = Class.query.get_or_404(curriculum.class_id)
+    
+    # 表示用データの準備
+    display_data = CurriculumService.get_curriculum_display_data(curriculum)
+    now = datetime.now()
+    
+    return render_template('edit_curriculum.html',
+                         curriculum=curriculum,
+                         class_obj=class_obj,
+                         curriculum_content=curriculum_data,
+                         curriculum_data=display_data,
+                         now=now,
+                         **display_data)
 
 @teacher_bp.route('/curriculum/<int:curriculum_id>/delete', methods=['POST'])
 @login_required
@@ -1407,29 +1418,29 @@ def delete_curriculum(curriculum_id):
 @teacher_required
 def export_curriculum(curriculum_id):
     """カリキュラムエクスポート"""
-    curriculum = Curriculum.query.get_or_404(curriculum_id)
-    class_obj = Class.query.get_or_404(curriculum.class_id)
+    from app.services.curriculum_service import CurriculumService
+    from app.utils.csv_helper import export_to_csv_utf8_bom
     
-    # 権限チェック
-    if class_obj.teacher_id != current_user.id:
-        flash('このカリキュラムをエクスポートする権限がありません。')
+    # CurriculumServiceの安全なCSVエクスポートメソッドを使用
+    csv_data, error_message = CurriculumService.export_curriculum_to_csv(curriculum_id)
+    
+    if error_message:
+        flash(f'エクスポートエラー: {error_message}', 'error')
         return redirect(url_for('teacher.dashboard'))
     
-    # CurriculumServiceを使用してデータを取得
-    try:
-        from app.services.curriculum_service import CurriculumService
-        from app.utils.csv_helper import export_curriculum_to_csv
-        
-        curriculum_display_data = CurriculumService.get_curriculum_display_data(curriculum)
-        
-        return export_curriculum_to_csv(
-            curriculum_display_data,
-            curriculum.title,
-            encoding='utf-8-bom'
-        )
-    except Exception as e:
-        flash(f'カリキュラムのエクスポートに失敗しました: {str(e)}')
+    if not csv_data:
+        flash('エクスポートするデータがありません。', 'warning')
         return redirect(url_for('teacher.view_curriculum', curriculum_id=curriculum_id))
+    
+    # カリキュラム情報を取得してファイル名に使用
+    curriculum = Curriculum.query.get(curriculum_id)
+    filename = f'curriculum_{curriculum.title.replace(" ", "_")}_{curriculum_id}.csv' if curriculum else f'curriculum_{curriculum_id}.csv'
+    
+    return export_to_csv_utf8_bom(
+        csv_data,
+        filename,
+        field_order=list(csv_data[0].keys()) if csv_data else None
+    )
 
 @teacher_bp.route('/curriculum/download_template')
 @login_required
