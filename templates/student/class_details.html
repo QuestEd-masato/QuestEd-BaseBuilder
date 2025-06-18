@@ -1,0 +1,425 @@
+{% extends "base.html" %}
+{% block title %}{{ class_obj.name }} - クラス詳細{% endblock %}
+
+{% block extra_css %}
+<style>
+/* クラス詳細ページのスタイル */
+.class-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 2rem;
+    border-radius: 15px;
+    margin-bottom: 2rem;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}
+
+.class-header h2 {
+    margin-bottom: 0.5rem;
+    font-weight: 700;
+}
+
+.class-header p {
+    margin-bottom: 0;
+    opacity: 0.9;
+    font-size: 1.1rem;
+}
+
+.section-card {
+    border: none;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+    margin-bottom: 2rem;
+    border-radius: 15px;
+    overflow: hidden;
+}
+
+.section-header {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    padding: 1.5rem;
+    border-bottom: 3px solid #dee2e6;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.section-header h4 {
+    margin-bottom: 0;
+    color: #495057;
+    font-weight: 600;
+}
+
+.section-header i {
+    margin-right: 0.5rem;
+    color: #6c757d;
+}
+
+.curriculum-section {
+    border-bottom: 1px solid #e9ecef;
+    padding: 1.5rem;
+    margin-bottom: 0;
+}
+
+.curriculum-section:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+.curriculum-table {
+    font-size: 0.875rem;
+    margin-top: 1rem;
+}
+
+.curriculum-table th {
+    background: linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%);
+    font-weight: 600;
+    color: #495057;
+    border: none;
+    padding: 1rem 0.75rem;
+}
+
+.curriculum-table td {
+    padding: 0.75rem;
+    border-top: 1px solid #e9ecef;
+    vertical-align: middle;
+}
+
+.milestone-item {
+    padding: 1.5rem;
+    border-bottom: 1px solid #e9ecef;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.milestone-item:hover {
+    background-color: #f8f9fa;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.milestone-item:last-child {
+    border-bottom: none;
+}
+
+.milestone-completed {
+    background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+    border-left: 4px solid #28a745;
+}
+
+.milestone-upcoming {
+    background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+    border-left: 4px solid #ffc107;
+}
+
+.milestone-overdue {
+    background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+    border-left: 4px solid #dc3545;
+}
+
+.badge-phase {
+    background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+    color: white;
+    padding: 0.4rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.milestone-status-icon {
+    font-size: 1.2rem;
+    margin-right: 0.75rem;
+}
+
+.navigation-buttons {
+    margin-bottom: 2rem;
+}
+
+.btn-modern {
+    padding: 0.75rem 1.5rem;
+    border-radius: 25px;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+    border: none;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.btn-modern:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    text-decoration: none;
+}
+
+.btn-secondary {
+    background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+    color: white;
+}
+
+.btn-success {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    color: white;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 3rem;
+    color: #6c757d;
+}
+
+.empty-state i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+.stats-badge {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 15px;
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.milestone-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.milestone-date {
+    font-size: 0.875rem;
+    color: #6c757d;
+}
+
+.milestone-points {
+    font-weight: 600;
+}
+
+@media (max-width: 768px) {
+    .class-header {
+        padding: 1.5rem;
+    }
+    
+    .section-header {
+        padding: 1rem;
+    }
+    
+    .milestone-item {
+        padding: 1rem;
+    }
+    
+    .curriculum-table {
+        font-size: 0.8rem;
+    }
+    
+    .navigation-buttons {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .btn-modern {
+        justify-content: center;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- クラスヘッダー -->
+    <div class="class-header">
+        <h2>{{ class_obj.name }}</h2>
+        <p>担任: {{ class_obj.teacher.display_name if class_obj.teacher else '未設定' }}</p>
+    </div>
+
+    <!-- ナビゲーションボタン -->
+    <div class="navigation-buttons">
+        <a href="{{ url_for('student.dashboard') }}" class="btn-modern btn-secondary">
+            <i class="fas fa-arrow-left"></i> ダッシュボードに戻る
+        </a>
+        <a href="{{ url_for('student.class_themes', class_id=class_obj.id) }}" class="btn-modern btn-success">
+            <i class="fas fa-book"></i> テーマを見る
+        </a>
+    </div>
+
+    <!-- カリキュラムセクション -->
+    <div class="section-card card">
+        <div class="section-header">
+            <h4>
+                <i class="fas fa-graduation-cap"></i> カリキュラム
+            </h4>
+            <span class="stats-badge">{{ curriculum_data|length }}件</span>
+        </div>
+        <div class="card-body p-0">
+            {% if curriculum_data %}
+                {% for data in curriculum_data %}
+                <div class="curriculum-section">
+                    <h5 class="mb-2 text-primary">{{ data.curriculum.title }}</h5>
+                    {% if data.curriculum.description %}
+                    <p class="text-muted mb-3">{{ data.curriculum.description }}</p>
+                    {% endif %}
+                    
+                    {% if data.items %}
+                    <div class="table-responsive">
+                        <table class="table table-sm curriculum-table mb-0">
+                            <thead>
+                                <tr>
+                                    <th style="width: 15%;">フェーズ</th>
+                                    <th style="width: 12%;">週</th>
+                                    <th style="width: 8%;">時間</th>
+                                    <th style="width: 15%;">カテゴリ</th>
+                                    <th style="width: 50%;">活動内容</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in data.items %}
+                                <tr>
+                                    <td>
+                                        <span class="badge-phase">{{ item.phase or '-' }}</span>
+                                    </td>
+                                    <td>{{ item.week or '-' }}</td>
+                                    <td>
+                                        {% if item.hours %}
+                                            {{ item.hours }}時間
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <small class="text-muted">{{ item.category or '-' }}</small>
+                                    </td>
+                                    <td>{{ item.activity or '-' }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="empty-state">
+                        <i class="fas fa-clipboard-list"></i>
+                        <p>詳細な内容はまだ登録されていません。</p>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state">
+                    <i class="fas fa-graduation-cap"></i>
+                    <h5>カリキュラムがありません</h5>
+                    <p>カリキュラムはまだ登録されていません。<br>担任の先生にお問い合わせください。</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- マイルストーンセクション -->
+    <div class="section-card card">
+        <div class="section-header">
+            <h4>
+                <i class="fas fa-flag-checkered"></i> マイルストーン
+            </h4>
+            <span class="stats-badge">{{ milestones|length }}件</span>
+        </div>
+        <div class="card-body p-0">
+            {% if milestones %}
+                {% for milestone in milestones %}
+                {% set now = moment().utc() %}
+                {% set target_date = moment(milestone.target_date) %}
+                {% set is_overdue = target_date < now and not milestone.is_completed %}
+                {% set is_upcoming = target_date >= now and target_date <= now.add(days=7) %}
+                
+                <div class="milestone-item 
+                    {% if milestone.is_completed %}milestone-completed{% endif %}
+                    {% if is_upcoming and not milestone.is_completed %}milestone-upcoming{% endif %}
+                    {% if is_overdue %}milestone-overdue{% endif %}">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div class="d-flex align-items-start flex-grow-1">
+                            <div class="milestone-status-icon">
+                                {% if milestone.is_completed %}
+                                <i class="fas fa-check-circle text-success"></i>
+                                {% elif is_overdue %}
+                                <i class="fas fa-exclamation-circle text-danger"></i>
+                                {% elif is_upcoming %}
+                                <i class="fas fa-clock text-warning"></i>
+                                {% else %}
+                                <i class="far fa-circle text-muted"></i>
+                                {% endif %}
+                            </div>
+                            <div class="flex-grow-1">
+                                <h6 class="mb-2 font-weight-bold">{{ milestone.title }}</h6>
+                                {% if milestone.description %}
+                                <p class="mb-2 text-muted">{{ milestone.description }}</p>
+                                {% endif %}
+                                <div class="milestone-meta">
+                                    <div class="milestone-date">
+                                        <i class="fas fa-calendar-alt"></i>
+                                        目標日: {{ milestone.target_date.strftime('%Y年%m月%d日') }}
+                                        {% if milestone.is_completed and milestone.completed_at %}
+                                        <span class="text-success ml-2">
+                                            <i class="fas fa-check"></i>
+                                            {{ milestone.completed_at.strftime('%Y年%m月%d日') }}達成
+                                        </span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="milestone-points">
+                            <span class="badge badge-{{ 'success' if milestone.is_completed else 'primary' }} badge-pill">
+                                <i class="fas fa-star"></i>
+                                {% if hasattr(milestone, 'points') %}
+                                    {{ milestone.points }}ポイント
+                                {% else %}
+                                    ポイント
+                                {% endif %}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state">
+                    <i class="fas fa-flag-checkered"></i>
+                    <h5>マイルストーンがありません</h5>
+                    <p>マイルストーンはまだ設定されていません。<br>担任の先生から設定されるまでお待ちください。</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // マイルストーンアイテムのホバー効果を強化
+    const milestoneItems = document.querySelectorAll('.milestone-item');
+    milestoneItems.forEach(item => {
+        item.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-2px)';
+        });
+        
+        item.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+        });
+    });
+    
+    // ナビゲーションボタンのアニメーション
+    const navButtons = document.querySelectorAll('.btn-modern');
+    navButtons.forEach(button => {
+        button.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-2px) scale(1.02)';
+        });
+        
+        button.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0) scale(1)';
+        });
+    });
+});
+</script>
+{% endblock %}

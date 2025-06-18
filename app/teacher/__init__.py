@@ -1270,20 +1270,21 @@ def view_curriculum(curriculum_id):
         # 生徒のクラス所属確認
         enrollment = db.session.execute(text("""
             SELECT 1 FROM class_enrollments 
-            WHERE student_id = :student_id AND class_id = :class_id
+            WHERE student_id = :student_id AND class_id = :class_id AND is_active = 1
         """), {
             'student_id': current_user.id,
             'class_id': curriculum.class_id
         }).first()
         
-        if not enrollment:
+        if enrollment:
+            can_edit = False  # 生徒は閲覧のみ
+        else:
             flash('このカリキュラムにアクセスする権限がありません。', 'error')
             return redirect(url_for('student.dashboard'))
     else:
         # その他のユーザーはアクセス不可
-        if current_user.role != 'teacher':
-            flash('このページへのアクセス権限がありません。', 'error')
-            return redirect(url_for('main.index'))
+        flash('このページへのアクセス権限がありません。', 'error')
+        return redirect(url_for('index'))
     
     # クラス情報を取得
     class_obj = Class.query.get_or_404(curriculum.class_id)

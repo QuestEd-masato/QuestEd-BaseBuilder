@@ -36,7 +36,7 @@ from app.models import (
     db, User, Class, ClassEnrollment, MainTheme, InquiryTheme,
     InterestSurvey, PersonalitySurvey, ActivityLog, Todo, Goal,
     Milestone, Group, GroupMembership, ChatHistory,
-    CurriculumUnit, StudentUnitSelection
+    CurriculumUnit, StudentUnitSelection, Curriculum
 )
 from app.ai import generate_personal_themes_with_ai
 from app.utils.rate_limiting import upload_limit, api_limit
@@ -1822,6 +1822,86 @@ def student_view_main_themes():
     except Exception as e:
         current_app.logger.error(f"Error in student_view_main_themes: {str(e)}")
         flash('大テーマの表示中にエラーが発生しました。')
+        return redirect(url_for('student.dashboard'))
+
+@student_bp.route('/class/<int:class_id>/details')
+@login_required
+@student_required
+def class_details(class_id):
+    """クラスの詳細（カリキュラム・マイルストーン）表示"""
+    try:
+        # クラス情報を取得
+        class_obj = Class.query.get_or_404(class_id)
+        
+        # 生徒の所属確認
+        enrollment = ClassEnrollment.query.filter_by(
+            student_id=current_user.id,
+            class_id=class_id,
+            is_active=True
+        ).first()
+        
+        if not enrollment:
+            flash('このクラスの情報を閲覧する権限がありません。', 'error')
+            return redirect(url_for('student.dashboard'))
+        
+        # カリキュラム取得
+        curriculums = Curriculum.query.filter_by(class_id=class_id).all()
+        
+        # カリキュラムごとのアイテムを取得
+        curriculum_data = []
+        for curriculum in curriculums:
+            items = []
+            if hasattr(curriculum, 'format') and curriculum.format == 'table':
+                # 新形式のカリキュラム
+                items = db.session.execute(text("""
+                    SELECT phase, week, hours, category, activity, 
+                           teacher_support, evaluation_method
+                    FROM curriculum_items
+                    WHERE curriculum_id = :curriculum_id
+                    ORDER BY order_index
+                """), {'curriculum_id': curriculum.id}).fetchall()
+            
+            curriculum_data.append({
+                'curriculum': curriculum,
+                'items': items
+            })
+        
+        # マイルストーン取得
+        milestones = db.session.execute(text("""
+            SELECT m.*, 
+                   CASE WHEN sm.completed_at IS NOT NULL THEN 1 ELSE 0 END as is_completed,
+                   sm.completed_at
+            FROM milestones m
+            LEFT JOIN student_milestones sm ON m.id = sm.milestone_id 
+                AND sm.student_id = :student_id
+            WHERE m.class_id = :class_id
+            ORDER BY m.target_date
+        """), {
+            'student_id': current_user.id,
+            'class_id': class_id
+        }).fetchall()
+        
+        return render_template('student/class_details.html',
+                             class_obj=class_obj,
+                             curriculum_data=curriculum_data,
+                             milestones=milestones)
+                             
+    except Exception as e:
+        current_app.logger.error(f"Error in class_details: {str(e)}")
+        flash('クラス詳細の表示中にエラーが発生しました。', 'error')
+        return redirect(url_for('student.dashboard'))
+
+@student_bp.route('/class/<int:class_id>/themes')
+@login_required
+@student_required
+def class_themes(class_id):
+    """クラスのテーマ一覧"""
+    try:
+        # 既存のテーマ表示機能にリダイレクト
+        return redirect(url_for('student.view_themes', class_id=class_id))
+    except Exception as e:
+        current_app.logger.error(f"Error in class_themes: {str(e)}")
+        flash('テーマページへの移動中にエラーが発生しました。', 'error')
         return redirect(url_for('student.dashboard'))
 
 @student_bp.route('/main_theme/<int:theme_id>/create_personal', methods=['GET', 'POST'])
