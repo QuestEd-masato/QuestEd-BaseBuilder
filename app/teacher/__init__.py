@@ -1253,36 +1253,125 @@ def import_curriculum(class_id):
     
     return render_template('upload_curriculum.html', class_obj=class_obj)
 
-@teacher_bp.route('/curriculum/<int:curriculum_id>')
+@teacher_bp.route('/curriculum/<int:curriculum_id>', methods=['GET', 'POST'])
 @login_required
-@teacher_required
 def view_curriculum(curriculum_id):
-    """カリキュラム詳細表示"""
+    """統合されたカリキュラム表示・編集画面"""
     from app.services.curriculum_service import CurriculumService
+    from app.services.curriculum_service_v2 import CurriculumServiceV2
+    from basebuilder.models import ProblemCategory, TextSet
+    from sqlalchemy import text
     
-    # CurriculumServiceの安全な取得メソッドを使用
-    curriculum, curriculum_data, error_message = CurriculumService.get_curriculum_safe(
-        curriculum_id, current_user.id
-    )
+    curriculum = Curriculum.query.get_or_404(curriculum_id)
     
-    if error_message:
-        flash(error_message, 'error')
-        return redirect(url_for('teacher.dashboard'))
+    # 権限チェック
+    can_edit = False
+    if current_user.role == 'teacher' and curriculum.teacher_id == current_user.id:
+        can_edit = True
+    elif current_user.role == 'student':
+        # 生徒のクラス所属確認
+        enrollment = db.session.execute(text("""
+            SELECT 1 FROM class_enrollments 
+            WHERE student_id = :student_id AND class_id = :class_id
+        """), {
+            'student_id': current_user.id,
+            'class_id': curriculum.class_id
+        }).first()
+        
+        if not enrollment:
+            flash('このカリキュラムにアクセスする権限がありません。', 'error')
+            return redirect(url_for('student.dashboard'))
     
     # クラス情報を取得
     class_obj = Class.query.get_or_404(curriculum.class_id)
     
-    # 表示用データの準備
-    display_data = CurriculumService.get_curriculum_display_data(curriculum)
-    now = datetime.now()
+    # POST処理（編集保存）
+    if request.method == 'POST' and can_edit:
+        try:
+            # 基本情報の更新
+            curriculum.title = request.form.get('title', '').strip()
+            curriculum.description = request.form.get('description', '').strip()
+            
+            # フォーマットに応じた処理
+            if curriculum.format == 'table' or not curriculum.format:
+                # v2形式（テーブル）での保存
+                items_count = int(request.form.get('items_count', 0))
+                items = []
+                
+                for i in range(items_count):
+                    item = {
+                        'phase': request.form.get(f'phase_{i}', ''),
+                        'week': request.form.get(f'week_{i}', ''),
+                        'hours': int(request.form.get(f'hours_{i}', 0) or 0),
+                        'category': request.form.get(f'category_{i}', ''),
+                        'activity': request.form.get(f'activity_{i}', ''),
+                        'teacher_support': request.form.get(f'teacher_support_{i}', ''),
+                        'evaluation_method': request.form.get(f'evaluation_method_{i}', '')
+                    }
+                    if any(item.values()):  # 空でない項目のみ保存
+                        items.append(item)
+                
+                # v2サービスで保存
+                success, message = CurriculumServiceV2.save_curriculum_items(curriculum_id, items)
+                if success:
+                    curriculum.format = 'table'
+                    curriculum.updated_at = datetime.utcnow()
+                    db.session.commit()
+                    flash('カリキュラムを更新しました。', 'success')
+                else:
+                    flash(f'保存エラー: {message}', 'error')
+            else:
+                # レガシーJSON形式での保存
+                # 元のCurriculumServiceを使用
+                pass
+            
+        except Exception as e:
+            db.session.rollback()
+            flash(f'保存中にエラーが発生しました: {str(e)}', 'error')
+            current_app.logger.error(f"Curriculum save error: {str(e)}")
+        
+        return redirect(url_for('teacher.view_curriculum', curriculum_id=curriculum_id))
     
-    return render_template('view_curriculum.html', 
-                         curriculum=curriculum,
-                         class_obj=class_obj,
-                         curriculum_content=curriculum_data,
-                         curriculum_data=display_data,
-                         now=now,
-                         **display_data)
+    # GET処理（表示）
+    curriculum_items = []
+    problem_categories = []
+    text_sets = []
+    
+    try:
+        # BaseBuilder連携データの取得
+        problem_categories = ProblemCategory.query.filter(
+            (ProblemCategory.school_id == current_user.school_id) |
+            (ProblemCategory.school_id.is_(None))
+        ).order_by(ProblemCategory.name).all()
+        
+        text_sets = TextSet.query.filter(
+            (TextSet.school_id == current_user.school_id) |
+            (TextSet.school_id.is_(None))
+        ).order_by(TextSet.title).all()
+        
+        # カリキュラム項目の取得
+        if curriculum.format == 'table':
+            curriculum_items = CurriculumServiceV2.get_curriculum_items(curriculum_id)
+        else:
+            # レガシー形式の場合は空のテンプレートを提供
+            curriculum_items = []
+            
+    except Exception as e:
+        current_app.logger.error(f"Error loading curriculum data: {str(e)}")
+        flash('一部のデータ読み込みでエラーが発生しました。', 'warning')
+    
+    # 表示データの準備
+    context = {
+        'curriculum': curriculum,
+        'class_obj': class_obj,
+        'curriculum_items': curriculum_items,
+        'problem_categories': problem_categories,
+        'text_sets': text_sets,
+        'can_edit': can_edit,
+        'now': datetime.now()
+    }
+    
+    return render_template('curriculum_unified.html', **context)
 
 @teacher_bp.route('/curriculum/<int:curriculum_id>/edit', methods=['GET', 'POST'])
 @login_required

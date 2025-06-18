@@ -1,0 +1,437 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ curriculum.title }} - {{ class_obj.name }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/curriculum.css') }}">
+<style>
+.unified-curriculum {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.curriculum-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 30px;
+    border-radius: 15px;
+    margin-bottom: 30px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}
+
+.curriculum-section {
+    background: white;
+    border-radius: 10px;
+    padding: 25px;
+    margin-bottom: 25px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+    border: 1px solid #e5e7eb;
+}
+
+.curriculum-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+}
+
+.curriculum-table th,
+.curriculum-table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #e5e7eb;
+    vertical-align: top;
+}
+
+.curriculum-table th {
+    background-color: #f8fafc;
+    font-weight: 600;
+    color: #374151;
+}
+
+.curriculum-table input,
+.curriculum-table textarea,
+.curriculum-table select {
+    width: 100%;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    padding: 8px;
+    font-size: 14px;
+}
+
+.curriculum-table textarea {
+    min-height: 60px;
+    resize: vertical;
+}
+
+.btn-add-row {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    margin-top: 15px;
+}
+
+.btn-remove-row {
+    background: #ef4444;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.action-buttons {
+    text-align: center;
+    margin-top: 30px;
+}
+
+.btn-save {
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    color: white;
+    border: none;
+    padding: 12px 30px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 16px;
+    margin: 0 10px;
+}
+
+.btn-cancel {
+    background: #6b7280;
+    color: white;
+    border: none;
+    padding: 12px 30px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 16px;
+    margin: 0 10px;
+}
+
+.read-only-view {
+    display: block;
+}
+
+.edit-mode {
+    display: none;
+}
+
+.editing .read-only-view {
+    display: none;
+}
+
+.editing .edit-mode {
+    display: block;
+}
+
+.category-dropdown {
+    max-width: 200px;
+}
+
+.basebuilder-info {
+    background: #f0f9ff;
+    border: 1px solid #0ea5e9;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 20px;
+}
+
+.category-badge {
+    display: inline-block;
+    background: #dbeafe;
+    color: #1e40af;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    margin: 2px;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="unified-curriculum" id="curriculumContainer">
+    <!-- ヘッダー -->
+    <div class="curriculum-header">
+        <div class="d-flex justify-content-between align-items-start">
+            <div>
+                <h1 id="curriculumTitle">{{ curriculum.title }}</h1>
+                <p class="mb-2">{{ class_obj.name }} - 作成日: {{ curriculum.created_at.strftime('%Y年%m月%d日') }}</p>
+                <p id="curriculumDescription">{{ curriculum.description or 'カリキュラムの説明はありません' }}</p>
+            </div>
+            <div class="d-flex gap-2">
+                <a href="{{ url_for('teacher.view_curriculums', class_id=class_obj.id) }}" class="btn btn-light">
+                    <i class="fas fa-arrow-left"></i> 一覧に戻る
+                </a>
+                {% if can_edit %}
+                <button id="editToggle" class="btn btn-warning" onclick="toggleEditMode()">
+                    <i class="fas fa-edit"></i> 編集
+                </button>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- BaseBuilder連携情報 -->
+    {% if problem_categories or text_sets %}
+    <div class="basebuilder-info">
+        <h5><i class="fas fa-link"></i> BaseBuilder連携</h5>
+        <p>利用可能なカテゴリ: 
+            {% for category in problem_categories %}
+            <span class="category-badge">{{ category.name }}</span>
+            {% endfor %}
+        </p>
+        <p class="mb-0">テキストセット: {{ text_sets|length }}件</p>
+    </div>
+    {% endif %}
+
+    <!-- カリキュラム内容 -->
+    <div class="curriculum-section">
+        <form id="curriculumForm" method="POST" style="display: none;">
+            <!-- 基本情報編集 -->
+            <div class="edit-mode mb-4">
+                <div class="row">
+                    <div class="col-md-6">
+                        <label for="title" class="form-label">カリキュラム名</label>
+                        <input type="text" id="title" name="title" class="form-control" value="{{ curriculum.title }}" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="description" class="form-label">説明</label>
+                        <textarea id="description" name="description" class="form-control" rows="2">{{ curriculum.description or '' }}</textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- カリキュラム項目テーブル -->
+            <div>
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h4>カリキュラム項目</h4>
+                    <div class="edit-mode">
+                        <button type="button" class="btn-add-row" onclick="addRow()">
+                            <i class="fas fa-plus"></i> 項目を追加
+                        </button>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="curriculum-table" id="curriculumTable">
+                        <thead>
+                            <tr>
+                                <th width="10%">フェーズ</th>
+                                <th width="8%">週</th>
+                                <th width="5%">時間</th>
+                                <th width="15%">カテゴリ</th>
+                                <th width="25%">活動内容</th>
+                                <th width="20%">教師サポート</th>
+                                <th width="15%">評価方法</th>
+                                <th width="2%" class="edit-mode">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="curriculumTableBody">
+                            {% if curriculum_items %}
+                                {% for item in curriculum_items %}
+                                <tr>
+                                    <td>
+                                        <span class="read-only-view">{{ item.phase }}</span>
+                                        <input type="text" name="phase_{{ loop.index0 }}" value="{{ item.phase }}" class="edit-mode">
+                                    </td>
+                                    <td>
+                                        <span class="read-only-view">{{ item.week }}</span>
+                                        <input type="text" name="week_{{ loop.index0 }}" value="{{ item.week }}" class="edit-mode">
+                                    </td>
+                                    <td>
+                                        <span class="read-only-view">{{ item.hours }}</span>
+                                        <input type="number" name="hours_{{ loop.index0 }}" value="{{ item.hours }}" min="0" class="edit-mode">
+                                    </td>
+                                    <td>
+                                        <span class="read-only-view">{{ item.category }}</span>
+                                        <select name="category_{{ loop.index0 }}" class="edit-mode category-dropdown">
+                                            <option value="">-- 選択してください --</option>
+                                            {% for category in problem_categories %}
+                                            <option value="{{ category.name }}" {% if item.category == category.name %}selected{% endif %}>
+                                                {{ category.name }}
+                                            </option>
+                                            {% endfor %}
+                                        </select>
+                                    </td>
+                                    <td>
+                                        <span class="read-only-view">{{ item.activity }}</span>
+                                        <textarea name="activity_{{ loop.index0 }}" class="edit-mode">{{ item.activity }}</textarea>
+                                    </td>
+                                    <td>
+                                        <span class="read-only-view">{{ item.teacher_support }}</span>
+                                        <textarea name="teacher_support_{{ loop.index0 }}" class="edit-mode">{{ item.teacher_support }}</textarea>
+                                    </td>
+                                    <td>
+                                        <span class="read-only-view">{{ item.evaluation_method }}</span>
+                                        <textarea name="evaluation_method_{{ loop.index0 }}" class="edit-mode">{{ item.evaluation_method }}</textarea>
+                                    </td>
+                                    <td class="edit-mode">
+                                        <button type="button" class="btn-remove-row" onclick="removeRow(this)">削除</button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="8" class="text-center text-muted">
+                                        カリキュラム項目がありません。
+                                        {% if can_edit %}編集モードで項目を追加してください。{% endif %}
+                                    </td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <input type="hidden" id="itemsCount" name="items_count" value="{{ curriculum_items|length }}">
+
+            <!-- アクションボタン -->
+            <div class="action-buttons edit-mode">
+                <button type="submit" class="btn-save">
+                    <i class="fas fa-save"></i> 保存
+                </button>
+                <button type="button" class="btn-cancel" onclick="toggleEditMode()">
+                    <i class="fas fa-times"></i> キャンセル
+                </button>
+            </div>
+        </form>
+
+        <!-- 読み取り専用表示 -->
+        <div class="read-only-view">
+            {% if not curriculum_items %}
+            <div class="text-center text-muted py-5">
+                <i class="fas fa-clipboard-list fa-3x mb-3"></i>
+                <h5>カリキュラム項目がありません</h5>
+                {% if can_edit %}
+                <p>編集ボタンをクリックして項目を追加してください。</p>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+let editMode = false;
+let rowCount = {{ curriculum_items|length }};
+
+function toggleEditMode() {
+    editMode = !editMode;
+    const container = document.getElementById('curriculumContainer');
+    const form = document.getElementById('curriculumForm');
+    const editToggle = document.getElementById('editToggle');
+    
+    if (editMode) {
+        container.classList.add('editing');
+        form.style.display = 'block';
+        editToggle.innerHTML = '<i class="fas fa-eye"></i> 表示';
+        editToggle.className = 'btn btn-info';
+    } else {
+        container.classList.remove('editing');
+        form.style.display = 'none';
+        editToggle.innerHTML = '<i class="fas fa-edit"></i> 編集';
+        editToggle.className = 'btn btn-warning';
+    }
+}
+
+function addRow() {
+    const tableBody = document.getElementById('curriculumTableBody');
+    const rowIndex = rowCount;
+    
+    // 空の行がある場合は削除
+    const emptyRow = tableBody.querySelector('td[colspan="8"]');
+    if (emptyRow) {
+        emptyRow.parentElement.remove();
+    }
+    
+    const newRow = document.createElement('tr');
+    newRow.innerHTML = `
+        <td>
+            <span class="read-only-view"></span>
+            <input type="text" name="phase_${rowIndex}" value="" class="edit-mode">
+        </td>
+        <td>
+            <span class="read-only-view"></span>
+            <input type="text" name="week_${rowIndex}" value="" class="edit-mode">
+        </td>
+        <td>
+            <span class="read-only-view">0</span>
+            <input type="number" name="hours_${rowIndex}" value="0" min="0" class="edit-mode">
+        </td>
+        <td>
+            <span class="read-only-view"></span>
+            <select name="category_${rowIndex}" class="edit-mode category-dropdown">
+                <option value="">-- 選択してください --</option>
+                {% for category in problem_categories %}
+                <option value="{{ category.name }}">{{ category.name }}</option>
+                {% endfor %}
+            </select>
+        </td>
+        <td>
+            <span class="read-only-view"></span>
+            <textarea name="activity_${rowIndex}" class="edit-mode"></textarea>
+        </td>
+        <td>
+            <span class="read-only-view"></span>
+            <textarea name="teacher_support_${rowIndex}" class="edit-mode"></textarea>
+        </td>
+        <td>
+            <span class="read-only-view"></span>
+            <textarea name="evaluation_method_${rowIndex}" class="edit-mode"></textarea>
+        </td>
+        <td class="edit-mode">
+            <button type="button" class="btn-remove-row" onclick="removeRow(this)">削除</button>
+        </td>
+    `;
+    
+    tableBody.appendChild(newRow);
+    rowCount++;
+    updateItemsCount();
+}
+
+function removeRow(button) {
+    button.closest('tr').remove();
+    updateItemsCount();
+    
+    // 全ての行が削除された場合の処理
+    const tableBody = document.getElementById('curriculumTableBody');
+    if (tableBody.children.length === 0) {
+        const emptyRow = document.createElement('tr');
+        emptyRow.innerHTML = `
+            <td colspan="8" class="text-center text-muted">
+                カリキュラム項目がありません。項目を追加してください。
+            </td>
+        `;
+        tableBody.appendChild(emptyRow);
+    }
+}
+
+function updateItemsCount() {
+    const tableBody = document.getElementById('curriculumTableBody');
+    const actualRows = Array.from(tableBody.children).filter(row => 
+        !row.querySelector('td[colspan="8"]')
+    );
+    document.getElementById('itemsCount').value = actualRows.length;
+}
+
+// フォーム送信前に読み取り専用データを更新
+document.getElementById('curriculumForm').addEventListener('submit', function() {
+    const rows = document.querySelectorAll('#curriculumTableBody tr');
+    rows.forEach((row, index) => {
+        if (!row.querySelector('td[colspan="8"]')) {
+            const readOnlySpans = row.querySelectorAll('.read-only-view');
+            const editInputs = row.querySelectorAll('.edit-mode input, .edit-mode textarea, .edit-mode select');
+            
+            readOnlySpans.forEach((span, i) => {
+                if (editInputs[i]) {
+                    span.textContent = editInputs[i].value;
+                }
+            });
+        }
+    });
+});
+</script>
+{% endblock %}
