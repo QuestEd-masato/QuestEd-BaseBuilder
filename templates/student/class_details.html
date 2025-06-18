@@ -4,6 +4,12 @@
 {% block extra_css %}
 <style>
 /* クラス詳細ページのスタイル */
+.class-details-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
 .class-header {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
@@ -16,12 +22,78 @@
 .class-header h2 {
     margin-bottom: 0.5rem;
     font-weight: 700;
+    font-size: 2.2rem;
 }
 
 .class-header p {
     margin-bottom: 0;
     opacity: 0.9;
     font-size: 1.1rem;
+}
+
+.progress-overview {
+    background: white;
+    border-radius: 15px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+    border: 1px solid #e5e7eb;
+}
+
+.progress-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 2rem;
+    margin-top: 1.5rem;
+}
+
+.stat-card {
+    text-align: center;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    border-radius: 12px;
+    border: 1px solid #cbd5e1;
+}
+
+.stat-number {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #3b82f6;
+    margin-bottom: 0.5rem;
+}
+
+.stat-label {
+    font-size: 0.9rem;
+    color: #64748b;
+    font-weight: 600;
+}
+
+.progress-bar-container {
+    margin: 1.5rem 0;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 20px;
+    background-color: #e2e8f0;
+    border-radius: 10px;
+    overflow: hidden;
+    position: relative;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #3b82f6 0%, #1d4ed8 100%);
+    border-radius: 10px;
+    transition: width 0.8s ease;
+    position: relative;
+}
+
+.progress-text {
+    text-align: center;
+    font-weight: 600;
+    color: #374151;
+    margin-top: 0.5rem;
 }
 
 .section-card {
@@ -64,8 +136,18 @@
 }
 
 .curriculum-table {
-    font-size: 0.875rem;
+    width: 100%;
+    border-collapse: collapse;
     margin-top: 1rem;
+    font-size: 0.9rem;
+}
+
+.curriculum-table th,
+.curriculum-table td {
+    padding: 10px 8px;
+    text-align: left;
+    border-bottom: 1px solid #e9ecef;
+    vertical-align: top;
 }
 
 .curriculum-table th {
@@ -73,13 +155,10 @@
     font-weight: 600;
     color: #495057;
     border: none;
-    padding: 1rem 0.75rem;
 }
 
 .curriculum-table td {
-    padding: 0.75rem;
     border-top: 1px solid #e9ecef;
-    vertical-align: middle;
 }
 
 .milestone-item {
@@ -132,6 +211,9 @@
 
 .navigation-buttons {
     margin-bottom: 2rem;
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
 }
 
 .btn-modern {
@@ -160,6 +242,11 @@
 
 .btn-success {
     background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    color: white;
+}
+
+.btn-info {
+    background: linear-gradient(135deg, #17a2b8 0%, #007bff 100%);
     color: white;
 }
 
@@ -199,13 +286,60 @@
     font-weight: 600;
 }
 
+.next-deadline {
+    background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+    border: 2px solid #ffc107;
+    border-radius: 10px;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+
+.next-deadline h5 {
+    color: #856404;
+    margin-bottom: 0.5rem;
+}
+
+.next-deadline p {
+    color: #856404;
+    margin-bottom: 0;
+    font-weight: 600;
+}
+
+/* レスポンシブ対応 */
+@media (max-width: 1366px) {
+    .curriculum-table {
+        font-size: 0.85rem;
+    }
+    
+    .curriculum-table th,
+    .curriculum-table td {
+        padding: 8px 6px;
+    }
+}
+
 @media (max-width: 768px) {
+    .class-details-container {
+        padding: 15px;
+    }
+    
     .class-header {
         padding: 1.5rem;
     }
     
+    .class-header h2 {
+        font-size: 1.8rem;
+    }
+    
+    .progress-stats {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
     .section-header {
         padding: 1rem;
+        flex-direction: column;
+        gap: 0.5rem;
     }
     
     .milestone-item {
@@ -216,21 +350,28 @@
         font-size: 0.8rem;
     }
     
+    .curriculum-table th,
+    .curriculum-table td {
+        padding: 6px 4px;
+    }
+    
     .navigation-buttons {
-        display: flex;
         flex-direction: column;
-        gap: 0.5rem;
     }
     
     .btn-modern {
         justify-content: center;
+    }
+    
+    .stat-number {
+        font-size: 2rem;
     }
 }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="container mt-4">
+<div class="class-details-container">
     <!-- クラスヘッダー -->
     <div class="class-header">
         <h2>{{ class_obj.name }}</h2>
@@ -245,6 +386,43 @@
         <a href="{{ url_for('student.class_themes', class_id=class_obj.id) }}" class="btn-modern btn-success">
             <i class="fas fa-book"></i> テーマを見る
         </a>
+        <a href="{{ url_for('student.activities') }}?class_id={{ class_obj.id }}" class="btn-modern btn-info">
+            <i class="fas fa-clipboard-list"></i> 活動記録
+        </a>
+    </div>
+
+    <!-- 進捗概要 -->
+    <div class="progress-overview">
+        <h3><i class="fas fa-chart-line"></i> 学習進捗概要</h3>
+        
+        {% if next_milestone %}
+        <div class="next-deadline">
+            <h5><i class="fas fa-clock"></i> 次のマイルストーン</h5>
+            <p>{{ next_milestone.title }} - {{ next_milestone.target_date.strftime('%Y年%m月%d日') }}</p>
+        </div>
+        {% endif %}
+        
+        <div class="progress-bar-container">
+            <div class="progress-bar">
+                <div class="progress-fill" style="width: {{ progress_percentage|default(0) }}%"></div>
+            </div>
+            <div class="progress-text">全体進捗: {{ progress_percentage|default(0) }}%</div>
+        </div>
+        
+        <div class="progress-stats">
+            <div class="stat-card">
+                <div class="stat-number">{{ completed_milestones|default(0) }}</div>
+                <div class="stat-label">達成済みマイルストーン</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">{{ total_milestones|default(0) }}</div>
+                <div class="stat-label">総マイルストーン数</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">{{ curriculum_items|length|default(0) }}</div>
+                <div class="stat-label">カリキュラム項目数</div>
+            </div>
+        </div>
     </div>
 
     <!-- カリキュラムセクション -->
@@ -269,11 +447,12 @@
                         <table class="table table-sm curriculum-table mb-0">
                             <thead>
                                 <tr>
-                                    <th style="width: 15%;">フェーズ</th>
-                                    <th style="width: 12%;">週</th>
+                                    <th style="width: 12%;">フェーズ</th>
+                                    <th style="width: 10%;">週</th>
                                     <th style="width: 8%;">時間</th>
                                     <th style="width: 15%;">カテゴリ</th>
-                                    <th style="width: 50%;">活動内容</th>
+                                    <th style="width: 35%;">活動内容</th>
+                                    <th style="width: 20%;">教師サポート</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -283,9 +462,9 @@
                                         <span class="badge-phase">{{ item.phase or '-' }}</span>
                                     </td>
                                     <td>{{ item.week or '-' }}</td>
-                                    <td>
+                                    <td class="text-center">
                                         {% if item.hours %}
-                                            {{ item.hours }}時間
+                                            {{ item.hours }}h
                                         {% else %}
                                             -
                                         {% endif %}
@@ -294,6 +473,9 @@
                                         <small class="text-muted">{{ item.category or '-' }}</small>
                                     </td>
                                     <td>{{ item.activity or '-' }}</td>
+                                    <td>
+                                        <small>{{ item.teacher_support or '-' }}</small>
+                                    </td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
@@ -328,10 +510,10 @@
         <div class="card-body p-0">
             {% if milestones %}
                 {% for milestone in milestones %}
-                {% set now = moment().utc() %}
-                {% set target_date = moment(milestone.target_date) %}
-                {% set is_overdue = target_date < now and not milestone.is_completed %}
-                {% set is_upcoming = target_date >= now and target_date <= now.add(days=7) %}
+                {% set now = moment().utc() if moment else None %}
+                {% set target_date = moment(milestone.target_date) if moment and milestone.target_date else None %}
+                {% set is_overdue = target_date and now and target_date < now and not milestone.is_completed %}
+                {% set is_upcoming = target_date and now and target_date >= now and target_date <= now.add(days=7) %}
                 
                 <div class="milestone-item 
                     {% if milestone.is_completed %}milestone-completed{% endif %}
@@ -372,7 +554,7 @@
                         <div class="milestone-points">
                             <span class="badge badge-{{ 'success' if milestone.is_completed else 'primary' }} badge-pill">
                                 <i class="fas fa-star"></i>
-                                {% if hasattr(milestone, 'points') %}
+                                {% if hasattr(milestone, 'points') and milestone.points %}
                                     {{ milestone.points }}ポイント
                                 {% else %}
                                     ポイント
@@ -397,6 +579,16 @@
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // プログレスバーのアニメーション
+    const progressFill = document.querySelector('.progress-fill');
+    if (progressFill) {
+        const width = progressFill.style.width;
+        progressFill.style.width = '0%';
+        setTimeout(() => {
+            progressFill.style.width = width;
+        }, 500);
+    }
+    
     // マイルストーンアイテムのホバー効果を強化
     const milestoneItems = document.querySelectorAll('.milestone-item');
     milestoneItems.forEach(item => {
@@ -419,6 +611,23 @@ document.addEventListener('DOMContentLoaded', function() {
         button.addEventListener('mouseleave', function() {
             this.style.transform = 'translateY(0) scale(1)';
         });
+    });
+    
+    // 統計カードのカウントアップアニメーション
+    const statNumbers = document.querySelectorAll('.stat-number');
+    statNumbers.forEach(stat => {
+        const finalValue = parseInt(stat.textContent);
+        let currentValue = 0;
+        const increment = Math.ceil(finalValue / 30);
+        
+        const timer = setInterval(() => {
+            currentValue += increment;
+            if (currentValue >= finalValue) {
+                currentValue = finalValue;
+                clearInterval(timer);
+            }
+            stat.textContent = currentValue;
+        }, 50);
     });
 });
 </script>

@@ -33,20 +33,61 @@
     width: 100%;
     border-collapse: collapse;
     margin-top: 15px;
+    font-size: 0.95rem;
 }
 
 .curriculum-table th,
 .curriculum-table td {
-    padding: 12px;
+    padding: 12px 8px;
     text-align: left;
     border-bottom: 1px solid #e5e7eb;
     vertical-align: top;
+    word-wrap: break-word;
 }
 
 .curriculum-table th {
-    background-color: #f8fafc;
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
     font-weight: 600;
     color: #374151;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.curriculum-table .col-phase {
+    width: 10%;
+    min-width: 80px;
+}
+
+.curriculum-table .col-week {
+    width: 8%;
+    min-width: 70px;
+}
+
+.curriculum-table .col-hours {
+    width: 7%;
+    min-width: 60px;
+    text-align: center;
+}
+
+.curriculum-table .col-category {
+    width: 13%;
+    min-width: 100px;
+}
+
+.curriculum-table .col-activity {
+    width: 30%;
+    min-width: 200px;
+}
+
+.curriculum-table .col-support {
+    width: 18%;
+    min-width: 150px;
+}
+
+.curriculum-table .col-evaluation {
+    width: 14%;
+    min-width: 120px;
 }
 
 .curriculum-table input,
@@ -87,28 +128,47 @@
 .action-buttons {
     text-align: center;
     margin-top: 30px;
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.btn-save, .btn-cancel {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    white-space: nowrap;
 }
 
 .btn-save {
     background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-    color: white;
-    border: none;
-    padding: 12px 30px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 16px;
-    margin: 0 10px;
+}
+
+.btn-save:hover {
+    background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
 }
 
 .btn-cancel {
-    background: #6b7280;
-    color: white;
-    border: none;
-    padding: 12px 30px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 16px;
-    margin: 0 10px;
+    background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+}
+
+.btn-cancel:hover {
+    background: linear-gradient(135deg, #4b5563 0%, #374151 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
 }
 
 .read-only-view {
@@ -148,6 +208,52 @@
     font-size: 12px;
     margin: 2px;
 }
+
+/* Responsive adjustments */
+@media (max-width: 1366px) {
+    .curriculum-table {
+        font-size: 0.9rem;
+    }
+    
+    .curriculum-table th,
+    .curriculum-table td {
+        padding: 10px 6px;
+    }
+    
+    .curriculum-header h1 {
+        font-size: 1.8rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .curriculum-header {
+        padding: 20px;
+    }
+    
+    .curriculum-header .d-flex {
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .curriculum-table {
+        font-size: 0.8rem;
+    }
+    
+    .curriculum-table th,
+    .curriculum-table td {
+        padding: 8px 4px;
+    }
+    
+    .action-buttons {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .btn-save, .btn-cancel {
+        width: 200px;
+        justify-content: center;
+    }
+}
 </style>
 {% endblock %}
 
@@ -161,14 +267,17 @@
                 <p class="mb-2">{{ class_obj.name }} - 作成日: {{ curriculum.created_at.strftime('%Y年%m月%d日') }}</p>
                 <p id="curriculumDescription">{{ curriculum.description or 'カリキュラムの説明はありません' }}</p>
             </div>
-            <div class="d-flex gap-2">
-                <a href="{{ url_for('teacher.view_curriculums', class_id=class_obj.id) }}" class="btn btn-light">
-                    <i class="fas fa-arrow-left"></i> 一覧に戻る
+            <div class="d-flex gap-2 flex-wrap">
+                <a href="{{ url_for('teacher.view_curriculums', class_id=class_obj.id) }}" class="btn btn-light d-flex align-items-center">
+                    <i class="fas fa-arrow-left me-2"></i> 一覧に戻る
                 </a>
                 {% if can_edit %}
-                <button id="editToggle" class="btn btn-warning" onclick="toggleEditMode()">
-                    <i class="fas fa-edit"></i> 編集
+                <button id="editToggle" class="btn btn-warning d-flex align-items-center" onclick="toggleEditMode()">
+                    <i class="fas fa-edit me-2"></i> 編集
                 </button>
+                <a href="{{ url_for('teacher.export_curriculum', curriculum_id=curriculum.id) }}" class="btn btn-success d-flex align-items-center">
+                    <i class="fas fa-download me-2"></i> エクスポート
+                </a>
                 {% endif %}
             </div>
         </div>
@@ -220,14 +329,14 @@
                     <table class="curriculum-table" id="curriculumTable">
                         <thead>
                             <tr>
-                                <th width="10%">フェーズ</th>
-                                <th width="8%">週</th>
-                                <th width="5%">時間</th>
-                                <th width="15%">カテゴリ</th>
-                                <th width="25%">活動内容</th>
-                                <th width="20%">教師サポート</th>
-                                <th width="15%">評価方法</th>
-                                <th width="2%" class="edit-mode">操作</th>
+                                <th class="col-phase">フェーズ</th>
+                                <th class="col-week">週</th>
+                                <th class="col-hours">時間</th>
+                                <th class="col-category">カテゴリ</th>
+                                <th class="col-activity">活動内容</th>
+                                <th class="col-support">教師サポート</th>
+                                <th class="col-evaluation">評価方法</th>
+                                <th class="edit-mode">操作</th>
                             </tr>
                         </thead>
                         <tbody id="curriculumTableBody">
