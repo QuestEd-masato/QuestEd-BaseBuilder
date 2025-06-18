@@ -139,7 +139,8 @@ class Class(db.Model):
     students = db.relationship('User', 
                              secondary='class_enrollments',
                              backref=db.backref('enrolled_classes', lazy='dynamic'),
-                             lazy='dynamic')
+                             lazy='dynamic',
+                             overlaps="class_enrollments,enrollments")
 
 # クラスと学生の中間テーブル（多対多の関連付け）
 class ClassEnrollment(db.Model):
@@ -151,8 +152,8 @@ class ClassEnrollment(db.Model):
     is_active = db.Column(db.Boolean, default=True)
     
     # リレーションシップ
-    student = db.relationship('User', foreign_keys=[student_id], backref=db.backref('class_enrollments', cascade='all, delete-orphan'))
-    class_obj = db.relationship('Class', foreign_keys=[class_id], backref='enrollments')
+    student = db.relationship('User', foreign_keys=[student_id], backref=db.backref('class_enrollments', cascade='all, delete-orphan'), overlaps="enrolled_classes,students")
+    class_obj = db.relationship('Class', foreign_keys=[class_id], backref='enrollments', overlaps="enrolled_classes,students")
     
     # ユニーク制約（同じ学生が同じクラスに複数回登録されないように）
     __table_args__ = (db.UniqueConstraint('class_id', 'student_id'),)

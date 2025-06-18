@@ -209,7 +209,7 @@ class RankingService:
                     ), 0
                 )
             ).label('total_points')
-        ).outerjoin(
+        ).select_from(User).outerjoin(
             ActivityLog, User.id == ActivityLog.student_id
         ).outerjoin(
             StudentUnitSelection, User.id == StudentUnitSelection.student_id
@@ -323,7 +323,7 @@ class RankingService:
                     ), 0
                 )
             ).label('weekly_points')
-        ).outerjoin(
+        ).select_from(User).outerjoin(
             AnswerRecord, User.id == AnswerRecord.student_id
         ).outerjoin(
             ActivityLog, User.id == ActivityLog.student_id
@@ -387,7 +387,7 @@ class RankingService:
                     ), 0
                 )
             ).label('monthly_points')
-        ).outerjoin(
+        ).select_from(User).outerjoin(
             AnswerRecord, User.id == AnswerRecord.student_id
         ).outerjoin(
             ActivityLog, User.id == ActivityLog.student_id
@@ -431,7 +431,7 @@ class RankingService:
             User.id.label('user_id'),
             func.avg(AnswerRecord.is_correct * 100).label('accuracy_rate'),
             func.count(AnswerRecord.id).label('total_answers')
-        ).join(
+        ).select_from(User).join(
             AnswerRecord, User.id == AnswerRecord.student_id
         ).filter(
             User.role == 'student',
@@ -478,7 +478,7 @@ class RankingService:
         study_time_subquery = db.session.query(
             User.id.label('user_id'),
             func.sum(1).label('total_study_time')  # study_durationフィールドが存在しないため活動数で代用
-        ).join(
+        ).select_from(User).join(
             ActivityLog, User.id == ActivityLog.student_id
         ).filter(
             User.role == 'student',
@@ -523,7 +523,7 @@ class RankingService:
         consistency_subquery = db.session.query(
             User.id.label('user_id'),
             func.count(func.distinct(func.date(ActivityLog.created_at))).label('study_days')
-        ).join(
+        ).select_from(User).join(
             ActivityLog, User.id == ActivityLog.student_id
         ).filter(
             User.role == 'student',
