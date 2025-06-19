@@ -7,19 +7,19 @@ class CurriculumUnit(db.Model):
     __tablename__ = 'curriculum_units'
     
     id = db.Column(db.Integer, primary_key=True, comment='単元ID')
-    subject_id = db.Column(db.Integer, db.ForeignKey('subjects.id'), nullable=False, comment='教科ID')
-    unit_code = db.Column(db.String(20), unique=True, nullable=False, comment='単元コード')
+    subject_id = db.Column(db.Integer, db.ForeignKey('subjects.id'), nullable=True, comment='教科ID')
+    unit_code = db.Column(db.String(50), unique=True, nullable=False, comment='単元コード')
     title = db.Column(db.String(200), nullable=False, comment='単元名')
     description = db.Column(db.Text, comment='単元説明')
     difficulty_level = db.Column(db.Integer, default=1, comment='難易度レベル（1-5）')
-    estimated_hours = db.Column(db.Numeric(4,2), default=1.00, comment='推定学習時間')
+    estimated_minutes = db.Column(db.Integer, default=60, comment='推定学習時間（分）')
     prerequisites = db.Column(db.JSON, comment='前提単元ID配列')
-    learning_objectives = db.Column(db.Text, comment='学習目標')
-    tags = db.Column(db.JSON, comment='タグ配列')
+    # learning_objectives = db.Column(db.Text, comment='学習目標')  # RDSに存在しない
+    # tags = db.Column(db.JSON, comment='タグ配列')  # RDSに存在しない
     order_index = db.Column(db.Integer, default=0, comment='表示順序')
-    is_active = db.Column(db.Boolean, default=True, comment='有効フラグ')
-    school_id = db.Column(db.Integer, db.ForeignKey('schools.id'), nullable=True, comment='学校ID（NULL=全校共通）')
-    created_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, comment='作成者ID')
+    # is_active = db.Column(db.Boolean, default=True, comment='有効フラグ')  # RDSに存在しない
+    # school_id = db.Column(db.Integer, db.ForeignKey('schools.id'), nullable=True, comment='学校ID（NULL=全校共通）')  # RDSに存在しない
+    # created_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, comment='作成者ID')  # RDSに存在しない
     legacy_curriculum_id = db.Column(db.Integer, db.ForeignKey('curriculums.id'), nullable=True, comment='レガシーカリキュラムID')
     created_at = db.Column(db.DateTime, default=datetime.utcnow, comment='作成日時')
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, comment='更新日時')
