@@ -28,15 +28,15 @@ class CurriculumUnit(db.Model):
     __table_args__ = (
         db.Index('idx_subject_id', 'subject_id'),
         db.Index('idx_difficulty_level', 'difficulty_level'),
-        db.Index('idx_school_id', 'school_id'),
-        db.Index('idx_is_active', 'is_active'),
+        # db.Index('idx_school_id', 'school_id'),  # school_idが存在しないためコメントアウト
+        # db.Index('idx_is_active', 'is_active'),  # is_activeが存在しないためコメントアウト
         db.Index('idx_order_index', 'order_index'),
     )
     
     # リレーションシップ
     subject = db.relationship('Subject', backref='curriculum_units')
-    school = db.relationship('School', backref='curriculum_units')
-    creator = db.relationship('User', foreign_keys=[created_by], backref='created_units')
+    # school = db.relationship('School', backref='curriculum_units')  # school_idが存在しないためコメントアウト
+    # creator = db.relationship('User', foreign_keys=[created_by], backref='created_units')  # created_byが存在しないためコメントアウト
     legacy_curriculum = db.relationship('Curriculum', backref='migrated_units')
     
     # 単元と問題の紐付け
