@@ -1881,10 +1881,30 @@ def class_details(class_id):
             'class_id': class_id
         }).fetchall()
         
+        # カリキュラム項目の総数を計算
+        curriculum_items_count = sum(len(data['items']) for data in curriculum_data)
+        
+        # マイルストーン統計の計算
+        total_milestones = len(milestones)
+        completed_milestones = sum(1 for m in milestones if m.is_completed)
+        progress_percentage = round((completed_milestones / total_milestones * 100) if total_milestones > 0 else 0)
+        
+        # 次のマイルストーンを取得
+        next_milestone = None
+        for milestone in milestones:
+            if not milestone.is_completed:
+                next_milestone = milestone
+                break
+        
         return render_template('student/class_details.html',
                              class_obj=class_obj,
                              curriculum_data=curriculum_data,
-                             milestones=milestones)
+                             curriculum_items=curriculum_items_count,
+                             milestones=milestones,
+                             total_milestones=total_milestones,
+                             completed_milestones=completed_milestones,
+                             progress_percentage=progress_percentage,
+                             next_milestone=next_milestone)
                              
     except Exception as e:
         current_app.logger.error(f"Error in class_details: {str(e)}")

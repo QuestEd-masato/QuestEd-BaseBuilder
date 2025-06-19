@@ -235,47 +235,80 @@ async function loadRankingWidget() {
     const userRole = widget.dataset.userRole;
     
     try {
-        let apiUrl;
-        if (userRole === 'student') {
-            apiUrl = '/api/rankings/total_points?scope=school&limit=10';
-        } else {
-            // 教師の場合は最初のクラスのランキングを取得
-            apiUrl = '/api/rankings/total_points?scope=class&limit=10';
+        let scope = 'school';
+        let limit = 10;
+        
+        if (userRole === 'teacher') {
+            scope = 'class';
         }
         
+        const apiUrl = `/api/rankings/total_points?scope=${scope}&limit=${limit}`;
         console.log('Fetching ranking data from:', apiUrl);
         
         const response = await fetch(apiUrl, {
             method: 'GET',
-            credentials: 'same-origin',  // 重要：クッキーを含める
+            credentials: 'same-origin',
             headers: {
-                'X-Requested-With': 'XMLHttpRequest'
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
             }
         });
         
-        console.log('Response status:', response.status);
+        console.log('Ranking response status:', response.status);
         
-        if (response.status === 401 || response.status === 302) {
-            // 認証エラーの場合
+        if (response.status === 401 || response.status === 403) {
             window.location.href = '/login';
             return;
         }
         
-        const data = await response.json();
-        console.log('Ranking API Response:', data);
+        if (!response.ok) {
+            throw new Error(`Failed to fetch rankings: ${response.status} ${response.statusText}`);
+        }
         
-        // より柔軟な成功判定
-        if (data.success || data.status === 'success' || (data.data && data.data.rankings)) {
+        const data = await response.json();
+        console.log('Ranking data received:', data);
+        
+        // データ構造をログで確認
+        if (data && data.rankings) {
+            console.log('Using data.rankings structure');
+            displayRankings(data.rankings, data);
+        } else if (data && data.data && data.data.rankings) {
+            console.log('Using data.data.rankings structure');
+            displayRankings(data.data.rankings, data.data);
+        } else if (data.success || data.status === 'success') {
+            console.log('Success response but checking data structure');
             const rankingData = data.data || data;
             renderRankingWidget(rankingData, userRole);
         } else {
-            console.error('Ranking data error:', data);
-            content.innerHTML = `<div class="error-message">データの取得に失敗しました: ${data.message || '不明なエラー'}</div>`;
+            console.error('Unexpected ranking data structure:', data);
+            content.innerHTML = `<div class="error-message">データ構造が予期しない形式です</div>`;
         }
     } catch (error) {
-        console.error('ランキングウィジェット読み込みエラー:', error);
-        content.innerHTML = `<div class="error-message">通信エラーが発生しました</div>`;
+        console.error('Ranking fetch error:', error);
+        content.innerHTML = `<div class="error-message">通信エラー: ${error.message}</div>`;
     }
+}
+
+function displayRankings(rankings, fullData) {
+    const content = document.getElementById('ranking-widget-content');
+    const widget = document.querySelector('.ranking-widget');
+    const userRole = widget.dataset.userRole;
+    
+    console.log('Displaying rankings:', rankings);
+    console.log('Full ranking data:', fullData);
+    
+    if (!rankings || rankings.length === 0) {
+        content.innerHTML = '<div class="no-data-message">ランキングデータがありません</div>';
+        return;
+    }
+    
+    renderRankingWidget({
+        rankings: rankings,
+        my_rank: fullData.my_rank,
+        analytics: fullData.analytics,
+        last_updated: fullData.last_updated || new Date().toISOString()
+    }, userRole);
 }
 
 function renderRankingWidget(rankingData, userRole) {
