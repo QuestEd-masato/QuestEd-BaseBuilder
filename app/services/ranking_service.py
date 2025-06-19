@@ -561,7 +561,7 @@ class RankingService:
     @classmethod
     def _get_base_user_query(cls, scope: str, scope_id: int):
         """ベースとなるユーザークエリを取得"""
-        query = db.session.query(User).filter(
+        query = db.session.query(User).select_from(User).filter(
             User.role == 'student',
             User.is_active == True
         )
@@ -570,8 +570,9 @@ class RankingService:
             query = query.filter(User.school_id == scope_id)
         elif scope == 'class' and scope_id:
             from app.models import ClassEnrollment
-            query = query.join(ClassEnrollment).filter(
-                ClassEnrollment.class_id == scope_id
+            query = query.join(ClassEnrollment, User.id == ClassEnrollment.student_id).filter(
+                ClassEnrollment.class_id == scope_id,
+                ClassEnrollment.is_active == True
             )
         
         return query

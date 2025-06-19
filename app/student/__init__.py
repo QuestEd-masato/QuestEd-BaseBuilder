@@ -38,6 +38,9 @@ from app.models import (
     Milestone, Group, GroupMembership, ChatHistory,
     CurriculumUnit, StudentUnitSelection, Curriculum
 )
+from app.utils.curriculum import get_curriculum_data_for_class, calculate_curriculum_statistics
+from app.utils.milestone import get_milestones_for_student, calculate_milestone_progress
+from app.utils.auth import check_student_class_access, log_access_attempt
 from app.ai import generate_personal_themes_with_ai
 from app.utils.rate_limiting import upload_limit, api_limit
 from app.utils.file_security import file_validator
@@ -1833,68 +1836,26 @@ def class_details(class_id):
         # クラス情報を取得
         class_obj = Class.query.get_or_404(class_id)
         
-        # 生徒の所属確認
-        enrollment = ClassEnrollment.query.filter_by(
-            student_id=current_user.id,
-            class_id=class_id,
-            is_active=True
-        ).first()
-        
-        if not enrollment:
-            flash('このクラスの情報を閲覧する権限がありません。', 'error')
+        # 生徒の所属確認（ユーティリティ関数使用）
+        if not check_student_class_access(current_user.id, class_id):
+            log_access_attempt('class_details', False, class_id=class_id)
+            flash('この機能にアクセスする権限がありません。', 'error')
             return redirect(url_for('student.dashboard'))
         
-        # カリキュラム取得
-        curriculums = Curriculum.query.filter_by(class_id=class_id).all()
+        log_access_attempt('class_details', True, class_id=class_id)
         
-        # カリキュラムごとのアイテムを取得
-        curriculum_data = []
-        for curriculum in curriculums:
-            items = []
-            if hasattr(curriculum, 'format') and curriculum.format == 'table':
-                # 新形式のカリキュラム
-                items = db.session.execute(text("""
-                    SELECT phase, week, hours, category, activity, 
-                           teacher_support, evaluation_method
-                    FROM curriculum_items
-                    WHERE curriculum_id = :curriculum_id
-                    ORDER BY order_index
-                """), {'curriculum_id': curriculum.id}).fetchall()
-            
-            curriculum_data.append({
-                'curriculum': curriculum,
-                'items': items
-            })
+        # カリキュラムデータ取得（ユーティリティ関数使用）
+        curriculum_data = get_curriculum_data_for_class(class_id)
+        curriculum_items_count = calculate_curriculum_statistics(curriculum_data)['total_items']
         
-        # マイルストーン取得
-        milestones = db.session.execute(text("""
-            SELECT m.*, 
-                   CASE WHEN sm.completed_at IS NOT NULL THEN 1 ELSE 0 END as is_completed,
-                   sm.completed_at
-            FROM milestones m
-            LEFT JOIN student_milestones sm ON m.id = sm.milestone_id 
-                AND sm.student_id = :student_id
-            WHERE m.class_id = :class_id
-            ORDER BY m.due_date
-        """), {
-            'student_id': current_user.id,
-            'class_id': class_id
-        }).fetchall()
+        # マイルストーン取得（ユーティリティ関数使用）
+        milestones = get_milestones_for_student(class_id, current_user.id)
+        milestone_progress = calculate_milestone_progress(milestones)
         
-        # カリキュラム項目の総数を計算
-        curriculum_items_count = sum(len(data['items']) for data in curriculum_data)
-        
-        # マイルストーン統計の計算
-        total_milestones = len(milestones)
-        completed_milestones = sum(1 for m in milestones if m.is_completed)
-        progress_percentage = round((completed_milestones / total_milestones * 100) if total_milestones > 0 else 0)
-        
-        # 次のマイルストーンを取得
-        next_milestone = None
-        for milestone in milestones:
-            if not milestone.is_completed:
-                next_milestone = milestone
-                break
+        total_milestones = milestone_progress['total_milestones']
+        completed_milestones = milestone_progress['completed_milestones']
+        progress_percentage = milestone_progress['progress_percentage']
+        next_milestone = milestone_progress['next_milestone']
         
         return render_template('student/class_details.html',
                              class_obj=class_obj,
@@ -1907,8 +1868,12 @@ def class_details(class_id):
                              next_milestone=next_milestone)
                              
     except Exception as e:
-        current_app.logger.error(f"Error in class_details: {str(e)}")
-        flash('クラス詳細の表示中にエラーが発生しました。', 'error')
+        current_app.logger.error(
+            f"[class_details] 処理エラー: {str(e)} "
+            f"(user_id={current_user.id}, class_id={class_id})",
+            exc_info=current_app.debug
+        )
+        flash('処理中にエラーが発生しました。', 'error')
         return redirect(url_for('student.dashboard'))
 
 @student_bp.route('/class/<int:class_id>/themes')
