@@ -243,6 +243,8 @@ async function loadRankingWidget() {
             apiUrl = '/api/rankings/total_points?scope=class&limit=10';
         }
         
+        console.log('Fetching ranking data from:', apiUrl);
+        
         const response = await fetch(apiUrl, {
             method: 'GET',
             credentials: 'same-origin',  // 重要：クッキーを含める
@@ -251,6 +253,8 @@ async function loadRankingWidget() {
             }
         });
         
+        console.log('Response status:', response.status);
+        
         if (response.status === 401 || response.status === 302) {
             // 認証エラーの場合
             window.location.href = '/login';
@@ -258,11 +262,15 @@ async function loadRankingWidget() {
         }
         
         const data = await response.json();
+        console.log('Ranking API Response:', data);
         
-        if (data.success || data.status === 'success') {
-            renderRankingWidget(data.data, userRole);
+        // より柔軟な成功判定
+        if (data.success || data.status === 'success' || (data.data && data.data.rankings)) {
+            const rankingData = data.data || data;
+            renderRankingWidget(rankingData, userRole);
         } else {
-            content.innerHTML = `<div class="error-message">データの取得に失敗しました</div>`;
+            console.error('Ranking data error:', data);
+            content.innerHTML = `<div class="error-message">データの取得に失敗しました: ${data.message || '不明なエラー'}</div>`;
         }
     } catch (error) {
         console.error('ランキングウィジェット読み込みエラー:', error);
@@ -270,19 +278,12 @@ async function loadRankingWidget() {
     }
 }
 
-function escapeHtml(unsafe) {
-    if (typeof unsafe !== 'string') return unsafe;
-    return unsafe
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-}
-
 function renderRankingWidget(rankingData, userRole) {
     const content = document.getElementById('ranking-widget-content');
     let html = '';
+    
+    console.log('Rendering ranking widget with data:', rankingData);
+    console.log('User role:', userRole);
     
     if (userRole === 'student' && rankingData.my_rank && rankingData.my_rank.rank) {
         // 学生の場合は自分のランキング情報を表示
@@ -319,7 +320,7 @@ function renderRankingWidget(rankingData, userRole) {
     if (rankingData.rankings && rankingData.rankings.length > 0) {
         html += '<ul class="ranking-list">';
         
-        const currentUserId = {{ current_user.id }};
+        const currentUserId = {{ current_user.id if current_user.is_authenticated else 'null' }};
         const displayLimit = Math.min(rankingData.rankings.length, 8);
         
         for (let i = 0; i < displayLimit; i++) {

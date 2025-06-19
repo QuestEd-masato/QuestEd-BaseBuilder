@@ -137,14 +137,14 @@
 .btn-save, .btn-cancel {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
     color: white;
     border: none;
-    padding: 12px 24px;
-    border-radius: 8px;
+    padding: 8px 16px;
+    border-radius: 6px;
     cursor: pointer;
-    font-size: 16px;
-    font-weight: 600;
+    font-size: 14px;
+    font-weight: 500;
     text-decoration: none;
     transition: all 0.3s ease;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
@@ -209,6 +209,27 @@
     margin: 2px;
 }
 
+.curriculum-annual-table {
+    font-size: 0.9rem;
+}
+
+.curriculum-annual-table th {
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    font-weight: 600;
+    color: #374151;
+    border: 1px solid #d1d5db;
+    vertical-align: middle;
+}
+
+.curriculum-annual-table td {
+    border: 1px solid #e5e7eb;
+    vertical-align: middle;
+}
+
+.curriculum-annual-table tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
 /* Responsive adjustments */
 @media (max-width: 1366px) {
     .curriculum-table {
@@ -268,14 +289,14 @@
                 <p id="curriculumDescription">{{ curriculum.description or 'カリキュラムの説明はありません' }}</p>
             </div>
             <div class="d-flex gap-2 flex-wrap">
-                <a href="{{ url_for('teacher.view_curriculums', class_id=class_obj.id) }}" class="btn btn-light d-flex align-items-center">
+                <a href="{{ url_for('teacher.view_curriculums', class_id=class_obj.id) }}" class="btn btn-light btn-sm d-flex align-items-center">
                     <i class="fas fa-arrow-left me-2"></i> 一覧に戻る
                 </a>
                 {% if can_edit %}
-                <button id="editToggle" class="btn btn-warning d-flex align-items-center" onclick="toggleEditMode()">
+                <button id="editToggle" class="btn btn-warning btn-sm d-flex align-items-center" onclick="toggleEditMode()">
                     <i class="fas fa-edit me-2"></i> 編集
                 </button>
-                <a href="{{ url_for('teacher.export_curriculum', curriculum_id=curriculum.id) }}" class="btn btn-success d-flex align-items-center">
+                <a href="{{ url_for('teacher.export_curriculum', curriculum_id=curriculum.id) }}" class="btn btn-success btn-sm d-flex align-items-center">
                     <i class="fas fa-download me-2"></i> エクスポート
                 </a>
                 {% endif %}
@@ -422,6 +443,97 @@
             {% endif %}
         </div>
     </div>
+
+    <!-- 年間計画表示 -->
+    {% if curriculum_items %}
+    <div class="curriculum-section mt-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h4><i class="fas fa-calendar-alt"></i> 年間計画表</h4>
+            <span class="badge bg-info">{{ curriculum_items|length }}項目</span>
+        </div>
+        
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover curriculum-annual-table">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width: 80px;" class="text-center">フェーズ</th>
+                        <th style="width: 60px;" class="text-center">週</th>
+                        <th style="width: 60px;" class="text-center">時間</th>
+                        <th style="width: 150px;">カテゴリ</th>
+                        <th>活動内容</th>
+                        <th style="width: 200px;">教師サポート</th>
+                        <th style="width: 150px;">評価方法</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in curriculum_items %}
+                    <tr>
+                        <td class="text-center">
+                            {% if item.phase %}
+                            <span class="badge bg-secondary">{{ item.phase }}</span>
+                            {% else %}
+                            <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center">
+                            {% if item.week %}
+                            <span class="fw-bold text-primary">第{{ item.week }}週</span>
+                            {% else %}
+                            <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center">
+                            {% if item.hours %}
+                            <span class="badge bg-success">{{ item.hours }}h</span>
+                            {% else %}
+                            <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if item.category %}
+                            <span class="badge bg-info">{{ item.category }}</span>
+                            {% else %}
+                            <span class="text-muted">未設定</span>
+                            {% endif %}
+                        </td>
+                        <td class="fw-bold">{{ item.activity or '内容未設定' }}</td>
+                        <td><small class="text-muted">{{ item.teacher_support or '-' }}</small></td>
+                        <td><small class="text-muted">{{ item.evaluation_method or '-' }}</small></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- 統計情報 -->
+        <div class="row mt-3">
+            <div class="col-md-3">
+                <div class="text-center p-2 bg-light rounded">
+                    <strong class="text-primary">{{ curriculum_items|length }}</strong>
+                    <small class="d-block text-muted">総項目数</small>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="text-center p-2 bg-light rounded">
+                    <strong class="text-success">{{ curriculum_items|selectattr('hours')|map(attribute='hours')|sum or 0 }}</strong>
+                    <small class="d-block text-muted">総時間数</small>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="text-center p-2 bg-light rounded">
+                    <strong class="text-info">{{ curriculum_items|selectattr('category')|list|length }}</strong>
+                    <small class="d-block text-muted">カテゴリ設定済</small>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="text-center p-2 bg-light rounded">
+                    <strong class="text-warning">{{ curriculum_items|selectattr('week')|map(attribute='week')|max or 0 }}</strong>
+                    <small class="d-block text-muted">最大週数</small>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
 </div>
 
 <script>

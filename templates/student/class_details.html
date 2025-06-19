@@ -398,7 +398,7 @@
         {% if next_milestone %}
         <div class="next-deadline">
             <h5><i class="fas fa-clock"></i> 次のマイルストーン</h5>
-            <p>{{ next_milestone.title }} - {{ next_milestone.target_date.strftime('%Y年%m月%d日') }}</p>
+            <p>{{ next_milestone.title }} - {{ next_milestone.due_date.strftime('%Y年%m月%d日') }}</p>
         </div>
         {% endif %}
         
@@ -511,7 +511,7 @@
             {% if milestones %}
                 {% for milestone in milestones %}
                 {% set now = moment().utc() if moment else None %}
-                {% set target_date = moment(milestone.target_date) if moment and milestone.target_date else None %}
+                {% set target_date = moment(milestone.due_date) if moment and milestone.due_date else None %}
                 {% set is_overdue = target_date and now and target_date < now and not milestone.is_completed %}
                 {% set is_upcoming = target_date and now and target_date >= now and target_date <= now.add(days=7) %}
                 
@@ -540,7 +540,7 @@
                                 <div class="milestone-meta">
                                     <div class="milestone-date">
                                         <i class="fas fa-calendar-alt"></i>
-                                        目標日: {{ milestone.target_date.strftime('%Y年%m月%d日') }}
+                                        目標日: {{ milestone.due_date.strftime('%Y年%m月%d日') }}
                                         {% if milestone.is_completed and milestone.completed_at %}
                                         <span class="text-success ml-2">
                                             <i class="fas fa-check"></i>

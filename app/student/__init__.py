@@ -1875,7 +1875,7 @@ def class_details(class_id):
             LEFT JOIN student_milestones sm ON m.id = sm.milestone_id 
                 AND sm.student_id = :student_id
             WHERE m.class_id = :class_id
-            ORDER BY m.target_date
+            ORDER BY m.due_date
         """), {
             'student_id': current_user.id,
             'class_id': class_id
