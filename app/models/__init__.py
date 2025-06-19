@@ -29,7 +29,7 @@ class User(UserMixin, db.Model):
     reset_token_created_at = db.Column(db.DateTime, nullable=True)
 
     # リレーションシップの定義（カスケード削除を設定）
-    classes_teaching = db.relationship('Class', backref='teacher', lazy=True, cascade='all, delete-orphan')
+    classes_teaching = db.relationship('Class', foreign_keys='Class.teacher_id', backref='teacher', lazy=True, cascade='all, delete-orphan')
     interest_surveys = db.relationship('InterestSurvey', backref='student', lazy=True, cascade='all, delete-orphan')
     personality_surveys = db.relationship('PersonalitySurvey', backref='student', lazy=True, cascade='all, delete-orphan')
     inquiry_themes = db.relationship('InquiryTheme', backref='student', lazy=True, cascade='all, delete-orphan')
