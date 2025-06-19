@@ -382,7 +382,7 @@ from app.models.email_log import EmailLog
 # Import BaseBuilder models for unified access
 from basebuilder.models import (
     ProblemCategory, BasicKnowledgeItem, AnswerRecord, ProficiencyRecord,
-    TextSet, TextDelivery, LearningPath as BaseBuilderLearningPath, PathAssignment, WordProficiency,
+    TextSet, TextDelivery, BaseBuilderLearningPath, PathAssignment, WordProficiency,
     TextProficiencyRecord, KnowledgeThemeRelation
 )
 
