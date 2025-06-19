@@ -11,7 +11,7 @@ from sqlalchemy import func
 
 from basebuilder.models import (
     ProblemCategory, BasicKnowledgeItem, KnowledgeThemeRelation,
-    AnswerRecord, ProficiencyRecord, LearningPath, PathAssignment,
+    AnswerRecord, ProficiencyRecord, BaseBuilderLearningPath, PathAssignment,
     TextSet, TextDelivery, TextProficiencyRecord, WordProficiency  # 追加
 )
 
@@ -161,7 +161,7 @@ def index():
             # 教師向けダッシュボード（既存のままでOK）
             problem_count = BasicKnowledgeItem.query.filter_by(created_by=current_user.id).count()
             category_count = ProblemCategory.query.filter_by(created_by=current_user.id).count()
-            path_count = LearningPath.query.filter_by(created_by=current_user.id).count()
+            path_count = BaseBuilderLearningPath.query.filter_by(created_by=current_user.id).count()
             classes = current_user.classes_teaching
             recent_problems = BasicKnowledgeItem.query.filter_by(
                 created_by=current_user.id
@@ -1932,9 +1932,9 @@ def learning_paths():
     
     elif current_user.role == 'teacher':
         # 教師向け - 作成した学習パス + 同じ学校の学習パスを表示
-        paths = LearningPath.query.filter(
-            (LearningPath.created_by == current_user.id) |
-            (LearningPath.school_id == current_user.school_id)
+        paths = BaseBuilderLearningPath.query.filter(
+            (BaseBuilderLearningPath.created_by == current_user.id) |
+            (BaseBuilderLearningPath.school_id == current_user.school_id)
         ).all()
         
         return render_template(
@@ -1974,7 +1974,7 @@ def create_learning_path():
             return render_template('basebuilder/create_learning_path.html')
         
         # 新しい学習パスを作成
-        new_path = LearningPath(
+        new_path = BaseBuilderLearningPath(
             title=title,
             description=description,
             steps=steps,
@@ -2004,7 +2004,7 @@ def edit_learning_path(path_id):
         return redirect(url_for('basebuilder_module.index'))
     
     # 学習パスを取得
-    path = LearningPath.query.get_or_404(path_id)
+    path = BaseBuilderLearningPath.query.get_or_404(path_id)
     
     # 作成者本人か確認
     if path.created_by != current_user.id:
@@ -2056,7 +2056,7 @@ def assign_learning_path(path_id):
         return redirect(url_for('basebuilder_module.index'))
     
     # 学習パスを取得
-    path = LearningPath.query.get_or_404(path_id)
+    path = BaseBuilderLearningPath.query.get_or_404(path_id)
     
     # 教師のクラスを取得
     classes = getattr(current_user, 'classes_teaching', [])
@@ -2208,7 +2208,7 @@ def api_category_problems(category_id):
     
     if path_id:
         # 学習パスの場合、現在のステップを確認
-        path = LearningPath.query.get_or_404(path_id)
+        path = BaseBuilderLearningPath.query.get_or_404(path_id)
         
         try:
             steps = json.loads(path.steps)

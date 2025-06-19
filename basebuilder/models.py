@@ -144,8 +144,8 @@ class TextProficiencyRecord(db.Model):
     __table_args__ = (db.UniqueConstraint('student_id', 'text_set_id'),)
 
 # 学習パスモデル
-class LearningPath(db.Model):
-    __tablename__ = 'learning_paths'
+class BaseBuilderLearningPath(db.Model):
+    __tablename__ = 'basebuilder_learning_paths'
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(200), nullable=False)
     description = db.Column(db.Text)
@@ -156,15 +156,15 @@ class LearningPath(db.Model):
     school_id = db.Column(db.Integer, db.ForeignKey('schools.id'), nullable=True)
     
     # リレーションシップ
-    creator = db.relationship('User', backref=db.backref('created_paths', lazy=True, cascade='all, delete-orphan'))
-    assignments = db.relationship('PathAssignment', backref='path', lazy=True)
+    creator = db.relationship('User', backref=db.backref('created_basebuilder_paths', lazy=True, cascade='all, delete-orphan'))
+    assignments = db.relationship('PathAssignment', backref='basebuilder_path', lazy=True)
     # school_ref = db.relationship('School', back_populates='learning_paths', lazy=True)
     
 # 学習パス割り当てモデル
 class PathAssignment(db.Model):
     __tablename__ = 'path_assignments'
     id = db.Column(db.Integer, primary_key=True)
-    path_id = db.Column(db.Integer, db.ForeignKey('learning_paths.id'), nullable=False)
+    path_id = db.Column(db.Integer, db.ForeignKey('basebuilder_learning_paths.id'), nullable=False)
     student_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     assigned_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     assigned_at = db.Column(db.DateTime, default=datetime.utcnow)
