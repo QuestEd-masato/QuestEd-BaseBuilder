@@ -67,7 +67,7 @@ class LearningPortal {
                     title: "一次関数の基礎",
                     score: 0.92,
                     reason: "二次方程式の理解度が高く、次のステップとして最適です",
-                    difficulty_level: 2,
+                    difficulty: 2,
                     estimated_minutes: 45
                 },
                 {
@@ -75,7 +75,7 @@ class LearningPortal {
                     title: "図形の性質",
                     score: 0.85,
                     reason: "空間認識能力を伸ばすのに適しています",
-                    difficulty_level: 1,
+                    difficulty: 1,
                     estimated_minutes: 30
                 },
                 {
@@ -83,7 +83,7 @@ class LearningPortal {
                     title: "確率の基礎",
                     score: 0.78,
                     reason: "論理的思考力の向上につながります",
-                    difficulty_level: 3,
+                    difficulty: 3,
                     estimated_minutes: 60
                 }
             ];
@@ -130,7 +130,7 @@ class LearningPortal {
         container.innerHTML = this.recommendations.map(rec => `
             <div class="recommendation-card" onclick="learningPortal.selectRecommendation(${rec.unit_id})">
                 <div class="difficulty-stars">
-                    ${this.renderStars(rec.difficulty_level)}
+                    ${this.renderStars(rec.difficulty)}
                 </div>
                 <h4>${rec.title}</h4>
                 <p class="text-sm mb-2">${rec.reason}</p>
@@ -171,9 +171,9 @@ class LearningPortal {
         const statusClass = progress.status === 'completed' ? 'completed' : 
                            progress.status === 'in_progress' ? 'in-progress' : '';
         
-        const difficultyText = this.getDifficultyText(unit.difficulty_level);
-        const difficultyClass = unit.difficulty_level === 1 ? 'easy' : 
-                               unit.difficulty_level === 2 ? 'normal' : 'hard';
+        const difficultyText = this.getDifficultyText(unit.difficulty);
+        const difficultyClass = unit.difficulty === 1 ? 'easy' : 
+                               unit.difficulty === 2 ? 'normal' : 'hard';
         
         const actionButton = this.getActionButton(progress.status, unit.id);
         
@@ -266,7 +266,7 @@ class LearningPortal {
             }
             
             // 難易度フィルター
-            if (this.filters.difficulty && unit.difficulty_level !== parseInt(this.filters.difficulty)) {
+            if (this.filters.difficulty && unit.difficulty !== parseInt(this.filters.difficulty)) {
                 return false;
             }
             
@@ -374,7 +374,7 @@ class LearningPortal {
         modalBody.innerHTML = `
             <h4>${unit.title}</h4>
             <p><strong>説明:</strong> ${unit.description || '説明がありません'}</p>
-            <p><strong>難易度:</strong> ${this.getDifficultyText(unit.difficulty_level)}</p>
+            <p><strong>難易度:</strong> ${this.getDifficultyText(unit.difficulty)}</p>
             <p><strong>推定学習時間:</strong> ${unit.estimated_minutes}分</p>
             
             ${progress.status !== 'not_started' ? `

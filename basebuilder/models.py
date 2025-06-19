@@ -10,6 +10,7 @@ class ProblemCategory(db.Model):
     description = db.Column(db.Text)
     parent_id = db.Column(db.Integer, db.ForeignKey('problem_categories.id'), nullable=True)
     school_id = db.Column(db.Integer, db.ForeignKey('schools.id'), nullable=True)
+    subject_id = db.Column(db.Integer, db.ForeignKey('subjects.id'), nullable=True)  # RDS追加フィールド
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     created_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     
@@ -47,13 +48,14 @@ class BasicKnowledgeItem(db.Model):
     correct_answer = db.Column(db.Text, nullable=False) # 別の表記など
     choices = db.Column(db.Text)  # 例文をJSONとして保存
     explanation = db.Column(db.Text)  # 発音記号や追加情報
-    difficulty = db.Column(db.Integer, default=2)  # 1-5のスケール
+    difficulty = db.Column(db.Integer, default=2)  # RDS実際のカラム名
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     created_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     is_active = db.Column(db.Boolean, default=True)
     text_set_id = db.Column(db.Integer, db.ForeignKey('text_sets.id'), nullable=True)
     order_in_text = db.Column(db.Integer, nullable=True)  # テキスト内での順序
     school_id = db.Column(db.Integer, db.ForeignKey('schools.id'), nullable=True)
+    subject_id = db.Column(db.Integer, db.ForeignKey('subjects.id'), nullable=True)  # RDS追加フィールド
     
     # リレーションシップ
     creator = db.relationship('User', backref=db.backref('created_problems', lazy=True, cascade='all, delete-orphan'))

@@ -25,7 +25,14 @@
       "Bash(git push:*)",
       "Bash(sudo systemctl:*)",
       "Bash(chmod:*)",
-      "Bash(tree:*)"
+      "Bash(tree:*)",
+      "Bash(sudo journalctl:*)",
+      "Bash(mysql:*)",
+      "Bash(pip3 install:*)",
+      "Bash(pip install:*)",
+      "Bash(/usr/bin/python3 -m pip install:*)",
+      "Bash(apt:*)",
+      "Bash(apt install:*)"
     ],
     "deny": []
   }

@@ -35,11 +35,13 @@ from sqlalchemy import and_, or_, desc, func
 from flask import current_app
 
 from app.models import (
-    User, AIRecommendation, LearningPattern, RecommendationSettings,
-    CurriculumUnit, StudentUnitSelection, Subject, ActivityLog, Todo, Goal,
-    BasicKnowledgeItem, ProficiencyRecord, WordProficiency, TextSet, 
-    LearningPath, PathAssignment, AnswerRecord
+    User, AIRecommendation, CurriculumUnit, StudentUnitSelection, Subject, ActivityLog, Todo, Goal
 )
+from basebuilder.models import (
+    BasicKnowledgeItem, ProficiencyRecord, WordProficiency, TextSet, 
+    LearningPath as BaseBuilderLearningPath, PathAssignment, AnswerRecord
+)
+# LearningPattern, RecommendationSettings は RDSに存在しないためコメントアウト
 from app.services.pattern_analyzer import PatternAnalyzerService
 from app.utils.exceptions import AIRecommendationError, InsufficientDataError
 from extensions import db

@@ -10,9 +10,10 @@ import json
 import statistics
 from sqlalchemy import and_, or_, func
 from app.models import (
-    User, LearningPattern, StudentUnitSelection, ChatHistory, 
+    User, StudentUnitSelection, ChatHistory, 
     ActivityLog, AIRecommendation, CurriculumUnit, Subject
 )
+# LearningPattern は RDSに存在しないためコメントアウト
 from app.services.base_service import BaseService
 from app import db
 

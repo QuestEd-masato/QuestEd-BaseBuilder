@@ -7,7 +7,8 @@ from datetime import datetime
 
 from app.models import (db, ChatHistory, InquiryTheme, Class, ClassEnrollment, StudentEvaluation, User, Subject,
                       CurriculumUnit, StudentUnitSelection, UnitItemMapping, ClassLearningSettings,
-                      AIRecommendation, ReviewSet, ReviewSetItem, StudentWeakness, School, Ranking, RankingCache)
+                      AIRecommendation, ReviewSet, ReviewSetItem, School, Ranking, RankingCache)
+# StudentWeakness は RDSに存在しないためコメントアウト
 from app.ai import generate_chat_response
 from app.utils.rate_limiting import smart_ai_limit, api_limit
 
