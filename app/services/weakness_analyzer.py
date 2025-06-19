@@ -43,7 +43,7 @@ from flask import current_app
 from app.models import (
     User, StudentWeakness, Subject, ProficiencyRecord, BasicKnowledgeItem,
     ProblemCategory, StudentUnitSelection, CurriculumUnit, ReviewSet, ReviewSetItem,
-    WordProficiency, AnswerRecord, TextSet, LearningPath, PathAssignment
+    WordProficiency, AnswerRecord, TextSet, BaseBuilderLearningPath, PathAssignment
 )
 from app.utils.exceptions import WeaknessAnalysisError, InsufficientDataError
 from extensions import db

@@ -45,7 +45,7 @@ from sqlalchemy import and_, or_, desc, func
 
 from app.models import (
     User, StudentUnitSelection, CurriculumUnit, ActivityLog, Todo, Goal,
-    ProficiencyRecord, WordProficiency, PathAssignment, LearningPath,
+    ProficiencyRecord, WordProficiency, PathAssignment, BaseBuilderLearningPath,
     TextSet, AnswerRecord, ReviewSet, AIRecommendation, StudentWeakness
 )
 from extensions import db

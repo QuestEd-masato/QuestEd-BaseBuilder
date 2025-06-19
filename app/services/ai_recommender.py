@@ -39,7 +39,7 @@ from app.models import (
 )
 from basebuilder.models import (
     BasicKnowledgeItem, ProficiencyRecord, WordProficiency, TextSet, 
-    LearningPath as BaseBuilderLearningPath, PathAssignment, AnswerRecord
+    BaseBuilderLearningPath, PathAssignment, AnswerRecord
 )
 # LearningPattern, RecommendationSettings は RDSに存在しないためコメントアウト
 from app.services.pattern_analyzer import PatternAnalyzerService
