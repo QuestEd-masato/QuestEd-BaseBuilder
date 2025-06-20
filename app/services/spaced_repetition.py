@@ -9,9 +9,10 @@ from dataclasses import dataclass
 from sqlalchemy import and_, or_, desc, func
 
 from app.models import (
-    User, ReviewSet, ReviewSetItem, StudentWeakness, ProficiencyRecord,
+    User, ReviewSet, ReviewSetItem, ProficiencyRecord,
     BasicKnowledgeItem, ProblemCategory, StudentUnitSelection
 )
+# StudentWeakness は RDSに存在しないためコメントアウト
 from app.services.weakness_analyzer import WeaknessAnalyzer
 from app.utils.exceptions import SpacedRepetitionError, InsufficientDataError
 from extensions import db
@@ -312,11 +313,9 @@ class SpacedRepetitionEngine:
         items = []
         
         try:
-            # 活動中の弱点を取得
-            weaknesses = StudentWeakness.query.filter_by(
-                student_id=student_id,
-                is_active=True
-            ).order_by(desc(StudentWeakness.severity_level)).limit(5).all()
+            # StudentWeaknessテーブルが存在しないため、弱点ベースの選択はスキップ
+            # 将来の実装では、answer_recordsから弱点を算出
+            weaknesses = []
             
             for weakness in weaknesses:
                 if len(items) >= max_count:
@@ -429,33 +428,10 @@ class SpacedRepetitionEngine:
         
         return datetime.utcnow() >= card.next_review
     
-    def _find_problems_for_weakness(self, weakness: StudentWeakness) -> List[BasicKnowledgeItem]:
-        """弱点に対応する問題を検索"""
-        problems = []
-        
-        try:
-            if weakness.analysis_data and 'category_id' in weakness.analysis_data:
-                # 特定カテゴリの問題
-                category_id = weakness.analysis_data['category_id']
-                problems = BasicKnowledgeItem.query.filter_by(
-                    category_id=category_id
-                ).limit(5).all()
-            else:
-                # カテゴリ名での検索
-                categories = ProblemCategory.query.filter(
-                    ProblemCategory.name.contains(weakness.category)
-                ).limit(3).all()
-                
-                for category in categories:
-                    category_problems = BasicKnowledgeItem.query.filter_by(
-                        category_id=category.id
-                    ).limit(2).all()
-                    problems.extend(category_problems)
-            
-        except Exception as e:
-            logger.warning(f"弱点対応問題検索エラー: {str(e)}")
-        
-        return problems
+    def _find_problems_for_weakness(self, weakness) -> List[BasicKnowledgeItem]:
+        """弱点に対応する問題を検索（StudentWeaknessテーブル未実装のためスキップ）"""
+        # StudentWeaknessテーブルが存在しないため、空リストを返す
+        return []
     
     def _generate_review_title(self, review_type: str, problem_count: int) -> str:
         """復習セットのタイトルを生成"""
