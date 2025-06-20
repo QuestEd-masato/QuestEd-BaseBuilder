@@ -103,7 +103,7 @@ class SpeechService:
         Returns:
             音声入力履歴
         """
-        query = SpeechTranscription.query.filter_by(student_id=student_id)
+        query = SpeechTranscription.query.filter_by(user_id=student_id)
         
         # コンテキストフィルタ
         if context:
