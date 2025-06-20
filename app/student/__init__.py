@@ -212,23 +212,24 @@ def dashboard():
             if classmate_ids:
                 table_names = inspector.get_table_names()
                 
-                # answer_recordsを使用した正確なランキング
-                current_app.logger.info("Using answer_records for ranking")
-                
-                # 総合ランキング（正答数ベース）
-                ranking_query = text("""
-                    SELECT 
-                        u.id,
-                        u.username,
-                        u.full_name,
-                        COUNT(CASE WHEN ar.is_correct = 1 THEN 1 END) as word_count
-                    FROM users u
-                    LEFT JOIN answer_records ar ON u.id = ar.student_id
-                    WHERE u.id IN :user_ids
-                    GROUP BY u.id, u.username, u.full_name
-                    ORDER BY word_count DESC, u.username ASC
-                    LIMIT 10
-                """)
+                # word_proficiency_recordsテーブルを優先的に使用
+                if 'word_proficiency_records' in table_names:
+                    current_app.logger.info("Using word_proficiency_records for ranking")
+                    
+                    # 総合ランキング
+                    ranking_query = text("""
+                        SELECT 
+                            u.id,
+                            u.username,
+                            u.full_name,
+                            COUNT(DISTINCT CASE WHEN wpr.level >= 5 THEN wpr.problem_id END) as word_count
+                        FROM users u
+                        LEFT JOIN word_proficiency_records wpr ON u.id = wpr.student_id
+                        WHERE u.id IN :user_ids
+                        GROUP BY u.id, u.username, u.full_name
+                        ORDER BY word_count DESC, u.username ASC
+                        LIMIT 10
+                    """)
                     
                 class_rankings_result = db.session.execute(
                     ranking_query,
@@ -242,11 +243,12 @@ def dashboard():
                         u.id,
                         u.username,
                         u.full_name,
-                        COUNT(CASE WHEN ar.is_correct = 1 THEN 1 END) as word_count
+                        COUNT(DISTINCT wpr.problem_id) as word_count
                     FROM users u
-                    LEFT JOIN answer_records ar ON u.id = ar.student_id
+                    LEFT JOIN word_proficiency_records wpr ON u.id = wpr.student_id
                     WHERE u.id IN :user_ids
-                    AND ar.timestamp >= :one_week_ago
+                    AND wpr.level >= 5
+                    AND wpr.last_updated >= :one_week_ago
                     GROUP BY u.id, u.username, u.full_name
                     ORDER BY word_count DESC, u.username ASC
                     LIMIT 10
@@ -628,6 +630,23 @@ def dashboard():
             ).first()
             
             context['total_words_attempted'] = result.count if result and result.count else 0
+            
+            # 正答率計算
+            total_answers_query = text("""
+                SELECT 
+                    COUNT(*) as total,
+                    SUM(is_correct) as correct
+                FROM answer_records
+                WHERE student_id = :user_id
+            """)
+            answers_result = db.session.execute(
+                total_answers_query,
+                {'user_id': current_user.id}
+            ).first()
+            if answers_result and answers_result.total > 0:
+                context['mastery_rate'] = round((answers_result.correct / answers_result.total) * 100, 1)
+            else:
+                context['mastery_rate'] = 0
             
             # word_proficiencyテーブルを使用
             if 'word_proficiency' in table_names:
