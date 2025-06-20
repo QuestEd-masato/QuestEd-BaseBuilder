@@ -429,7 +429,7 @@ class AIRecommendationEngine:
         learning_data: Dict[str, Any],
         recommendation_type: str,
         max_recommendations: int,
-        settings: RecommendationSettings
+        settings: Dict
     ) -> List[Dict[str, Any]]:
         """OpenAI APIを使用してAI推薦を生成"""
         
@@ -484,7 +484,7 @@ class AIRecommendationEngine:
         learning_patterns: Dict[str, Any],
         learning_data: Dict[str, Any],
         recommendation_type: str,
-        settings: RecommendationSettings
+        settings: Dict
     ) -> str:
         """推薦用プロンプトを構築"""
         

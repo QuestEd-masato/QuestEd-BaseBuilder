@@ -760,38 +760,24 @@ def recommendation_settings():
     if current_user.role != 'student':
         return jsonify({'error': '学生のみアクセス可能です'}), 403
     
-    from app.models import RecommendationSettings
+    # RecommendationSettings not implemented - use defaults
     
     if request.method == 'GET':
         # 設定取得
         try:
-            settings = RecommendationSettings.query.filter_by(
-                student_id=current_user.id
-            ).first()
+            settings = None  # RecommendationSettings not implemented
             
-            if settings:
-                settings_data = {
-                    'enable_ai_recommendations': settings.enable_ai_recommendations,
-                    'recommendation_frequency': settings.recommendation_frequency,
-                    'max_recommendations_per_session': settings.max_recommendations_per_session,
-                    'preferred_difficulty_adjustment': float(settings.preferred_difficulty_adjustment),
-                    'enable_challenge_problems': settings.enable_challenge_problems,
-                    'enable_review_recommendations': settings.enable_review_recommendations,
-                    'privacy_level': settings.privacy_level,
-                    'feedback_required': settings.feedback_required
-                }
-            else:
-                # デフォルト設定
-                settings_data = {
-                    'enable_ai_recommendations': True,
-                    'recommendation_frequency': 'daily',
-                    'max_recommendations_per_session': 5,
-                    'preferred_difficulty_adjustment': 0.0,
-                    'enable_challenge_problems': True,
-                    'enable_review_recommendations': True,
-                    'privacy_level': 'full',
-                    'feedback_required': False
-                }
+            # デフォルト設定
+            settings_data = {
+                'enable_ai_recommendations': True,
+                'recommendation_frequency': 'daily',
+                'max_recommendations_per_session': 5,
+                'preferred_difficulty_adjustment': 0.0,
+                'enable_challenge_problems': True,
+                'enable_review_recommendations': True,
+                'privacy_level': 'full',
+                'feedback_required': False
+            }
             
             return jsonify({
                 'status': 'success',
