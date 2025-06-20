@@ -14,12 +14,12 @@ class CurriculumUnit(db.Model):
     difficulty_level = db.Column(db.Integer, default=1, comment='難易度レベル（1-5）')
     estimated_minutes = db.Column(db.Integer, default=60, comment='推定学習時間（分）')
     prerequisites = db.Column(db.JSON, comment='前提単元ID配列')
-    # learning_objectives = db.Column(db.Text, comment='学習目標')  # RDSに存在しない
-    # tags = db.Column(db.JSON, comment='タグ配列')  # RDSに存在しない
+    learning_objectives = db.Column(db.Text, comment='学習目標')
+    tags = db.Column(db.JSON, comment='タグ配列')
     order_index = db.Column(db.Integer, default=0, comment='表示順序')
-    # is_active = db.Column(db.Boolean, default=True, comment='有効フラグ')  # RDSに存在しない
-    # school_id = db.Column(db.Integer, db.ForeignKey('schools.id'), nullable=True, comment='学校ID（NULL=全校共通）')  # RDSに存在しない
-    # created_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, comment='作成者ID')  # RDSに存在しない
+    is_active = db.Column(db.Boolean, default=True, comment='有効フラグ')
+    school_id = db.Column(db.Integer, db.ForeignKey('schools.id'), nullable=True, comment='学校ID（NULL=全校共通）')
+    created_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, comment='作成者ID')
     legacy_curriculum_id = db.Column(db.Integer, db.ForeignKey('curriculums.id'), nullable=True, comment='レガシーカリキュラムID')
     created_at = db.Column(db.DateTime, default=datetime.utcnow, comment='作成日時')
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, comment='更新日時')
@@ -28,15 +28,15 @@ class CurriculumUnit(db.Model):
     __table_args__ = (
         db.Index('idx_subject_id', 'subject_id'),
         db.Index('idx_difficulty_level', 'difficulty_level'),
-        # db.Index('idx_school_id', 'school_id'),  # school_idが存在しないためコメントアウト
-        # db.Index('idx_is_active', 'is_active'),  # is_activeが存在しないためコメントアウト
+        db.Index('idx_school_id', 'school_id'),
+        db.Index('idx_is_active', 'is_active'),
         db.Index('idx_order_index', 'order_index'),
     )
     
     # リレーションシップ
     subject = db.relationship('Subject', backref='curriculum_units')
-    # school = db.relationship('School', backref='curriculum_units')  # school_idが存在しないためコメントアウト
-    # creator = db.relationship('User', foreign_keys=[created_by], backref='created_units')  # created_byが存在しないためコメントアウト
+    school = db.relationship('School', backref='curriculum_units')
+    creator = db.relationship('User', foreign_keys=[created_by], backref='created_units')
     legacy_curriculum = db.relationship('Curriculum', backref='migrated_units')
     
     # 単元と問題の紐付け
@@ -62,7 +62,7 @@ class CurriculumUnit(db.Model):
             'title': self.title,
             'description': self.description,
             'difficulty_level': self.difficulty_level,
-            'estimated_hours': float(self.estimated_hours) if self.estimated_hours else None,
+            'estimated_minutes': self.estimated_minutes,
             'prerequisites': self.prerequisites,
             'learning_objectives': self.learning_objectives,
             'tags': self.tags,
