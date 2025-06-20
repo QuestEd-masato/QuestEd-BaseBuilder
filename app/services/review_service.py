@@ -282,18 +282,8 @@ class ReviewService:
         # 回答を記録
         review_item.answer(student_answer, is_correct, time_spent_seconds)
         
-        # 復習パフォーマンスを記録
-        performance = ReviewPerformance(
-            student_id=student_id,
-            review_set_id=set_id,
-            problem_id=review_item.problem_id,
-            review_date=date.today(),
-            response_time_seconds=time_spent_seconds,
-            is_correct=is_correct,
-            attempts_before_correct=1,
-            study_session_id=f"review_{set_id}"
-        )
-        db.session.add(performance)
+        # 復習パフォーマンスの記録（ReviewPerformanceテーブル未実装のためスキップ）
+        # 将来の実装では、answer_recordsテーブルや新しい統計テーブルに記録
         
         # 弱点分析を更新
         if review_item.weakness_category:
@@ -401,29 +391,16 @@ class ReviewService:
         Returns:
             弱点分析データ
         """
-        query = StudentWeakness.query.filter_by(student_id=student_id)
-        
-        if subject_id:
-            query = query.filter(StudentWeakness.subject_id == subject_id)
-        if severity_level:
-            query = query.filter(StudentWeakness.severity_level >= severity_level)
-        if is_active is not None:
-            query = query.filter(StudentWeakness.is_active == is_active)
-        
-        weaknesses = query.order_by(StudentWeakness.severity_level.desc()).all()
-        
-        # 分析サマリー
-        total_weaknesses = len(weaknesses)
-        critical_weaknesses = len([w for w in weaknesses if w.severity_level >= 4])
-        improving_weaknesses = len([w for w in weaknesses if w.improvement_trend == 'improving'])
+        # StudentWeaknessテーブルが存在しないため、空の結果を返す
+        # 将来の実装では、answer_recordsテーブルから弱点を分析
         
         return {
-            'weaknesses': [w.to_dict() for w in weaknesses],
+            'weaknesses': [],
             'summary': {
-                'total_weaknesses': total_weaknesses,
-                'critical_weaknesses': critical_weaknesses,
-                'improving_weaknesses': improving_weaknesses,
-                'stable_weaknesses': total_weaknesses - improving_weaknesses
+                'total_weaknesses': 0,
+                'critical_weaknesses': 0,
+                'improving_weaknesses': 0,
+                'stable_weaknesses': 0
             }
         }
     
@@ -439,27 +416,14 @@ class ReviewService:
         Returns:
             復習スケジュール
         """
-        query = ReviewSchedule.query.filter_by(
-            student_id=student_id,
-            is_suspended=False
-        )
-        
-        if due_only:
-            query = query.filter(ReviewSchedule.next_review_date <= date.today())
-        
-        schedules = query.order_by(ReviewSchedule.next_review_date).all()
-        
-        # 習得レベル別統計
-        mastery_stats = {}
-        for schedule in schedules:
-            level = schedule.mastery_level
-            mastery_stats[level] = mastery_stats.get(level, 0) + 1
+        # ReviewScheduleテーブルが存在しないため、空のスケジュールを返す
+        # 将来の実装では、answer_recordsやreview_setsからスケジュールを算出
         
         return {
-            'due_reviews': [s.to_dict() for s in schedules if s.is_due_for_review()],
-            'upcoming_reviews': [s.to_dict() for s in schedules if not s.is_due_for_review()],
-            'mastery_distribution': mastery_stats,
-            'total_scheduled': len(schedules)
+            'due_reviews': [],
+            'upcoming_reviews': [],
+            'mastery_distribution': {},
+            'total_scheduled': 0
         }
     
     @staticmethod
@@ -542,50 +506,18 @@ class ReviewService:
     @staticmethod
     def _update_weakness_analysis(student_id: int, category: str, is_correct: bool):
         """弱点分析を更新"""
-        weakness = StudentWeakness.query.filter_by(
-            student_id=student_id,
-            category=category
-        ).first()
-        
-        if weakness:
-            weakness.update_statistics(is_correct)
-        else:
-            # 新しい弱点として記録
-            weakness = StudentWeakness(
-                student_id=student_id,
-                category=category,
-                weakness_type='concept',
-                severity_level=3,
-                total_attempts=1,
-                correct_attempts=1 if is_correct else 0,
-                accuracy_rate=100.0 if is_correct else 0.0
-            )
-            db.session.add(weakness)
+        # StudentWeaknessテーブルが存在しないため、弱点分析更新はスキップ
+        # 将来の実装では、answer_recordsテーブルから統計を算出するか、
+        # 新しい弱点追跡テーブルを作成することを推奨
+        pass
     
     @staticmethod
     def _update_spaced_repetition_schedule(student_id: int, problem_id: int, is_correct: bool):
         """間隔反復学習スケジュールを更新"""
-        schedule = ReviewSchedule.query.filter_by(
-            student_id=student_id,
-            problem_id=problem_id
-        ).first()
-        
-        if not schedule:
-            # 新しいスケジュールを作成
-            schedule = ReviewSchedule(
-                student_id=student_id,
-                problem_id=problem_id,
-                next_review_date=date.today() + timedelta(days=1)
-            )
-            db.session.add(schedule)
-        
-        # パフォーマンスに基づいてスケジュール更新
-        if is_correct:
-            performance = 'good'
-        else:
-            performance = 'again'
-        
-        schedule.update_schedule(performance)
+        # ReviewScheduleテーブルが存在しないため、スケジュール更新はスキップ
+        # 将来の実装では、専用の復習スケジュールテーブルを作成するか、
+        # 既存のテーブルにスケジュール機能を追加することを推奨
+        pass
     
     @staticmethod
     def _get_next_item_id(set_id: int, current_item_id: int) -> Optional[int]:

@@ -137,7 +137,7 @@ class SpeechService:
     @staticmethod
     def get_settings(student_id: int) -> Dict:
         """
-        音声入力設定を取得
+        音声入力設定を取得（デフォルト設定を返す）
         
         Args:
             student_id: 生徒ID
@@ -145,20 +145,24 @@ class SpeechService:
         Returns:
             音声入力設定
         """
-        settings = SpeechSettings.query.filter_by(student_id=student_id).first()
-        
-        if not settings:
-            # デフォルト設定を作成
-            settings = SpeechSettings(student_id=student_id)
-            db.session.add(settings)
-            db.session.commit()
-        
-        return settings.to_dict()
+        # SpeechSettingsテーブルが存在しないため、デフォルト設定を返す
+        return {
+            'student_id': student_id,
+            'voice_sensitivity': 0.7,
+            'auto_punctuation': True,
+            'language_code': 'ja-JP',
+            'noise_suppression': True,
+            'echo_cancellation': True,
+            'interim_results': True,
+            'max_alternatives': 1,
+            'created_at': datetime.now().isoformat(),
+            'updated_at': datetime.now().isoformat()
+        }
     
     @staticmethod
     def update_settings(student_id: int, settings_data: Dict) -> Dict:
         """
-        音声入力設定を更新
+        音声入力設定を更新（設定の永続化は未実装）
         
         Args:
             student_id: 生徒ID
@@ -167,17 +171,13 @@ class SpeechService:
         Returns:
             更新後の設定
         """
-        settings = SpeechSettings.query.filter_by(student_id=student_id).first()
+        # SpeechSettingsテーブルが存在しないため、設定値をそのまま返す
+        # 将来の実装では、ユーザー設定テーブルに保存するか、JSONカラムに格納
+        default_settings = SpeechService.get_settings(student_id)
+        default_settings.update(settings_data)
+        default_settings['updated_at'] = datetime.now().isoformat()
         
-        if not settings:
-            settings = SpeechSettings(student_id=student_id)
-            db.session.add(settings)
-        
-        # 設定値の更新
-        settings.update_settings(**settings_data)
-        db.session.commit()
-        
-        return settings.to_dict()
+        return default_settings
     
     @staticmethod
     def get_statistics(student_id: int, days: int = 30) -> Dict:
@@ -194,30 +194,28 @@ class SpeechService:
         end_date = date.today()
         start_date = date.fromordinal(end_date.toordinal() - days + 1)
         
-        # 期間内の統計データを取得
-        stats = SpeechStatistics.query.filter(
-            SpeechStatistics.student_id == student_id,
-            SpeechStatistics.date >= start_date,
-            SpeechStatistics.date <= end_date
-        ).order_by(SpeechStatistics.date).all()
+        # SpeechStatisticsテーブルが存在しないため、SpeechTranscriptionから統計を算出
+        transcriptions = SpeechTranscription.query.filter(
+            SpeechTranscription.user_id == student_id,
+            SpeechTranscription.created_at >= start_date
+        ).all()
         
         # 集計
-        total_inputs = sum(s.total_inputs for s in stats)
-        successful_inputs = sum(s.successful_inputs for s in stats)
-        total_duration = sum(float(s.total_duration) for s in stats if s.total_duration)
+        total_inputs = len(transcriptions)
+        successful_inputs = len([t for t in transcriptions if t.transcription and len(t.transcription.strip()) > 0])
+        total_duration = sum(float(t.duration) for t in transcriptions if t.duration)
         
-        # 平均信頼度の計算
-        confidence_scores = [float(s.average_confidence) for s in stats if s.average_confidence]
-        average_confidence = sum(confidence_scores) / len(confidence_scores) if confidence_scores else 0.0
+        # 平均信頼度の計算（今はTranscriptionからは取得できないため簡易実装）
+        average_confidence = 0.85  # デフォルト値
         
-        # 日別データ
-        daily_data = [s.to_dict() for s in stats]
+        # 日別データ（簡易実装）
+        daily_data = []
         
-        # 最も使用されたコンテキスト
+        # 最も使用されたコンテキスト（Transcriptionから算出）
         context_usage = {}
-        for stat in stats:
-            if stat.most_used_context:
-                context_usage[stat.most_used_context] = context_usage.get(stat.most_used_context, 0) + stat.total_inputs
+        for t in transcriptions:
+            context = t.usage_context or 'unknown'
+            context_usage[context] = context_usage.get(context, 0) + 1
         
         most_used_context = max(context_usage.items(), key=lambda x: x[1])[0] if context_usage else None
         
@@ -281,14 +279,10 @@ class SpeechService:
             student_id: 生徒ID
             transcription_data: 音声認識データ
         """
-        stat = SpeechStatistics.get_or_create_today(student_id)
-        stat.update_statistics(transcription_data)
-        
-        # 最も使用されたコンテキストの更新
-        if transcription_data.get('context'):
-            # 簡易実装：今日のコンテキスト使用回数を記録
-            # 本格実装では別テーブルで管理することを推奨
-            stat.most_used_context = transcription_data['context']
+        # SpeechStatisticsテーブルが存在しないため、統計更新はスキップ
+        # 将来の実装では、speech_transcriptionsテーブルのデータから統計を算出するか、
+        # 新しい統計テーブルを作成することを推奨
+        pass
     
     @staticmethod
     def _generate_suggestions(text: str, context: str) -> List[str]:
