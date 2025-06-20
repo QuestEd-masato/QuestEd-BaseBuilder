@@ -120,12 +120,14 @@ class AIRecommendationEngine:
             if not student or student.role != 'student':
                 raise AIRecommendationError("有効な学生が見つかりません")
             
-            # 推薦設定を取得
-            settings = RecommendationSettings.query.filter_by(student_id=student_id).first()
-            if not settings:
-                settings = self._create_default_settings(student_id)
+            # 推薦設定を取得（RecommendationSettingsテーブルが存在しないためデフォルト設定を使用）
+            settings = {
+                'enable_ai_recommendations': True,
+                'max_daily_recommendations': 5,
+                'difficulty_preference': 'adaptive'
+            }
             
-            if not settings.enable_ai_recommendations:
+            if not settings['enable_ai_recommendations']:
                 logger.info(f"学生 {student_id} はAI推薦を無効にしています")
                 return []
             
@@ -159,20 +161,19 @@ class AIRecommendationEngine:
             logger.error(f"推薦生成エラー (学生ID: {student_id}): {str(e)}")
             raise AIRecommendationError(f"推薦生成中にエラーが発生しました: {str(e)}")
     
-    def _create_default_settings(self, student_id: int) -> RecommendationSettings:
-        """デフォルトの推薦設定を作成"""
-        settings = RecommendationSettings(
-            student_id=student_id,
-            enable_ai_recommendations=True,
-            recommendation_frequency='daily',
-            max_recommendations_per_session=5,
-            preferred_difficulty_adjustment=0.0,
-            enable_challenge_problems=True,
-            enable_review_recommendations=True,
-            privacy_level='full'
-        )
-        db.session.add(settings)
-        db.session.commit()
+    def _create_default_settings(self, student_id: int) -> Dict:
+        """デフォルトの推薦設定を作成（RecommendationSettingsテーブルが存在しないため辞書で返す）"""
+        settings = {
+            'student_id': student_id,
+            'enable_ai_recommendations': True,
+            'recommendation_frequency': 'daily',
+            'max_recommendations_per_session': 5,
+            'preferred_difficulty_adjustment': 0.0,
+            'enable_challenge_problems': True,
+            'enable_review_recommendations': True,
+            'privacy_level': 'full'
+        }
+        # RecommendationSettingsテーブルが存在しないため、辞書で返す
         return settings
     
     def _get_recent_recommendations(
@@ -246,7 +247,7 @@ class AIRecommendationEngine:
                     'status': selection.status,
                     'progress': float(selection.progress_percentage) if selection.progress_percentage else 0,
                     'study_time': selection.study_time_minutes,
-                    'difficulty': selection.unit.difficulty_level if selection.unit else 2,
+                    'difficulty': selection.unit.difficulty if selection.unit else 2,
                     'last_activity': selection.last_activity_at.isoformat() if selection.last_activity_at else None
                 })
             
@@ -583,7 +584,7 @@ class AIRecommendationEngine:
                         'confidence_score': 0.6,
                         'reasoning': "まだ学習していない基礎単元です",
                         'estimated_time_minutes': unit.estimated_minutes,
-                        'difficulty_level': unit.difficulty_level,
+                        'difficulty_level': unit.difficulty,
                         'recommendation_type': recommendation_type,
                         'generated_at': datetime.utcnow().isoformat()
                     })
@@ -682,15 +683,9 @@ class AIRecommendationEngine:
     ):
         """推薦設定を更新"""
         try:
-            settings = RecommendationSettings.query.filter_by(student_id=student_id).first()
-            if not settings:
-                settings = RecommendationSettings(student_id=student_id)
-                db.session.add(settings)
-            
-            # 設定を更新
-            for key, value in settings_data.items():
-                if hasattr(settings, key):
-                    setattr(settings, key, value)
+            # RecommendationSettingsテーブルが存在しないため、デフォルト設定を更新して返す
+            settings = self._create_default_settings(student_id)
+            settings.update(settings_data)
             
             settings.updated_at = datetime.utcnow()
             db.session.commit()

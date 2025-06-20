@@ -41,10 +41,11 @@ from sqlalchemy import and_, or_, desc, func, text
 from flask import current_app
 
 from app.models import (
-    User, StudentWeakness, Subject, ProficiencyRecord, BasicKnowledgeItem,
+    User, Subject, ProficiencyRecord, BasicKnowledgeItem,
     ProblemCategory, StudentUnitSelection, CurriculumUnit, ReviewSet, ReviewSetItem,
     WordProficiency, AnswerRecord, TextSet, BaseBuilderLearningPath, PathAssignment
 )
+# StudentWeakness は RDSに存在しないためコメントアウト
 from app.utils.exceptions import WeaknessAnalysisError, InsufficientDataError
 from extensions import db
 
@@ -162,16 +163,12 @@ class WeaknessAnalyzer:
         """最近の弱点分析結果を取得"""
         cutoff_time = datetime.utcnow() - timedelta(hours=hours)
         
-        recent_weaknesses = StudentWeakness.query.filter(
-            and_(
-                StudentWeakness.student_id == student_id,
-                StudentWeakness.updated_at >= cutoff_time,
-                StudentWeakness.is_active == True
-            )
-        ).order_by(desc(StudentWeakness.severity_level)).all()
+        # StudentWeaknessテーブルが存在しないため、answer_recordsから弱点を分析
+        # TODO: answer_recordsやproficiency_recordsから弱点を算出する実装に変更
+        recent_weaknesses = []
         
         if recent_weaknesses:
-            return [self._weakness_to_dict(weakness) for weakness in recent_weaknesses]
+            return recent_weaknesses
         return None
     
     def _collect_comprehensive_learning_data(self, student_id: int) -> Dict[str, Any]:
@@ -295,7 +292,7 @@ class WeaknessAnalyzer:
                     data['unit_selections'].append({
                         'unit_id': selection.unit_id,
                         'unit_title': selection.unit.title,
-                        'difficulty_level': selection.unit.difficulty_level,
+                        'difficulty_level': selection.unit.difficulty,
                         'status': selection.status,
                         'progress_percentage': float(selection.progress_percentage) if selection.progress_percentage else 0,
                         'total_items': selection.total_items,
@@ -995,42 +992,15 @@ class WeaknessAnalyzer:
     def _save_weakness_analysis(self, student_id: int, weaknesses: List[Dict[str, Any]]):
         """弱点分析結果をデータベースに保存"""
         try:
-            # 既存の活動中の弱点を非活動化
-            StudentWeakness.query.filter_by(
-                student_id=student_id,
-                is_active=True
-            ).update({'is_active': False})
+            # StudentWeaknessテーブルが存在しないため、既存弱点の非活動化をスキップ
+            # TODO: 将来の実装では、新しい弱点テーブルを作成するか、
+            # 既存テーブルにJSONカラムとして弱点データを保存
             
-            # 新しい弱点を保存
+            # StudentWeaknessテーブルが存在しないため、弱点の保存をスキップ
+            logger.info(f"弱点データ保存スキップ: 生徒ID {student_id}, 弱点数 {len(weaknesses)}")
             for weakness_data in weaknesses:
-                # subject_idを取得
-                subject_id = None
-                if weakness_data.get('analysis_data', {}).get('subject_name'):
-                    subject = Subject.query.filter_by(
-                        name=weakness_data['analysis_data']['subject_name']
-                    ).first()
-                    if subject:
-                        subject_id = subject.id
-                
-                weakness = StudentWeakness(
-                    student_id=weakness_data['student_id'],
-                    subject_id=subject_id,
-                    category=weakness_data['category'],
-                    subcategory=weakness_data['subcategory'],
-                    weakness_type=weakness_data['weakness_type'],
-                    severity_level=weakness_data['severity_level'],
-                    confidence_score=weakness_data['confidence_score'],
-                    total_attempts=weakness_data['total_attempts'],
-                    correct_attempts=weakness_data['correct_attempts'],
-                    accuracy_rate=weakness_data['accuracy_rate'],
-                    last_attempt_at=datetime.utcnow(),
-                    improvement_trend=weakness_data['improvement_trend'],
-                    recommended_actions=weakness_data['recommended_actions'],
-                    analysis_data=weakness_data['analysis_data'],
-                    is_active=True
-                )
-                
-                db.session.add(weakness)
+                logger.debug(f"弱点: {weakness_data['category']} - {weakness_data['subcategory']} (重度: {weakness_data['severity_level']})")
+                # 将来の実装では、ここで弱点データを保存する
             
             db.session.commit()
             logger.info(f"弱点分析結果を保存 (学生ID: {student_id}, 弱点数: {len(weaknesses)})")
@@ -1040,36 +1010,35 @@ class WeaknessAnalyzer:
             db.session.rollback()
             raise WeaknessAnalysisError(f"弱点分析保存中にエラーが発生しました: {str(e)}")
     
-    def _weakness_to_dict(self, weakness: StudentWeakness) -> Dict[str, Any]:
-        """StudentWeaknessオブジェクトを辞書に変換"""
+    def _weakness_to_dict(self, weakness: Dict[str, Any]) -> Dict[str, Any]:
+        """StudentWeaknessデータ（辞書）を正規化した辞書に変換"""
+        # StudentWeaknessテーブルが存在しないため、辞書で処理
         return {
-            'id': weakness.id,
-            'student_id': weakness.student_id,
-            'subject_id': weakness.subject_id,
-            'category': weakness.category,
-            'subcategory': weakness.subcategory,
-            'weakness_type': weakness.weakness_type,
-            'severity_level': weakness.severity_level,
-            'confidence_score': float(weakness.confidence_score),
-            'total_attempts': weakness.total_attempts,
-            'correct_attempts': weakness.correct_attempts,
-            'accuracy_rate': float(weakness.accuracy_rate),
-            'last_attempt_at': weakness.last_attempt_at.isoformat() if weakness.last_attempt_at else None,
-            'improvement_trend': weakness.improvement_trend,
-            'recommended_actions': weakness.recommended_actions,
-            'analysis_data': weakness.analysis_data,
-            'is_active': weakness.is_active,
-            'created_at': weakness.created_at.isoformat() if weakness.created_at else None,
+            'id': weakness.get('id', 0),
+            'student_id': weakness.get('student_id'),
+            'subject_id': weakness.get('subject_id'),
+            'category': weakness.get('category'),
+            'subcategory': weakness.get('subcategory'),
+            'weakness_type': weakness.get('weakness_type'),
+            'severity_level': weakness.get('severity_level'),
+            'confidence_score': float(weakness.get('confidence_score', 0)),
+            'total_attempts': weakness.get('total_attempts', 0),
+            'correct_attempts': weakness.get('correct_attempts', 0),
+            'accuracy_rate': float(weakness.get('accuracy_rate', 0)),
+            'last_attempt_at': weakness.get('last_attempt_at'),
+            'improvement_trend': weakness.get('improvement_trend'),
+            'recommended_actions': weakness.get('recommended_actions'),
+            'analysis_data': weakness.get('analysis_data'),
+            'is_active': weakness.get('is_active', True),
+            'created_at': weakness.get('created_at'),
             'updated_at': weakness.updated_at.isoformat() if weakness.updated_at else None
         }
     
     def get_weakness_summary(self, student_id: int) -> Dict[str, Any]:
         """学生の弱点サマリーを取得"""
         try:
-            active_weaknesses = StudentWeakness.query.filter_by(
-                student_id=student_id,
-                is_active=True
-            ).order_by(desc(StudentWeakness.severity_level)).all()
+            # StudentWeaknessテーブルが存在しないため、空リストを使用
+            active_weaknesses = []
             
             if not active_weaknesses:
                 return {
@@ -1121,11 +1090,8 @@ class WeaknessRecommendationEngine:
     ) -> List[Dict[str, Any]]:
         """弱点に基づく対象推薦を生成"""
         try:
-            # 活動中の弱点を取得
-            weaknesses = StudentWeakness.query.filter_by(
-                student_id=student_id,
-                is_active=True
-            ).order_by(desc(StudentWeakness.severity_level)).limit(max_recommendations).all()
+            # StudentWeaknessテーブルが存在しないため、空リストを使用
+            weaknesses = []
             
             recommendations = []
             
@@ -1140,17 +1106,17 @@ class WeaknessRecommendationEngine:
             logger.error(f"対象推薦生成エラー: {str(e)}")
             return []
     
-    def _find_content_for_weakness(self, weakness: StudentWeakness) -> List[Dict[str, Any]]:
-        """弱点に対応するコンテンツを検索"""
+    def _find_content_for_weakness(self, weakness: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """弱点データ（辞書）に対応するコンテンツを検索"""
         recommendations = []
         
         try:
-            if weakness.weakness_type == 'concept':
+            if weakness.get('weakness_type') == 'concept':
                 # 概念理解のための基礎的な単元を推薦
                 basic_units = CurriculumUnit.query.filter_by(
-                    difficulty_level=1
+                    difficulty=1  # difficulty_level -> difficulty
                 ).filter(
-                    CurriculumUnit.title.contains(weakness.category)
+                    CurriculumUnit.title.contains(weakness.get('category', ''))
                 ).limit(2).all()
                 
                 for unit in basic_units:
@@ -1158,16 +1124,16 @@ class WeaknessRecommendationEngine:
                         'type': 'unit',
                         'item_id': unit.id,
                         'title': f"基礎復習: {unit.title}",
-                        'description': f"{weakness.category}の概念理解を深めるための基礎学習",
-                        'weakness_id': weakness.id,
-                        'priority': weakness.severity_level
+                        'description': f"{weakness.get('category', '不明')}の概念理解を深めるための基礎学習",
+                        'weakness_id': weakness.get('id', 0),
+                        'priority': weakness.get('severity_level', 1)
                     })
             
-            elif weakness.weakness_type == 'knowledge':
+            elif weakness.get('weakness_type') == 'knowledge':
                 # 知識定着のための問題を推薦
-                if weakness.subject_id:
+                if weakness.get('subject_id'):
                     categories = ProblemCategory.query.filter_by(
-                        subject_id=weakness.subject_id
+                        subject_id=weakness.get('subject_id')
                     ).limit(2).all()
                     
                     for category in categories:

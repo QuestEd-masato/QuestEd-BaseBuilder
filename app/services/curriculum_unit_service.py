@@ -165,7 +165,7 @@ class CurriculumUnitService:
             problem_data = {
                 'id': item.id,
                 'title': item.title,
-                'difficulty': item.difficulty_level,
+                'difficulty': item.difficulty,
                 'is_required': mapping.is_required,
                 'order_index': mapping.order_index,
                 'weight': float(mapping.weight) if mapping.weight else 1.0

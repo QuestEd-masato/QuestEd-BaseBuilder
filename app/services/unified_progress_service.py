@@ -46,8 +46,9 @@ from sqlalchemy import and_, or_, desc, func
 from app.models import (
     User, StudentUnitSelection, CurriculumUnit, ActivityLog, Todo, Goal,
     ProficiencyRecord, WordProficiency, PathAssignment, BaseBuilderLearningPath,
-    TextSet, AnswerRecord, ReviewSet, AIRecommendation, StudentWeakness
+    TextSet, AnswerRecord, ReviewSet, AIRecommendation
 )
+# StudentWeakness は RDSに存在しないためコメントアウト
 from extensions import db
 
 # ログ設定
@@ -337,8 +338,8 @@ class UnifiedProgressService:
                 total_progress += selection.progress_percentage or 0
                 
                 # 難易度分布
-                if selection.unit and selection.unit.difficulty_level in progress_data['difficulty_distribution']:
-                    progress_data['difficulty_distribution'][selection.unit.difficulty_level] += 1
+                if selection.unit and selection.unit.difficulty in progress_data['difficulty_distribution']:
+                    progress_data['difficulty_distribution'][selection.unit.difficulty] += 1
             
             # 平均進捗率
             if len(selections) > 0:
@@ -352,7 +353,7 @@ class UnifiedProgressService:
                         'title': selection.unit.title,
                         'status': selection.status,
                         'progress_percentage': float(selection.progress_percentage) if selection.progress_percentage else 0,
-                        'difficulty_level': selection.unit.difficulty_level,
+                        'difficulty_level': selection.unit.difficulty,
                         'last_activity_at': selection.last_activity_at.isoformat() if selection.last_activity_at else None
                     })
             
@@ -653,9 +654,8 @@ class UnifiedProgressService:
         """
         try:
             review_sets = ReviewSet.query.filter_by(student_id=student_id).all()
-            weaknesses = StudentWeakness.query.filter_by(
-                student_id=student_id, is_active=True
-            ).all()
+            # StudentWeaknessテーブルが存在しないため、空リストで代替
+            weaknesses = []
             
             return {
                 'total_review_sets': len(review_sets),

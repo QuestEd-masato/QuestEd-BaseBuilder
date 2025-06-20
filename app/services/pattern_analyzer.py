@@ -291,7 +291,7 @@ class DifficultyPreferenceAnalyzer:
         # 単元学習データと難易度情報を結合して取得
         query = db.session.query(
             StudentUnitSelection,
-            CurriculumUnit.difficulty_level,
+            CurriculumUnit.difficulty,
             CurriculumUnit.estimated_minutes
         ).join(
             CurriculumUnit,

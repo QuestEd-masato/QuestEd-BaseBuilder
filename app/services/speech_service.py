@@ -50,7 +50,7 @@ class SpeechService:
         
         # 記録作成
         transcription = SpeechTranscription(
-            student_id=student_id,
+            user_id=student_id,
             session_id=session_id,
             original_audio_text=original_text,
             cleaned_text=cleaned_text,
@@ -339,7 +339,7 @@ class SpeechService:
             記録ID
         """
         transcription = SpeechTranscription(
-            student_id=student_id,
+            user_id=student_id,
             session_id=session_id,
             original_audio_text="",
             cleaned_text="",
@@ -412,7 +412,7 @@ class SpeechService:
             db.func.count(SpeechTranscription.id).label('count'),
             db.func.avg(SpeechTranscription.confidence_score).label('avg_confidence')
         ).filter(
-            SpeechTranscription.student_id == student_id,
+            SpeechTranscription.user_id == student_id,
             SpeechTranscription.created_at >= datetime.now().replace(day=1)  # 今月
         ).group_by(SpeechTranscription.input_context).all()
         
@@ -430,7 +430,7 @@ class SpeechService:
             db.func.extract('hour', SpeechTranscription.created_at).label('hour'),
             db.func.count(SpeechTranscription.id).label('count')
         ).filter(
-            SpeechTranscription.student_id == student_id,
+            SpeechTranscription.user_id == student_id,
             SpeechTranscription.created_at >= datetime.now().replace(day=1)
         ).group_by(db.func.extract('hour', SpeechTranscription.created_at)).all()
         
