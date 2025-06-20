@@ -212,47 +212,45 @@ def dashboard():
             if classmate_ids:
                 table_names = inspector.get_table_names()
                 
-                # word_proficiency_recordsテーブルを優先的に使用
-                if 'word_proficiency_records' in table_names:
-                    current_app.logger.info("Using word_proficiency_records for ranking")
-                    
-                    # 総合ランキング
-                    ranking_query = text("""
-                        SELECT 
-                            u.id,
-                            u.username,
-                            u.full_name,
-                            COUNT(DISTINCT CASE WHEN wpr.level >= 5 THEN wpr.problem_id END) as word_count
-                        FROM users u
-                        LEFT JOIN word_proficiency_records wpr ON u.id = wpr.student_id
-                        WHERE u.id IN :user_ids
-                        GROUP BY u.id, u.username, u.full_name
-                        ORDER BY word_count DESC, u.username ASC
-                        LIMIT 10
-                    """)
+                # answer_recordsを使用した正確なランキング
+                current_app.logger.info("Using answer_records for ranking")
+                
+                # 総合ランキング（正答数ベース）
+                ranking_query = text("""
+                    SELECT 
+                        u.id,
+                        u.username,
+                        u.full_name,
+                        COUNT(CASE WHEN ar.is_correct = 1 THEN 1 END) as word_count
+                    FROM users u
+                    LEFT JOIN answer_records ar ON u.id = ar.student_id
+                    WHERE u.id IN :user_ids
+                    GROUP BY u.id, u.username, u.full_name
+                    ORDER BY word_count DESC, u.username ASC
+                    LIMIT 10
+                """)
                     
                     class_rankings_result = db.session.execute(
                         ranking_query,
                         {"user_ids": tuple(classmate_ids)}
                     ).fetchall()
                     
-                    # 週間ランキング
-                    one_week_ago = datetime.now() - timedelta(days=7)
-                    weekly_query = text("""
-                        SELECT 
-                            u.id,
-                            u.username,
-                            u.full_name,
-                            COUNT(DISTINCT wpr.problem_id) as word_count
-                        FROM users u
-                        LEFT JOIN word_proficiency_records wpr ON u.id = wpr.student_id
-                        WHERE u.id IN :user_ids
-                        AND wpr.level >= 5
-                        AND wpr.last_updated >= :one_week_ago
-                        GROUP BY u.id, u.username, u.full_name
-                        ORDER BY word_count DESC, u.username ASC
-                        LIMIT 10
-                    """)
+                # 週間ランキング
+                one_week_ago = datetime.now() - timedelta(days=7)
+                weekly_query = text("""
+                    SELECT 
+                        u.id,
+                        u.username,
+                        u.full_name,
+                        COUNT(CASE WHEN ar.is_correct = 1 THEN 1 END) as word_count
+                    FROM users u
+                    LEFT JOIN answer_records ar ON u.id = ar.student_id
+                    WHERE u.id IN :user_ids
+                    AND ar.timestamp >= :one_week_ago
+                    GROUP BY u.id, u.username, u.full_name
+                    ORDER BY word_count DESC, u.username ASC
+                    LIMIT 10
+                """)
                     
                     weekly_rankings_result = db.session.execute(
                         weekly_query,
@@ -582,17 +580,16 @@ def dashboard():
             context['mastery_rate'] = 0
             context['weekly_target'] = 50
             
-            # word_proficiency_recordsテーブルを優先的に使用
-            if 'word_proficiency_records' in table_names:
-                current_app.logger.info("Using word_proficiency_records table")
-                
-                # 総マスター単語数（レベル5）
-                total_mastered_query = text("""
-                    SELECT COUNT(DISTINCT problem_id) as count
-                    FROM word_proficiency_records
-                    WHERE student_id = :user_id
-                    AND level >= 5
-                """)
+            # answer_recordsを使用した正確な統計
+            current_app.logger.info("Using answer_records table")
+            
+            # 総正答問題数
+            total_mastered_query = text("""
+                SELECT COUNT(DISTINCT problem_id) as count
+                FROM answer_records
+                WHERE student_id = :user_id
+                AND is_correct = 1
+            """)
                 
                 result = db.session.execute(
                     total_mastered_query,
@@ -601,32 +598,31 @@ def dashboard():
                 
                 context['total_mastered_words'] = result.count if result and result.count else 0
                 
-                # 今週マスターした単語数
-                one_week_ago = datetime.now() - timedelta(days=7)
-                weekly_mastered_query = text("""
-                    SELECT COUNT(DISTINCT problem_id) as count
-                    FROM word_proficiency_records
-                    WHERE student_id = :user_id
-                    AND level >= 5
-                    AND last_updated >= :week_ago
-                """)
+            # 今週正答した問題数
+            one_week_ago = datetime.now() - timedelta(days=7)
+            weekly_mastered_query = text("""
+                SELECT COUNT(CASE WHEN is_correct = 1 THEN 1 END) as count
+                FROM answer_records
+                WHERE student_id = :user_id
+                AND timestamp >= :week_ago
+            """)
                 
-                result = db.session.execute(
-                    weekly_mastered_query,
-                    {"user_id": current_user.id, "week_ago": one_week_ago}
-                ).first()
+            result = db.session.execute(
+                weekly_mastered_query,
+                {"user_id": current_user.id, "week_ago": one_week_ago}
+            ).first()
+            
+            context['weekly_words_learned'] = result.count if result and result.count else 0
+            
+            # 全問題数
+            total_words_query = text("""
+                SELECT COUNT(DISTINCT problem_id) as count
+                FROM answer_records
+                WHERE student_id = :user_id
+            """)
                 
-                context['weekly_words_learned'] = result.count if result and result.count else 0
-                
-                # 全単語数
-                total_words_query = text("""
-                    SELECT COUNT(DISTINCT problem_id) as count
-                    FROM word_proficiency_records
-                    WHERE student_id = :user_id
-                """)
-                
-                result = db.session.execute(
-                    total_words_query,
+            result = db.session.execute(
+                total_words_query,
                     {"user_id": current_user.id}
                 ).first()
                 
