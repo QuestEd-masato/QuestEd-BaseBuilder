@@ -212,6 +212,10 @@ def dashboard():
             if classmate_ids:
                 table_names = inspector.get_table_names()
                 
+                # デバッグ情報の追加
+                current_app.logger.info(f"Ranking data status:")
+                current_app.logger.info(f"- Total classmates: {len(classmate_ids)}")
+                
                 # word_proficiency_recordsテーブルを優先的に使用
                 if 'word_proficiency_records' in table_names:
                     current_app.logger.info("Using word_proficiency_records for ranking")
@@ -236,19 +240,60 @@ def dashboard():
                     {"user_ids": tuple(classmate_ids)}
                 ).fetchall()
                 
-                # 週間ランキング
+                # データが少ない場合のフォールバック
+                if len(class_rankings_result) < 5:  # 5人未満の場合
+                    current_app.logger.warning(f"Word proficiency data insufficient: {len(class_rankings_result)} users")
+                    
+                    # answer_recordsからのフォールバック
+                    fallback_query = text("""
+                        SELECT 
+                            u.id,
+                            u.username,
+                            u.full_name,
+                            COUNT(DISTINCT ar.problem_id) as word_count
+                        FROM users u
+                        LEFT JOIN answer_records ar ON u.id = ar.student_id AND ar.is_correct = 1
+                        WHERE u.id IN :user_ids
+                          AND u.id NOT IN (SELECT DISTINCT student_id FROM word_proficiency_records)
+                        GROUP BY u.id, u.username, u.full_name
+                        ORDER BY word_count DESC
+                        LIMIT :limit
+                    """)
+                    
+                    fallback_results = db.session.execute(
+                        fallback_query,
+                        {'user_ids': tuple(classmate_ids), 'limit': 10 - len(class_rankings_result)}
+                    ).fetchall()
+                    
+                    # 結果をマージ
+                    class_rankings_combined = list(class_rankings_result)
+                    for result in fallback_results:
+                        class_rankings_combined.append(result)
+                    class_rankings_result = class_rankings_combined
+                
+                # ランキングデータ状況をログ出力
+                current_app.logger.info(f"- Word proficiency users: {len(class_rankings_result)}")
+                current_app.logger.info(f"- Missing users: {len(classmate_ids) - len(class_rankings_result)}")
+                
+                # 週間ランキング（修正版）
                 one_week_ago = datetime.now() - timedelta(days=7)
                 weekly_query = text("""
                     SELECT 
                         u.id,
                         u.username,
                         u.full_name,
-                        COUNT(DISTINCT wpr.problem_id) as word_count
+                        COALESCE(wpr_count.word_count, 0) as word_count
                     FROM users u
-                    LEFT JOIN word_proficiency_records wpr ON u.id = wpr.student_id
+                    LEFT JOIN (
+                        SELECT 
+                            student_id,
+                            COUNT(DISTINCT problem_id) as word_count
+                        FROM word_proficiency_records
+                        WHERE level >= 5
+                          AND last_updated >= :one_week_ago
+                        GROUP BY student_id
+                    ) wpr_count ON u.id = wpr_count.student_id
                     WHERE u.id IN :user_ids
-                    AND wpr.level >= 5
-                    AND wpr.last_updated >= :one_week_ago
                     GROUP BY u.id, u.username, u.full_name
                     ORDER BY word_count DESC, u.username ASC
                     LIMIT 10
@@ -631,11 +676,11 @@ def dashboard():
             
             context['total_words_attempted'] = result.count if result and result.count else 0
             
-            # 正答率計算
+            # 正答率計算（整数値対応）
             total_answers_query = text("""
                 SELECT 
                     COUNT(*) as total,
-                    SUM(is_correct) as correct
+                    SUM(CASE WHEN is_correct = 1 THEN 1 ELSE 0 END) as correct
                 FROM answer_records
                 WHERE student_id = :user_id
             """)
