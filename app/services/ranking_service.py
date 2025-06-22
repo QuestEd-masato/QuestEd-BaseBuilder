@@ -280,7 +280,7 @@ class RankingService:
             'rankings': [
                 {
                     'rank': result.rank,
-                    'student_id': result.user_id,
+                    'student_id': result.id,
                     'student_name': result.username,
                     'score': float(result.total_points),
                     'school_name': result.school.name if result.school else None,
@@ -345,7 +345,7 @@ class RankingService:
             'rankings': [
                 {
                     'rank': result.rank,
-                    'student_id': result.user_id,
+                    'student_id': result.id,
                     'student_name': result.username,
                     'score': float(result.weekly_points),
                     'school_name': result.school.name if result.school else None,
@@ -409,7 +409,7 @@ class RankingService:
             'rankings': [
                 {
                     'rank': result.rank,
-                    'student_id': result.user_id,
+                    'student_id': result.id,
                     'student_name': result.username,
                     'score': float(result.monthly_points),
                     'school_name': result.school.name if result.school else None,
@@ -454,7 +454,7 @@ class RankingService:
             'rankings': [
                 {
                     'rank': result.rank,
-                    'student_id': result.user_id,
+                    'student_id': result.id,
                     'student_name': result.username,
                     'score': round(float(result.accuracy_rate), 1),
                     'total_answers': result.total_answers,
@@ -499,7 +499,7 @@ class RankingService:
             'rankings': [
                 {
                     'rank': result.rank,
-                    'student_id': result.user_id,
+                    'student_id': result.id,
                     'student_name': result.username,
                     'score': float(result.total_study_time or 0),
                     'hours': round(float(result.total_study_time or 0) / 60, 1),
@@ -544,7 +544,7 @@ class RankingService:
             'rankings': [
                 {
                     'rank': result.rank,
-                    'student_id': result.user_id,
+                    'student_id': result.id,
                     'student_name': result.username,
                     'score': result.study_days,
                     'consistency_rate': round((result.study_days / 30) * 100, 1),
