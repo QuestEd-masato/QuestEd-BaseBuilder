@@ -99,7 +99,7 @@ class RankingService:
     def get_ranking(cls, ranking_type: str, scope: str = 'school', 
                    scope_id: int = None, limit: int = 50) -> Dict[str, Any]:
         """
-        ランキングデータを取得
+        ランキングデータを取得（簡素化版）
         
         Args:
             ranking_type: ランキング種類
@@ -111,31 +111,17 @@ class RankingService:
             Dict: ランキングデータ
         """
         try:
-            # キャッシュから取得を試行
-            cached_data = cls._get_cached_ranking(ranking_type, scope, scope_id)
-            if cached_data:
-                return cached_data
-            
-            # キャッシュにない場合は計算
+            # キャッシュ機能を一時的に無効化
             ranking_data = cls._calculate_ranking(ranking_type, scope, scope_id, limit)
-            
-            # キャッシュに保存
-            cls._cache_ranking(ranking_type, scope, scope_id, ranking_data)
-            
             return ranking_data
             
         except Exception as e:
             logger.error(f"ランキング取得エラー: {str(e)}", exc_info=True)
-            # セキュリティ: 本番環境では詳細なエラー情報を隠す
-            error_msg = 'ランキングデータの取得に失敗しました'
-            if current_app.debug:
-                error_msg += f' (詳細: {str(e)})'
-            
             return {
                 'rankings': [],
                 'total_participants': 0,
                 'last_updated': datetime.utcnow().isoformat(),
-                'error': error_msg
+                'error': 'ランキングデータの取得に失敗しました'
             }
 
     @classmethod
@@ -707,56 +693,37 @@ class RankingService:
 
     @classmethod
     def _format_ranking_entry(cls, result, rank, ranking_type):
-        """ランキングエントリーのフォーマット（NULL安全版）"""
+        """ランキングエントリーのフォーマット（簡素化版）"""
         try:
-            # タプルとオブジェクトの両方に対応
-            if isinstance(result, tuple):
-                # タプルの場合（インデックスアクセス）
-                user_id = result[0] if len(result) > 0 else 0
-                username = result[1] if len(result) > 1 else 'Unknown'
-                full_name = result[2] if len(result) > 2 else username
-                score = result[3] if len(result) > 3 else 0
-            else:
-                # オブジェクトの場合（属性アクセス）
-                user_id = getattr(result, 'id', getattr(result, 'user_id', 0))
-                username = getattr(result, 'username', 'Unknown')
-                full_name = getattr(result, 'full_name', username)
-                
-                # スコア属性の安全な取得
-                score_attr = cls._get_score_attribute(ranking_type)
-                score = getattr(result, score_attr, 0)
+            # 基本的なオブジェクト属性アクセスのみ
+            user_id = getattr(result, 'id', 0)
+            username = getattr(result, 'username', 'Unknown')
             
-            # NULL値の処理
+            # スコア取得を簡素化
+            if ranking_type == 'total_points':
+                score = getattr(result, 'total_points', 0)
+            elif ranking_type == 'weekly_points':
+                score = getattr(result, 'weekly_points', 0)
+            elif ranking_type == 'monthly_points':
+                score = getattr(result, 'monthly_points', 0)
+            else:
+                score = 0
+            
             return {
                 'rank': rank or 0,
                 'student_id': user_id or 0,
                 'student_name': username or 'Unknown',
-                'full_name': full_name or username or 'Unknown',
                 'score': float(score) if score is not None else 0.0,
-                'school_name': getattr(getattr(result, 'school', None), 'name', None),
-                'class_name': ', '.join([c.name for c in getattr(result, 'classes', [])]) if hasattr(result, 'classes') else None
+                'school_name': None,
+                'class_name': None
             }
-        except Exception as e:
-            logger.error(f"Error formatting ranking entry: {str(e)}", exc_info=True)
+        except Exception:
             return {
                 'rank': rank or 0,
                 'student_id': 0,
                 'student_name': 'Error',
-                'full_name': 'Error',
                 'score': 0.0,
                 'school_name': None,
                 'class_name': None
             }
 
-    @classmethod
-    def _get_score_attribute(cls, ranking_type):
-        """ランキングタイプに応じたスコア属性名を取得"""
-        score_attributes = {
-            'total_points': 'total_points',
-            'weekly_points': 'weekly_points',
-            'monthly_points': 'monthly_points',
-            'accuracy_rate': 'accuracy_rate',
-            'study_time': 'total_study_time',
-            'consistency': 'study_days'
-        }
-        return score_attributes.get(ranking_type, 'score')
