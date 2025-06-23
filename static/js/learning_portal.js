@@ -183,9 +183,9 @@ class LearningPortal {
         const statusClass = progress.status === 'completed' ? 'completed' : 
                            progress.status === 'in_progress' ? 'in-progress' : '';
         
-        const difficultyText = this.getDifficultyText(unit.difficulty);
-        const difficultyClass = unit.difficulty === 1 ? 'easy' : 
-                               unit.difficulty === 2 ? 'normal' : 'hard';
+        const difficultyText = this.getDifficultyText(unit.difficulty_level);
+        const difficultyClass = unit.difficulty_level === 1 ? 'easy' : 
+                               unit.difficulty_level === 2 ? 'normal' : 'hard';
         
         const actionButton = this.getActionButton(progress.status, unit.id);
         
@@ -278,7 +278,7 @@ class LearningPortal {
             }
             
             // 難易度フィルター
-            if (this.filters.difficulty && unit.difficulty !== parseInt(this.filters.difficulty)) {
+            if (this.filters.difficulty && unit.difficulty_level !== parseInt(this.filters.difficulty)) {
                 return false;
             }
             

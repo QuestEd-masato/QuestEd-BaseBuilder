@@ -403,7 +403,7 @@ def get_units():
         
         # 難易度フィルタ
         if difficulty_filter:
-            query = query.filter(CurriculumUnit.difficulty == difficulty_filter)
+            query = query.filter(CurriculumUnit.difficulty_level == difficulty_filter)
         
         # ページネーション
         units_pagination = query.order_by(CurriculumUnit.order_index).paginate(
@@ -415,7 +415,7 @@ def get_units():
                 'id': unit.id,
                 'title': unit.title,
                 'description': unit.description,
-                'difficulty': unit.difficulty,
+                'difficulty_level': unit.difficulty_level,
                 'estimated_minutes': unit.estimated_minutes,
                 'order_index': unit.order_index,
                 'prerequisites': unit.prerequisites or []
