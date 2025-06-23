@@ -2810,7 +2810,7 @@ def learning_portal():
         in_progress_units = len([s for s in student_selections if s.status == 'in_progress'])
         
         # 総学習時間を計算
-        total_study_time = sum(s.study_time_minutes for s in student_selections)
+        total_study_time = sum((s.study_time_minutes or 0) for s in student_selections)
         
         context = {
             'total_units': total_units,
