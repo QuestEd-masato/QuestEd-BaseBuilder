@@ -44,25 +44,8 @@ except ImportError:
     def validate_ranking_params(ranking_type, scope, scope_id, limit):
         return {'ranking_type': ranking_type, 'scope': scope, 'scope_id': scope_id, 'limit': limit}
 
-# BaseBuilderモデルのコンディショナルインポート
-try:
-    from basebuilder.models import AnswerRecord, ProficiencyRecord, WordProficiency
-except ImportError:
-    # BaseBuilderモジュールが利用できない場合のダミークラス
-    class AnswerRecord:
-        student_id = None
-        is_correct = None
-        created_at = None
-    
-    class ProficiencyRecord:
-        student_id = None
-        score = None
-        created_at = None
-    
-    class WordProficiency:
-        student_id = None
-        proficiency_level = None
-        created_at = None
+# BaseBuilderモデルのインポート
+from basebuilder.models import AnswerRecord, WordProficiency
 
 logger = logging.getLogger(__name__)
 
@@ -204,24 +187,19 @@ class RankingService:
             User.is_active == True
         ).group_by(User.id).subquery()
         
-        # BaseBuilderモジュールが利用可能な場合は正解ポイントも追加
-        try:
-            answer_points_subquery = db.session.query(
-                AnswerRecord.student_id,
-                func.sum(AnswerRecord.is_correct * cls.POINTS_CONFIG['correct_answer']).label('answer_points')
-            ).group_by(AnswerRecord.student_id).subquery()
-            
-            points_subquery = db.session.query(
-                points_subquery.c.user_id,
-                (points_subquery.c.total_points + 
-                 func.coalesce(answer_points_subquery.c.answer_points, 0)).label('total_points')
-            ).outerjoin(
-                answer_points_subquery, points_subquery.c.user_id == answer_points_subquery.c.student_id
-            ).subquery()
-        except Exception as e:
-            # BaseBuilderモジュールが利用できない場合はActivityLogベースのみ
-            logger.warning(f"BaseBuilderモジュール利用不可、ActivityLogベースで計算: {e}")
-            pass
+        # BaseBuilderの正解ポイントを追加
+        answer_points_subquery = db.session.query(
+            AnswerRecord.student_id,
+            func.sum(AnswerRecord.is_correct * cls.POINTS_CONFIG['correct_answer']).label('answer_points')
+        ).group_by(AnswerRecord.student_id).subquery()
+        
+        points_subquery = db.session.query(
+            points_subquery.c.user_id,
+            (points_subquery.c.total_points + 
+             func.coalesce(answer_points_subquery.c.answer_points, 0)).label('total_points')
+        ).outerjoin(
+            answer_points_subquery, points_subquery.c.user_id == answer_points_subquery.c.student_id
+        ).subquery()
         
         # ランキングクエリ
         ranking_query = base_query.join(

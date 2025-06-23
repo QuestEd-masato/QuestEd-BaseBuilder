@@ -635,25 +635,64 @@ def dashboard():
                     # デバッグログ
                     current_app.logger.info(f"Delivered texts count: {len(delivered_texts)}")
                     
-            # 基本統計（簡素化版）
+            # 基本統計（修正版）
             context['total_mastered_words'] = 0
             context['weekly_words_learned'] = 0
             context['total_words_attempted'] = 0
             context['mastery_rate'] = 0
             context['weekly_target'] = 50
             
-            # 簡単な統計のみ
-            try:
-                result = db.session.execute(
-                    text("SELECT COUNT(DISTINCT problem_id) FROM answer_records WHERE student_id = :user_id AND is_correct = 1"),
-                    {"user_id": current_user.id}
-                ).scalar() or 0
-                
-                context['total_mastered_words'] = result
-                context['total_words_attempted'] = result
-                context['mastery_rate'] = 100 if result > 0 else 0
-            except Exception:
-                pass
+            # word_proficiency_recordsを優先的に使用
+            if 'word_proficiency_records' in table_names:
+                try:
+                    # レベル5達成数
+                    mastered = db.session.execute(
+                        text("SELECT COUNT(DISTINCT problem_id) FROM word_proficiency_records WHERE student_id = :user_id AND level = 5"),
+                        {"user_id": current_user.id}
+                    ).scalar() or 0
+                    
+                    # 全体の単語数
+                    total = db.session.execute(
+                        text("SELECT COUNT(DISTINCT problem_id) FROM word_proficiency_records WHERE student_id = :user_id"),
+                        {"user_id": current_user.id}
+                    ).scalar() or 0
+                    
+                    # 今週の学習
+                    one_week_ago = datetime.now() - timedelta(days=7)
+                    weekly = db.session.execute(
+                        text("SELECT COUNT(DISTINCT problem_id) FROM word_proficiency_records WHERE student_id = :user_id AND level = 5 AND timestamp >= :week_ago"),
+                        {"user_id": current_user.id, "week_ago": one_week_ago}
+                    ).scalar() or 0
+                    
+                    context['total_mastered_words'] = mastered
+                    context['total_words_attempted'] = total
+                    context['weekly_words_learned'] = weekly
+                    context['mastery_rate'] = round((mastered / total * 100), 1) if total > 0 else 0
+                    
+                except Exception as e:
+                    current_app.logger.error(f"Word proficiency stats error: {e}")
+            
+            # answer_recordsをフォールバックとして使用
+            elif 'answer_records' in table_names:
+                try:
+                    # 正解した問題数
+                    correct = db.session.execute(
+                        text("SELECT COUNT(DISTINCT problem_id) FROM answer_records WHERE student_id = :user_id AND is_correct = 1"),
+                        {"user_id": current_user.id}
+                    ).scalar() or 0
+                    
+                    # 全体の問題数
+                    total = db.session.execute(
+                        text("SELECT COUNT(DISTINCT problem_id) FROM answer_records WHERE student_id = :user_id"),
+                        {"user_id": current_user.id}
+                    ).scalar() or 0
+                    
+                    context['total_mastered_words'] = correct
+                    context['total_words_attempted'] = total
+                    context['mastery_rate'] = round((correct / total * 100), 1) if total > 0 else 0
+                    
+                except Exception as e:
+                    current_app.logger.error(f"Answer records stats error: {e}")
             
             # word_proficiencyテーブルを使用
             if 'word_proficiency' in table_names:
