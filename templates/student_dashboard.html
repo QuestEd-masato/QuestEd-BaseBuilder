@@ -641,24 +641,28 @@
 </div>
 
 <!-- ランキングセクション -->
-{% if class_top_learners or weekly_top_learners %}
 <div class="ranking-section">
     <!-- クラス学習ランキング -->
     <div class="ranking-card">
         <h3>🏆 基礎学力マスターランキング（5/5達成単語数）</h3>
         <p style="color: #666; font-size: 0.9rem; margin-top: -0.5rem; margin-bottom: 1rem;">※ランキングは毎日深夜に更新されます</p>
         <ol class="ranking-list">
-            {% for learner in class_top_learners[:5] %}
-            <li class="ranking-item" {% if learner.id == current_user.id %}style="background: #e3f2fd;"{% endif %}>
-                <span class="rank-number">{{ loop.index }}</span>
-                <span class="rank-name">{{ learner.full_name|default(learner.username, true) }}</span>
-                <span class="rank-score">{{ learner.word_count|default(0, true) }}単語</span>
-            </li>
+            {% if class_top_learners %}
+                {% for learner in class_top_learners[:5] %}
+                <li class="ranking-item" {% if learner.id == current_user.id %}style="background: #e3f2fd;"{% endif %}>
+                    <span class="rank-number">{{ loop.index }}</span>
+                    <span class="rank-name">{{ learner.full_name|default(learner.username, true) }}</span>
+                    <span class="rank-score">{{ learner.word_count|default(0, true) }}単語</span>
+                </li>
+                {% endfor %}
             {% else %}
-            <li class="ranking-item">
-                <span class="rank-name">データなし</span>
-            </li>
-            {% endfor %}
+                <li class="ranking-item">
+                    <div class="alert alert-info mb-0">
+                        <i class="fas fa-info-circle"></i> 
+                        ランキングデータを集計中です。問題を解いて記録を作りましょう！
+                    </div>
+                </li>
+            {% endif %}
         </ol>
     </div>
     
@@ -666,21 +670,25 @@
     <div class="ranking-card">
         <h3>📅 今週の活動ランキング</h3>
         <ol class="ranking-list">
-            {% for learner in weekly_top_learners[:5] %}
-            <li class="ranking-item" {% if learner.id == current_user.id %}style="background: #e3f2fd;"{% endif %}>
-                <span class="rank-number">{{ loop.index }}</span>
-                <span class="rank-name">{{ learner.full_name|default(learner.username, true) }}</span>
-                <span class="rank-score">{{ learner.word_count|default(0, true) }}単語</span>
-            </li>
+            {% if weekly_top_learners %}
+                {% for learner in weekly_top_learners[:5] %}
+                <li class="ranking-item" {% if learner.id == current_user.id %}style="background: #e3f2fd;"{% endif %}>
+                    <span class="rank-number">{{ loop.index }}</span>
+                    <span class="rank-name">{{ learner.full_name|default(learner.username, true) }}</span>
+                    <span class="rank-score">{{ learner.word_count|default(0, true) }}単語</span>
+                </li>
+                {% endfor %}
             {% else %}
-            <li class="ranking-item">
-                <span class="rank-name">データなし</span>
-            </li>
-            {% endfor %}
+                <li class="ranking-item">
+                    <div class="alert alert-info mb-0">
+                        <i class="fas fa-info-circle"></i> 
+                        今週の活動データを集計中です。学習を始めてみましょう！
+                    </div>
+                </li>
+            {% endif %}
         </ol>
     </div>
 </div>
-{% endif %}
 
 <!-- ページロード時のアニメーション -->
 <script>

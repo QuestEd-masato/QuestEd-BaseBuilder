@@ -90,6 +90,10 @@ def dashboard():
         # 基本情報
         'current_user': current_user,
         
+        # ランキング情報（安全なデフォルト値）
+        'class_top_learners': [],
+        'weekly_top_learners': [],
+        
         # アンケート情報
         'interest_survey': None,
         'personality_survey': None,
@@ -363,27 +367,37 @@ def dashboard():
                 weekly_rankings_result = [(current_user.id, current_user.username, current_user.full_name or current_user.username, 0)]
             
             # 結果をcontextに設定（classmate_idsの有無に関わらず）
-            if 'class_rankings_result' in locals():
-                class_top_learners = [
-                    {
-                        'id': r.id if hasattr(r, 'id') else r[0],
-                        'username': r.username if hasattr(r, 'username') else r[1],
-                        'full_name': r.full_name if hasattr(r, 'full_name') else r[2],
-                        'word_count': r.word_count if hasattr(r, 'word_count') else r[3]
-                    } for r in class_rankings_result
-                ]
-                context['class_top_learners'] = class_top_learners
+            try:
+                if 'class_rankings_result' in locals() and class_rankings_result:
+                    class_top_learners = [
+                        {
+                            'id': r.id if hasattr(r, 'id') else r[0],
+                            'username': r.username if hasattr(r, 'username') else r[1],
+                            'full_name': r.full_name if hasattr(r, 'full_name') else r[2],
+                            'word_count': r.word_count if hasattr(r, 'word_count') else r[3]
+                        } for r in class_rankings_result
+                    ]
+                    context['class_top_learners'] = class_top_learners
+                    current_app.logger.info(f"Class rankings processed: {len(class_top_learners)} entries")
+            except Exception as e:
+                current_app.logger.error(f"Error processing class rankings: {str(e)}")
+                # context初期値（空配列）が使用される
             
-            if 'weekly_rankings_result' in locals():
-                weekly_top_learners = [
-                    {
-                        'id': r.id if hasattr(r, 'id') else r[0],
-                        'username': r.username if hasattr(r, 'username') else r[1],
-                        'full_name': r.full_name if hasattr(r, 'full_name') else r[2],
-                        'word_count': r.word_count if hasattr(r, 'word_count') else r[3]
-                    } for r in weekly_rankings_result
-                ]
-                context['weekly_top_learners'] = weekly_top_learners
+            try:
+                if 'weekly_rankings_result' in locals() and weekly_rankings_result:
+                    weekly_top_learners = [
+                        {
+                            'id': r.id if hasattr(r, 'id') else r[0],
+                            'username': r.username if hasattr(r, 'username') else r[1],
+                            'full_name': r.full_name if hasattr(r, 'full_name') else r[2],
+                            'word_count': r.word_count if hasattr(r, 'word_count') else r[3]
+                        } for r in weekly_rankings_result
+                    ]
+                    context['weekly_top_learners'] = weekly_top_learners
+                    current_app.logger.info(f"Weekly rankings processed: {len(weekly_top_learners)} entries")
+            except Exception as e:
+                current_app.logger.error(f"Error processing weekly rankings: {str(e)}")
+                # context初期値（空配列）が使用される
                     
         except Exception as e:
             current_app.logger.warning(f"Could not fetch rankings: {str(e)}")

@@ -99,11 +99,23 @@ class LearningPortal {
     async loadUnits() {
         try {
             const response = await fetch('/api/units?include_progress=true');
+            
+            // レスポンスステータスチェック
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
             const result = await response.json();
             
-            if (result.status === 'success') {
+            // データ検証強化
+            if (result && result.status === 'success' && result.data && Array.isArray(result.data.units)) {
                 this.units = result.data.units;
-                this.renderUnits();
+                
+                if (this.units.length === 0) {
+                    this.showEmptyUnits();
+                } else {
+                    this.renderUnits();
+                }
             } else {
                 throw new Error(result.message || 'データの取得に失敗しました');
             }
@@ -491,13 +503,35 @@ class LearningPortal {
         `;
     }
     
+    showEmptyUnits() {
+        const container = document.getElementById('units-grid');
+        if (!container) {
+            console.warn('units-grid container not found');
+            return;
+        }
+        container.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-book fa-3x mb-3"></i>
+                <h3>学習単元がまだありません</h3>
+                <p>先生が単元を登録するまでお待ちください。</p>
+            </div>
+        `;
+    }
+    
     showUnitsError() {
         const container = document.getElementById('units-grid');
+        if (!container) {
+            console.warn('units-grid container not found');
+            return;
+        }
         container.innerHTML = `
             <div class="empty-state">
                 <i class="fas fa-exclamation-triangle"></i>
                 <h3>単元の読み込みに失敗しました</h3>
                 <p>ページを再読み込みしてお試しください</p>
+                <button class="btn btn-outline-primary btn-sm mt-2" onclick="location.reload()">
+                    <i class="fas fa-redo"></i> 再読み込み
+                </button>
             </div>
         `;
     }
