@@ -44,6 +44,7 @@ from app.utils.auth import check_student_class_access, log_access_attempt
 from app.ai import generate_personal_themes_with_ai
 from app.utils.rate_limiting import upload_limit, api_limit
 from app.utils.file_security import file_validator
+from app.utils.data_helpers import safe_sum, safe_percentage, safe_average
 
 student_bp = Blueprint('student', __name__)
 
@@ -817,23 +818,32 @@ def dashboard():
             context['completed_units'] = len([s for s in student_selections if s.status == 'completed'])
             context['in_progress_units'] = len([s for s in student_selections if s.status == 'in_progress'])
             
-            # 総学習時間を計算
-            context['total_study_time'] = sum(s.study_time_minutes for s in student_selections)
+            # NULL安全な総学習時間計算（ユーティリティ関数使用）
+            context['total_study_time'] = safe_sum(student_selections, 'study_time_minutes', 0)
             
-            # 完了率を計算
-            if context['total_units'] > 0:
-                context['completion_rate'] = round((context['completed_units'] / context['total_units'] * 100), 1)
-            else:
-                context['completion_rate'] = 0
+            # 完了率の安全な計算（ユーティリティ関数使用）
+            context['completion_rate'] = safe_percentage(
+                context['completed_units'], 
+                context['total_units'], 
+                0.0, 
+                1
+            )
+                
+            # 追加の統計情報（平均学習時間）
+            study_times = [s.study_time_minutes for s in student_selections if s.study_time_minutes is not None]
+            context['avg_study_time'] = safe_average(study_times, 0.0, 1)
                 
         except Exception as e:
-            current_app.logger.error(f"Free-pace learning stats error: {str(e)}")
-            # デフォルト値を設定
-            context['total_units'] = 0
-            context['completed_units'] = 0
-            context['in_progress_units'] = 0
-            context['total_study_time'] = 0
-            context['completion_rate'] = 0
+            current_app.logger.error(f"Free-pace learning stats error: {str(e)}", exc_info=True)
+            # 完全なデフォルト値セット
+            context.update({
+                'total_units': 0,
+                'completed_units': 0,
+                'in_progress_units': 0,
+                'total_study_time': 0,
+                'completion_rate': 0.0,
+                'avg_study_time': 0
+            })
         
     except Exception as e:
         current_app.logger.error(f"Dashboard error: {str(e)}")

@@ -278,15 +278,8 @@ class RankingService:
         
         return {
             'rankings': [
-                {
-                    'rank': result.rank,
-                    'student_id': result.id,
-                    'student_name': result.username,
-                    'score': float(result.total_points),
-                    'school_name': result.school.name if result.school else None,
-                    'class_name': ', '.join([c.name for c in result.classes]) if result.classes else None
-                }
-                for result in results
+                cls._format_ranking_entry(result, getattr(result, 'rank', idx + 1), 'total_points')
+                for idx, result in enumerate(results)
             ],
             'total_participants': cls._count_participants(scope, scope_id),
             'last_updated': datetime.utcnow().isoformat(),
@@ -711,3 +704,59 @@ class RankingService:
                 
             except Exception as e:
                 logger.error(f"{ranking_type} ランキング更新エラー: {str(e)}")
+
+    @classmethod
+    def _format_ranking_entry(cls, result, rank, ranking_type):
+        """ランキングエントリーのフォーマット（NULL安全版）"""
+        try:
+            # タプルとオブジェクトの両方に対応
+            if isinstance(result, tuple):
+                # タプルの場合（インデックスアクセス）
+                user_id = result[0] if len(result) > 0 else 0
+                username = result[1] if len(result) > 1 else 'Unknown'
+                full_name = result[2] if len(result) > 2 else username
+                score = result[3] if len(result) > 3 else 0
+            else:
+                # オブジェクトの場合（属性アクセス）
+                user_id = getattr(result, 'id', getattr(result, 'user_id', 0))
+                username = getattr(result, 'username', 'Unknown')
+                full_name = getattr(result, 'full_name', username)
+                
+                # スコア属性の安全な取得
+                score_attr = cls._get_score_attribute(ranking_type)
+                score = getattr(result, score_attr, 0)
+            
+            # NULL値の処理
+            return {
+                'rank': rank or 0,
+                'student_id': user_id or 0,
+                'student_name': username or 'Unknown',
+                'full_name': full_name or username or 'Unknown',
+                'score': float(score) if score is not None else 0.0,
+                'school_name': getattr(getattr(result, 'school', None), 'name', None),
+                'class_name': ', '.join([c.name for c in getattr(result, 'classes', [])]) if hasattr(result, 'classes') else None
+            }
+        except Exception as e:
+            logger.error(f"Error formatting ranking entry: {str(e)}", exc_info=True)
+            return {
+                'rank': rank or 0,
+                'student_id': 0,
+                'student_name': 'Error',
+                'full_name': 'Error',
+                'score': 0.0,
+                'school_name': None,
+                'class_name': None
+            }
+
+    @classmethod
+    def _get_score_attribute(cls, ranking_type):
+        """ランキングタイプに応じたスコア属性名を取得"""
+        score_attributes = {
+            'total_points': 'total_points',
+            'weekly_points': 'weekly_points',
+            'monthly_points': 'monthly_points',
+            'accuracy_rate': 'accuracy_rate',
+            'study_time': 'total_study_time',
+            'consistency': 'study_days'
+        }
+        return score_attributes.get(ranking_type, 'score')
