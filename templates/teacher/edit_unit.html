@@ -1,0 +1,362 @@
+{% extends 'base.html' %}
+
+{% block title %}単元編集 - {{ unit.title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+.edit-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.form-section {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.form-section h3 {
+    color: #495057;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-label {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 5px;
+    display: block;
+}
+
+.form-control {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    font-size: 14px;
+    transition: border-color 0.3s;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.form-select {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    background-color: white;
+    cursor: pointer;
+}
+
+.form-check {
+    display: flex;
+    align-items: center;
+    margin-top: 10px;
+}
+
+.form-check-input {
+    margin-right: 8px;
+}
+
+.difficulty-badges {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.difficulty-badge {
+    padding: 5px 10px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.difficulty-1 { background: #d4edda; color: #155724; }
+.difficulty-2 { background: #cce5ff; color: #004085; }
+.difficulty-3 { background: #f8d7da; color: #721c24; }
+
+.source-info {
+    background: #f8f9fa;
+    border-left: 4px solid #007bff;
+    padding: 15px;
+    margin-bottom: 20px;
+}
+
+.form-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-top: 30px;
+}
+
+.btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    text-decoration: none;
+    display: inline-block;
+    transition: all 0.3s;
+}
+
+.btn-primary {
+    background: #007bff;
+    color: white;
+}
+
+.btn-secondary {
+    background: #6c757d;
+    color: white;
+}
+
+.btn-danger {
+    background: #dc3545;
+    color: white;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.help-text {
+    font-size: 0.875rem;
+    color: #6c757d;
+    margin-top: 5px;
+}
+
+@media (max-width: 768px) {
+    .edit-container {
+        padding: 10px;
+    }
+    
+    .form-actions {
+        flex-direction: column;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="edit-container">
+    <!-- ヘッダー -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1><i class="fas fa-edit"></i> 単元編集</h1>
+            <p class="text-muted">単元の詳細情報を編集します</p>
+        </div>
+        <div>
+            <a href="{{ url_for('teacher.integrated_management') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left"></i> 統合管理に戻る
+            </a>
+        </div>
+    </div>
+
+    <!-- 元カリキュラム情報 -->
+    {% if source_curriculum %}
+    <div class="source-info">
+        <h4><i class="fas fa-link"></i> 元カリキュラム情報</h4>
+        <p><strong>タイトル:</strong> {{ source_curriculum.title }}</p>
+        <p><strong>クラス:</strong> {{ source_curriculum.class_obj.name }}</p>
+        <p><strong>作成日:</strong> {{ source_curriculum.created_at.strftime('%Y年%m月%d日') }}</p>
+    </div>
+    {% endif %}
+
+    <form method="POST">
+        <!-- 基本情報 -->
+        <div class="form-section">
+            <h3><i class="fas fa-info-circle"></i> 基本情報</h3>
+            
+            <div class="form-group">
+                <label for="title" class="form-label">単元名 <span class="text-danger">*</span></label>
+                <input type="text" id="title" name="title" class="form-control" 
+                       value="{{ unit.title }}" required maxlength="200">
+                <div class="help-text">学習者にとって分かりやすい単元名を入力してください</div>
+            </div>
+
+            <div class="form-group">
+                <label for="description" class="form-label">説明</label>
+                <textarea id="description" name="description" class="form-control" 
+                          rows="4" placeholder="単元の内容や目標について説明してください">{{ unit.description or '' }}</textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="learning_objectives" class="form-label">学習目標</label>
+                <textarea id="learning_objectives" name="learning_objectives" class="form-control" 
+                          rows="3" placeholder="この単元で達成すべき学習目標を記入してください">{{ unit.learning_objectives or '' }}</textarea>
+            </div>
+        </div>
+
+        <!-- 設定 -->
+        <div class="form-section">
+            <h3><i class="fas fa-cogs"></i> 詳細設定</h3>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="difficulty_level" class="form-label">難易度</label>
+                        <select id="difficulty_level" name="difficulty_level" class="form-select">
+                            <option value="1" {% if unit.difficulty_level == 1 %}selected{% endif %}>基礎</option>
+                            <option value="2" {% if unit.difficulty_level == 2 %}selected{% endif %}>標準</option>
+                            <option value="3" {% if unit.difficulty_level == 3 %}selected{% endif %}>応用</option>
+                        </select>
+                        <div class="difficulty-badges">
+                            <span class="difficulty-badge difficulty-1">基礎: 導入・基本概念</span>
+                            <span class="difficulty-badge difficulty-2">標準: 応用・実践</span>
+                            <span class="difficulty-badge difficulty-3">応用: 発展・複合</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="estimated_minutes" class="form-label">予想学習時間（分）</label>
+                        <input type="number" id="estimated_minutes" name="estimated_minutes" 
+                               class="form-control" value="{{ unit.estimated_minutes }}" 
+                               min="5" max="300" step="5">
+                        <div class="help-text">5分〜300分の範囲で設定してください</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="tags" class="form-label">タグ</label>
+                <input type="text" id="tags" name="tags" class="form-control" 
+                       value="{{ tags_string }}" placeholder="タグをカンマ区切りで入力 (例: 数学, 基礎, 計算)">
+                <div class="help-text">単元の分類や検索に使用するタグをカンマ区切りで入力してください</div>
+            </div>
+
+            <div class="form-check">
+                <input type="checkbox" id="is_active" name="is_active" class="form-check-input" 
+                       {% if unit.is_active %}checked{% endif %}>
+                <label for="is_active" class="form-check-label">
+                    単元を有効にする（学生が選択できるようになります）
+                </label>
+            </div>
+        </div>
+
+        <!-- メタ情報 -->
+        <div class="form-section">
+            <h3><i class="fas fa-info"></i> メタ情報</h3>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong>作成日:</strong> {{ unit.created_at.strftime('%Y年%m月%d日 %H:%M') }}</p>
+                    {% if unit.updated_at %}
+                    <p><strong>最終更新:</strong> {{ unit.updated_at.strftime('%Y年%m月%d日 %H:%M') }}</p>
+                    {% endif %}
+                </div>
+                <div class="col-md-6">
+                    <p><strong>単元コード:</strong> {{ unit.unit_code or 'なし' }}</p>
+                    <p><strong>表示順序:</strong> {{ unit.order_index + 1 }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- アクション -->
+        <div class="form-actions">
+            <button type="button" class="btn btn-danger" onclick="deleteUnit()">
+                <i class="fas fa-trash"></i> 削除
+            </button>
+            <a href="{{ url_for('teacher.integrated_management') }}" class="btn btn-secondary">
+                <i class="fas fa-times"></i> キャンセル
+            </a>
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save"></i> 保存
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- 削除確認モーダル -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">単元削除の確認</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>この単元を削除しますか？</p>
+                <p class="text-danger"><strong>注意:</strong> 削除した単元は学生が選択できなくなります。学習データは保持されます。</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">キャンセル</button>
+                <button type="button" class="btn btn-danger" onclick="confirmDelete()">削除実行</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// 削除確認モーダル表示
+function deleteUnit() {
+    const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+    modal.show();
+}
+
+// 削除実行
+function confirmDelete() {
+    fetch(`/teacher/unit/{{ unit.id }}/delete`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('単元が削除されました。');
+            window.location.href = '{{ url_for("teacher.integrated_management") }}';
+        } else {
+            alert('削除に失敗しました: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Delete error:', error);
+        alert('削除中にエラーが発生しました。');
+    });
+}
+
+// フォーム検証
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    const titleInput = document.getElementById('title');
+    const minutesInput = document.getElementById('estimated_minutes');
+    
+    form.addEventListener('submit', function(e) {
+        // タイトルの検証
+        if (titleInput.value.trim().length < 1) {
+            e.preventDefault();
+            alert('単元名を入力してください。');
+            titleInput.focus();
+            return;
+        }
+        
+        // 学習時間の検証
+        const minutes = parseInt(minutesInput.value);
+        if (isNaN(minutes) || minutes < 5 || minutes > 300) {
+            e.preventDefault();
+            alert('学習時間は5分〜300分の範囲で入力してください。');
+            minutesInput.focus();
+            return;
+        }
+    });
+});
+</script>
+{% endblock %}

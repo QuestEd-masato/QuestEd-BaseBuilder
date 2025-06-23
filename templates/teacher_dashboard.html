@@ -11,6 +11,73 @@
         <p>担当クラスの情報や学生の活動状況を確認できます</p>
     </div>
     
+    <!-- 統合管理概要 -->
+    {% if integrated_stats %}
+    <div class="dashboard-section integrated-overview">
+        <div class="section-header">
+            <h3><i class="fas fa-chart-pie"></i> カリキュラム・単元統合管理</h3>
+            <div>
+                <a href="{{ url_for('teacher.integrated_management') }}" class="btn btn-sm btn-success">
+                    <i class="fas fa-cogs"></i> 統合管理画面
+                </a>
+            </div>
+        </div>
+        
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-book"></i>
+                </div>
+                <div class="stat-content">
+                    <h4>{{ integrated_stats.total_curriculums }}</h4>
+                    <p>総カリキュラム数</p>
+                </div>
+            </div>
+            
+            <div class="stat-card converted">
+                <div class="stat-icon">
+                    <i class="fas fa-exchange-alt"></i>
+                </div>
+                <div class="stat-content">
+                    <h4>{{ integrated_stats.converted_curriculums }}</h4>
+                    <p>変換済み</p>
+                </div>
+            </div>
+            
+            <div class="stat-card units">
+                <div class="stat-icon">
+                    <i class="fas fa-cubes"></i>
+                </div>
+                <div class="stat-content">
+                    <h4>{{ integrated_stats.total_units }}</h4>
+                    <p>生成単元数</p>
+                </div>
+            </div>
+            
+            <div class="stat-card rate">
+                <div class="stat-icon">
+                    <i class="fas fa-percentage"></i>
+                </div>
+                <div class="stat-content">
+                    <h4>{{ integrated_stats.conversion_rate }}%</h4>
+                    <p>変換率</p>
+                </div>
+            </div>
+        </div>
+        
+        {% if integrated_stats.total_curriculums > 0 and integrated_stats.conversion_rate < 100 %}
+        <div class="quick-actions">
+            <button class="btn btn-outline-primary" onclick="showBatchConversion()">
+                <i class="fas fa-magic"></i> 一括変換
+            </button>
+            <button class="btn btn-outline-info" onclick="syncAllCurriculums()">
+                <i class="fas fa-sync"></i> 一括同期
+            </button>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+    
     <div class="dashboard-sections">
         <div class="dashboard-section my-classes">
             <div class="section-header">
@@ -40,6 +107,41 @@
                                     <span class="stat-label">テーマ選択済</span>
                                 </div>
                             </div>
+                            
+                            <!-- カリキュラム統計情報 -->
+                            {% if class_data.curriculum_stats %}
+                            <div class="curriculum-stats">
+                                <div class="stats-header">
+                                    <h5><i class="fas fa-exchange-alt"></i> カリキュラム変換状況</h5>
+                                </div>
+                                <div class="mini-stats">
+                                    <div class="mini-stat">
+                                        <span class="mini-value">{{ class_data.curriculum_stats.total_curriculums }}</span>
+                                        <span class="mini-label">カリキュラム</span>
+                                    </div>
+                                    <div class="mini-stat converted">
+                                        <span class="mini-value">{{ class_data.curriculum_stats.converted_count }}</span>
+                                        <span class="mini-label">変換済み</span>
+                                    </div>
+                                    <div class="mini-stat units">
+                                        <span class="mini-value">{{ class_data.curriculum_stats.total_units }}</span>
+                                        <span class="mini-label">単元</span>
+                                    </div>
+                                </div>
+                                
+                                {% if class_data.curriculum_stats.recent_conversions %}
+                                <div class="recent-conversions">
+                                    <small class="text-muted">最近の変換:</small>
+                                    {% for conversion in class_data.curriculum_stats.recent_conversions[:2] %}
+                                    <div class="conversion-item">
+                                        <small>{{ conversion.curriculum_title[:30] }}{% if conversion.curriculum_title|length > 30 %}...{% endif %}</small>
+                                        <small class="text-muted">({{ conversion.units_count }}単元)</small>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                            {% endif %}
                             
                             {% if class_data.next_milestone %}
                                 <div class="next-milestone">
@@ -565,5 +667,133 @@
     }
     
     /* ===== End of 教師ダッシュボード レスポンシブ改善 ===== */
+    
+    /* 統合管理スタイル */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        margin-top: 15px;
+    }
+    
+    .stat-card {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        padding: 20px;
+        text-align: center;
+        backdrop-filter: blur(10px);
+    }
+    
+    .stat-card h4 {
+        font-size: 2rem;
+        font-weight: bold;
+        margin: 0 0 5px 0;
+    }
+    
+    .stat-card p {
+        margin: 0;
+        opacity: 0.9;
+    }
+    
+    .quick-actions {
+        margin-top: 20px;
+        text-align: center;
+    }
+    
+    .quick-actions .btn {
+        margin: 0 5px;
+    }
+    
+    .curriculum-stats {
+        margin-top: 15px;
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 6px;
+    }
+    
+    .mini-stats {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+        margin-top: 10px;
+    }
+    
+    .mini-stat {
+        text-align: center;
+    }
+    
+    .mini-value {
+        display: block;
+        font-size: 1.2rem;
+        font-weight: bold;
+        color: #495057;
+    }
+    
+    .mini-label {
+        font-size: 0.8rem;
+        color: #6c757d;
+    }
+    
+    .recent-conversions {
+        margin-top: 10px;
+        font-size: 0.9rem;
+    }
+    
+    .conversion-item {
+        margin-top: 5px;
+        padding: 3px 0;
+        border-top: 1px solid #dee2e6;
+    }
 </style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// 一括変換モーダル表示
+function showBatchConversion() {
+    // 簡易実装：統合管理画面にリダイレクト
+    if (confirm('統合管理画面で一括変換を行いますか？')) {
+        window.location.href = '{{ url_for("teacher.integrated_management") }}';
+    }
+}
+
+// 一括同期実行
+function syncAllCurriculums() {
+    if (!confirm('変換済みカリキュラムを一括同期しますか？')) {
+        return;
+    }
+    
+    const button = event.target;
+    const originalText = button.innerHTML;
+    
+    // ボタンを無効化
+    button.disabled = true;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 同期中...';
+    
+    fetch('/teacher/curriculum/sync-all', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('一括同期が完了しました:\n' + data.message);
+            location.reload();
+        } else {
+            alert('同期に失敗しました:\n' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Sync error:', error);
+        alert('一括同期中にエラーが発生しました。');
+    })
+    .finally(() => {
+        // ボタンを復元
+        button.disabled = false;
+        button.innerHTML = originalText;
+    });
+}
+</script>
 {% endblock %}

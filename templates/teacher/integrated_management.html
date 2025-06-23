@@ -1,0 +1,733 @@
+{% extends 'base.html' %}
+
+{% block title %}統合管理画面 - カリキュラム・単元管理{% endblock %}
+
+{% block extra_css %}
+<style>
+.integrated-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.stats-overview {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 12px;
+    padding: 30px;
+    margin-bottom: 30px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.stat-item {
+    text-align: center;
+}
+
+.stat-number {
+    font-size: 2.5rem;
+    font-weight: bold;
+    display: block;
+}
+
+.stat-label {
+    font-size: 0.9rem;
+    opacity: 0.9;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.management-tabs {
+    display: flex;
+    background: #f8f9fa;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    overflow: hidden;
+}
+
+.tab-button {
+    flex: 1;
+    padding: 15px 20px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-weight: 500;
+}
+
+.tab-button.active {
+    background: white;
+    color: #007bff;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+.curriculum-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.curriculum-card {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    border: 1px solid #e9ecef;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.curriculum-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+}
+
+.curriculum-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 15px;
+}
+
+.curriculum-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #212529;
+    margin: 0;
+    line-height: 1.3;
+}
+
+.conversion-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.badge-converted {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.badge-not-converted {
+    background-color: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeaa7;
+}
+
+.curriculum-meta {
+    margin-bottom: 15px;
+    font-size: 0.9rem;
+    color: #6c757d;
+}
+
+.conversion-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin: 15px 0;
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 6px;
+}
+
+.stat-mini {
+    text-align: center;
+}
+
+.stat-mini-value {
+    display: block;
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #495057;
+}
+
+.stat-mini-label {
+    font-size: 0.8rem;
+    color: #6c757d;
+}
+
+.curriculum-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 15px;
+}
+
+.btn-mini {
+    padding: 6px 12px;
+    font-size: 0.8rem;
+    border-radius: 6px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    transition: all 0.2s;
+    border: 1px solid;
+}
+
+.btn-primary-mini {
+    background: #007bff;
+    color: white;
+    border-color: #007bff;
+}
+
+.btn-success-mini {
+    background: #28a745;
+    color: white;
+    border-color: #28a745;
+}
+
+.btn-warning-mini {
+    background: #ffc107;
+    color: #212529;
+    border-color: #ffc107;
+}
+
+.btn-info-mini {
+    background: #17a2b8;
+    color: white;
+    border-color: #17a2b8;
+}
+
+.units-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.units-table th,
+.units-table td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.units-table th {
+    background: #f8f9fa;
+    font-weight: 600;
+    color: #495057;
+}
+
+.units-table tr:hover {
+    background: #f8f9fa;
+}
+
+.difficulty-badge {
+    padding: 0.2rem 0.5rem;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    font-weight: 500;
+}
+
+.difficulty-1 { background: #d4edda; color: #155724; }
+.difficulty-2 { background: #cce5ff; color: #004085; }
+.difficulty-3 { background: #f8d7da; color: #721c24; }
+
+.batch-actions {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.batch-controls {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.btn-batch {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s;
+}
+
+.btn-batch-primary {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+    color: white;
+}
+
+.btn-batch-success {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    color: white;
+}
+
+@media (max-width: 768px) {
+    .curriculum-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="integrated-container">
+    <!-- ヘッダー -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1><i class="fas fa-cogs"></i> 統合管理画面</h1>
+            <p class="text-muted">カリキュラムと単元の統合管理・一括操作</p>
+        </div>
+        <div>
+            <a href="{{ url_for('teacher.dashboard') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left"></i> ダッシュボードに戻る
+            </a>
+        </div>
+    </div>
+
+    <!-- 統計概要 -->
+    <div class="stats-overview">
+        <h2><i class="fas fa-chart-bar"></i> 統計概要</h2>
+        <div class="stats-grid">
+            <div class="stat-item">
+                <span class="stat-number">{{ overall_stats.total_curriculums }}</span>
+                <span class="stat-label">総カリキュラム数</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number">{{ overall_stats.converted_count }}</span>
+                <span class="stat-label">変換済み</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number">{{ overall_stats.total_units }}</span>
+                <span class="stat-label">生成単元数</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number">{{ overall_stats.active_units }}</span>
+                <span class="stat-label">アクティブ単元</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 一括操作 -->
+    {% if curriculum_details %}
+    <div class="batch-actions">
+        <h3><i class="fas fa-magic"></i> 一括操作</h3>
+        <div class="batch-controls">
+            <button class="btn-batch btn-batch-primary" onclick="showBatchConversion()">
+                <i class="fas fa-exchange-alt"></i> 選択したカリキュラムを一括変換
+            </button>
+            <button class="btn-batch btn-batch-success" onclick="syncAllConverted()">
+                <i class="fas fa-sync"></i> 変換済みを一括同期
+            </button>
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="selectAll" onchange="toggleSelectAll()">
+                <label class="form-check-label" for="selectAll">
+                    すべて選択
+                </label>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- タブナビゲーション -->
+    <div class="management-tabs">
+        <button class="tab-button active" onclick="showTab('curriculums')">
+            <i class="fas fa-book"></i> カリキュラム一覧
+        </button>
+        <button class="tab-button" onclick="showTab('units')">
+            <i class="fas fa-cubes"></i> 単元一覧
+        </button>
+        <button class="tab-button" onclick="showTab('logs')">
+            <i class="fas fa-history"></i> 変換ログ
+        </button>
+    </div>
+
+    <!-- カリキュラム一覧タブ -->
+    <div id="curriculums-tab" class="tab-content active">
+        {% if curriculum_details %}
+        <div class="curriculum-grid">
+            {% for detail in curriculum_details %}
+            <div class="curriculum-card">
+                <div class="curriculum-header">
+                    <div>
+                        <h3 class="curriculum-title">{{ detail.curriculum.title }}</h3>
+                        <div class="form-check mt-2">
+                            <input class="form-check-input curriculum-checkbox" type="checkbox" 
+                                   value="{{ detail.curriculum.id }}" id="curriculum-{{ detail.curriculum.id }}">
+                            <label class="form-check-label" for="curriculum-{{ detail.curriculum.id }}">
+                                操作対象に選択
+                            </label>
+                        </div>
+                    </div>
+                    {% if detail.conversion_status.is_converted %}
+                    <span class="conversion-badge badge-converted">
+                        <i class="fas fa-check-circle"></i> 変換済み
+                    </span>
+                    {% else %}
+                    <span class="conversion-badge badge-not-converted">
+                        <i class="fas fa-clock"></i> 未変換
+                    </span>
+                    {% endif %}
+                </div>
+
+                <div class="curriculum-meta">
+                    <div><strong>クラス:</strong> {{ detail.curriculum.class_obj.name }}</div>
+                    <div><strong>作成日:</strong> {{ detail.curriculum.created_at.strftime('%Y年%m月%d日') }}</div>
+                    {% if detail.conversion_status.conversion_date %}
+                    <div><strong>変換日:</strong> {{ detail.conversion_status.conversion_date.strftime('%Y年%m月%d日') }}</div>
+                    {% endif %}
+                </div>
+
+                {% if detail.conversion_status.exists %}
+                <div class="conversion-stats">
+                    <div class="stat-mini">
+                        <span class="stat-mini-value">{{ detail.conversion_status.total_items }}</span>
+                        <span class="stat-mini-label">項目数</span>
+                    </div>
+                    <div class="stat-mini">
+                        <span class="stat-mini-value">{{ detail.conversion_status.converted_units }}</span>
+                        <span class="stat-mini-label">単元数</span>
+                    </div>
+                    <div class="stat-mini">
+                        <span class="stat-mini-value">{{ detail.conversion_status.conversion_rate|round(1) }}%</span>
+                        <span class="stat-mini-label">変換率</span>
+                    </div>
+                </div>
+                {% endif %}
+
+                <div class="curriculum-actions">
+                    <a href="{{ url_for('teacher.view_curriculum', curriculum_id=detail.curriculum.id) }}" 
+                       class="btn-mini btn-primary-mini">
+                        <i class="fas fa-eye"></i> 詳細
+                    </a>
+                    {% if not detail.conversion_status.is_converted %}
+                    <button class="btn-mini btn-success-mini" 
+                            onclick="convertSingle({{ detail.curriculum.id }})">
+                        <i class="fas fa-magic"></i> 変換
+                    </button>
+                    {% else %}
+                    <a href="{{ url_for('teacher.view_converted_units', curriculum_id=detail.curriculum.id) }}" 
+                       class="btn-mini btn-info-mini">
+                        <i class="fas fa-cubes"></i> 単元表示
+                    </a>
+                    <button class="btn-mini btn-warning-mini" 
+                            onclick="syncSingle({{ detail.curriculum.id }})">
+                        <i class="fas fa-sync"></i> 同期
+                    </button>
+                    <a href="{{ url_for('teacher.auto_sync_settings', curriculum_id=detail.curriculum.id) }}" 
+                       class="btn-mini btn-secondary">
+                        <i class="fas fa-cogs"></i> 自動同期
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-book fa-3x text-muted mb-3"></i>
+            <h4>カリキュラムがありません</h4>
+            <p class="text-muted">まずはカリキュラムを作成してください。</p>
+            <a href="{{ url_for('teacher.create_curriculum') }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> カリキュラムを作成
+            </a>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- 単元一覧タブ -->
+    <div id="units-tab" class="tab-content">
+        {% set all_units = [] %}
+        {% for detail in curriculum_details %}
+            {% for unit in detail.units %}
+                {% if all_units.append(unit) %}{% endif %}
+            {% endfor %}
+        {% endfor %}
+        
+        {% if all_units %}
+        <div class="table-responsive">
+            <table class="units-table">
+                <thead>
+                    <tr>
+                        <th>単元名</th>
+                        <th>難易度</th>
+                        <th>学習時間</th>
+                        <th>元カリキュラム</th>
+                        <th>作成日</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for unit in all_units %}
+                    <tr>
+                        <td>{{ unit.title }}</td>
+                        <td>
+                            <span class="difficulty-badge difficulty-{{ unit.difficulty_level }}">
+                                {% if unit.difficulty_level == 1 %}基礎{% elif unit.difficulty_level == 2 %}標準{% else %}応用{% endif %}
+                            </span>
+                        </td>
+                        <td>{{ unit.estimated_minutes }}分</td>
+                        <td>
+                            {% for detail in curriculum_details %}
+                                {% if unit.legacy_curriculum_id == detail.curriculum.id %}
+                                    {{ detail.curriculum.title[:30] }}{% if detail.curriculum.title|length > 30 %}...{% endif %}
+                                {% endif %}
+                            {% endfor %}
+                        </td>
+                        <td>{{ unit.created_at.strftime('%Y/%m/%d') }}</td>
+                        <td>
+                            <button class="btn-mini btn-primary-mini" onclick="editUnit({{ unit.id }})">
+                                <i class="fas fa-edit"></i> 編集
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-cubes fa-3x text-muted mb-3"></i>
+            <h4>単元がありません</h4>
+            <p class="text-muted">カリキュラムを変換すると単元が表示されます。</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- 変換ログタブ -->
+    <div id="logs-tab" class="tab-content">
+        <div class="text-center py-5">
+            <i class="fas fa-history fa-3x text-muted mb-3"></i>
+            <h4>変換ログ機能</h4>
+            <p class="text-muted">変換履歴・ログ機能は今後実装予定です。</p>
+        </div>
+    </div>
+</div>
+
+<!-- 一括変換モーダル -->
+<div class="modal fade" id="batchConversionModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">一括変換の確認</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>選択されたカリキュラムを一括変換しますか？</p>
+                <div id="selectedCurriculums"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">キャンセル</button>
+                <button type="button" class="btn btn-primary" onclick="executeBatchConversion()">変換実行</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 結果表示モーダル -->
+<div class="modal fade" id="resultModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">操作結果</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="resultModalBody">
+                <!-- 結果がJavaScriptで挿入される -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">閉じる</button>
+                <button type="button" class="btn btn-primary" onclick="location.reload()">ページを更新</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// タブ切り替え
+function showTab(tabName) {
+    // すべてのタブボタンを非アクティブに
+    document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+    
+    // 選択されたタブをアクティブに
+    event.target.classList.add('active');
+    document.getElementById(tabName + '-tab').classList.add('active');
+}
+
+// 全選択・全解除
+function toggleSelectAll() {
+    const selectAll = document.getElementById('selectAll');
+    const checkboxes = document.querySelectorAll('.curriculum-checkbox');
+    
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = selectAll.checked;
+    });
+}
+
+// 一括変換モーダル表示
+function showBatchConversion() {
+    const selected = getSelectedCurriculums();
+    if (selected.length === 0) {
+        alert('変換するカリキュラムを選択してください。');
+        return;
+    }
+    
+    document.getElementById('selectedCurriculums').innerHTML = 
+        '<p>選択されたカリキュラム: ' + selected.length + '件</p>';
+    
+    const modal = new bootstrap.Modal(document.getElementById('batchConversionModal'));
+    modal.show();
+}
+
+// 選択されたカリキュラムIDを取得
+function getSelectedCurriculums() {
+    const checkboxes = document.querySelectorAll('.curriculum-checkbox:checked');
+    return Array.from(checkboxes).map(cb => parseInt(cb.value));
+}
+
+// 一括変換実行
+function executeBatchConversion() {
+    const selected = getSelectedCurriculums();
+    
+    fetch('/teacher/curriculum/batch-convert', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            curriculum_ids: selected
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        showResult(data);
+        bootstrap.Modal.getInstance(document.getElementById('batchConversionModal')).hide();
+    })
+    .catch(error => {
+        console.error('Batch conversion error:', error);
+        alert('一括変換中にエラーが発生しました。');
+    });
+}
+
+// 一括同期実行
+function syncAllConverted() {
+    if (!confirm('変換済みカリキュラムを一括同期しますか？')) {
+        return;
+    }
+    
+    fetch('/teacher/curriculum/sync-all', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        showResult(data);
+    })
+    .catch(error => {
+        console.error('Sync error:', error);
+        alert('一括同期中にエラーが発生しました。');
+    });
+}
+
+// 単一変換
+function convertSingle(curriculumId) {
+    if (!confirm('このカリキュラムを変換しますか？')) {
+        return;
+    }
+    
+    fetch(`/teacher/curriculum/${curriculumId}/convert-to-units`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('変換が完了しました。');
+            location.reload();
+        } else {
+            alert('変換に失敗しました: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Conversion error:', error);
+        alert('変換中にエラーが発生しました。');
+    });
+}
+
+// 単一同期
+function syncSingle(curriculumId) {
+    if (!confirm('このカリキュラムを同期しますか？')) {
+        return;
+    }
+    
+    // 同期機能の実装
+    alert('同期機能は実装中です。');
+}
+
+// 単元編集
+function editUnit(unitId) {
+    window.location.href = `/teacher/unit/${unitId}/edit`;
+}
+
+// 結果表示
+function showResult(data) {
+    const modalBody = document.getElementById('resultModalBody');
+    
+    if (data.success) {
+        modalBody.innerHTML = `
+            <div class="alert alert-success">
+                <h5><i class="fas fa-check-circle"></i> ${data.message}</h5>
+                ${data.summary ? `
+                <ul class="mb-0">
+                    <li>処理対象: ${data.summary.processed}件</li>
+                    <li>成功: ${data.summary.successful}件</li>
+                    <li>失敗: ${data.summary.failed}件</li>
+                    ${data.summary.total_converted_units ? `<li>生成単元数: ${data.summary.total_converted_units}件</li>` : ''}
+                </ul>
+                ` : ''}
+            </div>
+        `;
+    } else {
+        modalBody.innerHTML = `
+            <div class="alert alert-danger">
+                <h5><i class="fas fa-exclamation-triangle"></i> エラー</h5>
+                <p class="mb-0">${data.message}</p>
+            </div>
+        `;
+    }
+    
+    const modal = new bootstrap.Modal(document.getElementById('resultModal'));
+    modal.show();
+}
+</script>
+{% endblock %}

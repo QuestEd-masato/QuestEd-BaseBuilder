@@ -49,9 +49,20 @@ def teacher_required(f):
 @login_required
 @teacher_required
 def dashboard():
-    """教師ダッシュボード"""
+    """教師ダッシュボード（統合管理機能付き）"""
+    from app.services.curriculum_bridge_service import CurriculumBridgeService
+    
     # 教師が担当するクラスを取得
     classes = Class.query.filter_by(teacher_id=current_user.id).all()
+    
+    # 統合統計情報の初期化
+    integrated_stats = {
+        'total_curriculums': 0,
+        'converted_curriculums': 0,
+        'total_units': 0,
+        'active_units': 0,
+        'conversion_rate': 0
+    }
     
     # 各クラスの生徒数と統計情報を計算
     class_info = []
@@ -83,13 +94,59 @@ def dashboard():
             .filter(Milestone.due_date >= datetime.utcnow().date())\
             .order_by(*mysql_nulls_last(Milestone.due_date, 'asc')).first()
         
+        # カリキュラム・単元統合情報を取得
+        curriculums = Curriculum.query.filter_by(
+            class_id=class_obj.id,
+            teacher_id=current_user.id
+        ).all()
+        
+        curriculum_stats = {
+            'total_curriculums': len(curriculums),
+            'converted_count': 0,
+            'total_units': 0,
+            'recent_conversions': []
+        }
+        
+        for curriculum in curriculums:
+            # 変換状況をチェック
+            conversion_status = CurriculumBridgeService.get_conversion_status(curriculum.id)
+            if conversion_status.get('is_converted', False):
+                curriculum_stats['converted_count'] += 1
+                curriculum_stats['total_units'] += conversion_status.get('converted_units', 0)
+                
+                # 最近の変換履歴
+                if conversion_status.get('conversion_date'):
+                    curriculum_stats['recent_conversions'].append({
+                        'curriculum_title': curriculum.title,
+                        'conversion_date': conversion_status['conversion_date'],
+                        'units_count': conversion_status.get('converted_units', 0)
+                    })
+        
+        # 統合統計に加算
+        integrated_stats['total_curriculums'] += curriculum_stats['total_curriculums']
+        integrated_stats['converted_curriculums'] += curriculum_stats['converted_count']
+        integrated_stats['total_units'] += curriculum_stats['total_units']
+        
         class_info.append({
             'class': class_obj,
             'student_count': student_count,
             'survey_completed': survey_completed,
             'theme_selected': theme_selected,
-            'next_milestone': next_milestone
+            'next_milestone': next_milestone,
+            'curriculum_stats': curriculum_stats  # 新規追加
         })
+    
+    # アクティブな単元数を取得
+    integrated_stats['active_units'] = CurriculumUnit.query.filter_by(
+        created_by=current_user.id,
+        is_active=True
+    ).count()
+    
+    # 変換率計算
+    if integrated_stats['total_curriculums'] > 0:
+        integrated_stats['conversion_rate'] = round(
+            (integrated_stats['converted_curriculums'] / integrated_stats['total_curriculums']) * 100, 1
+        )
     
     # 承認待ちの学生数を取得
     pending_students_count = 0
@@ -102,8 +159,9 @@ def dashboard():
         ).count()
     
     return render_template('teacher_dashboard.html', 
-                         classes=class_info,  # テンプレートはclassesを期待している
-                         pending_students_count=pending_students_count)
+                         classes=class_info,
+                         pending_students_count=pending_students_count,
+                         integrated_stats=integrated_stats)  # 新規追加
 
 @teacher_bp.route('/teacher/pending_users')
 @login_required
@@ -1482,7 +1540,33 @@ def edit_curriculum(curriculum_id):
         )
         
         if success:
-            flash(message, 'success')
+            # 自動同期トリガー
+            try:
+                from app.services.auto_sync_service import AutoSyncService, SyncTriggerType
+                
+                # 自動同期すべきかチェック
+                should_sync, sync_info = AutoSyncService.should_auto_sync(curriculum_id)
+                
+                if should_sync:
+                    # 非同期で自動同期を実行（バックグラウンド）
+                    current_app.logger.info(f"Triggering auto sync for curriculum {curriculum_id}")
+                    # 注意: 実際の本番環境では、Celeryやrq等のタスクキューを使用すべき
+                    # ここでは簡易実装として直接実行
+                    sync_result = AutoSyncService.execute_auto_sync(
+                        curriculum_id, SyncTriggerType.AUTO_UPDATE
+                    )
+                    
+                    if sync_result['success']:
+                        flash(f'{message} 関連単元も自動更新されました。', 'success')
+                    else:
+                        flash(f'{message} 注意: 単元の自動更新に問題がありました。', 'warning')
+                else:
+                    flash(message, 'success')
+                    
+            except Exception as e:
+                current_app.logger.error(f"Auto sync trigger error: {str(e)}", exc_info=True)
+                flash(f'{message} 注意: 自動同期でエラーが発生しました。', 'warning')
+            
             return redirect(url_for('teacher.view_curriculum', curriculum_id=curriculum_id))
         else:
             flash(message, 'error')
@@ -1876,6 +1960,652 @@ def migrate_curriculum_to_v2(curriculum_id):
         logger.info(f"Curriculum {curriculum_id} migrated to v2 format by user {current_user.id}")
     
     return jsonify({'success': success, 'message': message})
+
+@teacher_bp.route('/curriculum/<int:curriculum_id>/convert-to-units', methods=['POST'])
+@login_required
+@teacher_required
+def convert_curriculum_to_units(curriculum_id):
+    """カリキュラムを自由進度学習単元に変換"""
+    from app.services.curriculum_bridge_service import CurriculumBridgeService
+    
+    curriculum = Curriculum.query.get_or_404(curriculum_id)
+    
+    # 権限チェック
+    if curriculum.teacher_id != current_user.id:
+        return jsonify({
+            'success': False, 
+            'message': 'このカリキュラムを変換する権限がありません'
+        }), 403
+    
+    try:
+        # 変換実行
+        result = CurriculumBridgeService.convert_curriculum_to_units(
+            curriculum_id, 
+            current_user.id
+        )
+        
+        if result['success']:
+            current_app.logger.info(
+                f"Curriculum {curriculum_id} converted to units by user {current_user.id}: "
+                f"{result['converted_count']} created, {result.get('updated_count', 0)} updated"
+            )
+            
+            return jsonify({
+                'success': True,
+                'message': result['message'],
+                'data': {
+                    'converted_count': result['converted_count'],
+                    'updated_count': result.get('updated_count', 0),
+                    'total_items': result.get('total_items', 0)
+                }
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'message': result['message']
+            }), 400
+            
+    except Exception as e:
+        current_app.logger.error(f"Curriculum conversion error: {str(e)}", exc_info=True)
+        return jsonify({
+            'success': False,
+            'message': '変換中にエラーが発生しました'
+        }), 500
+
+@teacher_bp.route('/curriculum/<int:curriculum_id>/conversion-status')
+@login_required
+@teacher_required
+def get_curriculum_conversion_status(curriculum_id):
+    """カリキュラムの変換状況を取得"""
+    from app.services.curriculum_bridge_service import CurriculumBridgeService
+    
+    curriculum = Curriculum.query.get_or_404(curriculum_id)
+    
+    # 権限チェック
+    if curriculum.teacher_id != current_user.id:
+        return jsonify({'error': '権限がありません'}), 403
+    
+    try:
+        status = CurriculumBridgeService.get_conversion_status(curriculum_id)
+        return jsonify(status)
+        
+    except Exception as e:
+        current_app.logger.error(f"Conversion status error: {str(e)}", exc_info=True)
+        return jsonify({'error': '状況取得エラー'}), 500
+
+@teacher_bp.route('/curriculum/batch-convert', methods=['POST'])
+@login_required
+@teacher_required
+def batch_convert_curriculums():
+    """複数カリキュラムの一括変換"""
+    from app.services.curriculum_bridge_service import CurriculumBridgeService
+    
+    try:
+        data = request.get_json()
+        curriculum_ids = data.get('curriculum_ids', [])
+        
+        if not curriculum_ids:
+            return jsonify({'success': False, 'message': '変換対象のカリキュラムが選択されていません'}), 400
+        
+        # 権限チェック：すべてのカリキュラムが自分のものか確認
+        invalid_curriculums = []
+        for curriculum_id in curriculum_ids:
+            curriculum = Curriculum.query.get(curriculum_id)
+            if not curriculum or curriculum.teacher_id != current_user.id:
+                invalid_curriculums.append(curriculum_id)
+        
+        if invalid_curriculums:
+            return jsonify({
+                'success': False, 
+                'message': f'権限のないカリキュラムが含まれています: {invalid_curriculums}'
+            }), 403
+        
+        # 一括変換実行
+        conversion_results = []
+        total_converted = 0
+        total_updated = 0
+        failed_conversions = []
+        
+        for curriculum_id in curriculum_ids:
+            try:
+                result = CurriculumBridgeService.convert_curriculum_to_units(
+                    curriculum_id, current_user.id
+                )
+                
+                if result['success']:
+                    conversion_results.append({
+                        'curriculum_id': curriculum_id,
+                        'success': True,
+                        'converted_count': result['converted_count'],
+                        'updated_count': result.get('updated_count', 0)
+                    })
+                    total_converted += result['converted_count']
+                    total_updated += result.get('updated_count', 0)
+                else:
+                    failed_conversions.append({
+                        'curriculum_id': curriculum_id,
+                        'error': result['message']
+                    })
+                    
+            except Exception as e:
+                failed_conversions.append({
+                    'curriculum_id': curriculum_id,
+                    'error': str(e)
+                })
+        
+        # 結果の集計
+        success_count = len(conversion_results)
+        failure_count = len(failed_conversions)
+        
+        response_data = {
+            'success': True,
+            'message': f'一括変換完了: {success_count}件成功, {failure_count}件失敗',
+            'summary': {
+                'processed': len(curriculum_ids),
+                'successful': success_count,
+                'failed': failure_count,
+                'total_converted_units': total_converted,
+                'total_updated_units': total_updated
+            },
+            'results': conversion_results,
+            'failures': failed_conversions
+        }
+        
+        current_app.logger.info(
+            f"Batch conversion completed by user {current_user.id}: "
+            f"{success_count} successful, {failure_count} failed"
+        )
+        
+        return jsonify(response_data)
+        
+    except Exception as e:
+        current_app.logger.error(f"Batch conversion error: {str(e)}", exc_info=True)
+        return jsonify({
+            'success': False,
+            'message': '一括変換中にエラーが発生しました'
+        }), 500
+
+@teacher_bp.route('/curriculum/sync-all', methods=['POST'])
+@login_required
+@teacher_required
+def sync_all_converted_curriculums():
+    """変換済みカリキュラムの一括同期"""
+    from app.services.curriculum_bridge_service import CurriculumBridgeService
+    
+    try:
+        # 自分が作成した変換済みカリキュラムを取得
+        converted_curriculums = Curriculum.query.filter_by(
+            teacher_id=current_user.id,
+            is_converted_to_units=True
+        ).all()
+        
+        if not converted_curriculums:
+            return jsonify({
+                'success': False,
+                'message': '同期対象の変換済みカリキュラムがありません'
+            })
+        
+        sync_results = []
+        successful_syncs = 0
+        failed_syncs = []
+        
+        for curriculum in converted_curriculums:
+            try:
+                result = CurriculumBridgeService.sync_curriculum_updates(curriculum.id)
+                
+                if result['success']:
+                    sync_results.append({
+                        'curriculum_id': curriculum.id,
+                        'curriculum_title': curriculum.title,
+                        'success': True,
+                        'message': result['message']
+                    })
+                    successful_syncs += 1
+                else:
+                    failed_syncs.append({
+                        'curriculum_id': curriculum.id,
+                        'curriculum_title': curriculum.title,
+                        'error': result['message']
+                    })
+                    
+            except Exception as e:
+                failed_syncs.append({
+                    'curriculum_id': curriculum.id,
+                    'curriculum_title': curriculum.title,
+                    'error': str(e)
+                })
+        
+        response_data = {
+            'success': True,
+            'message': f'一括同期完了: {successful_syncs}件成功, {len(failed_syncs)}件失敗',
+            'summary': {
+                'processed': len(converted_curriculums),
+                'successful': successful_syncs,
+                'failed': len(failed_syncs)
+            },
+            'results': sync_results,
+            'failures': failed_syncs
+        }
+        
+        current_app.logger.info(
+            f"Batch sync completed by user {current_user.id}: "
+            f"{successful_syncs} successful, {len(failed_syncs)} failed"
+        )
+        
+        return jsonify(response_data)
+        
+    except Exception as e:
+        current_app.logger.error(f"Batch sync error: {str(e)}", exc_info=True)
+        return jsonify({
+            'success': False,
+            'message': '一括同期中にエラーが発生しました'
+        }), 500
+
+@teacher_bp.route('/integrated-management')
+@login_required
+@teacher_required
+def integrated_management():
+    """統合管理画面"""
+    from app.services.curriculum_bridge_service import CurriculumBridgeService
+    
+    try:
+        # 教師の全カリキュラムを取得
+        curriculums = Curriculum.query.filter_by(teacher_id=current_user.id).all()
+        
+        # 各カリキュラムの詳細情報を収集
+        curriculum_details = []
+        for curriculum in curriculums:
+            conversion_status = CurriculumBridgeService.get_conversion_status(curriculum.id)
+            
+            # 関連する単元を取得
+            units = CurriculumUnit.query.filter_by(
+                legacy_curriculum_id=curriculum.id,
+                is_active=True
+            ).all()
+            
+            curriculum_details.append({
+                'curriculum': curriculum,
+                'conversion_status': conversion_status,
+                'units': units,
+                'units_count': len(units)
+            })
+        
+        # 全体統計
+        overall_stats = {
+            'total_curriculums': len(curriculums),
+            'converted_count': sum(1 for detail in curriculum_details if detail['conversion_status'].get('is_converted', False)),
+            'total_units': sum(detail['units_count'] for detail in curriculum_details),
+            'active_units': CurriculumUnit.query.filter_by(created_by=current_user.id, is_active=True).count()
+        }
+        
+        return render_template('teacher/integrated_management.html',
+                             curriculum_details=curriculum_details,
+                             overall_stats=overall_stats)
+                             
+    except Exception as e:
+        current_app.logger.error(f"Integrated management error: {str(e)}", exc_info=True)
+        flash('統合管理画面の読み込みに失敗しました。')
+        return redirect(url_for('teacher.dashboard'))
+
+@teacher_bp.route('/unit/<int:unit_id>/edit', methods=['GET', 'POST'])
+@login_required
+@teacher_required
+def edit_unit(unit_id):
+    """単元編集"""
+    unit = CurriculumUnit.query.get_or_404(unit_id)
+    
+    # 権限チェック
+    if unit.created_by != current_user.id:
+        flash('この単元を編集する権限がありません。')
+        return redirect(url_for('teacher.integrated_management'))
+    
+    if request.method == 'POST':
+        try:
+            # フォームデータを取得
+            unit.title = request.form.get('title', '').strip()
+            unit.description = request.form.get('description', '').strip()
+            unit.difficulty_level = int(request.form.get('difficulty_level', 2))
+            unit.estimated_minutes = int(request.form.get('estimated_minutes', 45))
+            unit.learning_objectives = request.form.get('learning_objectives', '').strip()
+            unit.is_active = 'is_active' in request.form
+            unit.updated_at = datetime.utcnow()
+            
+            # タグの処理
+            tags_input = request.form.get('tags', '').strip()
+            if tags_input:
+                tags_list = [tag.strip() for tag in tags_input.split(',') if tag.strip()]
+                unit.tags = json.dumps(tags_list, ensure_ascii=False)
+            else:
+                unit.tags = None
+            
+            db.session.commit()
+            
+            flash('単元が正常に更新されました。', 'success')
+            return redirect(url_for('teacher.integrated_management'))
+            
+        except ValueError as e:
+            flash(f'入力値に誤りがあります: {str(e)}', 'error')
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(f"Unit edit error: {str(e)}", exc_info=True)
+            flash('単元の更新に失敗しました。', 'error')
+    
+    # 元のカリキュラム情報を取得
+    source_curriculum = None
+    if unit.legacy_curriculum_id:
+        source_curriculum = Curriculum.query.get(unit.legacy_curriculum_id)
+    
+    # タグを文字列に変換
+    tags_string = ''
+    if unit.tags:
+        try:
+            tags_list = json.loads(unit.tags)
+            tags_string = ', '.join(tags_list)
+        except (json.JSONDecodeError, TypeError):
+            tags_string = ''
+    
+    return render_template('teacher/edit_unit.html',
+                         unit=unit,
+                         source_curriculum=source_curriculum,
+                         tags_string=tags_string)
+
+@teacher_bp.route('/unit/<int:unit_id>/delete', methods=['POST'])
+@login_required
+@teacher_required
+def delete_unit(unit_id):
+    """単元削除（論理削除）"""
+    unit = CurriculumUnit.query.get_or_404(unit_id)
+    
+    # 権限チェック
+    if unit.created_by != current_user.id:
+        return jsonify({'success': False, 'message': '権限がありません'}), 403
+    
+    try:
+        # 論理削除（is_activeをFalseに）
+        unit.is_active = False
+        unit.updated_at = datetime.utcnow()
+        
+        db.session.commit()
+        
+        current_app.logger.info(f"Unit {unit_id} deactivated by user {current_user.id}")
+        
+        return jsonify({
+            'success': True,
+            'message': '単元が正常に削除されました'
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Unit delete error: {str(e)}", exc_info=True)
+        return jsonify({
+            'success': False,
+            'message': '単元の削除に失敗しました'
+        }), 500
+
+@teacher_bp.route('/curriculum/<int:curriculum_id>/auto-sync-settings', methods=['GET', 'POST'])
+@login_required
+@teacher_required
+def auto_sync_settings(curriculum_id):
+    """自動同期設定画面"""
+    from app.services.auto_sync_service import AutoSyncService
+    
+    curriculum = Curriculum.query.get_or_404(curriculum_id)
+    
+    # 権限チェック
+    if curriculum.teacher_id != current_user.id:
+        flash('この機能を利用する権限がありません。')
+        return redirect(url_for('teacher.dashboard'))
+    
+    if request.method == 'POST':
+        try:
+            # フォームから設定を取得
+            settings = {
+                'auto_sync_enabled': 'auto_sync_enabled' in request.form,
+                'sync_on_curriculum_update': 'sync_on_curriculum_update' in request.form,
+                'sync_on_item_change': 'sync_on_item_change' in request.form,
+                'conflict_resolution_strategy': request.form.get('conflict_resolution_strategy', 'prompt'),
+                'sync_delay_minutes': int(request.form.get('sync_delay_minutes', 5)),
+                'batch_sync_window': int(request.form.get('batch_sync_window', 30))
+            }
+            
+            # 設定更新
+            result = AutoSyncService.update_sync_settings(curriculum_id, settings, current_user.id)
+            
+            if result['success']:
+                flash('自動同期設定が更新されました。', 'success')
+            else:
+                flash(f'設定の更新に失敗しました: {result["message"]}', 'error')
+                
+        except ValueError as e:
+            flash(f'入力値に誤りがあります: {str(e)}', 'error')
+        except Exception as e:
+            flash(f'設定の更新中にエラーが発生しました: {str(e)}', 'error')
+            current_app.logger.error(f"Auto sync settings update error: {str(e)}", exc_info=True)
+    
+    # 現在の設定を取得
+    current_settings = AutoSyncService.get_sync_settings(curriculum_id)
+    
+    # 同期履歴を取得
+    sync_history = AutoSyncService.get_sync_history(curriculum_id, limit=10)
+    
+    # 変更検知結果を取得
+    change_detection = AutoSyncService.detect_curriculum_changes(curriculum_id)
+    
+    return render_template('teacher/auto_sync_settings.html',
+                         curriculum=curriculum,
+                         current_settings=current_settings,
+                         sync_history=sync_history,
+                         change_detection=change_detection)
+
+@teacher_bp.route('/curriculum/<int:curriculum_id>/enable-auto-sync', methods=['POST'])
+@login_required
+@teacher_required
+def enable_auto_sync(curriculum_id):
+    """自動同期の有効化"""
+    from app.services.auto_sync_service import AutoSyncService
+    
+    result = AutoSyncService.enable_auto_sync_for_curriculum(curriculum_id, current_user.id)
+    
+    if result['success']:
+        return jsonify({
+            'success': True,
+            'message': result['message'],
+            'settings': result['settings']
+        })
+    else:
+        return jsonify({
+            'success': False,
+            'message': result['message']
+        }), 400
+
+@teacher_bp.route('/curriculum/<int:curriculum_id>/sync-status')
+@login_required
+@teacher_required
+def get_sync_status(curriculum_id):
+    """同期状況の取得"""
+    from app.services.auto_sync_service import AutoSyncService
+    
+    curriculum = Curriculum.query.get_or_404(curriculum_id)
+    
+    # 権限チェック
+    if curriculum.teacher_id != current_user.id:
+        return jsonify({'error': '権限がありません'}), 403
+    
+    try:
+        # 現在の同期状況
+        should_sync, sync_info = AutoSyncService.should_auto_sync(curriculum_id)
+        
+        # 変更検知
+        change_detection = AutoSyncService.detect_curriculum_changes(curriculum_id)
+        
+        # 最新の同期ログ
+        sync_history = AutoSyncService.get_sync_history(curriculum_id, limit=3)
+        
+        return jsonify({
+            'should_sync': should_sync,
+            'sync_info': sync_info,
+            'change_detection': change_detection,
+            'recent_syncs': sync_history,
+            'settings': AutoSyncService.get_sync_settings(curriculum_id)
+        })
+        
+    except Exception as e:
+        current_app.logger.error(f"Sync status error: {str(e)}", exc_info=True)
+        return jsonify({'error': '状況取得エラー'}), 500
+
+@teacher_bp.route('/curriculum/<int:curriculum_id>/manual-sync', methods=['POST'])
+@login_required
+@teacher_required
+def manual_sync(curriculum_id):
+    """手動同期の実行"""
+    from app.services.auto_sync_service import AutoSyncService, SyncTriggerType
+    
+    curriculum = Curriculum.query.get_or_404(curriculum_id)
+    
+    # 権限チェック
+    if curriculum.teacher_id != current_user.id:
+        return jsonify({'success': False, 'message': '権限がありません'}), 403
+    
+    try:
+        # 強制同期オプション
+        force_sync = request.json.get('force', False) if request.is_json else False
+        
+        if not force_sync:
+            # 通常の同期条件をチェック
+            should_sync, sync_info = AutoSyncService.should_auto_sync(curriculum_id)
+            if not should_sync:
+                return jsonify({
+                    'success': False,
+                    'message': f'同期の必要がありません: {sync_info.get("reason", "不明")}',
+                    'sync_info': sync_info
+                })
+        
+        # 手動同期を実行
+        sync_result = AutoSyncService.execute_auto_sync(
+            curriculum_id, SyncTriggerType.MANUAL
+        )
+        
+        if sync_result['success']:
+            return jsonify({
+                'success': True,
+                'message': '手動同期が完了しました',
+                'sync_result': sync_result
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'message': sync_result.get('message', '同期に失敗しました'),
+                'sync_result': sync_result
+            })
+            
+    except Exception as e:
+        current_app.logger.error(f"Manual sync error: {str(e)}", exc_info=True)
+        return jsonify({
+            'success': False,
+            'message': '手動同期中にエラーが発生しました'
+        }), 500
+
+@teacher_bp.route('/api/sync-notifications/<int:curriculum_id>')
+@login_required 
+@teacher_required
+def sync_notifications(curriculum_id):
+    """同期通知のSSE エンドポイント（将来実装）"""
+    # Server-Sent Events (SSE) でリアルタイム通知を実装
+    # 現在は基本的なレスポンスのみ
+    
+    def generate():
+        # 将来的にはリアルタイム同期状況をストリーミング
+        yield f"data: {json.dumps({'status': 'connected', 'curriculum_id': curriculum_id})}\n\n"
+    
+    return Response(generate(), mimetype='text/plain')
+
+@teacher_bp.route('/system/scheduled-sync-admin')
+@login_required
+@teacher_required  
+def scheduled_sync_admin():
+    """スケジュール同期管理画面（管理者用）"""
+    from app.services.scheduled_sync_service import ScheduledSyncService
+    
+    # 簡易権限チェック（実際には管理者権限をチェック）
+    if current_user.role != 'teacher':
+        flash('この機能は管理者のみ利用可能です。')
+        return redirect(url_for('teacher.dashboard'))
+    
+    try:
+        # スケジュール同期の概要を取得
+        sync_summary = ScheduledSyncService.get_scheduled_sync_summary()
+        
+        return render_template('teacher/scheduled_sync_admin.html',
+                             sync_summary=sync_summary)
+                             
+    except Exception as e:
+        current_app.logger.error(f"Scheduled sync admin error: {str(e)}", exc_info=True)
+        flash('スケジュール同期管理画面の読み込みに失敗しました。')
+        return redirect(url_for('teacher.dashboard'))
+
+@teacher_bp.route('/api/scheduled-sync/test', methods=['POST'])
+@login_required
+@teacher_required
+def test_scheduled_sync():
+    """スケジュール同期のテスト実行"""
+    from app.services.scheduled_sync_service import ScheduledSyncService
+    
+    try:
+        result = ScheduledSyncService.test_scheduled_sync()
+        return jsonify(result)
+        
+    except Exception as e:
+        current_app.logger.error(f"Test scheduled sync error: {str(e)}", exc_info=True)
+        return jsonify({
+            'success': False,
+            'message': 'テスト実行中にエラーが発生しました'
+        }), 500
+
+@teacher_bp.route('/api/scheduled-sync/run', methods=['POST'])
+@login_required
+@teacher_required
+def run_scheduled_sync():
+    """スケジュール同期の手動実行"""
+    from app.services.scheduled_sync_service import ScheduledSyncService
+    
+    try:
+        result = ScheduledSyncService.run_scheduled_sync_check()
+        return jsonify(result)
+        
+    except Exception as e:
+        current_app.logger.error(f"Run scheduled sync error: {str(e)}", exc_info=True)
+        return jsonify({
+            'success': False,
+            'message': '手動実行中にエラーが発生しました'
+        }), 500
+
+@teacher_bp.route('/curriculum/<int:curriculum_id>/units')
+@login_required
+@teacher_required
+def view_converted_units(curriculum_id):
+    """変換済み単元の一覧表示"""
+    from app.services.curriculum_bridge_service import CurriculumBridgeService
+    
+    curriculum = Curriculum.query.get_or_404(curriculum_id)
+    
+    # 権限チェック
+    if curriculum.teacher_id != current_user.id:
+        flash('このカリキュラムを表示する権限がありません。')
+        return redirect(url_for('teacher.view_curriculums', class_id=curriculum.class_id))
+    
+    # 変換済み単元を取得
+    units = CurriculumUnit.query.filter_by(
+        legacy_curriculum_id=curriculum_id,
+        is_active=True
+    ).order_by(CurriculumUnit.order_index).all()
+    
+    # 変換状況を取得
+    conversion_status = CurriculumBridgeService.get_conversion_status(curriculum_id)
+    
+    return render_template('curriculum_units_view.html',
+                         curriculum=curriculum,
+                         units=units,
+                         conversion_status=conversion_status)
 
 @teacher_bp.route('/api/curriculum/problems')
 @login_required

@@ -287,9 +287,26 @@ class Curriculum(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
+    # ブリッジ機能関連フィールド
+    is_converted_to_units = db.Column(db.Boolean, default=False, comment='単元への変換済みフラグ')
+    units_conversion_date = db.Column(db.DateTime, nullable=True, comment='単元変換日時')
+    curriculum_data = db.Column(db.Text, comment='curriculum_unified.html用のデータ')
+    created_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True, comment='作成者ID')
+    
     # リレーションシップ
     class_obj = db.relationship('Class', backref=db.backref('curriculums', lazy=True))
-    teacher = db.relationship('User', backref=db.backref('created_curriculums', lazy=True, cascade='all, delete-orphan'))
+    teacher = db.relationship('User', foreign_keys=[teacher_id], backref=db.backref('taught_curriculums', lazy=True))
+    creator = db.relationship('User', foreign_keys=[created_by], backref=db.backref('created_curriculums', lazy=True))
+    
+    def get_curriculum_items(self):
+        """カリキュラムアイテムを取得"""
+        if self.curriculum_data:
+            try:
+                data = json.loads(self.curriculum_data)
+                return data.get('items', [])
+            except json.JSONDecodeError:
+                return []
+        return []
 
 class RubricTemplate(db.Model):
     __tablename__ = 'rubric_templates'
