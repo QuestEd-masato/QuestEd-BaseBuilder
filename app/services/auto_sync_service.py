@@ -2,6 +2,7 @@
 自動同期サービス
 
 カリキュラム更新時の自動同期、変更検知、競合解決機能を提供します。
+リアルタイム通知システムとの統合により、同期状況をWebSocketで通知します。
 """
 from datetime import datetime, timedelta
 from typing import List, Dict, Optional, Tuple, Any
@@ -259,16 +260,25 @@ class AutoSyncService:
             # 同期ログの開始
             sync_log_id = cls._create_sync_log(curriculum_id, trigger_type)
             
+            # 同期開始通知
+            curriculum = Curriculum.query.get(curriculum_id)
+            sync_info = {
+                'trigger_type': trigger_type.value,
+                'sync_log_id': sync_log_id,
+                'curriculum_title': curriculum.title if curriculum else 'Unknown'
+            }
+            cls._send_sync_notification(curriculum_id, 'started', sync_info)
+            
             # 同期前の状態保存
             pre_sync_state = cls._capture_curriculum_state(curriculum_id)
             
             # 競合チェック
             conflict_result = cls._check_for_conflicts(curriculum_id)
             if conflict_result['has_conflicts']:
+                cls._send_sync_notification(curriculum_id, 'conflict', conflict_result)
                 return cls._handle_conflicts(curriculum_id, conflict_result, sync_log_id)
             
             # 実際の同期実行
-            curriculum = Curriculum.query.get(curriculum_id)
             sync_result = CurriculumBridgeService.convert_curriculum_to_units(
                 curriculum_id, curriculum.teacher_id
             )
@@ -608,15 +618,34 @@ class AutoSyncService:
     
     @classmethod
     def _send_sync_notification(cls, curriculum_id: int, status: str, result: Dict) -> None:
-        """同期通知の送信（将来のWebSocket実装用）"""
+        """同期通知の送信（WebSocketリアルタイム通知）"""
         try:
-            # 現在はログ出力のみ（将来WebSocketで実装）
-            logger.info(f"Sync notification: curriculum_id={curriculum_id}, status={status}")
+            # WebSocketリアルタイム通知の実装
+            from app.realtime import RealtimeSyncNotifier
             
-            # 将来の実装：
-            # - WebSocketでリアルタイム通知
-            # - メール通知
-            # - システム内通知
+            curriculum = Curriculum.query.get(curriculum_id)
+            if not curriculum:
+                logger.warning(f"Curriculum {curriculum_id} not found for notification")
+                return
+            
+            if status == 'success':
+                RealtimeSyncNotifier.notify_sync_completed(
+                    curriculum_id, curriculum.teacher_id, result
+                )
+            elif status == 'started':
+                RealtimeSyncNotifier.notify_sync_started(
+                    curriculum_id, curriculum.teacher_id, result
+                )
+            elif status == 'progress':
+                RealtimeSyncNotifier.notify_sync_progress(
+                    curriculum_id, curriculum.teacher_id, result
+                )
+            elif status == 'conflict':
+                RealtimeSyncNotifier.notify_sync_conflict(
+                    curriculum_id, curriculum.teacher_id, result
+                )
+            
+            logger.info(f"Real-time sync notification sent: curriculum_id={curriculum_id}, status={status}")
             
         except Exception as e:
             logger.error(f"Sync notification error: {str(e)}", exc_info=True)

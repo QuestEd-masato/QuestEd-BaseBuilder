@@ -58,6 +58,11 @@
         </div>
     </div>
     
+    <!-- 同期ステータスウィジェット -->
+    {% if current_user.role == 'teacher' and curriculum.teacher_id == current_user.id %}
+    {% include 'teacher/sync_status_widget.html' %}
+    {% endif %}
+    
     <!-- カリキュラム情報グリッド -->
     <div class="info-grid">
         <div class="info-card">

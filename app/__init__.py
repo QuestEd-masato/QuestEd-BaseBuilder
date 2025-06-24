@@ -61,6 +61,11 @@ def create_app(config_object=None):
     csrf.init_app(app)
     limiter.init_app(app)
     
+    # SocketIOを初期化（リアルタイム同期用）
+    from app.realtime import init_socketio
+    socketio = init_socketio(app)
+    app.socketio = socketio
+    
     # Celeryを初期化（利用可能な場合のみ）
     from app.tasks import make_celery, CELERY_AVAILABLE
     if CELERY_AVAILABLE:
@@ -189,12 +194,14 @@ def register_blueprints(app):
     from app.teacher import teacher_bp
     from app.student import student_bp
     from app.api import api_bp
+    from app.realtime import realtime_bp
     
     app.register_blueprint(auth_bp)
     app.register_blueprint(admin_bp)
     app.register_blueprint(teacher_bp)
     app.register_blueprint(student_bp)
     app.register_blueprint(api_bp)
+    app.register_blueprint(realtime_bp)
     
     # ルートURLのハンドラー
     @app.route('/')

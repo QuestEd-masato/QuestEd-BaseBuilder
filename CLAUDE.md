@@ -199,3 +199,218 @@ Currently no automated tests. To add tests:
 - Flask-Admin for administrative interface
 - CSRF protection enabled globally
 - All datetime stored in UTC
+
+## Database Structure (Detailed Report 2025-06-24)
+
+### Database Overview
+- **MySQL Version**: 8.0.40
+- **Character Set**: utf8mb4_unicode_ci
+- **Total Tables**: 59 (including 2 views)
+- **Database Size**: 3.39 MB
+- **Active Students**: 46 users (40 students, 5 teachers, 1 admin)
+
+### Critical Field Name Consistency
+⚠️ **IMPORTANT**: Ensure field naming consistency across the application:
+
+#### ✅ Standardized Fields (Fixed)
+- **Difficulty**: Use `difficulty_level` everywhere (NOT `difficulty`)
+- **Timestamps**: Use `timestamp` for ActivityLog, `created_at` for others
+- **User References**: Context-dependent (`student_id` vs `user_id`)
+
+#### 🔧 Fixed Issues
+- `static/js/learning_portal.js`: Updated `unit.difficulty` → `unit.difficulty_level`
+- `app/api/__init__.py`: Consistent use of `difficulty_level` field
+- `app/services/ranking_service.py`: Fixed tuple access patterns
+
+### Core Table Structure
+
+#### Users & Authentication (46 total users)
+```sql
+users:
+- id (PK), username (UNIQUE), full_name, email (UNIQUE)  
+- role ('admin'|'teacher'|'student'), school_id (FK)
+- email_confirmed, is_approved, is_active
+- password, reset_token, token_created_at
+```
+
+#### Educational Content
+```sql
+curriculums: (6 active)
+- id (PK), class_id (FK), teacher_id (FK), subject_id (FK)
+- title, description, content (JSON), format
+- is_converted_to_units (BOOLEAN) -- NEW: Bridge feature
+- units_conversion_date, curriculum_data (TEXT) -- NEW
+- created_by (FK) -- NEW: Bridge relationship
+
+curriculum_units: (8 active) 
+- id (PK), title, description, unit_code (UNIQUE)
+- difficulty_level (1-3), estimated_minutes, order_index
+- school_id (FK), created_by (FK), subject_id (FK)
+- legacy_curriculum_id (FK) -- NEW: Bridge to original curriculum
+- is_active, tags (JSON), learning_objectives
+```
+
+#### Bridge System Tables (NEW)
+```sql
+auto_sync_settings: (0 records)
+- id (PK), curriculum_id (FK UNIQUE)
+- auto_sync_enabled, sync_on_curriculum_update, sync_on_item_change
+- conflict_resolution_strategy, sync_delay_minutes, batch_sync_window
+- last_sync_at, created_at, updated_at
+
+sync_logs: (0 records)
+- id (PK), curriculum_id (FK), trigger_type, status
+- message (TEXT), details (JSON), created_at
+```
+
+#### Learning Records
+```sql
+answer_records: (3,456 records, 92.4% accuracy)
+- id (PK), student_id (FK), problem_id (FK)
+- is_correct, response_time, created_at
+
+student_unit_selections: (546 records)
+- id (PK), student_id (FK), unit_id (FK), class_id (FK)
+- status ('not_started'|'in_progress'|'completed')
+- study_time_minutes, completion_rate, selected_at
+```
+
+### Data Distribution & Usage
+
+#### Subject Distribution
+- **English**: 475 problems (97.3%) - Most active
+- **Integrated Studies**: 13 problems (2.7%)
+- **Science**: 3 curriculum units  
+- **Other subjects**: Minimal content
+
+#### School Distribution  
+- **KGUJHS**: 38 users, 3 classes (Primary school)
+- **Test01**: 4 users, 5 classes (Development)
+- **TEST**: 3 users, 0 classes (Testing)
+
+#### Learning Activity
+- **Total Attempts**: 3,793 across 21 active students
+- **Problem Coverage**: 200 unique problems used
+- **Average Accuracy**: 92.4% (very high performance)
+- **Top Performer**: 山口　琉叶 (1,565 correct / 1,710 attempts)
+
+### Bridge System Implementation Status
+
+#### ✅ Completed Features
+1. **Phase 1**: Basic curriculum-to-unit conversion
+2. **Phase 2**: Integrated management dashboard  
+3. **Phase 3**: Automatic synchronization system
+
+#### Database Schema Changes
+```sql
+-- Bridge-related fields added to existing tables
+ALTER TABLE curriculums ADD COLUMN is_converted_to_units BOOLEAN DEFAULT FALSE;
+ALTER TABLE curriculum_units ADD COLUMN legacy_curriculum_id INT;
+
+-- New tables for auto-sync functionality  
+CREATE TABLE auto_sync_settings (...);
+CREATE TABLE sync_logs (...);
+```
+
+### Performance & Indexing
+
+#### Key Indexes
+- `users`: email (UNIQUE), username (UNIQUE), class_id
+- `curriculum_units`: unit_code (UNIQUE), is_active, school_id, created_by
+- `answer_records`: student_id, problem_id (high query volume)
+- `curriculums`: is_converted_to_units (NEW - for bridge queries)
+
+#### Query Patterns
+- **High Volume**: answer_records (3,456 rows), basic_knowledge_items (488 rows)
+- **Bridge Queries**: curriculum ↔ curriculum_units relationships
+- **Real-time**: student_unit_selections for learning portal
+
+### Foreign Key Relationships
+
+#### Bridge System Relationships
+```
+curriculums ←→ curriculum_units (via legacy_curriculum_id)
+curriculums → auto_sync_settings (1:1)
+curriculums → sync_logs (1:many)
+```
+
+#### Core Educational Flow
+```
+schools → classes → curriculums → curriculum_units
+       → users → student_unit_selections → learning_records
+```
+
+### Database Maintenance Commands
+
+#### Investigation Commands
+```bash
+# Generate comprehensive DB report
+source .env && mysql -h "$DB_HOST" -u "$DB_USERNAME" -p"$DB_PASSWORD" "$DB_NAME" < generate_db_report.sql
+
+# Check field consistency
+grep -rn "difficulty[^_]" app/ --include="*.py" | grep -v "difficulty_level"
+
+# Monitor error logs
+sudo journalctl -u quested -f | grep -E "(ERROR|WARNING)"
+
+# Verify bridge system tables
+source .env && mysql -h "$DB_HOST" -u "$DB_USERNAME" -p"$DB_PASSWORD" "$DB_NAME" -e "
+SELECT COUNT(*) as curriculum_count, 
+       SUM(is_converted_to_units) as converted_count 
+FROM curriculums;"
+```
+
+#### Performance Monitoring
+```bash
+# Check slow queries
+source .env && mysql -h "$DB_HOST" -u "$DB_USERNAME" -p"$DB_PASSWORD" "$DB_NAME" -e "
+SHOW VARIABLES LIKE 'slow_query_log%';
+SELECT * FROM mysql.slow_log ORDER BY start_time DESC LIMIT 10;"
+
+# Monitor connection usage
+source .env && mysql -h "$DB_HOST" -u "$DB_USERNAME" -p"$DB_PASSWORD" "$DB_NAME" -e "
+SHOW PROCESSLIST;
+SHOW STATUS LIKE 'Connections';"
+```
+
+### Troubleshooting Common Issues
+
+#### Field Name Mismatches
+1. ✅ **Fixed**: `difficulty` → `difficulty_level` in JavaScript
+2. ✅ **Fixed**: Ranking service tuple access patterns
+3. ⚠️ **Monitor**: New bridge features for consistency
+
+#### Bridge System Health Check
+```bash
+# Verify bridge functionality
+source .env && mysql -h "$DB_HOST" -u "$DB_USERNAME" -p"$DB_PASSWORD" "$DB_NAME" -e "
+SELECT c.id, c.title, c.is_converted_to_units,
+       COUNT(cu.id) as unit_count
+FROM curriculums c
+LEFT JOIN curriculum_units cu ON c.id = cu.legacy_curriculum_id
+GROUP BY c.id;"
+```
+
+#### Missing Column Errors
+If "Unknown column" errors occur:
+1. Check if migrations need to run: `flask db upgrade`
+2. Verify column exists: `SHOW COLUMNS FROM table_name`
+3. Restart application server: `sudo systemctl restart quested`
+
+### Data Integrity Checks
+
+#### Orphaned Records Detection
+```bash
+# Find curriculum units without parent curriculum
+source .env && mysql -h "$DB_HOST" -u "$DB_USERNAME" -p"$DB_PASSWORD" "$DB_NAME" -e "
+SELECT cu.* FROM curriculum_units cu 
+LEFT JOIN curriculums c ON cu.legacy_curriculum_id = c.id 
+WHERE cu.legacy_curriculum_id IS NOT NULL AND c.id IS NULL;"
+
+# Find broken user references
+source .env && mysql -h "$DB_HOST" -u "$DB_USERNAME" -p"$DB_PASSWORD" "$DB_NAME" -e "
+SELECT 'student_unit_selections' as table_name, COUNT(*) as broken_refs
+FROM student_unit_selections sus
+LEFT JOIN users u ON sus.student_id = u.id
+WHERE u.id IS NULL;"
+```

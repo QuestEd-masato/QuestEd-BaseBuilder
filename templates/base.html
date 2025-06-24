@@ -1203,6 +1203,12 @@
             });
         });
     </script>
+    <!-- Socket.IO for real-time sync -->
+    {% if current_user.is_authenticated %}
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <script src="{{ url_for('static', filename='js/realtime-sync.js') }}"></script>
+    {% endif %}
+    
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
     <script src="{{ url_for('static', filename='js/responsive-tables.js') }}"></script>
     <script src="{{ url_for('static', filename='js/speech_fallback.js') }}"></script>

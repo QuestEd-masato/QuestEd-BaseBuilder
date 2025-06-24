@@ -1,0 +1,530 @@
+<!-- 同期ステータスウィジェット -->
+<div class="sync-status-widget" data-curriculum-id="{{ curriculum_id if curriculum_id else '' }}">
+    <div class="sync-status-header">
+        <h6 class="sync-status-title">
+            <i class="fas fa-sync-alt"></i>
+            リアルタイム同期
+        </h6>
+        <div class="sync-status-controls">
+            {% if current_user.role == 'teacher' %}
+            <button class="btn btn-sm btn-outline-primary sync-manual-btn" 
+                    onclick="triggerManualSync({{ curriculum_id if curriculum_id else 'null' }})"
+                    title="手動同期実行">
+                <i class="fas fa-play"></i>
+            </button>
+            {% endif %}
+            <button class="btn btn-sm btn-outline-secondary sync-settings-btn"
+                    onclick="showSyncSettings({{ curriculum_id if curriculum_id else 'null' }})"
+                    title="同期設定">
+                <i class="fas fa-cog"></i>
+            </button>
+        </div>
+    </div>
+    
+    <div class="sync-status-content">
+        <!-- 接続ステータス -->
+        <div class="sync-connection-status" id="sync-connection-{{ curriculum_id if curriculum_id else 'global' }}">
+            <div class="connection-indicator disconnected">
+                <i class="fas fa-circle"></i>
+                <span>接続中...</span>
+            </div>
+        </div>
+        
+        <!-- 同期進捗 -->
+        <div class="sync-progress-container" id="sync-progress-{{ curriculum_id if curriculum_id else 'global' }}" style="display: none;">
+            <div class="sync-progress-bar">
+                <div class="progress">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                         role="progressbar" style="width: 0%">
+                        <span class="progress-text">0%</span>
+                    </div>
+                </div>
+            </div>
+            <div class="sync-progress-status">
+                <small class="text-muted">準備中...</small>
+            </div>
+        </div>
+        
+        <!-- 最新同期情報 -->
+        <div class="sync-last-info" id="sync-last-info-{{ curriculum_id if curriculum_id else 'global' }}">
+            <div class="sync-last-status">
+                <i class="fas fa-clock text-muted"></i>
+                <span class="text-muted">同期情報なし</span>
+            </div>
+        </div>
+        
+        <!-- 同期統計 -->
+        {% if curriculum_id %}
+        <div class="sync-stats" id="sync-stats-{{ curriculum_id }}">
+            <div class="row g-2">
+                <div class="col-4">
+                    <div class="sync-stat-item">
+                        <div class="sync-stat-value" id="sync-units-count-{{ curriculum_id }}">-</div>
+                        <div class="sync-stat-label">生成単元</div>
+                    </div>
+                </div>
+                <div class="col-4">
+                    <div class="sync-stat-item">
+                        <div class="sync-stat-value" id="sync-last-time-{{ curriculum_id }}">-</div>
+                        <div class="sync-stat-label">最終同期</div>
+                    </div>
+                </div>
+                <div class="col-4">
+                    <div class="sync-stat-item">
+                        <div class="sync-stat-value" id="sync-conflicts-{{ curriculum_id }}">-</div>
+                        <div class="sync-stat-label">競合数</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+.sync-status-widget {
+    background: #fff;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.sync-status-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.sync-status-title {
+    margin: 0;
+    font-size: 0.95rem;
+    color: #495057;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.sync-status-controls {
+    display: flex;
+    gap: 4px;
+}
+
+.sync-status-controls .btn {
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+
+.sync-connection-status {
+    margin-bottom: 12px;
+}
+
+.connection-indicator {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    transition: all 0.3s ease;
+}
+
+.connection-indicator.connected {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.connection-indicator.connecting {
+    background-color: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeaa7;
+}
+
+.connection-indicator.disconnected {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+.connection-indicator .fas {
+    font-size: 0.7rem;
+}
+
+.connection-indicator.connected .fas {
+    color: #28a745;
+    animation: pulse 2s infinite;
+}
+
+.connection-indicator.connecting .fas {
+    color: #ffc107;
+    animation: spin 1s linear infinite;
+}
+
+.connection-indicator.disconnected .fas {
+    color: #dc3545;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.sync-progress-container {
+    margin-bottom: 12px;
+}
+
+.sync-progress-bar .progress {
+    height: 6px;
+    background-color: #e9ecef;
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.sync-progress-bar .progress-bar {
+    background: linear-gradient(90deg, #007bff 0%, #0056b3 100%);
+    transition: width 0.3s ease;
+    position: relative;
+}
+
+.sync-progress-text {
+    position: absolute;
+    top: -20px;
+    right: 0;
+    font-size: 0.75rem;
+    color: #495057;
+    font-weight: 500;
+}
+
+.sync-progress-status {
+    margin-top: 4px;
+}
+
+.sync-last-info {
+    margin-bottom: 12px;
+}
+
+.sync-last-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.8rem;
+}
+
+.sync-stats {
+    padding-top: 8px;
+    border-top: 1px solid #f0f0f0;
+}
+
+.sync-stat-item {
+    text-align: center;
+    padding: 4px;
+}
+
+.sync-stat-value {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #495057;
+    line-height: 1.2;
+}
+
+.sync-stat-label {
+    font-size: 0.7rem;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 2px;
+}
+
+/* 状態別スタイル */
+.sync-status-widget.syncing .sync-status-title i {
+    animation: spin 1s linear infinite;
+    color: #007bff;
+}
+
+.sync-status-widget.success .sync-status-title i {
+    color: #28a745;
+}
+
+.sync-status-widget.error .sync-status-title i {
+    color: #dc3545;
+}
+
+.sync-status-widget.conflict .sync-status-title i {
+    color: #ffc107;
+}
+
+/* レスポンシブ対応 */
+@media (max-width: 768px) {
+    .sync-status-widget {
+        padding: 12px;
+        margin-bottom: 16px;
+    }
+    
+    .sync-status-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+    
+    .sync-status-controls {
+        align-self: flex-end;
+    }
+    
+    .sync-stats .row {
+        text-align: center;
+    }
+    
+    .sync-stat-value {
+        font-size: 1rem;
+    }
+    
+    .sync-stat-label {
+        font-size: 0.65rem;
+    }
+}
+
+/* 小型版 */
+.sync-status-widget.compact {
+    padding: 12px;
+    margin-bottom: 12px;
+}
+
+.sync-status-widget.compact .sync-status-header {
+    margin-bottom: 8px;
+    padding-bottom: 6px;
+}
+
+.sync-status-widget.compact .sync-status-title {
+    font-size: 0.9rem;
+}
+
+.sync-status-widget.compact .sync-stats {
+    display: none;
+}
+</style>
+
+<script>
+// 同期ステータスウィジェット用JavaScript
+(function() {
+    // ウィジェットの初期化
+    function initSyncStatusWidget(widgetElement) {
+        const curriculumId = widgetElement.dataset.curriculumId;
+        
+        // リアルタイム同期クライアントとの連携
+        if (window.realtimeSync && window.realtimeSync.isSocketConnected()) {
+            updateConnectionStatus(widgetElement, 'connected', 'リアルタイム同期接続中');
+            
+            // カリキュラム固有の同期ルームに参加
+            if (curriculumId) {
+                window.realtimeSync.joinCurriculumSync(parseInt(curriculumId));
+            }
+        } else {
+            updateConnectionStatus(widgetElement, 'disconnected', '同期サービス未接続');
+        }
+        
+        // 初期データの読み込み
+        if (curriculumId) {
+            loadSyncStats(curriculumId);
+        }
+    }
+    
+    // 接続ステータスの更新
+    function updateConnectionStatus(widgetElement, status, message) {
+        const curriculumId = widgetElement.dataset.curriculumId || 'global';
+        const statusElement = widgetElement.querySelector(`#sync-connection-${curriculumId} .connection-indicator`);
+        
+        if (statusElement) {
+            statusElement.className = `connection-indicator ${status}`;
+            statusElement.querySelector('span').textContent = message;
+        }
+    }
+    
+    // 同期進捗の更新
+    function updateSyncProgress(curriculumId, progressData) {
+        const progressContainer = document.getElementById(`sync-progress-${curriculumId || 'global'}`);
+        
+        if (progressContainer && progressData) {
+            const progressBar = progressContainer.querySelector('.progress-bar');
+            const progressText = progressContainer.querySelector('.progress-text');
+            const statusText = progressContainer.querySelector('.sync-progress-status small');
+            
+            const percentage = progressData.percentage || 0;
+            
+            progressContainer.style.display = 'block';
+            progressBar.style.width = `${percentage}%`;
+            
+            if (progressText) {
+                progressText.textContent = `${Math.round(percentage)}%`;
+            }
+            
+            if (statusText && progressData.status) {
+                statusText.textContent = progressData.status;
+            }
+            
+            // 完了時は自動的に非表示
+            if (percentage >= 100) {
+                setTimeout(() => {
+                    progressContainer.style.display = 'none';
+                }, 2000);
+            }
+        }
+    }
+    
+    // 最終同期情報の更新
+    function updateLastSyncInfo(curriculumId, syncData) {
+        const infoElement = document.getElementById(`sync-last-info-${curriculumId || 'global'}`);
+        
+        if (infoElement && syncData) {
+            const statusElement = infoElement.querySelector('.sync-last-status');
+            
+            let iconClass = 'fas fa-clock';
+            let statusText = '同期情報なし';
+            let statusClass = 'text-muted';
+            
+            if (syncData.type === 'sync_completed') {
+                if (syncData.result && syncData.result.success) {
+                    iconClass = 'fas fa-check-circle';
+                    statusText = `${new Date(syncData.timestamp).toLocaleTimeString()} に同期完了`;
+                    statusClass = 'text-success';
+                } else {
+                    iconClass = 'fas fa-exclamation-triangle';
+                    statusText = `${new Date(syncData.timestamp).toLocaleTimeString()} に同期エラー`;
+                    statusClass = 'text-danger';
+                }
+            } else if (syncData.type === 'sync_started') {
+                iconClass = 'fas fa-spinner';
+                statusText = `${new Date(syncData.timestamp).toLocaleTimeString()} に同期開始`;
+                statusClass = 'text-info';
+            }
+            
+            statusElement.innerHTML = `
+                <i class="${iconClass} ${statusClass}"></i>
+                <span class="${statusClass}">${statusText}</span>
+            `;
+        }
+    }
+    
+    // 同期統計の読み込み
+    function loadSyncStats(curriculumId) {
+        if (!curriculumId) return;
+        
+        fetch(`/teacher/curriculum/${curriculumId}/sync-stats`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    updateSyncStats(curriculumId, data.stats);
+                }
+            })
+            .catch(error => {
+                console.error('Failed to load sync stats:', error);
+            });
+    }
+    
+    // 同期統計の更新
+    function updateSyncStats(curriculumId, stats) {
+        const unitsCountElement = document.getElementById(`sync-units-count-${curriculumId}`);
+        const lastTimeElement = document.getElementById(`sync-last-time-${curriculumId}`);
+        const conflictsElement = document.getElementById(`sync-conflicts-${curriculumId}`);
+        
+        if (unitsCountElement && stats.units_count !== undefined) {
+            unitsCountElement.textContent = stats.units_count;
+        }
+        
+        if (lastTimeElement && stats.last_sync_time) {
+            const lastTime = new Date(stats.last_sync_time);
+            lastTimeElement.textContent = lastTime.toLocaleDateString();
+        }
+        
+        if (conflictsElement && stats.conflicts_count !== undefined) {
+            conflictsElement.textContent = stats.conflicts_count;
+        }
+    }
+    
+    // リアルタイム同期イベントリスナー
+    if (window.realtimeSync) {
+        // 同期通知の処理
+        window.realtimeSync.onSyncStatus('sync_notification', function(data) {
+            const curriculumId = data.curriculum_id;
+            
+            // 進捗更新
+            if (data.type === 'sync_progress' && data.progress) {
+                updateSyncProgress(curriculumId, data.progress);
+            }
+            
+            // 最終同期情報更新
+            updateLastSyncInfo(curriculumId, data);
+            
+            // ウィジェットの状態クラス更新
+            const widget = document.querySelector(`[data-curriculum-id="${curriculumId}"]`);
+            if (widget) {
+                widget.className = `sync-status-widget ${data.type.replace('sync_', '')}`;
+            }
+        });
+        
+        // 接続状態変更の処理
+        window.addEventListener('sync_connection_changed', function(event) {
+            const widgets = document.querySelectorAll('.sync-status-widget');
+            widgets.forEach(widget => {
+                updateConnectionStatus(widget, event.detail.status, event.detail.message);
+            });
+        });
+    }
+    
+    // 手動同期実行
+    window.triggerManualSync = function(curriculumId) {
+        if (!curriculumId) {
+            alert('カリキュラムIDが指定されていません。');
+            return;
+        }
+        
+        if (confirm('手動で同期を実行しますか？')) {
+            fetch(`/teacher/curriculum/${curriculumId}/sync`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    trigger_type: 'manual'
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('同期を開始しました。');
+                } else {
+                    alert(`同期の開始に失敗しました: ${data.message}`);
+                }
+            })
+            .catch(error => {
+                console.error('Manual sync error:', error);
+                alert('同期の開始中にエラーが発生しました。');
+            });
+        }
+    };
+    
+    // 同期設定表示
+    window.showSyncSettings = function(curriculumId) {
+        if (curriculumId) {
+            window.location.href = `/teacher/curriculum/${curriculumId}/auto-sync-settings`;
+        } else {
+            window.location.href = '/teacher/sync-settings';
+        }
+    };
+    
+    // ページ読み込み時にウィジェットを初期化
+    document.addEventListener('DOMContentLoaded', function() {
+        const widgets = document.querySelectorAll('.sync-status-widget');
+        widgets.forEach(initSyncStatusWidget);
+    });
+})();
+</script>

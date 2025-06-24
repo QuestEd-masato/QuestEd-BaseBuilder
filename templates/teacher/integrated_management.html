@@ -290,6 +290,115 @@
         grid-template-columns: repeat(2, 1fr);
     }
 }
+
+/* リアルタイム同期オーバービューのスタイル */
+.realtime-sync-overview {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 30px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+}
+
+.sync-overview-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.2);
+}
+
+.sync-overview-header h3 {
+    margin: 0;
+    font-size: 1.3rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.sync-overview-controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.sync-overview-controls .badge {
+    font-size: 0.8rem;
+    padding: 6px 10px;
+}
+
+.sync-overview-stat {
+    text-align: center;
+    padding: 12px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 8px;
+    margin-bottom: 12px;
+    transition: background-color 0.3s ease;
+}
+
+.sync-overview-stat:hover {
+    background: rgba(255,255,255,0.15);
+}
+
+.sync-overview-number {
+    font-size: 2rem;
+    font-weight: bold;
+    line-height: 1;
+    margin-bottom: 4px;
+}
+
+.sync-overview-label {
+    font-size: 0.85rem;
+    opacity: 0.9;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.sync-activity-feed {
+    background: rgba(255,255,255,0.1);
+    border-radius: 8px;
+    padding: 16px;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.sync-activity-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    font-size: 0.9rem;
+}
+
+.sync-activity-item:last-child {
+    border-bottom: none;
+}
+
+.sync-activity-item .fas {
+    font-size: 0.8rem;
+    width: 16px;
+    text-align: center;
+}
+
+.sync-activity-time {
+    margin-left: auto;
+    font-size: 0.8rem;
+    opacity: 0.8;
+}
+
+/* アニメーション */
+.sync-overview-number.updating {
+    animation: numberUpdate 0.3s ease;
+}
+
+@keyframes numberUpdate {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); color: #ffd700; }
+    100% { transform: scale(1); }
+}
 </style>
 {% endblock %}
 
@@ -327,6 +436,55 @@
             <div class="stat-item">
                 <span class="stat-number">{{ overall_stats.active_units }}</span>
                 <span class="stat-label">アクティブ単元</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- リアルタイム同期ステータス -->
+    <div class="realtime-sync-overview">
+        <div class="sync-overview-header">
+            <h3><i class="fas fa-broadcast-tower"></i> リアルタイム同期ステータス</h3>
+            <div class="sync-overview-controls">
+                <span id="connected-users-count" class="badge badge-info">0名接続中</span>
+                <button class="btn btn-sm btn-outline-primary" onclick="refreshSyncOverview()">
+                    <i class="fas fa-sync"></i> 更新
+                </button>
+            </div>
+        </div>
+        
+        <div class="sync-overview-content">
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="sync-overview-stat">
+                        <div class="sync-overview-number" id="active-syncs">0</div>
+                        <div class="sync-overview-label">アクティブ同期</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="sync-overview-stat">
+                        <div class="sync-overview-number" id="pending-syncs">0</div>
+                        <div class="sync-overview-label">待機中同期</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="sync-overview-stat">
+                        <div class="sync-overview-number" id="completed-syncs">0</div>
+                        <div class="sync-overview-label">今日の完了</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="sync-overview-stat">
+                        <div class="sync-overview-number" id="sync-conflicts">0</div>
+                        <div class="sync-overview-label">競合</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="sync-activity-feed" id="sync-activity-feed">
+                <div class="sync-activity-item">
+                    <i class="fas fa-info-circle text-muted"></i>
+                    <span class="text-muted">同期アクティビティの読み込み中...</span>
+                </div>
             </div>
         </div>
     </div>
@@ -729,5 +887,210 @@ function showResult(data) {
     const modal = new bootstrap.Modal(document.getElementById('resultModal'));
     modal.show();
 }
+
+// リアルタイム同期オーバービュー機能
+let syncOverviewData = {
+    activeSyncs: 0,
+    pendingSyncs: 0,
+    completedSyncs: 0,
+    syncConflicts: 0,
+    connectedUsers: 0,
+    activityFeed: []
+};
+
+// 同期オーバービューの初期化
+function initSyncOverview() {
+    // リアルタイム同期クライアントとの連携
+    if (window.realtimeSync) {
+        // 同期通知の監視
+        window.realtimeSync.onSyncStatus('sync_notification', function(data) {
+            updateSyncOverview(data);
+            addSyncActivity(data);
+        });
+        
+        // 接続ユーザー数の更新
+        updateConnectedUsersCount();
+        
+        // 定期的にデータを更新
+        setInterval(refreshSyncOverview, 30000); // 30秒ごと
+    }
+    
+    // 初期データの読み込み
+    refreshSyncOverview();
+}
+
+// 同期オーバービューデータの更新
+function updateSyncOverview(syncData) {
+    if (syncData.type === 'sync_started') {
+        syncOverviewData.activeSyncs++;
+        updateSyncNumber('active-syncs', syncOverviewData.activeSyncs);
+    } else if (syncData.type === 'sync_completed') {
+        syncOverviewData.activeSyncs = Math.max(0, syncOverviewData.activeSyncs - 1);
+        syncOverviewData.completedSyncs++;
+        updateSyncNumber('active-syncs', syncOverviewData.activeSyncs);
+        updateSyncNumber('completed-syncs', syncOverviewData.completedSyncs);
+    } else if (syncData.type === 'sync_conflict') {
+        syncOverviewData.syncConflicts++;
+        updateSyncNumber('sync-conflicts', syncOverviewData.syncConflicts);
+    }
+}
+
+// 同期数値の更新（アニメーション付き）
+function updateSyncNumber(elementId, newValue) {
+    const element = document.getElementById(elementId);
+    if (element) {
+        element.classList.add('updating');
+        element.textContent = newValue;
+        
+        setTimeout(() => {
+            element.classList.remove('updating');
+        }, 300);
+    }
+}
+
+// 同期アクティビティの追加
+function addSyncActivity(syncData) {
+    const activityFeed = document.getElementById('sync-activity-feed');
+    if (!activityFeed) return;
+    
+    let iconClass = 'fas fa-info-circle';
+    let statusClass = '';
+    let message = syncData.message || '同期通知';
+    
+    switch (syncData.type) {
+        case 'sync_started':
+            iconClass = 'fas fa-play-circle';
+            statusClass = 'text-info';
+            break;
+        case 'sync_completed':
+            iconClass = syncData.result?.success ? 'fas fa-check-circle' : 'fas fa-times-circle';
+            statusClass = syncData.result?.success ? 'text-success' : 'text-danger';
+            break;
+        case 'sync_conflict':
+            iconClass = 'fas fa-exclamation-triangle';
+            statusClass = 'text-warning';
+            break;
+    }
+    
+    const activityItem = document.createElement('div');
+    activityItem.className = 'sync-activity-item';
+    activityItem.innerHTML = `
+        <i class="${iconClass} ${statusClass}"></i>
+        <span>${message}</span>
+        <span class="sync-activity-time">${new Date().toLocaleTimeString()}</span>
+    `;
+    
+    // 新しいアイテムを先頭に追加
+    if (activityFeed.firstChild) {
+        activityFeed.insertBefore(activityItem, activityFeed.firstChild);
+    } else {
+        activityFeed.appendChild(activityItem);
+    }
+    
+    // 最大10件まで保持
+    while (activityFeed.children.length > 10) {
+        activityFeed.removeChild(activityFeed.lastChild);
+    }
+}
+
+// 接続ユーザー数の更新
+function updateConnectedUsersCount() {
+    if (window.realtimeSync && window.realtimeSync.isSocketConnected()) {
+        fetch('/teacher/realtime-stats')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const connectedCount = data.stats.connected_users || 0;
+                    syncOverviewData.connectedUsers = connectedCount;
+                    
+                    const countElement = document.getElementById('connected-users-count');
+                    if (countElement) {
+                        countElement.textContent = `${connectedCount}名接続中`;
+                        countElement.className = connectedCount > 0 ? 'badge badge-success' : 'badge badge-secondary';
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Failed to update connected users count:', error);
+            });
+    }
+}
+
+// 同期オーバービューの手動更新
+function refreshSyncOverview() {
+    fetch('/teacher/sync-overview-stats')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const stats = data.stats;
+                
+                syncOverviewData.activeSyncs = stats.active_syncs || 0;
+                syncOverviewData.pendingSyncs = stats.pending_syncs || 0;
+                syncOverviewData.completedSyncs = stats.completed_today || 0;
+                syncOverviewData.syncConflicts = stats.conflicts || 0;
+                
+                updateSyncNumber('active-syncs', syncOverviewData.activeSyncs);
+                updateSyncNumber('pending-syncs', syncOverviewData.pendingSyncs);
+                updateSyncNumber('completed-syncs', syncOverviewData.completedSyncs);
+                updateSyncNumber('sync-conflicts', syncOverviewData.syncConflicts);
+                
+                // アクティビティフィードの更新
+                if (stats.recent_activities) {
+                    updateActivityFeed(stats.recent_activities);
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Failed to refresh sync overview:', error);
+        });
+    
+    // 接続ユーザー数も更新
+    updateConnectedUsersCount();
+}
+
+// アクティビティフィードの更新
+function updateActivityFeed(activities) {
+    const activityFeed = document.getElementById('sync-activity-feed');
+    if (!activityFeed || !activities || activities.length === 0) return;
+    
+    activityFeed.innerHTML = '';
+    
+    activities.slice(0, 10).forEach(activity => {
+        const activityItem = document.createElement('div');
+        activityItem.className = 'sync-activity-item';
+        
+        let iconClass = 'fas fa-info-circle';
+        let statusClass = '';
+        
+        switch (activity.type) {
+            case 'sync_completed':
+                iconClass = activity.success ? 'fas fa-check-circle' : 'fas fa-times-circle';
+                statusClass = activity.success ? 'text-success' : 'text-danger';
+                break;
+            case 'sync_conflict':
+                iconClass = 'fas fa-exclamation-triangle';
+                statusClass = 'text-warning';
+                break;
+            case 'sync_started':
+                iconClass = 'fas fa-play-circle';
+                statusClass = 'text-info';
+                break;
+        }
+        
+        activityItem.innerHTML = `
+            <i class="${iconClass} ${statusClass}"></i>
+            <span>${activity.message}</span>
+            <span class="sync-activity-time">${new Date(activity.timestamp).toLocaleTimeString()}</span>
+        `;
+        
+        activityFeed.appendChild(activityItem);
+    });
+}
+
+// ページ読み込み時に同期オーバービューを初期化
+document.addEventListener('DOMContentLoaded', function() {
+    // 既存の初期化の後に実行
+    setTimeout(initSyncOverview, 1000);
+});
 </script>
 {% endblock %}

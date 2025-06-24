@@ -2631,3 +2631,193 @@ def get_curriculum_problems():
         'problems': problems,
         'review_problems': review_problems
     })
+
+# ==== リアルタイム同期関連のAPIエンドポイント ====
+
+@teacher_bp.route('/curriculum/<int:curriculum_id>/sync', methods=['POST'])
+@login_required
+@teacher_required
+def manual_sync_curriculum(curriculum_id):
+    """カリキュラムの手動同期実行"""
+    from app.tasks.sync_tasks import SyncTaskManager
+    
+    curriculum = Curriculum.query.get_or_404(curriculum_id)
+    
+    # 権限チェック
+    if curriculum.teacher_id != current_user.id:
+        return jsonify({'success': False, 'message': '権限がありません'}), 403
+    
+    try:
+        data = request.get_json() or {}
+        trigger_type = data.get('trigger_type', 'manual')
+        
+        # バックグラウンド同期の開始
+        task_result = SyncTaskManager.start_background_sync(
+            curriculum_id, trigger_type, current_user.id
+        )
+        
+        return jsonify({
+            'success': True,
+            'message': '同期を開始しました',
+            'task_info': task_result
+        })
+        
+    except Exception as e:
+        current_app.logger.error(f"Manual sync error: {str(e)}", exc_info=True)
+        return jsonify({
+            'success': False,
+            'message': f'同期開始エラー: {str(e)}'
+        }), 500
+
+@teacher_bp.route('/curriculum/<int:curriculum_id>/sync-stats')
+@login_required
+@teacher_required
+def get_curriculum_sync_stats(curriculum_id):
+    """カリキュラムの同期統計を取得"""
+    curriculum = Curriculum.query.get_or_404(curriculum_id)
+    
+    # 権限チェック
+    if curriculum.teacher_id != current_user.id:
+        return jsonify({'success': False, 'message': '権限がありません'}), 403
+    
+    try:
+        # 関連単元数
+        units_count = CurriculumUnit.query.filter_by(
+            legacy_curriculum_id=curriculum_id,
+            is_active=True
+        ).count()
+        
+        # 最終同期時間
+        last_sync_time = None
+        if curriculum.units_conversion_date:
+            last_sync_time = curriculum.units_conversion_date.isoformat()
+        
+        # 競合数（実装例）
+        conflicts_count = 0  # 将来的には実際の競合データから取得
+        
+        stats = {
+            'units_count': units_count,
+            'last_sync_time': last_sync_time,
+            'conflicts_count': conflicts_count,
+            'is_converted': curriculum.is_converted_to_units or False
+        }
+        
+        return jsonify({
+            'success': True,
+            'stats': stats
+        })
+        
+    except Exception as e:
+        current_app.logger.error(f"Sync stats error: {str(e)}", exc_info=True)
+        return jsonify({
+            'success': False,
+            'message': '統計取得エラー'
+        }), 500
+
+@teacher_bp.route('/realtime-stats')
+@login_required
+@teacher_required
+def get_realtime_stats():
+    """リアルタイム接続統計を取得"""
+    try:
+        from app.realtime import RealtimeSyncNotifier
+        
+        # 接続ユーザー情報を取得
+        users_info = RealtimeSyncNotifier.get_connected_users_info()
+        
+        stats = {
+            'connected_users': users_info.get('total_connected', 0),
+            'users_detail': users_info.get('users', {})
+        }
+        
+        return jsonify({
+            'success': True,
+            'stats': stats
+        })
+        
+    except Exception as e:
+        current_app.logger.error(f"Realtime stats error: {str(e)}", exc_info=True)
+        return jsonify({
+            'success': False,
+            'message': 'リアルタイム統計取得エラー'
+        }), 500
+
+@teacher_bp.route('/sync-overview-stats')
+@login_required
+@teacher_required
+def get_sync_overview_stats():
+    """同期オーバービュー統計を取得"""
+    try:
+        from app.services.auto_sync_service import AutoSyncService
+        from datetime import datetime, timedelta
+        
+        # 今日の同期完了数
+        today = datetime.utcnow().date()
+        completed_today = 0  # 実装例：実際はログから取得
+        
+        # アクティブ同期数（実装例）
+        active_syncs = 0
+        
+        # 待機中同期数（実装例）
+        pending_syncs = 0
+        
+        # 競合数（実装例）
+        conflicts = 0
+        
+        # 最近のアクティビティ（実装例）
+        recent_activities = [
+            {
+                'type': 'sync_completed',
+                'message': 'サンプル同期完了',
+                'timestamp': datetime.utcnow().isoformat(),
+                'success': True
+            }
+        ]
+        
+        stats = {
+            'active_syncs': active_syncs,
+            'pending_syncs': pending_syncs,
+            'completed_today': completed_today,
+            'conflicts': conflicts,
+            'recent_activities': recent_activities
+        }
+        
+        return jsonify({
+            'success': True,
+            'stats': stats
+        })
+        
+    except Exception as e:
+        current_app.logger.error(f"Sync overview stats error: {str(e)}", exc_info=True)
+        return jsonify({
+            'success': False,
+            'message': '同期概要統計取得エラー'
+        }), 500
+
+@teacher_bp.route('/curriculum/<int:curriculum_id>/sync-task-status/<task_id>')
+@login_required
+@teacher_required
+def get_sync_task_status(curriculum_id, task_id):
+    """同期タスクのステータスを取得"""
+    curriculum = Curriculum.query.get_or_404(curriculum_id)
+    
+    # 権限チェック
+    if curriculum.teacher_id != current_user.id:
+        return jsonify({'success': False, 'message': '権限がありません'}), 403
+    
+    try:
+        from app.tasks.sync_tasks import SyncTaskManager
+        
+        task_status = SyncTaskManager.get_task_status(task_id)
+        
+        return jsonify({
+            'success': True,
+            'task_status': task_status
+        })
+        
+    except Exception as e:
+        current_app.logger.error(f"Task status error: {str(e)}", exc_info=True)
+        return jsonify({
+            'success': False,
+            'message': 'タスクステータス取得エラー'
+        }), 500
