@@ -11,7 +11,7 @@ import logging
 
 from app.models import (
     db, User, Class, ClassEnrollment, MainTheme, InquiryTheme,
-    Milestone, StudentEvaluation, Curriculum, RubricTemplate,
+    Milestone, StudentEvaluation, Curriculum, CurriculumUnit, RubricTemplate,
     Group, GroupMembership, School, InterestSurvey, PersonalitySurvey,
     ActivityLog, Goal, Todo, Subject
 )
