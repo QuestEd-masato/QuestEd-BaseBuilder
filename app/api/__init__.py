@@ -14,6 +14,105 @@ from app.utils.rate_limiting import smart_ai_limit, api_limit
 
 api_bp = Blueprint('api', __name__, url_prefix='/api')
 
+@api_bp.route('/units/select', methods=['POST'])
+@login_required
+@api_limit()
+def select_unit():
+    """単元選択API - 生徒が学習単元を選択"""
+    try:
+        # リクエストデータを取得
+        data = request.get_json()
+        if not data:
+            return jsonify({
+                'status': 'error',
+                'message': 'JSONデータが必要です'
+            }), 400
+        
+        unit_id = data.get('unit_id')
+        selection_reason = data.get('selection_reason', 'self_selected')
+        
+        if not unit_id:
+            return jsonify({
+                'status': 'error',
+                'message': '単元IDが必要です'
+            }), 400
+        
+        # 単元の存在確認
+        unit = CurriculumUnit.query.get(unit_id)
+        if not unit or not unit.is_active:
+            return jsonify({
+                'status': 'error',
+                'message': '指定された単元が見つかりません'
+            }), 404
+        
+        # 生徒の所属クラス確認（学校フィルタリング）
+        if unit.school_id:
+            if current_user.school_id != unit.school_id:
+                return jsonify({
+                    'status': 'error',
+                    'message': 'この単元にアクセスする権限がありません'
+                }), 403
+        
+        # 既存の選択履歴確認
+        existing_selection = StudentUnitSelection.query.filter_by(
+            student_id=current_user.id,
+            unit_id=unit_id
+        ).first()
+        
+        if existing_selection:
+            # 既に選択済みの場合は状況に応じて処理
+            if existing_selection.status == 'completed':
+                return jsonify({
+                    'status': 'info',
+                    'message': 'この単元は既に完了しています'
+                })
+            elif existing_selection.status in ['in_progress', 'paused']:
+                # 学習再開
+                existing_selection.status = 'in_progress'
+                existing_selection.last_activity_at = datetime.utcnow()
+                db.session.commit()
+                
+                return jsonify({
+                    'status': 'success',
+                    'message': '単元学習を再開しました',
+                    'learning_url': f'/student/learning/unit/{unit_id}'
+                })
+        else:
+            # 新規選択の作成
+            new_selection = StudentUnitSelection(
+                student_id=current_user.id,
+                unit_id=unit_id,
+                status='not_started',
+                started_at=datetime.utcnow(),
+                last_activity_at=datetime.utcnow(),
+                created_at=datetime.utcnow()
+            )
+            db.session.add(new_selection)
+        
+        db.session.commit()
+        
+        logging.info(f"Unit selected: student_id={current_user.id}, unit_id={unit_id}, reason={selection_reason}")
+        
+        return jsonify({
+            'status': 'success',
+            'message': f'単元「{unit.title}」を選択しました',
+            'unit_title': unit.title,
+            'learning_url': f'/student/learning/unit/{unit_id}',
+            'data': {
+                'unit_id': unit_id,
+                'difficulty_level': unit.difficulty_level,
+                'estimated_minutes': unit.estimated_minutes
+            }
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        logging.error(f"Unit selection error: {str(e)}", exc_info=True)
+        return jsonify({
+            'status': 'error',
+            'message': f'単元選択中にエラーが発生しました: {str(e)}'
+        }), 500
+
 @api_bp.route('/chat', methods=['GET', 'POST'])
 @login_required
 @smart_ai_limit()

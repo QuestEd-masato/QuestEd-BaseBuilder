@@ -394,10 +394,26 @@ def dashboard():
                         is_selected=True
                     ).first()
                     
+                    # デバッグログ追加
+                    current_app.logger.info(f"Class {class_obj.id} ({class_obj.name}) - Selected theme: {selected_theme_for_class.title if selected_theme_for_class else 'None'}")
+                    
+                    # 代替ロジック: is_selected=True がない場合、最新のテーマを取得
+                    if not selected_theme_for_class:
+                        # このクラスの最新テーマを取得（フォールバック）
+                        latest_theme = InquiryTheme.query.filter_by(
+                            student_id=current_user.id,
+                            class_id=class_obj.id
+                        ).order_by(InquiryTheme.created_at.desc()).first()
+                        
+                        if latest_theme:
+                            current_app.logger.info(f"Using latest theme for class {class_obj.id}: {latest_theme.title}")
+                            selected_theme_for_class = latest_theme
+                    
                     all_class_themes.append({
                         'class_name': class_obj.name,
                         'class_id': class_obj.id,
-                        'theme_title': selected_theme_for_class.title if selected_theme_for_class else None
+                        'theme_title': selected_theme_for_class.title if selected_theme_for_class else None,
+                        'theme_id': selected_theme_for_class.id if selected_theme_for_class else None
                     })
             
             context['all_class_themes'] = all_class_themes
@@ -2731,13 +2747,42 @@ def learning_portal():
     }
     
     try:
-        # シンプルなカウント処理
-        context['total_units'] = CurriculumUnit.query.count()
+        # 利用可能な単元を取得（学校フィルタリング適用）
+        available_units_query = CurriculumUnit.query.filter(
+            CurriculumUnit.is_active == True
+        )
+        
+        # 学校フィルタリング
+        if current_user.school_id:
+            available_units_query = available_units_query.filter(
+                db.or_(
+                    CurriculumUnit.school_id == current_user.school_id,
+                    CurriculumUnit.school_id.is_(None)  # 全校共通
+                )
+            )
+        
+        available_units = available_units_query.all()
+        context['total_units'] = len(available_units)
+        context['available_units'] = [
+            {
+                'id': unit.id,
+                'title': unit.title,
+                'description': unit.description,
+                'difficulty_level': unit.difficulty_level,
+                'estimated_minutes': unit.estimated_minutes,
+                'tags': unit.tags,
+                'subject_name': unit.subject.name if unit.subject else 'その他'
+            }
+            for unit in available_units
+        ]
         
         # 学生の選択情報（NULL安全）
         selections = StudentUnitSelection.query.filter_by(
             student_id=current_user.id
         ).all()
+        
+        # 選択履歴のマッピング作成
+        selection_map = {s.unit_id: s for s in selections}
         
         if selections:
             context['completed_units'] = sum(1 for s in selections if s.status == 'completed')
@@ -2751,6 +2796,20 @@ def learning_portal():
                 context['completion_rate'] = round(
                     (context['completed_units'] / context['total_units'] * 100), 1
                 )
+        
+        # 単元リストに進捗情報を追加
+        for unit in context['available_units']:
+            selection = selection_map.get(unit['id'])
+            if selection:
+                unit['status'] = selection.status
+                unit['progress_percentage'] = float(selection.progress_percentage) if selection.progress_percentage else 0
+                unit['study_time_minutes'] = selection.study_time_minutes or 0
+            else:
+                unit['status'] = 'not_started'
+                unit['progress_percentage'] = 0
+                unit['study_time_minutes'] = 0
+        
+        current_app.logger.info(f"Learning portal loaded: {context['total_units']} units available for user {current_user.id}")
         
         return render_template('learning_portal.html', **context)
         
@@ -2784,7 +2843,16 @@ def learning_unit(unit_id):
                 last_activity_at=datetime.utcnow()
             )
             db.session.add(selection)
-            db.session.commit()
+            current_app.logger.info(f"Created new unit selection: student_id={current_user.id}, unit_id={unit_id}")
+        else:
+            # 既存選択の最終活動時刻を更新
+            selection.last_activity_at = datetime.utcnow()
+            if selection.status == 'not_started':
+                selection.status = 'in_progress'
+                selection.started_at = datetime.utcnow()
+            current_app.logger.info(f"Updated existing unit selection: student_id={current_user.id}, unit_id={unit_id}, status={selection.status}")
+        
+        db.session.commit()
         
         # 復習モードかどうかを判定
         review_mode = request.args.get('mode') == 'review'
