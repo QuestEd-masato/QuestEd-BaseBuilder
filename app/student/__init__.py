@@ -220,7 +220,7 @@ def dashboard():
                 current_app.logger.info(f"Ranking data status:")
                 current_app.logger.info(f"- Total classmates: {len(classmate_ids)}")
                 
-                # word_proficiency_recordsテーブルを優先的に使用
+                # word_proficiency_recordsテーブルを使用
                 if 'word_proficiency_records' in table_names:
                     current_app.logger.info("Using word_proficiency_records for ranking")
                     
@@ -239,41 +239,10 @@ def dashboard():
                         LIMIT 10
                     """)
                     
-                class_rankings_result = db.session.execute(
-                    ranking_query,
-                    {"user_ids": tuple(classmate_ids)}
-                ).fetchall()
-                
-                # データが少ない場合のフォールバック
-                if len(class_rankings_result) < 5:  # 5人未満の場合
-                    current_app.logger.warning(f"Word proficiency data insufficient: {len(class_rankings_result)} users")
-                    
-                    # answer_recordsからのフォールバック
-                    fallback_query = text("""
-                        SELECT 
-                            u.id,
-                            u.username,
-                            u.full_name,
-                            COUNT(DISTINCT ar.problem_id) as word_count
-                        FROM users u
-                        LEFT JOIN answer_records ar ON u.id = ar.student_id AND ar.is_correct = 1
-                        WHERE u.id IN :user_ids
-                          AND u.id NOT IN (SELECT DISTINCT student_id FROM word_proficiency_records)
-                        GROUP BY u.id, u.username, u.full_name
-                        ORDER BY word_count DESC
-                        LIMIT :limit
-                    """)
-                    
-                    fallback_results = db.session.execute(
-                        fallback_query,
-                        {'user_ids': tuple(classmate_ids), 'limit': 10 - len(class_rankings_result)}
+                    class_rankings_result = db.session.execute(
+                        ranking_query,
+                        {"user_ids": tuple(classmate_ids)}
                     ).fetchall()
-                    
-                    # 結果をマージ
-                    class_rankings_combined = list(class_rankings_result)
-                    for result in fallback_results:
-                        class_rankings_combined.append(result)
-                    class_rankings_result = class_rankings_combined
                 
                 # ランキングデータ状況をログ出力
                 current_app.logger.info(f"- Word proficiency users: {len(class_rankings_result)}")
@@ -307,53 +276,6 @@ def dashboard():
                     weekly_query,
                     {"user_ids": tuple(classmate_ids), "one_week_ago": one_week_ago}
                 ).fetchall()
-                
-                # Fallback to word_proficiency if needed
-                if 'word_proficiency' in table_names:
-                    current_app.logger.info("Using word_proficiency for ranking")
-                    
-                    # 総合ランキング（proficiency_level = 5の単語数）
-                    ranking_query = text("""
-                        SELECT 
-                            u.id,
-                            u.username,
-                            u.full_name,
-                            COUNT(DISTINCT CASE WHEN wp.proficiency_level = 5 THEN wp.word_id END) as word_count
-                        FROM users u
-                        LEFT JOIN word_proficiency wp ON u.id = wp.user_id
-                        WHERE u.id IN :user_ids
-                        GROUP BY u.id, u.username, u.full_name
-                        ORDER BY word_count DESC, u.username ASC
-                        LIMIT 10
-                    """)
-                    
-                    class_rankings_result = db.session.execute(
-                        ranking_query,
-                        {"user_ids": tuple(classmate_ids)}
-                    ).fetchall()
-                    
-                    # 週間ランキング（今週5/5になった単語数）
-                    one_week_ago = datetime.now() - timedelta(days=7)
-                    weekly_query = text("""
-                        SELECT 
-                            u.id,
-                            u.username,
-                            u.full_name,
-                            COUNT(DISTINCT wp.word_id) as word_count
-                        FROM users u
-                        LEFT JOIN word_proficiency wp ON u.id = wp.user_id
-                        WHERE u.id IN :user_ids
-                        AND wp.proficiency_level = 5
-                        AND wp.last_reviewed >= :one_week_ago
-                        GROUP BY u.id, u.username, u.full_name
-                        ORDER BY word_count DESC, u.username ASC
-                        LIMIT 10
-                    """)
-                    
-                    weekly_rankings_result = db.session.execute(
-                        weekly_query,
-                        {"user_ids": tuple(classmate_ids), "one_week_ago": one_week_ago}
-                    ).fetchall()
                     
                 else:
                     # テーブルがない場合はクラスメイトのみ表示
@@ -660,7 +582,7 @@ def dashboard():
                     # 今週の学習
                     one_week_ago = datetime.now() - timedelta(days=7)
                     weekly = db.session.execute(
-                        text("SELECT COUNT(DISTINCT problem_id) FROM word_proficiency_records WHERE student_id = :user_id AND level = 5 AND timestamp >= :week_ago"),
+                        text("SELECT COUNT(DISTINCT problem_id) FROM word_proficiency_records WHERE student_id = :user_id AND level = 5 AND last_updated >= :week_ago"),
                         {"user_id": current_user.id, "week_ago": one_week_ago}
                     ).scalar() or 0
                     
