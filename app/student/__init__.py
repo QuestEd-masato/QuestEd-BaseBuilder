@@ -244,39 +244,39 @@ def dashboard():
                         {"user_ids": tuple(classmate_ids)}
                     ).fetchall()
                 
-                # ランキングデータ状況をログ出力
-                current_app.logger.info(f"- Word proficiency users: {len(class_rankings_result)}")
-                current_app.logger.info(f"- Missing users: {len(classmate_ids) - len(class_rankings_result)}")
-                
-                # 週間ランキング（修正版）
-                one_week_ago = datetime.now() - timedelta(days=7)
-                weekly_query = text("""
-                    SELECT 
-                        u.id,
-                        u.username,
-                        u.full_name,
-                        COALESCE(wpr_count.word_count, 0) as word_count
-                    FROM users u
-                    LEFT JOIN (
-                        SELECT 
-                            student_id,
-                            COUNT(DISTINCT problem_id) as word_count
-                        FROM word_proficiency_records
-                        WHERE level >= 5
-                          AND last_updated >= :one_week_ago
-                        GROUP BY student_id
-                    ) wpr_count ON u.id = wpr_count.student_id
-                    WHERE u.id IN :user_ids
-                    GROUP BY u.id, u.username, u.full_name
-                    ORDER BY word_count DESC, u.username ASC
-                    LIMIT 10
-                """)
-                
-                weekly_rankings_result = db.session.execute(
-                    weekly_query,
-                    {"user_ids": tuple(classmate_ids), "one_week_ago": one_week_ago}
-                ).fetchall()
+                    # ランキングデータ状況をログ出力
+                    current_app.logger.info(f"- Word proficiency users: {len(class_rankings_result)}")
+                    current_app.logger.info(f"- Missing users: {len(classmate_ids) - len(class_rankings_result)}")
                     
+                    # 週間ランキング（修正版）
+                    one_week_ago = datetime.now() - timedelta(days=7)
+                    weekly_query = text("""
+                        SELECT 
+                            u.id,
+                            u.username,
+                            u.full_name,
+                            COALESCE(wpr_count.word_count, 0) as word_count
+                        FROM users u
+                        LEFT JOIN (
+                            SELECT 
+                                student_id,
+                                COUNT(DISTINCT problem_id) as word_count
+                            FROM word_proficiency_records
+                            WHERE level >= 5
+                              AND last_updated >= :one_week_ago
+                            GROUP BY student_id
+                        ) wpr_count ON u.id = wpr_count.student_id
+                        WHERE u.id IN :user_ids
+                        GROUP BY u.id, u.username, u.full_name
+                        ORDER BY word_count DESC, u.username ASC
+                        LIMIT 10
+                    """)
+                    
+                    weekly_rankings_result = db.session.execute(
+                        weekly_query,
+                        {"user_ids": tuple(classmate_ids), "one_week_ago": one_week_ago}
+                    ).fetchall()
+                
                 else:
                     # テーブルがない場合はクラスメイトのみ表示
                     current_app.logger.info("No word proficiency tables found, showing classmates only")
