@@ -1968,25 +1968,64 @@ def convert_curriculum_to_units(curriculum_id):
     """カリキュラムを自由進度学習単元に変換"""
     from app.services.curriculum_bridge_service import CurriculumBridgeService
     
-    curriculum = Curriculum.query.get_or_404(curriculum_id)
-    
-    # 権限チェック
-    if curriculum.teacher_id != current_user.id:
-        return jsonify({
-            'success': False, 
-            'message': 'このカリキュラムを変換する権限がありません'
-        }), 403
+    current_app.logger.info(f"Starting curriculum conversion for ID {curriculum_id} by user {current_user.id}")
     
     try:
+        curriculum = Curriculum.query.get_or_404(curriculum_id)
+        current_app.logger.info(f"Found curriculum: {curriculum.title}")
+        
+        # 権限チェック
+        if curriculum.teacher_id != current_user.id:
+            current_app.logger.warning(f"Permission denied: curriculum {curriculum_id} belongs to user {curriculum.teacher_id}, requested by {current_user.id}")
+            return jsonify({
+                'success': False, 
+                'message': 'このカリキュラムを変換する権限がありません'
+            }), 403
+        
+        # カリキュラムデータの事前チェック
+        if not curriculum.curriculum_data:
+            current_app.logger.warning(f"Curriculum {curriculum_id} has no curriculum_data")
+            return jsonify({
+                'success': False,
+                'message': 'カリキュラムデータが設定されていません'
+            }), 400
+        
+        # JSON解析チェック
+        try:
+            import json
+            curriculum_data = json.loads(curriculum.curriculum_data)
+            items = curriculum_data.get('items', [])
+            current_app.logger.info(f"Curriculum {curriculum_id} has {len(items)} items to convert")
+            
+            if not items:
+                return jsonify({
+                    'success': False,
+                    'message': 'カリキュラムに変換可能な項目がありません'
+                }), 400
+                
+        except json.JSONDecodeError as e:
+            current_app.logger.error(f"Invalid JSON in curriculum {curriculum_id}: {str(e)}")
+            return jsonify({
+                'success': False,
+                'message': 'カリキュラムデータの形式が不正です'
+            }), 400
+        
+        # トランザクション開始
+        db.session.begin()
+        
         # 変換実行
+        current_app.logger.info(f"Executing conversion for curriculum {curriculum_id}")
         result = CurriculumBridgeService.convert_curriculum_to_units(
             curriculum_id, 
             current_user.id
         )
         
         if result['success']:
+            # トランザクションコミット
+            db.session.commit()
+            
             current_app.logger.info(
-                f"Curriculum {curriculum_id} converted to units by user {current_user.id}: "
+                f"Curriculum {curriculum_id} converted successfully by user {current_user.id}: "
                 f"{result['converted_count']} created, {result.get('updated_count', 0)} updated"
             )
             
@@ -1996,20 +2035,120 @@ def convert_curriculum_to_units(curriculum_id):
                 'data': {
                     'converted_count': result['converted_count'],
                     'updated_count': result.get('updated_count', 0),
-                    'total_items': result.get('total_items', 0)
+                    'total_items': result.get('total_items', 0),
+                    'curriculum_title': curriculum.title
                 }
             })
         else:
+            # トランザクションロールバック
+            db.session.rollback()
+            current_app.logger.error(f"Conversion failed for curriculum {curriculum_id}: {result['message']}")
+            
             return jsonify({
                 'success': False,
                 'message': result['message']
             }), 400
             
     except Exception as e:
-        current_app.logger.error(f"Curriculum conversion error: {str(e)}", exc_info=True)
+        # トランザクションロールバック
+        db.session.rollback()
+        current_app.logger.error(f"Curriculum conversion error for ID {curriculum_id}: {str(e)}", exc_info=True)
+        
         return jsonify({
             'success': False,
-            'message': '変換中にエラーが発生しました'
+            'message': f'変換中にエラーが発生しました: {str(e)}',
+            'error_details': str(e) if current_app.debug else None
+        }), 500
+
+@teacher_bp.route('/curriculum/sync-all', methods=['POST'])
+@login_required
+@teacher_required
+def sync_all_curriculums():
+    """全カリキュラムを単元に一括変換"""
+    from app.services.curriculum_bridge_service import CurriculumBridgeService
+    
+    try:
+        # 1. 教師の全カリキュラムを取得
+        curriculums = Curriculum.query.filter_by(
+            teacher_id=current_user.id
+        ).all()
+        
+        if not curriculums:
+            return jsonify({
+                'success': True,
+                'message': '変換対象のカリキュラムがありません',
+                'data': {
+                    'converted_count': 0,
+                    'failed_count': 0,
+                    'total_count': 0
+                }
+            })
+        
+        # 2. 各カリキュラムを単元に変換
+        converted_count = 0
+        failed_count = 0
+        conversion_results = []
+        
+        for curriculum in curriculums:
+            try:
+                current_app.logger.info(f"Converting curriculum {curriculum.id}: {curriculum.title}")
+                
+                result = CurriculumBridgeService.convert_curriculum_to_units(
+                    curriculum.id, 
+                    current_user.id
+                )
+                
+                if result['success']:
+                    converted_count += 1
+                    conversion_results.append({
+                        'id': curriculum.id,
+                        'title': curriculum.title,
+                        'status': 'success',
+                        'converted_count': result['converted_count'],
+                        'updated_count': result.get('updated_count', 0)
+                    })
+                else:
+                    failed_count += 1
+                    conversion_results.append({
+                        'id': curriculum.id,
+                        'title': curriculum.title,
+                        'status': 'failed',
+                        'error': result['message']
+                    })
+                    
+            except Exception as e:
+                failed_count += 1
+                current_app.logger.error(f"Individual curriculum conversion error: {str(e)}", exc_info=True)
+                conversion_results.append({
+                    'id': curriculum.id,
+                    'title': curriculum.title,
+                    'status': 'failed',
+                    'error': str(e)
+                })
+        
+        # 3. 結果を返す
+        success_message = f'{converted_count}個のカリキュラムを単元に変換しました'
+        if failed_count > 0:
+            success_message += f'（{failed_count}個のカリキュラムで失敗）'
+        
+        current_app.logger.info(f"Bulk curriculum conversion completed: {converted_count} success, {failed_count} failed")
+        
+        return jsonify({
+            'success': True,
+            'message': success_message,
+            'data': {
+                'converted_count': converted_count,
+                'failed_count': failed_count,
+                'total_count': len(curriculums),
+                'details': conversion_results
+            }
+        })
+        
+    except Exception as e:
+        current_app.logger.error(f"Sync all curriculums error: {str(e)}", exc_info=True)
+        return jsonify({
+            'success': False,
+            'message': f'一括変換中にエラーが発生しました: {str(e)}'
         }), 500
 
 @teacher_bp.route('/curriculum/<int:curriculum_id>/conversion-status')

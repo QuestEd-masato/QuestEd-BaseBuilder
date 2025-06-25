@@ -185,13 +185,14 @@ def dashboard():
         except Exception as e:
             current_app.logger.warning(f"Could not fetch class info: {str(e)}")
         
-        # word_proficiencyテーブルが存在するか確認
-        has_word_proficiency = False
+        # word_proficiency_recordsテーブルが存在するか確認
+        has_word_proficiency_records = False
         try:
             # テーブルの存在確認（よりセキュアな方法）
             from sqlalchemy import inspect
             inspector = inspect(db.engine)
-            has_word_proficiency = 'word_proficiency' in inspector.get_table_names()
+            has_word_proficiency_records = 'word_proficiency_records' in inspector.get_table_names()
+            current_app.logger.info(f"word_proficiency_records table exists: {has_word_proficiency_records}")
         except Exception as e:
             current_app.logger.debug(f"Table existence check failed: {str(e)}")
             pass
@@ -616,16 +617,16 @@ def dashboard():
                 except Exception as e:
                     current_app.logger.error(f"Answer records stats error: {e}")
             
-            # word_proficiencyテーブルを使用
-            if 'word_proficiency' in table_names:
-                current_app.logger.info("Using word_proficiency table")
+            # word_proficiency_recordsテーブルを使用（統一）
+            if 'word_proficiency_records' in table_names:
+                current_app.logger.info("Using word_proficiency_records table for word mastery stats")
                 
-                # 総マスター単語数（定着度5）
+                # 総マスター単語数（レベル5）
                 total_mastered_query = text("""
-                    SELECT COUNT(DISTINCT word_id) as count
-                    FROM word_proficiency
-                    WHERE user_id = :user_id
-                    AND proficiency_level = 5
+                    SELECT COUNT(DISTINCT problem_id) as count
+                    FROM word_proficiency_records
+                    WHERE student_id = :user_id
+                    AND level = 5
                 """)
                 
                 total_result = db.session.execute(
@@ -638,11 +639,11 @@ def dashboard():
                 # 今週マスターした単語数
                 one_week_ago = datetime.now() - timedelta(days=7)
                 weekly_mastered_query = text("""
-                    SELECT COUNT(DISTINCT word_id) as count
-                    FROM word_proficiency
-                    WHERE user_id = :user_id
-                    AND proficiency_level = 5
-                    AND last_reviewed >= :week_ago
+                    SELECT COUNT(DISTINCT problem_id) as count
+                    FROM word_proficiency_records
+                    WHERE student_id = :user_id
+                    AND level = 5
+                    AND last_updated >= :week_ago
                 """)
                 
                 weekly_result = db.session.execute(
@@ -652,11 +653,11 @@ def dashboard():
                 
                 context['weekly_words_learned'] = weekly_result or 0
                 
-                # 全体の単語数を取得（定着度に関わらず）
+                # 全体の単語数を取得（レベルに関わらず）
                 total_words_query = text("""
-                    SELECT COUNT(DISTINCT word_id) as count
-                    FROM word_proficiency
-                    WHERE user_id = :user_id
+                    SELECT COUNT(DISTINCT problem_id) as count
+                    FROM word_proficiency_records
+                    WHERE student_id = :user_id
                 """)
                 
                 total_words_result = db.session.execute(
@@ -665,6 +666,8 @@ def dashboard():
                 ).scalar()
                 
                 context['total_words_attempted'] = total_words_result or 0
+                
+                current_app.logger.info(f"Word proficiency stats - Total attempted: {context['total_words_attempted']}, Mastered: {context['total_mastered_words']}, Weekly: {context['weekly_words_learned']}")
                 
             # wordsテーブルから基礎単語の総数を取得（目標値として使用）
             elif 'words' in table_names:
@@ -1833,12 +1836,30 @@ def class_details(class_id):
         log_access_attempt('class_details', True, class_id=class_id)
         
         # カリキュラムデータ取得（ユーティリティ関数使用）
-        curriculum_data = get_curriculum_data_for_class(class_id)
-        curriculum_items_count = calculate_curriculum_statistics(curriculum_data)['total_items']
+        try:
+            curriculum_data = get_curriculum_data_for_class(class_id)
+            curriculum_statistics = calculate_curriculum_statistics(curriculum_data)
+            curriculum_items_count = curriculum_statistics['total_items']
+            current_app.logger.info(f"Class {class_id} curriculum data loaded: {curriculum_items_count} items")
+        except Exception as e:
+            current_app.logger.error(f"Failed to load curriculum data for class {class_id}: {str(e)}")
+            curriculum_data = []
+            curriculum_items_count = 0
         
         # マイルストーン取得（ユーティリティ関数使用）
-        milestones = get_milestones_for_student(class_id, current_user.id)
-        milestone_progress = calculate_milestone_progress(milestones)
+        try:
+            milestones = get_milestones_for_student(class_id, current_user.id)
+            milestone_progress = calculate_milestone_progress(milestones)
+            current_app.logger.info(f"Class {class_id} milestones loaded: {len(milestones)} milestones")
+        except Exception as e:
+            current_app.logger.error(f"Failed to load milestones for class {class_id}: {str(e)}")
+            milestones = []
+            milestone_progress = {
+                'total_milestones': 0,
+                'completed_milestones': 0,
+                'progress_percentage': 0,
+                'next_milestone': None
+            }
         
         total_milestones = milestone_progress['total_milestones']
         completed_milestones = milestone_progress['completed_milestones']
