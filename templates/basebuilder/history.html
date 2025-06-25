@@ -31,7 +31,7 @@
               <tbody>
                 {% for record in answer_records %}
                   <tr>
-                    <td>{{ record.timestamp.strftime('%Y-%m-%d %H:%M') }}</td>
+                    <td>{{ record.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
                     <td>{{ record.problem.title }}</td>
                     <td>{{ record.problem.category.name }}</td>
                     <td>

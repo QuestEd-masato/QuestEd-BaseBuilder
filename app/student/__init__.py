@@ -264,7 +264,7 @@ def dashboard():
                                 COUNT(DISTINCT problem_id) as word_count
                             FROM word_proficiency_records
                             WHERE level >= 5
-                              AND last_updated >= :one_week_ago
+                              AND updated_at >= :one_week_ago
                             GROUP BY student_id
                         ) wpr_count ON u.id = wpr_count.student_id
                         WHERE u.id IN :user_ids
@@ -599,7 +599,7 @@ def dashboard():
                     # 今週の学習
                     one_week_ago = datetime.now() - timedelta(days=7)
                     weekly = db.session.execute(
-                        text("SELECT COUNT(DISTINCT problem_id) FROM word_proficiency_records WHERE student_id = :user_id AND level = 5 AND last_updated >= :week_ago"),
+                        text("SELECT COUNT(DISTINCT problem_id) FROM word_proficiency_records WHERE student_id = :user_id AND level = 5 AND updated_at >= :week_ago"),
                         {"user_id": current_user.id, "week_ago": one_week_ago}
                     ).scalar() or 0
                     
@@ -659,7 +659,7 @@ def dashboard():
                     FROM word_proficiency_records
                     WHERE student_id = :user_id
                     AND level = 5
-                    AND last_updated >= :week_ago
+                    AND updated_at >= :week_ago
                 """)
                 
                 weekly_result = db.session.execute(

@@ -394,16 +394,16 @@
             if (syncData.type === 'sync_completed') {
                 if (syncData.result && syncData.result.success) {
                     iconClass = 'fas fa-check-circle';
-                    statusText = `${new Date(syncData.timestamp).toLocaleTimeString()} に同期完了`;
+                    statusText = `${new Date(syncData.created_at).toLocaleTimeString()} に同期完了`;
                     statusClass = 'text-success';
                 } else {
                     iconClass = 'fas fa-exclamation-triangle';
-                    statusText = `${new Date(syncData.timestamp).toLocaleTimeString()} に同期エラー`;
+                    statusText = `${new Date(syncData.created_at).toLocaleTimeString()} に同期エラー`;
                     statusClass = 'text-danger';
                 }
             } else if (syncData.type === 'sync_started') {
                 iconClass = 'fas fa-spinner';
-                statusText = `${new Date(syncData.timestamp).toLocaleTimeString()} に同期開始`;
+                statusText = `${new Date(syncData.created_at).toLocaleTimeString()} に同期開始`;
                 statusClass = 'text-info';
             }
             

@@ -482,7 +482,7 @@ class RankingCache(db.Model):
     # キャッシュメタデータ
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     expires_at = db.Column(db.DateTime, nullable=False)
-    last_updated = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     # インデックス
     __table_args__ = (

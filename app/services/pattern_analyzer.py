@@ -657,8 +657,8 @@ class LearningStyleAnalyzer:
             return []
         
         sessions = []
-        current_session_start = chats[0].timestamp
-        last_timestamp = chats[0].timestamp
+        current_session_start = chats[0].created_at
+        last_timestamp = chats[0].created_at
         
         for chat in chats[1:]:
             time_diff = (chat.created_at - last_timestamp).total_seconds() / 60  # 分単位

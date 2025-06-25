@@ -160,7 +160,7 @@
                                     {{ chat.message|nl2br }}
                                 </div>
                                 <div>
-                                    <small class="text-muted">{{ chat.timestamp.strftime('%Y-%m-%d %H:%M') }}</small>
+                                    <small class="text-muted">{{ chat.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
                                 </div>
                             </div>
                         {% endfor %}

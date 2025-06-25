@@ -1080,7 +1080,7 @@ function updateActivityFeed(activities) {
         activityItem.innerHTML = `
             <i class="${iconClass} ${statusClass}"></i>
             <span>${activity.message}</span>
-            <span class="sync-activity-time">${new Date(activity.timestamp).toLocaleTimeString()}</span>
+            <span class="sync-activity-time">${new Date(activity.created_at).toLocaleTimeString()}</span>
         `;
         
         activityFeed.appendChild(activityItem);

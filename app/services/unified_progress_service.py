@@ -561,7 +561,7 @@ class UnifiedProgressService:
                 } if selected_theme else None,
                 'activity_logs': {
                     'total_count': len(activities),
-                    'recent_activities': len([a for a in activities if a.timestamp and a.timestamp >= datetime.utcnow() - timedelta(days=7)])
+                    'recent_activities': len([a for a in activities if a.created_at and a.created_at >= datetime.utcnow() - timedelta(days=7)])
                 }
             }
             
