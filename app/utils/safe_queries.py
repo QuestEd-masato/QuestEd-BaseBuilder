@@ -26,15 +26,15 @@ class SafeAnalyticsQueries:
         
         # SQLAlchemyのORMを使用してSQLインジェクション対策
         query = db.session.query(
-            func.date(ActivityLog.timestamp).label('activity_date'),
+            func.date(ActivityLog.created_at).label('activity_date'),
             func.count(ActivityLog.student_id.distinct()).label('active_users')
         ).filter(
             and_(
-                func.date(ActivityLog.timestamp) >= start_date,
-                func.date(ActivityLog.timestamp) <= end_date
+                func.date(ActivityLog.created_at) >= start_date,
+                func.date(ActivityLog.created_at) <= end_date
             )
         ).group_by(
-            func.date(ActivityLog.timestamp)
+            func.date(ActivityLog.created_at)
         ).order_by(
             asc('activity_date')
         )
@@ -103,7 +103,7 @@ class SafeAnalyticsQueries:
             func.count(ActivityLog.id).label('total_activities'),
             func.avg(
                 func.case(
-                    (ActivityLog.timestamp >= week_ago, 1.0),  # SQLAlchemy 2.0: タプル形式
+                    (ActivityLog.created_at >= week_ago, 1.0),  # SQLAlchemy 2.0: タプル形式
                     else_=0.0
                 )
             ).label('weekly_activity_rate')
@@ -141,7 +141,7 @@ class SafeAnalyticsQueries:
         
         # 各種API使用量をORMで安全に取得
         chat_usage = ChatHistory.query.filter(
-            ChatHistory.timestamp >= start_date
+            ChatHistory.created_at >= start_date
         ).count()
         
         theme_generation = InquiryTheme.query.filter(
@@ -190,7 +190,7 @@ class SafeAnalyticsQueries:
         activities = ActivityLog.query.filter(
             and_(
                 ActivityLog.student_id == user_id,
-                ActivityLog.timestamp >= start_date
+                ActivityLog.created_at >= start_date
             )
         ).count()
         
@@ -198,7 +198,7 @@ class SafeAnalyticsQueries:
         chats = ChatHistory.query.filter(
             and_(
                 ChatHistory.user_id == user_id,
-                ChatHistory.timestamp >= start_date
+                ChatHistory.created_at >= start_date
             )
         ).count()
         
@@ -237,7 +237,7 @@ class SafeAnalyticsQueries:
         query = db.session.query(ActivityLog).options(
             joinedload(ActivityLog.student)
         ).order_by(
-            desc(ActivityLog.timestamp)
+            desc(ActivityLog.created_at)
         ).limit(limit)
         
         activities = query.all()
@@ -249,7 +249,7 @@ class SafeAnalyticsQueries:
                 'student_id': activity.student_id,
                 'title': activity.title,
                 'content': activity.content[:100] + '...' if len(activity.content) > 100 else activity.content,
-                'timestamp': activity.timestamp.isoformat(),
+                'timestamp': activity.created_at.isoformat(),
                 'has_image': bool(activity.image_url)
             }
             for activity in activities

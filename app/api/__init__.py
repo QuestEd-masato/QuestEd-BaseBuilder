@@ -162,12 +162,12 @@ def chat():
             chat_history = ChatHistory.query.filter_by(
                 user_id=current_user.id,
                 class_id=class_id
-            ).order_by(ChatHistory.timestamp.desc()).limit(10).all()
+            ).order_by(ChatHistory.created_at.desc()).limit(10).all()
         else:
             chat_history = ChatHistory.query.filter_by(
                 user_id=current_user.id,
                 class_id=None
-            ).order_by(ChatHistory.timestamp.desc()).limit(10).all()
+            ).order_by(ChatHistory.created_at.desc()).limit(10).all()
         
         # 古い順に並べ直してコンテキストに追加
         for chat in reversed(chat_history):
@@ -564,90 +564,6 @@ def get_units():
         return jsonify({
             'status': 'error',
             'message': '単元一覧の取得に失敗しました'
-        }), 500
-
-@api_bp.route('/units/select', methods=['POST'])
-@login_required
-@api_limit()
-def select_unit():
-    """単元選択API"""
-    if current_user.role != 'student':
-        return jsonify({'error': '学生のみアクセス可能です'}), 403
-    
-    try:
-        data = request.get_json()
-        unit_id = data.get('unit_id')
-        class_id = data.get('class_id')
-        selection_reason = data.get('selection_reason', 'self_selected')
-        
-        if not unit_id:
-            return jsonify({
-                'status': 'error',
-                'message': '単元IDが必要です'
-            }), 400
-        
-        # 単元の存在確認
-        unit = CurriculumUnit.query.get(unit_id)
-        if not unit:
-            return jsonify({
-                'status': 'error',
-                'message': '指定された単元が見つかりません'
-            }), 404
-        
-        # 既存の選択履歴をチェック
-        existing_selection = StudentUnitSelection.query.filter_by(
-            student_id=current_user.id,
-            unit_id=unit_id,
-            class_id=class_id
-        ).first()
-        
-        if existing_selection:
-            # 既に選択済みの場合は状態を更新
-            if existing_selection.status == 'completed':
-                return jsonify({
-                    'status': 'error',
-                    'message': 'この単元は既に完了しています'
-                }), 400
-            else:
-                existing_selection.status = 'in_progress'
-                existing_selection.last_activity_at = datetime.utcnow()
-        else:
-            # 新規選択
-            # 単元の問題数を計算
-            total_items = UnitItemMapping.query.filter_by(unit_id=unit_id).count()
-            
-            new_selection = StudentUnitSelection(
-                student_id=current_user.id,
-                unit_id=unit_id,
-                class_id=class_id,
-                status='in_progress',
-                total_items=total_items,
-                started_at=datetime.utcnow(),
-                last_activity_at=datetime.utcnow()
-            )
-            db.session.add(new_selection)
-        
-        db.session.commit()
-        
-        # ログ記録
-        logging.info(f"User {current_user.id} selected unit {unit_id} via {selection_reason}")
-        
-        return jsonify({
-            'status': 'success',
-            'message': f'単元「{unit.title}」を選択しました',
-            'data': {
-                'unit_id': unit_id,
-                'title': unit.title,
-                'status': 'in_progress'
-            }
-        })
-        
-    except Exception as e:
-        db.session.rollback()
-        logging.error(f"単元選択エラー: {str(e)}")
-        return jsonify({
-            'status': 'error',
-            'message': '単元の選択に失敗しました'
         }), 500
 
 @api_bp.route('/units/<int:unit_id>/progress', methods=['POST'])

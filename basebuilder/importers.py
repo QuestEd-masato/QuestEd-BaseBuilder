@@ -165,7 +165,7 @@ def update_category_proficiency(student_id, category_id):
     
     # 熟練度は平均値を整数に切り捨て
     proficiency.level = int(avg_level)
-    proficiency.last_updated = datetime.utcnow()
+    proficiency.updated_at = datetime.utcnow()
     
     # 次回復習日は最も早い単語の復習日
     if word_proficiencies:

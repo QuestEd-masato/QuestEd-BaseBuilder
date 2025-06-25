@@ -156,13 +156,13 @@ def dashboard():
         # 最近の活動記録
         context['recent_activities'] = ActivityLog.query.filter_by(
             student_id=current_user.id
-        ).order_by(ActivityLog.timestamp.desc()).limit(5).all()
+        ).order_by(ActivityLog.created_at.desc()).limit(5).all()
         
         # 今週の活動数
         one_week_ago = datetime.now() - timedelta(days=7)
         context['weekly_activities_count'] = ActivityLog.query.filter(
             ActivityLog.student_id == current_user.id,
-            ActivityLog.timestamp >= one_week_ago
+            ActivityLog.created_at >= one_week_ago
         ).count()
         
         # クラス情報を取得（JOIN最適化）
@@ -368,7 +368,7 @@ def dashboard():
             this_month_start = datetime.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
             context['monthly_chat_count'] = ChatHistory.query.filter(
                 ChatHistory.user_id == current_user.id,
-                ChatHistory.timestamp >= this_month_start
+                ChatHistory.created_at >= this_month_start
             ).count()
         except Exception as e:
             current_app.logger.debug(f"Could not fetch chat count: {str(e)}")
@@ -537,7 +537,7 @@ def dashboard():
                             td.delivered_at,
                             COALESCE(tpr.understanding_level, 0) as understanding_level,
                             tpr.completed_at,
-                            td.last_updated
+                            td.updated_at
                         FROM text_delivery td
                         INNER JOIN text_set ts ON td.text_set_id = ts.id
                         LEFT JOIN text_proficiency_record tpr ON (
@@ -546,7 +546,7 @@ def dashboard():
                         )
                         WHERE td.class_id IN :class_ids
                         AND td.is_active = 1
-                        ORDER BY td.delivered_at DESC, td.last_updated DESC
+                        ORDER BY td.delivered_at DESC, td.updated_at DESC
                         LIMIT 5
                     """)
                     
@@ -566,7 +566,7 @@ def dashboard():
                             'understanding_level': int(row.understanding_level) if row.understanding_level else 0,
                             'completed_at': row.completed_at,
                             'is_completed': row.completed_at is not None,
-                            'last_updated': row.last_updated  # 更新時刻を追加
+                            'updated_at': row.updated_at  # 更新時刻を追加
                         })
                     
                     context['delivered_texts'] = delivered_texts
@@ -1156,7 +1156,7 @@ def edit_activity(log_id):
                 
                 log.image_url = f"/uploads/{unique_filename}"
         
-        log.timestamp = datetime.utcnow()
+        log.created_at = datetime.utcnow()
         db.session.commit()
         
         flash('活動記録を更新しました。')
@@ -1440,7 +1440,7 @@ def toggle_todo(todo_id):
     
     # 完了状態を切り替え
     todo.is_completed = not todo.is_completed
-    todo.last_updated = datetime.utcnow()
+    todo.updated_at = datetime.utcnow()
     db.session.commit()
     
     status = "完了" if todo.is_completed else "未完了"
@@ -1586,7 +1586,7 @@ def update_goal_progress(goal_id):
     if goal.progress >= 100:
         goal.is_completed = True
     
-    goal.last_updated = datetime.utcnow()
+    goal.updated_at = datetime.utcnow()
     db.session.commit()
     
     flash(f'目標の進捗を{goal.progress}%に更新しました。')
@@ -2604,7 +2604,7 @@ def chat_page():
         chat_history = ChatHistory.query.filter_by(
             user_id=current_user.id,
             class_id=class_id
-        ).order_by(ChatHistory.timestamp.asc()).all()
+        ).order_by(ChatHistory.created_at.asc()).all()
         
         current_app.logger.info(f"Found {len(chat_history)} chat messages for user {current_user.id} in class {class_id}")
         
@@ -2681,7 +2681,7 @@ def chat_page():
         # 教師のチャット履歴を取得（クラス指定なし）
         chat_history = ChatHistory.query.filter_by(
             user_id=current_user.id
-        ).order_by(ChatHistory.timestamp.asc()).all()
+        ).order_by(ChatHistory.created_at.asc()).all()
         
         return render_template('chat.html',
                              chat_history=chat_history,

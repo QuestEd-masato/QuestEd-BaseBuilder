@@ -58,7 +58,7 @@ def index():
             for record in ProficiencyRecord.query.filter_by(student_id=current_user.id).all():
                 category_proficiency[record.category_id] = {
                     'level': record.level * 20,  # 0-5を0-100%に変換
-                    'last_updated': record.last_updated
+                    'updated_at': record.updated_at
                 }
             
             # 5. テキストの定着度を計算（N+1クエリ最適化）
@@ -79,13 +79,13 @@ def index():
                     # 定着度レコードが存在する場合
                     text_proficiency[text_set.id] = {
                         'level': prof_record.level,
-                        'last_updated': prof_record.last_updated
+                        'updated_at': prof_record.updated_at
                     }
                 else:
                     # 定着度レコードが存在しない場合
                     text_proficiency[text_set.id] = {
                         'level': 0,
-                        'last_updated': None
+                        'updated_at': None
                     }
 
             # テキスト学習進捗状況を計算（解答済み問題数ベース）
@@ -124,7 +124,7 @@ def index():
             # 6. 学生の最近の解答履歴を取得（最新10件）
             recent_answers = AnswerRecord.query.filter_by(
                 student_id=current_user.id
-            ).order_by(AnswerRecord.timestamp.desc()).limit(10).all()
+            ).order_by(AnswerRecord.created_at.desc()).limit(10).all()
             
             # 7. 学生の選択した探究テーマを取得
             theme = InquiryTheme.query.filter_by(
@@ -470,7 +470,7 @@ def problems():
         for wp in word_proficiencies:
             word_proficiency_records[wp.problem_id] = {
                 'level': wp.level,
-                'last_updated': wp.last_updated,
+                'updated_at': wp.updated_at,
                 'review_date': wp.review_date
             }
         
@@ -612,7 +612,7 @@ def start_search_session():
             answers = AnswerRecord.query.filter_by(
                 student_id=current_user.id,
                 problem_id=problem_id
-            ).order_by(AnswerRecord.timestamp.desc()).limit(5).all()
+            ).order_by(AnswerRecord.created_at.desc()).limit(5).all()
             
             if answers:
                 # 解答があれば定着度を計算
@@ -1202,8 +1202,8 @@ def session_summary():
     answer_records_list = AnswerRecord.query.filter(
         AnswerRecord.student_id == current_user.id,
         AnswerRecord.problem_id.in_(learning_session['completed_problems']),
-        AnswerRecord.timestamp >= session_start
-    ).order_by(AnswerRecord.timestamp).all()
+        AnswerRecord.created_at >= session_start
+    ).order_by(AnswerRecord.created_at).all()
     
     # 問題IDごとに最新の解答記録を取得
     latest_records = {}
@@ -1300,7 +1300,7 @@ def update_proficiency(student_id, category_id, is_correct):
    # 熟練度と次回復習日を更新
    proficiency.level = new_level
    proficiency.review_date = next_review
-   proficiency.last_updated = datetime.utcnow()
+   proficiency.updated_at = datetime.utcnow()
    
    # 変更をコミット
    db.session.commit()
@@ -1365,7 +1365,7 @@ def update_word_proficiency(student_id, problem_id, is_correct):
     # 熟練度と次回復習日を更新
     proficiency.level = new_level
     proficiency.review_date = next_review
-    proficiency.last_updated = datetime.utcnow()
+    proficiency.updated_at = datetime.utcnow()
     
     # 変更をコミット
     db.session.commit()
@@ -1424,7 +1424,7 @@ def update_category_proficiency(student_id, category_id):
     
     # 熟練度は平均値を整数に切り捨て (0-5の範囲)
     proficiency.level = min(5, int(avg_level))
-    proficiency.last_updated = datetime.utcnow()
+    proficiency.updated_at = datetime.utcnow()
     
     # 次回復習日は最も早い単語の復習日
     if word_proficiencies:
@@ -1454,7 +1454,7 @@ def view_proficiency():
         category_proficiency[record.category.id] = {
             'category': record.category,
             'level': record.level,
-            'last_updated': record.last_updated
+            'updated_at': record.updated_at
         }
     
     # すべてのカテゴリを取得
@@ -1488,7 +1488,7 @@ def view_history():
     # 学生の解答履歴を取得
     answer_records = AnswerRecord.query.filter_by(
         student_id=current_user.id
-    ).order_by(AnswerRecord.timestamp.desc()).all()
+    ).order_by(AnswerRecord.created_at.desc()).all()
     
     # カテゴリ別の正解率を計算
     category_stats = {}
@@ -1567,10 +1567,10 @@ def analysis(class_id=None):
                 # 最後の活動日時を取得
                 last_answer = AnswerRecord.query.filter_by(
                     student_id=student.id
-                ).order_by(AnswerRecord.timestamp.desc()).first()
+                ).order_by(AnswerRecord.created_at.desc()).first()
                 
                 if last_answer:
-                    student_last_activity[student.id] = last_answer.timestamp
+                    student_last_activity[student.id] = last_answer.created_at
     
     return render_template(
         'basebuilder/analysis.html',
@@ -1672,9 +1672,9 @@ def student_analysis(student_id):
         actual_points = sum(level * count for level, count in level_counts.items() if level > 0)
         
         # 最終更新日を取得
-        last_updated = None
+        updated_at = None
         if word_proficiencies:
-            last_updated = max(wp.last_updated for wp in word_proficiencies)
+            updated_at = max(wp.updated_at for wp in word_proficiencies)
         
         # テキストの定着度をパーセントで計算
         text_percentage = (actual_points / max_points * 100) if max_points > 0 else 0
@@ -1682,7 +1682,7 @@ def student_analysis(student_id):
         # テキスト定着度データを保存
         text_proficiency_data[text.id] = {
             'level': round(text_percentage),
-            'last_updated': last_updated
+            'updated_at': updated_at
         }
         
         # カテゴリ定着度データを更新/作成
@@ -1699,9 +1699,9 @@ def student_analysis(student_id):
                     category_proficiency[category_id]['levels'][level] = count
             
             # 最終更新日を更新
-            if last_updated and (not category_proficiency[category_id]['last_updated'] or 
-                                last_updated > category_proficiency[category_id]['last_updated']):
-                category_proficiency[category_id]['last_updated'] = last_updated
+            if updated_at and (not category_proficiency[category_id]['updated_at'] or 
+                                updated_at > category_proficiency[category_id]['updated_at']):
+                category_proficiency[category_id]['updated_at'] = updated_at
                 
         else:
             # 新しいカテゴリデータを作成
@@ -1711,7 +1711,7 @@ def student_analysis(student_id):
                 'total': text_words_count,
                 'mastered': text_mastered,
                 'levels': level_counts,
-                'last_updated': last_updated
+                'updated_at': updated_at
             }
     
     # 各カテゴリの定着度パーセントを計算
@@ -1737,7 +1737,7 @@ def student_analysis(student_id):
     # 学生の解答履歴を取得（最新20件）
     answer_records = AnswerRecord.query.filter_by(
         student_id=student_id
-    ).order_by(AnswerRecord.timestamp.desc()).limit(20).all()
+    ).order_by(AnswerRecord.created_at.desc()).limit(20).all()
     
     # 解答数と正解率を計算
     all_answers = AnswerRecord.query.filter_by(student_id=student_id).all()
@@ -1746,7 +1746,7 @@ def student_analysis(student_id):
     correct_rate = (correct_count / answer_count * 100) if answer_count > 0 else 0
     
     # 最後の活動日時
-    last_activity = answer_records[0].timestamp if answer_records else None
+    last_activity = answer_records[0].created_at if answer_records else None
     
     # 単語ごとの熟練度を取得（解答履歴表示用）
     word_proficiency = {}
@@ -1764,7 +1764,7 @@ def student_analysis(student_id):
     for wp in word_prof_records:
         word_proficiency[wp.problem_id] = {
             'level': wp.level,
-            'last_updated': wp.last_updated,
+            'updated_at': wp.updated_at,
             'review_date': wp.review_date
         }
     
@@ -2231,7 +2231,7 @@ def api_category_problems(category_id):
                         answer = AnswerRecord.query.filter_by(
                             student_id=current_user.id,
                             problem_id=problem.id
-                        ).order_by(AnswerRecord.timestamp.desc()).first()
+                        ).order_by(AnswerRecord.created_at.desc()).first()
                         
                         completed[problem.id] = answer and answer.is_correct
                     
@@ -2585,14 +2585,14 @@ def view_text_set(text_id):
                     if wp:
                         word_proficiencies[problem.id] = {
                             'level': wp.level,
-                            'last_updated': wp.last_updated
+                            'updated_at': wp.updated_at
                         }
                     
                     # 解答状況を取得
                     answer = AnswerRecord.query.filter_by(
                         student_id=current_user.id,
                         problem_id=problem.id
-                    ).order_by(AnswerRecord.timestamp.desc()).first()
+                    ).order_by(AnswerRecord.created_at.desc()).first()
                     
                     answers[problem.id] = answer
         
@@ -2662,7 +2662,7 @@ def calculate_text_proficiency(student_id, text_id, problems=None):
         # 既存のレコードを更新または新規作成
         if text_proficiency:
             text_proficiency.level = int(level_percentage)
-            text_proficiency.last_updated = datetime.utcnow()
+            text_proficiency.updated_at = datetime.utcnow()
         else:
             text_proficiency = TextProficiencyRecord(
                 student_id=student_id,
@@ -2789,7 +2789,7 @@ def my_texts():
     ).all():
         text_proficiency[record.text_set_id] = {
             'level': record.level,
-            'last_updated': record.last_updated
+            'updated_at': record.updated_at
         }
     
     # レコードがないテキストの定着度を計算
@@ -2810,7 +2810,7 @@ def my_texts():
                         student_id=current_user.id,
                         problem_id=problem.id,
                         is_correct=True
-                    ).order_by(AnswerRecord.timestamp.desc()).first()
+                    ).order_by(AnswerRecord.created_at.desc()).first()
                     
                     if answer:
                         correct_count += 1
@@ -2823,7 +2823,7 @@ def my_texts():
                 
                 text_proficiency[delivery.text_set_id] = {
                     'level': level,
-                    'last_updated': datetime.now()
+                    'updated_at': datetime.now()
                 }
     
     return render_template(
@@ -3213,7 +3213,7 @@ def update_word_proficiency(student_id, problem_id, is_correct):
     # 熟練度と次回復習日を更新
     proficiency.level = new_level
     proficiency.review_date = next_review
-    proficiency.last_updated = datetime.utcnow()
+    proficiency.updated_at = datetime.utcnow()
     
     return proficiency
 
@@ -3277,7 +3277,7 @@ def update_text_proficiency(student_id, text_set_id):
     
     if text_proficiency:
         text_proficiency.level = int(overall_percentage)
-        text_proficiency.last_updated = datetime.utcnow()
+        text_proficiency.updated_at = datetime.utcnow()
     else:
         text_proficiency = TextProficiencyRecord(
             student_id=student_id,

@@ -87,7 +87,7 @@ class AnswerRecord(db.Model):
     student_answer = db.Column(db.Text, nullable=False)
     is_correct = db.Column(db.Boolean, nullable=False)
     answer_time = db.Column(db.Integer)  # 回答にかかった時間（秒）
-    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     # リレーションシップ
     student = db.relationship('User', backref=db.backref('answer_records', lazy=True, cascade='all, delete-orphan'))
@@ -99,7 +99,7 @@ class ProficiencyRecord(db.Model):
     student_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     category_id = db.Column(db.Integer, db.ForeignKey('problem_categories.id'), nullable=False)
     level = db.Column(db.Integer, default=0)  # 0-5のスケール → ポイントとして使用
-    last_updated = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow)
     review_date = db.Column(db.Date)  # 次回復習日を追加
     last_reviewed = db.Column(db.DateTime, default=datetime.utcnow)  # 最後に復習した日時
     
@@ -134,7 +134,7 @@ class TextProficiencyRecord(db.Model):
     student_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     text_set_id = db.Column(db.Integer, db.ForeignKey('text_sets.id'), nullable=False)
     level = db.Column(db.Integer, default=0)  # 0-100のパーセント
-    last_updated = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     # リレーションシップ
     student = db.relationship('User', backref=db.backref('text_proficiency_records', lazy=True, cascade='all, delete-orphan'))
@@ -186,7 +186,7 @@ class WordProficiency(db.Model):
     student_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     problem_id = db.Column(db.Integer, db.ForeignKey('basic_knowledge_items.id'), nullable=False)
     level = db.Column(db.Integer, default=0)  # 0-5のスケール → ポイントとして使用
-    last_updated = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow)
     review_date = db.Column(db.Date, default=datetime.now().date())  # 次回復習日
     
     # リレーションシップ

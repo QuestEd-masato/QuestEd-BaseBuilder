@@ -195,9 +195,9 @@ class WeaknessAnalyzer:
             proficiency_records = ProficiencyRecord.query.filter(
                 and_(
                     ProficiencyRecord.student_id == student_id,
-                    ProficiencyRecord.last_updated >= recent_cutoff
+                    ProficiencyRecord.updated_at >= recent_cutoff
                 )
-            ).order_by(desc(ProficiencyRecord.last_updated)).all()
+            ).order_by(desc(ProficiencyRecord.updated_at)).all()
             
             for record in proficiency_records:
                 try:
@@ -210,7 +210,7 @@ class WeaknessAnalyzer:
                         'total_correct': getattr(record, 'total_correct', 0),
                         'accuracy_rate': getattr(record, 'accuracy_rate', 0.0),
                         'streak_count': getattr(record, 'streak_count', 0),
-                        'last_updated': record.last_updated
+                        'updated_at': record.updated_at
                     })
                 except Exception as e:
                     logger.warning(f"熟練度記録処理エラー (ID: {record.id}): {str(e)}")
@@ -219,9 +219,9 @@ class WeaknessAnalyzer:
             word_proficiencies = WordProficiency.query.filter(
                 and_(
                     WordProficiency.student_id == student_id,
-                    WordProficiency.last_updated >= recent_cutoff
+                    WordProficiency.updated_at >= recent_cutoff
                 )
-            ).order_by(desc(WordProficiency.last_updated)).all()
+            ).order_by(desc(WordProficiency.updated_at)).all()
             
             for wp in word_proficiencies:
                 try:
@@ -232,7 +232,7 @@ class WeaknessAnalyzer:
                         'category_name': wp.problem.category.name if (wp.problem and wp.problem.category) else 'Unknown',
                         'level': getattr(wp, 'level', 0),
                         'difficulty': wp.problem.difficulty if wp.problem else 2,
-                        'last_updated': wp.last_updated,
+                        'updated_at': wp.updated_at,
                         'review_date': wp.review_date,
                         'repetition_number': getattr(wp, 'repetition_number', 0)
                     })

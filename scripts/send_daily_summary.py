@@ -63,7 +63,7 @@ def get_teacher_class_activities(teacher_id, date):
     ).select_from(Class).outerjoin(
         ActivityLog, 
         (Class.id == ActivityLog.class_id) & 
-        (func.date(ActivityLog.timestamp) == date)
+        (func.date(ActivityLog.created_at) == date)
     ).filter(
         Class.teacher_id == teacher_id
     ).group_by(

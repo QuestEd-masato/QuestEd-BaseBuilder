@@ -222,7 +222,7 @@ class ActivityLog(db.Model):
     content = db.Column(db.Text)
     reflection = db.Column(db.Text)
     image_url = db.Column(db.String(255))
-    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
     activity = db.Column(db.Text)  # 既存のフィールドを残す
     tags = db.Column(db.String(255))  # 新しいタグフィールドを追加
     
@@ -356,7 +356,7 @@ class ChatHistory(db.Model):
     subject_id = db.Column(db.Integer, db.ForeignKey('subjects.id'), nullable=True)
     message = db.Column(db.Text, nullable=False)
     is_user = db.Column(db.Boolean, default=True)  # True=ユーザー, False=AI
-    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     # userリレーションシップは1つだけにする
     user = db.relationship('User', back_populates='chat_histories')

@@ -405,12 +405,12 @@ class UnifiedProgressService:
             # 単語レベル熟練度
             word_proficiencies = WordProficiency.query.filter_by(
                 student_id=student_id
-            ).order_by(desc(WordProficiency.last_updated)).all()
+            ).order_by(desc(WordProficiency.updated_at)).all()
             
             # カテゴリレベル熟練度
             category_proficiencies = ProficiencyRecord.query.filter_by(
                 student_id=student_id
-            ).order_by(desc(ProficiencyRecord.last_updated)).all()
+            ).order_by(desc(ProficiencyRecord.updated_at)).all()
             
             # 学習パス進捗
             path_assignments = PathAssignment.query.filter_by(
@@ -490,7 +490,7 @@ class UnifiedProgressService:
                             'word': wp.problem.title if wp.problem.title else 'Unknown',
                             'category': wp.problem.category.name if (wp.problem.category) else 'Unknown',
                             'level': getattr(wp, 'level', 0),
-                            'last_updated': wp.last_updated.isoformat() if wp.last_updated else None
+                            'updated_at': wp.updated_at.isoformat() if wp.updated_at else None
                         })
                 except Exception as e:
                     logger.warning(f"最近の単語進捗処理エラー (ID: {wp.id}): {str(e)}")
@@ -502,7 +502,7 @@ class UnifiedProgressService:
                             'category': cp.category.name if cp.category.name else 'Unknown',
                             'level': getattr(cp, 'level', 0),
                             'adjusted_proficiency': getattr(cp, 'adjusted_proficiency', 0.0),
-                            'last_updated': cp.last_updated.isoformat() if cp.last_updated else None
+                            'updated_at': cp.updated_at.isoformat() if cp.updated_at else None
                         })
                 except Exception as e:
                     logger.warning(f"最近のカテゴリ進捗処理エラー (ID: {cp.id}): {str(e)}")
@@ -731,16 +731,16 @@ class UnifiedProgressService:
             recent_word_activities = WordProficiency.query.filter(
                 and_(
                     WordProficiency.student_id == student_id,
-                    WordProficiency.last_updated >= datetime.utcnow() - timedelta(days=7)
+                    WordProficiency.updated_at >= datetime.utcnow() - timedelta(days=7)
                 )
-            ).order_by(desc(WordProficiency.last_updated)).limit(5).all()
+            ).order_by(desc(WordProficiency.updated_at)).limit(5).all()
             
             for activity in recent_word_activities:
                 if activity.problem:
                     activities.append({
                         'type': 'vocabulary_learning',
                         'title': f"単語「{activity.problem.title}」を学習",
-                        'timestamp': activity.last_updated.isoformat(),
+                        'timestamp': activity.updated_at.isoformat(),
                         'details': f"熟練度: レベル{activity.level}"
                     })
             
@@ -748,15 +748,15 @@ class UnifiedProgressService:
             recent_logs = ActivityLog.query.filter(
                 and_(
                     ActivityLog.student_id == student_id,
-                    ActivityLog.timestamp >= datetime.utcnow() - timedelta(days=7)
+                    ActivityLog.created_at >= datetime.utcnow() - timedelta(days=7)
                 )
-            ).order_by(desc(ActivityLog.timestamp)).limit(3).all()
+            ).order_by(desc(ActivityLog.created_at)).limit(3).all()
             
             for log in recent_logs:
                 activities.append({
                     'type': 'inquiry_activity',
                     'title': f"活動記録「{log.title}」を作成",
-                    'timestamp': log.timestamp.isoformat(),
+                    'timestamp': log.created_at.isoformat(),
                     'details': f"内容: {log.content[:50]}..." if log.content else ""
                 })
             
@@ -942,8 +942,8 @@ class UnifiedProgressService:
         
         学習活動の定義:
         - 単元学習の進捗（StudentUnitSelection.last_activity_at）
-        - 語彙学習の実行（WordProficiency.last_updated）
-        - 探究活動の記録（ActivityLog.timestamp）
+        - 語彙学習の実行（WordProficiency.updated_at）
+        - 探究活動の記録（ActivityLog.created_at）
         
         教育効果:
         - 学習習慣の可視化
@@ -979,7 +979,7 @@ class UnifiedProgressService:
                 word_activity = WordProficiency.query.filter(
                     and_(
                         WordProficiency.student_id == student_id,
-                        func.date(WordProficiency.last_updated) == check_date
+                        func.date(WordProficiency.updated_at) == check_date
                     )
                 ).first()
                 
@@ -987,7 +987,7 @@ class UnifiedProgressService:
                 activity_log = ActivityLog.query.filter(
                     and_(
                         ActivityLog.student_id == student_id,
-                        func.date(ActivityLog.timestamp) == check_date
+                        func.date(ActivityLog.created_at) == check_date
                     )
                 ).first()
                 
@@ -1241,16 +1241,16 @@ class UnifiedProgressService:
             word_activities = WordProficiency.query.filter(
                 and_(
                     WordProficiency.student_id == student_id,
-                    WordProficiency.last_updated >= start_date,
-                    WordProficiency.last_updated < end_date
+                    WordProficiency.updated_at >= start_date,
+                    WordProficiency.updated_at < end_date
                 )
             ).count()
             
             activity_logs = ActivityLog.query.filter(
                 and_(
                     ActivityLog.student_id == student_id,
-                    ActivityLog.timestamp >= start_date,
-                    ActivityLog.timestamp < end_date
+                    ActivityLog.created_at >= start_date,
+                    ActivityLog.created_at < end_date
                 )
             ).count()
             

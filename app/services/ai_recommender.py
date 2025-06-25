@@ -254,7 +254,7 @@ class AIRecommendationEngine:
             # 熟練度記録（BaseBuilderモジュール）
             proficiency_records = ProficiencyRecord.query.filter_by(
                 student_id=student_id
-            ).order_by(desc(ProficiencyRecord.last_updated)).limit(30).all()
+            ).order_by(desc(ProficiencyRecord.updated_at)).limit(30).all()
             
             for record in proficiency_records:
                 data['proficiency_records'].append({
@@ -262,14 +262,14 @@ class AIRecommendationEngine:
                     'category_name': record.category.name if record.category else 'Unknown',
                     'level': record.level,
                     'adjusted_proficiency': record.adjusted_proficiency,
-                    'last_updated': record.last_updated.isoformat() if record.last_updated else None,
+                    'updated_at': record.updated_at.isoformat() if record.updated_at else None,
                     'review_date': record.review_date.isoformat() if record.review_date else None
                 })
             
             # 単語レベルの熟練度記録
             word_proficiency = WordProficiency.query.filter_by(
                 student_id=student_id
-            ).order_by(desc(WordProficiency.last_updated)).limit(50).all()
+            ).order_by(desc(WordProficiency.updated_at)).limit(50).all()
             
             data['word_proficiency'] = []
             for wp in word_proficiency:
@@ -279,7 +279,7 @@ class AIRecommendationEngine:
                         'word_title': wp.problem.title if wp.problem else 'Unknown',
                         'category_name': wp.problem.category.name if (wp.problem and wp.problem.category) else 'Unknown',
                         'level': getattr(wp, 'level', 0),
-                        'last_updated': wp.last_updated.isoformat() if wp.last_updated else None,
+                        'updated_at': wp.updated_at.isoformat() if wp.updated_at else None,
                         'review_date': wp.review_date.isoformat() if wp.review_date else None,
                         'difficulty': wp.problem.difficulty if wp.problem else 2
                     })
@@ -305,14 +305,14 @@ class AIRecommendationEngine:
             # 活動記録
             recent_activities = ActivityLog.query.filter_by(
                 student_id=student_id
-            ).order_by(desc(ActivityLog.timestamp)).limit(10).all()
+            ).order_by(desc(ActivityLog.created_at)).limit(10).all()
             
             for activity in recent_activities:
                 data['activity_logs'].append({
                     'title': activity.title,
                     'content_length': len(activity.content) if activity.content else 0,
                     'reflection_length': len(activity.reflection) if activity.reflection else 0,
-                    'timestamp': activity.timestamp.isoformat() if activity.timestamp else None
+                    'created_at': activity.created_at.isoformat() if activity.created_at else None
                 })
             
             # タスクと目標
@@ -351,7 +351,7 @@ class AIRecommendationEngine:
             recent_records = ProficiencyRecord.query.filter(
                 and_(
                     ProficiencyRecord.student_id == student_id,
-                    ProficiencyRecord.last_updated >= datetime.utcnow() - timedelta(days=30)
+                    ProficiencyRecord.updated_at >= datetime.utcnow() - timedelta(days=30)
                 )
             ).all()
             

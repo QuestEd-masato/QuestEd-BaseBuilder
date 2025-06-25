@@ -279,7 +279,7 @@ class SpacedRepetitionEngine:
                     ProficiencyRecord.accuracy_rate >= 0.7,
                     ProficiencyRecord.accuracy_rate <= 0.85,
                     ProficiencyRecord.total_attempted >= 3,
-                    ProficiencyRecord.last_updated >= cutoff_date
+                    ProficiencyRecord.updated_at >= cutoff_date
                 )
             ).all()
             
@@ -380,7 +380,7 @@ class SpacedRepetitionEngine:
         initial_difficulty = self._estimate_initial_difficulty(proficiency_record)
         
         # 前回の復習からの経過日数を計算
-        days_since_last = (datetime.utcnow() - proficiency_record.last_updated).days
+        days_since_last = (datetime.utcnow() - proficiency_record.updated_at).days
         
         card = SpacedRepetitionCard(
             item_id=problem_id,
@@ -388,7 +388,7 @@ class SpacedRepetitionEngine:
             interval=max(1, min(days_since_last, 30)),  # 1-30日の範囲
             repetition=proficiency_record.total_attempted,
             ease_factor=self._calculate_ease_factor(proficiency_record.accuracy_rate),
-            last_reviewed=proficiency_record.last_updated,
+            last_reviewed=proficiency_record.updated_at,
             review_count=proficiency_record.total_attempted,
             success_count=proficiency_record.total_correct
         )

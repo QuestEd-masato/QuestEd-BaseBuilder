@@ -181,7 +181,7 @@ class TimePreferenceAnalyzer:
         chat_activities = ChatHistory.query.filter(
             and_(
                 ChatHistory.user_id == student_id,
-                ChatHistory.timestamp >= cutoff_date,
+                ChatHistory.created_at >= cutoff_date,
                 ChatHistory.is_user == True
             )
         ).all()
@@ -190,7 +190,7 @@ class TimePreferenceAnalyzer:
         activity_logs = ActivityLog.query.filter(
             and_(
                 ActivityLog.student_id == student_id,
-                ActivityLog.timestamp >= cutoff_date
+                ActivityLog.created_at >= cutoff_date
             )
         ).all()
         
@@ -209,13 +209,13 @@ class TimePreferenceAnalyzer:
         
         # チャット活動の時間帯を分析
         for chat in chat_activities:
-            hour = chat.timestamp.hour
+            hour = chat.created_at.hour
             hourly_activity[hour] += 1
             total_activities += 1
         
         # 活動記録の時間帯を分析
         for log in activity_logs:
-            hour = log.timestamp.hour
+            hour = log.created_at.hour
             hourly_activity[hour] += 1
             total_activities += 1
         
@@ -431,7 +431,7 @@ class SubjectStrengthAnalyzer:
         ).filter(
             and_(
                 ChatHistory.user_id == student_id,
-                ChatHistory.timestamp >= cutoff_date,
+                ChatHistory.created_at >= cutoff_date,
                 ChatHistory.subject_id.isnot(None)
             )
         ).group_by(ChatHistory.subject_id, Subject.name).all()
@@ -440,7 +440,7 @@ class SubjectStrengthAnalyzer:
         activity_logs = ActivityLog.query.filter(
             and_(
                 ActivityLog.student_id == student_id,
-                ActivityLog.timestamp >= cutoff_date,
+                ActivityLog.created_at >= cutoff_date,
                 ActivityLog.tags.isnot(None)
             )
         ).all()
@@ -648,10 +648,10 @@ class LearningStyleAnalyzer:
         chats = ChatHistory.query.filter(
             and_(
                 ChatHistory.user_id == student_id,
-                ChatHistory.timestamp >= cutoff_date,
+                ChatHistory.created_at >= cutoff_date,
                 ChatHistory.is_user == True
             )
-        ).order_by(ChatHistory.timestamp).all()
+        ).order_by(ChatHistory.created_at).all()
         
         if not chats:
             return []
@@ -661,15 +661,15 @@ class LearningStyleAnalyzer:
         last_timestamp = chats[0].timestamp
         
         for chat in chats[1:]:
-            time_diff = (chat.timestamp - last_timestamp).total_seconds() / 60  # 分単位
+            time_diff = (chat.created_at - last_timestamp).total_seconds() / 60  # 分単位
             
             if time_diff > 30:  # 30分以上空いたら新しいセッション
                 session_duration = (last_timestamp - current_session_start).total_seconds() / 60
                 if session_duration > 1:  # 1分以上のセッションのみ記録
                     sessions.append(int(session_duration))
-                current_session_start = chat.timestamp
+                current_session_start = chat.created_at
             
-            last_timestamp = chat.timestamp
+            last_timestamp = chat.created_at
         
         # 最後のセッションを追加
         final_duration = (last_timestamp - current_session_start).total_seconds() / 60

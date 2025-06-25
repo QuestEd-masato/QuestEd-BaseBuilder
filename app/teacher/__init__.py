@@ -304,7 +304,7 @@ def class_details(class_id):
         # 最新の活動記録を取得
         latest_activity = ActivityLog.query.filter_by(
             student_id=student.id
-        ).order_by(ActivityLog.timestamp.desc()).first()
+        ).order_by(ActivityLog.created_at.desc()).first()
         
         # 学生の情報をまとめる
         student_info = {
@@ -1175,7 +1175,7 @@ def chat_page():
     # チャット履歴を取得
     from app.models import ChatHistory
     chat_history = ChatHistory.query.filter_by(user_id=current_user.id)\
-        .order_by(ChatHistory.timestamp)\
+        .order_by(ChatHistory.created_at)\
         .all()
     
     return render_template('chat.html', chat_history=chat_history)
@@ -1215,13 +1215,13 @@ def generate_student_report(class_id, student_id):
         activities = ActivityLog.query.filter_by(
             student_id=student_id,
             class_id=class_id
-        ).order_by(ActivityLog.timestamp.desc()).limit(50).all()
+        ).order_by(ActivityLog.created_at.desc()).limit(50).all()
         
         # チャット履歴を取得（最新100件）
         chat_histories = ChatHistory.query.filter_by(
             user_id=student_id,
             class_id=class_id
-        ).order_by(ChatHistory.timestamp.desc()).limit(100).all()
+        ).order_by(ChatHistory.created_at.desc()).limit(100).all()
         
         # AI要約を生成
         activity_texts = [a.content for a in activities if a.content]

@@ -264,7 +264,7 @@ class RankingService:
                 func.coalesce(
                     func.sum(
                         case(
-                            (AnswerRecord.timestamp >= week_start,
+                            (AnswerRecord.created_at >= week_start,
                               AnswerRecord.is_correct * cls.POINTS_CONFIG['correct_answer']),
                             else_=0
                         )
@@ -273,7 +273,7 @@ class RankingService:
                 func.coalesce(
                     func.sum(
                         case(
-                            (ActivityLog.timestamp >= week_start,
+                            (ActivityLog.created_at >= week_start,
                               0),  # study_durationフィールドが存在しないためゼロで置き換え
                             else_=0
                         )
@@ -328,7 +328,7 @@ class RankingService:
                 func.coalesce(
                     func.sum(
                         case(
-                            (AnswerRecord.timestamp >= month_start,
+                            (AnswerRecord.created_at >= month_start,
                               AnswerRecord.is_correct * cls.POINTS_CONFIG['correct_answer']),
                             else_=0
                         )
@@ -337,7 +337,7 @@ class RankingService:
                 func.coalesce(
                     func.sum(
                         case(
-                            (ActivityLog.timestamp >= month_start,
+                            (ActivityLog.created_at >= month_start,
                               0),  # study_durationフィールドが存在しないためゼロで置き換え
                             else_=0
                         )
@@ -440,7 +440,7 @@ class RankingService:
         ).filter(
             User.role == 'student',
             User.is_active == True,
-            ActivityLog.timestamp >= week_start
+            ActivityLog.created_at >= week_start
         ).group_by(User.id).subquery()
         
         ranking_query = base_query.join(
@@ -479,13 +479,13 @@ class RankingService:
         
         consistency_subquery = db.session.query(
             User.id.label('user_id'),
-            func.count(func.distinct(func.date(ActivityLog.timestamp))).label('study_days')
+            func.count(func.distinct(func.date(ActivityLog.created_at))).label('study_days')
         ).select_from(User).join(
             ActivityLog, User.id == ActivityLog.student_id
         ).filter(
             User.role == 'student',
             User.is_active == True,
-            ActivityLog.timestamp >= thirty_days_ago
+            ActivityLog.created_at >= thirty_days_ago
         ).group_by(User.id).subquery()
         
         ranking_query = base_query.join(

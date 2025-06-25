@@ -101,7 +101,7 @@ class DailyReportService:
         # チャット履歴
         chats = ChatHistory.query.filter(
             ChatHistory.user_id == student.id,
-            ChatHistory.timestamp.between(start_time, end_time),
+            ChatHistory.created_at.between(start_time, end_time),
             ChatHistory.is_user == True  # ユーザーからの質問のみ
         ).order_by(ChatHistory.subject_id).all()
         
@@ -136,7 +136,7 @@ class DailyReportService:
                 }
             subject_data[subject_id]['questions'].append({
                 'question': chat.message,
-                'timestamp': chat.timestamp
+                'timestamp': chat.created_at
             })
             
         # AI要約生成
@@ -177,7 +177,7 @@ class DailyReportService:
             daily_chats = ChatHistory.query.filter(
                 ChatHistory.user_id == student.id,
                 ChatHistory.class_id == class_obj.id,
-                ChatHistory.timestamp.between(start_time, end_time),
+                ChatHistory.created_at.between(start_time, end_time),
                 ChatHistory.is_user == True
             ).count()
             

@@ -90,7 +90,7 @@ def generate_student_report_pdf(student, class_obj, activities, chat_histories, 
     story.append(Paragraph("2. 活動記録", heading_style))
     if activities:
         for i, activity in enumerate(activities[:20]):  # 最新20件
-            date_str = activity.timestamp.strftime('%Y/%m/%d %H:%M')
+            date_str = activity.created_at.strftime('%Y/%m/%d %H:%M')
             story.append(Paragraph(f"【{i+1}. {date_str}】", normal_style))
             story.append(Paragraph(activity.content or "内容なし", normal_style))
             if activity.reflection:
