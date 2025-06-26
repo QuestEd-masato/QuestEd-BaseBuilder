@@ -1,0 +1,640 @@
+{% extends "base.html" %}
+
+{% block title %}単元完了承認 | QuestEd{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header d-flex justify-content-between align-items-center mb-4">
+        <h2>単元完了承認</h2>
+        <div>
+            <button type="button" class="btn btn-info me-2" onclick="showStatistics()">
+                <i class="fas fa-chart-bar"></i> 統計
+            </button>
+            <a href="{{ url_for('teacher.dashboard') }}" class="btn btn-primary">ダッシュボードに戻る</a>
+        </div>
+    </div>
+    
+    <!-- フィルター -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row align-items-end">
+                <div class="col-md-4">
+                    <label for="class-filter">クラス絞り込み</label>
+                    <select class="form-control" id="class-filter" onchange="loadPendingApprovals()">
+                        <option value="">全てのクラス</option>
+                        <!-- クラス選択肢はJavaScriptで動的追加 -->
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label for="sort-order">並び順</label>
+                    <select class="form-control" id="sort-order" onchange="loadPendingApprovals()">
+                        <option value="newest">申請日時（新しい順）</option>
+                        <option value="oldest">申請日時（古い順）</option>
+                        <option value="student">学生名順</option>
+                        <option value="unit">単元名順</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <button type="button" class="btn btn-secondary" onclick="loadPendingApprovals()">
+                        <i class="fas fa-sync-alt"></i> 更新
+                    </button>
+                    <button type="button" class="btn btn-success" onclick="showBatchApproval()" id="batch-approve-btn" disabled>
+                        <i class="fas fa-check-double"></i> 一括承認
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 承認待ち一覧 -->
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">承認待ち一覧</h5>
+            <span class="badge badge-warning" id="pending-count">0</span>
+        </div>
+        <div class="card-body">
+            <div id="pending-approvals-list">
+                <div class="text-center">
+                    <div class="spinner-border" role="status">
+                        <span class="sr-only">読み込み中...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 個別承認モーダル -->
+<div class="modal fade" id="approvalModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">単元完了承認</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="approval-student-info"></div>
+                <div id="approval-unit-info"></div>
+                <div id="approval-progress-info"></div>
+                
+                <form id="approval-form">
+                    <div class="form-group">
+                        <label for="approval-comments">承認コメント（任意）</label>
+                        <textarea class="form-control" id="approval-comments" rows="3" 
+                                  placeholder="学生への承認コメントを入力してください"></textarea>
+                    </div>
+                    <input type="hidden" id="approval-selection-id">
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger" onclick="showRejectionForm()">却下</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">キャンセル</button>
+                <button type="button" class="btn btn-success" onclick="approveCompletion()">承認</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 却下モーダル -->
+<div class="modal fade" id="rejectionModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">申請却下</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p><strong>この申請を却下しますか？</strong></p>
+                <div id="rejection-unit-info"></div>
+                
+                <form id="rejection-form">
+                    <div class="form-group">
+                        <label for="rejection-reason">却下理由 <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="rejection-reason" rows="3" 
+                                  placeholder="却下理由を具体的に入力してください（5文字以上）" required></textarea>
+                    </div>
+                    <input type="hidden" id="rejection-selection-id">
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">キャンセル</button>
+                <button type="button" class="btn btn-danger" onclick="rejectCompletion()">却下する</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 一括承認モーダル -->
+<div class="modal fade" id="batchApprovalModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">一括承認</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p><strong id="batch-count-text">選択された申請を一括承認しますか？</strong></p>
+                
+                <form id="batch-approval-form">
+                    <div class="form-group">
+                        <label for="batch-comments">承認コメント（任意）</label>
+                        <textarea class="form-control" id="batch-comments" rows="2" 
+                                  placeholder="一括承認時のコメント"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">キャンセル</button>
+                <button type="button" class="btn btn-success" onclick="performBatchApproval()">
+                    一括承認実行
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 統計モーダル -->
+<div class="modal fade" id="statisticsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">承認統計</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="statistics-content">
+                    <div class="text-center">
+                        <div class="spinner-border" role="status">
+                            <span class="sr-only">読み込み中...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let pendingApprovals = [];
+let selectedApprovals = [];
+
+$(document).ready(function() {
+    loadPendingApprovals();
+    loadTeacherClasses();
+});
+
+function loadTeacherClasses() {
+    // 教師の担当クラス一覧を取得してフィルターに追加
+    // ここでは簡易的に実装、実際は専用APIを作成
+}
+
+function loadPendingApprovals() {
+    const classId = $('#class-filter').val();
+    const sortOrder = $('#sort-order').val();
+    
+    let url = '/api/approvals/pending';
+    const params = new URLSearchParams();
+    if (classId) params.append('class_id', classId);
+    if (params.toString()) url += '?' + params.toString();
+    
+    $.get(url)
+        .done(function(data) {
+            if (data.status === 'success') {
+                pendingApprovals = data.pending_approvals;
+                sortApprovals(sortOrder);
+                displayPendingApprovals();
+                updatePendingCount();
+            } else {
+                showError('承認待ち一覧の取得に失敗しました: ' + data.message);
+            }
+        })
+        .fail(function() {
+            showError('サーバーとの通信に失敗しました');
+        });
+}
+
+function sortApprovals(order) {
+    switch(order) {
+        case 'newest':
+            pendingApprovals.sort((a, b) => new Date(b.selection.completion_request_date) - new Date(a.selection.completion_request_date));
+            break;
+        case 'oldest':
+            pendingApprovals.sort((a, b) => new Date(a.selection.completion_request_date) - new Date(b.selection.completion_request_date));
+            break;
+        case 'student':
+            pendingApprovals.sort((a, b) => a.student.username.localeCompare(b.student.username));
+            break;
+        case 'unit':
+            pendingApprovals.sort((a, b) => a.unit.title.localeCompare(b.unit.title));
+            break;
+    }
+}
+
+function displayPendingApprovals() {
+    const listContainer = $('#pending-approvals-list');
+    
+    if (pendingApprovals.length === 0) {
+        listContainer.html('<p class="text-muted text-center">承認待ちの申請はありません</p>');
+        return;
+    }
+    
+    let html = '<div class="table-responsive"><table class="table table-hover">';
+    html += `
+        <thead>
+            <tr>
+                <th>
+                    <input type="checkbox" id="select-all" onchange="toggleSelectAll()">
+                </th>
+                <th>学生</th>
+                <th>単元</th>
+                <th>進捗</th>
+                <th>申請日</th>
+                <th>待機日数</th>
+                <th>アクション</th>
+            </tr>
+        </thead>
+        <tbody>
+    `;
+    
+    pendingApprovals.forEach(function(approval, index) {
+        const selection = approval.selection;
+        const unit = approval.unit;
+        const student = approval.student;
+        const progressPercent = Math.round(selection.progress_percentage || 0);
+        const accuracyRate = Math.round(selection.accuracy_rate || 0);
+        
+        html += `
+            <tr>
+                <td>
+                    <input type="checkbox" class="approval-checkbox" value="${selection.id}" 
+                           onchange="updateSelectedApprovals()">
+                </td>
+                <td>
+                    <strong>${student.username}</strong>
+                    ${student.full_name ? `<br><small class="text-muted">${student.full_name}</small>` : ''}
+                </td>
+                <td>
+                    <strong>${unit.title}</strong>
+                    <br><small class="text-muted">難易度: ${unit.difficulty_level}/5</small>
+                </td>
+                <td>
+                    <div class="progress mb-1" style="height: 15px;">
+                        <div class="progress-bar bg-success" style="width: ${progressPercent}%"></div>
+                    </div>
+                    <small>進捗: ${progressPercent}% | 正解率: ${accuracyRate}%</small>
+                    <br><small class="text-muted">
+                        正解: ${selection.correct_items}/${selection.total_items} 問 | 
+                        学習時間: ${Math.round((selection.study_time_minutes || 0) / 60)}h
+                    </small>
+                </td>
+                <td>
+                    ${formatDate(selection.completion_request_date)}
+                    <br><small class="text-muted">${formatTime(selection.completion_request_date)}</small>
+                </td>
+                <td>
+                    <span class="badge ${approval.days_pending > 7 ? 'badge-danger' : approval.days_pending > 3 ? 'badge-warning' : 'badge-info'}">
+                        ${approval.days_pending}日
+                    </span>
+                </td>
+                <td>
+                    <button class="btn btn-sm btn-info" onclick="showApprovalModal(${index})">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                    <button class="btn btn-sm btn-success" onclick="quickApprove(${selection.id})">
+                        <i class="fas fa-check"></i>
+                    </button>
+                </td>
+            </tr>
+        `;
+    });
+    
+    html += '</tbody></table></div>';
+    listContainer.html(html);
+}
+
+function updatePendingCount() {
+    $('#pending-count').text(pendingApprovals.length);
+}
+
+function toggleSelectAll() {
+    const selectAll = $('#select-all').prop('checked');
+    $('.approval-checkbox').prop('checked', selectAll);
+    updateSelectedApprovals();
+}
+
+function updateSelectedApprovals() {
+    selectedApprovals = [];
+    $('.approval-checkbox:checked').each(function() {
+        selectedApprovals.push(parseInt($(this).val()));
+    });
+    
+    $('#batch-approve-btn').prop('disabled', selectedApprovals.length === 0);
+}
+
+function showApprovalModal(index) {
+    const approval = pendingApprovals[index];
+    const selection = approval.selection;
+    const unit = approval.unit;
+    const student = approval.student;
+    
+    $('#approval-selection-id').val(selection.id);
+    
+    $('#approval-student-info').html(`
+        <div class="mb-3">
+            <h6>学生情報</h6>
+            <p><strong>氏名:</strong> ${student.username} ${student.full_name ? `(${student.full_name})` : ''}</p>
+        </div>
+    `);
+    
+    $('#approval-unit-info').html(`
+        <div class="mb-3">
+            <h6>単元情報</h6>
+            <p><strong>単元名:</strong> ${unit.title}</p>
+            <p><strong>難易度:</strong> ${unit.difficulty_level}/5</p>
+            <p><strong>説明:</strong> ${unit.description || '説明なし'}</p>
+        </div>
+    `);
+    
+    const progressPercent = Math.round(selection.progress_percentage || 0);
+    const accuracyRate = Math.round(selection.accuracy_rate || 0);
+    
+    $('#approval-progress-info').html(`
+        <div class="mb-3">
+            <h6>学習成果</h6>
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong>進捗率:</strong> ${progressPercent}%</p>
+                    <div class="progress mb-2">
+                        <div class="progress-bar bg-success" style="width: ${progressPercent}%"></div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>正解率:</strong> ${accuracyRate}%</p>
+                    <p><strong>正解数:</strong> ${selection.correct_items}/${selection.total_items} 問</p>
+                </div>
+            </div>
+            <p><strong>学習時間:</strong> ${Math.round((selection.study_time_minutes || 0) / 60)}時間</p>
+            <p><strong>申請日:</strong> ${formatDateTime(selection.completion_request_date)}</p>
+            ${selection.notes ? `<p><strong>学生メモ:</strong> ${selection.notes}</p>` : ''}
+        </div>
+    `);
+    
+    $('#approval-comments').val('');
+    $('#approvalModal').modal('show');
+}
+
+function approveCompletion() {
+    const selectionId = $('#approval-selection-id').val();
+    const comments = $('#approval-comments').val();
+    
+    $.ajax({
+        url: `/api/approvals/${selectionId}/approve`,
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({ comments: comments }),
+        success: function(data) {
+            $('#approvalModal').modal('hide');
+            if (data.status === 'success') {
+                showSuccess(data.message);
+                loadPendingApprovals();
+            } else {
+                showError(data.message);
+            }
+        },
+        error: function() {
+            showError('承認処理に失敗しました');
+        }
+    });
+}
+
+function showRejectionForm() {
+    $('#approvalModal').modal('hide');
+    const selectionId = $('#approval-selection-id').val();
+    $('#rejection-selection-id').val(selectionId);
+    
+    // 単元情報をコピー
+    const approval = pendingApprovals.find(a => a.selection.id == selectionId);
+    if (approval) {
+        $('#rejection-unit-info').html(`
+            <p><strong>学生:</strong> ${approval.student.username}</p>
+            <p><strong>単元:</strong> ${approval.unit.title}</p>
+        `);
+    }
+    
+    $('#rejection-reason').val('');
+    $('#rejectionModal').modal('show');
+}
+
+function rejectCompletion() {
+    const selectionId = $('#rejection-selection-id').val();
+    const reason = $('#rejection-reason').val().trim();
+    
+    if (reason.length < 5) {
+        showError('却下理由は5文字以上入力してください');
+        return;
+    }
+    
+    $.ajax({
+        url: `/api/approvals/${selectionId}/reject`,
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({ reason: reason }),
+        success: function(data) {
+            $('#rejectionModal').modal('hide');
+            if (data.status === 'success') {
+                showSuccess(data.message);
+                loadPendingApprovals();
+            } else {
+                showError(data.message);
+            }
+        },
+        error: function() {
+            showError('却下処理に失敗しました');
+        }
+    });
+}
+
+function quickApprove(selectionId) {
+    if (!confirm('この申請を即座に承認しますか？')) return;
+    
+    $.ajax({
+        url: `/api/approvals/${selectionId}/approve`,
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({ comments: '一括承認' }),
+        success: function(data) {
+            if (data.status === 'success') {
+                showSuccess('承認しました');
+                loadPendingApprovals();
+            } else {
+                showError(data.message);
+            }
+        },
+        error: function() {
+            showError('承認処理に失敗しました');
+        }
+    });
+}
+
+function showBatchApproval() {
+    if (selectedApprovals.length === 0) {
+        showError('承認する申請を選択してください');
+        return;
+    }
+    
+    $('#batch-count-text').text(`選択された${selectedApprovals.length}件の申請を一括承認しますか？`);
+    $('#batch-comments').val('');
+    $('#batchApprovalModal').modal('show');
+}
+
+function performBatchApproval() {
+    const comments = $('#batch-comments').val();
+    
+    $.ajax({
+        url: '/api/approvals/batch-approve',
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({
+            selection_ids: selectedApprovals,
+            comments: comments
+        }),
+        success: function(data) {
+            $('#batchApprovalModal').modal('hide');
+            if (data.status === 'success') {
+                showSuccess(`${data.approved_count}件の申請を承認しました`);
+                if (data.failed_count > 0) {
+                    showError(`${data.failed_count}件の処理に失敗しました`);
+                }
+                loadPendingApprovals();
+                selectedApprovals = [];
+            } else {
+                showError(data.message);
+            }
+        },
+        error: function() {
+            showError('一括承認処理に失敗しました');
+        }
+    });
+}
+
+function showStatistics() {
+    $('#statisticsModal').modal('show');
+    
+    $.get('/api/approvals/statistics?days=30')
+        .done(function(data) {
+            if (data.status === 'success') {
+                displayStatistics(data.statistics);
+            } else {
+                $('#statistics-content').html('<p class="text-danger">統計データの取得に失敗しました</p>');
+            }
+        })
+        .fail(function() {
+            $('#statistics-content').html('<p class="text-danger">サーバーとの通信に失敗しました</p>');
+        });
+}
+
+function displayStatistics(stats) {
+    const html = `
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <h4 class="text-primary">${stats.total_requests}</h4>
+                        <small>総申請数（30日間）</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <h4 class="text-success">${stats.approval_rate}%</h4>
+                        <small>承認率</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row mt-3">
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <h5 class="text-success">${stats.approved_count}</h5>
+                        <small>承認済み</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <h5 class="text-danger">${stats.rejected_count}</h5>
+                        <small>却下</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <h5 class="text-warning">${stats.pending_count}</h5>
+                        <small>承認待ち</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    $('#statistics-content').html(html);
+}
+
+// ユーティリティ関数
+function formatDate(dateString) {
+    if (!dateString) return '未設定';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('ja-JP');
+}
+
+function formatTime(dateString) {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return date.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
+}
+
+function formatDateTime(dateString) {
+    if (!dateString) return '未設定';
+    const date = new Date(dateString);
+    return date.toLocaleString('ja-JP');
+}
+
+function showSuccess(message) {
+    const alert = $(`
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            ${message}
+            <button type="button" class="close" data-dismiss="alert">
+                <span>&times;</span>
+            </button>
+        </div>
+    `);
+    $('body').prepend(alert);
+    setTimeout(() => alert.remove(), 5000);
+}
+
+function showError(message) {
+    const alert = $(`
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            ${message}
+            <button type="button" class="close" data-dismiss="alert">
+                <span>&times;</span>
+            </button>
+        </div>
+    `);
+    $('body').prepend(alert);
+    setTimeout(() => alert.remove(), 8000);
+}
+</script>
+{% endblock %}

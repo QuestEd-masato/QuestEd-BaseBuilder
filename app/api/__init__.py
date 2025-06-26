@@ -11,6 +11,7 @@ from app.models import (db, ChatHistory, InquiryTheme, Class, ClassEnrollment, S
 # StudentWeakness は RDSに存在しないためコメントアウト
 from app.ai import generate_chat_response
 from app.utils.rate_limiting import smart_ai_limit, api_limit
+from app.services.unit_completion_service import UnitCompletionService
 
 api_bp = Blueprint('api', __name__, url_prefix='/api')
 
@@ -1403,4 +1404,307 @@ def create_unit_mappings():
         return jsonify({
             'status': 'error',
             'message': 'マッピング作成に失敗しました'
+        }), 500
+
+
+# ==================== 承認ワークフロー API ====================
+
+@api_bp.route('/units/<int:unit_id>/request-completion', methods=['POST'])
+@login_required
+@api_limit()
+def request_unit_completion(unit_id):
+    """単元完了申請API - 学生用"""
+    if current_user.role != 'student':
+        return jsonify({'error': '学生のみアクセス可能です'}), 403
+    
+    try:
+        data = request.get_json() or {}
+        class_id = data.get('class_id')
+        notes = data.get('notes', '')
+        
+        result = UnitCompletionService.request_completion(
+            student_id=current_user.id,
+            unit_id=unit_id,
+            class_id=class_id,
+            notes=notes
+        )
+        
+        status_code = 200 if result['success'] else 400
+        return jsonify({
+            'status': 'success' if result['success'] else 'error',
+            'message': result['message'],
+            'auto_approved': result.get('auto_approved', False),
+            'approval_status': result.get('approval_status'),
+            'selection_data': result.get('selection_data'),
+            'error_type': result.get('error_type')
+        }), status_code
+        
+    except Exception as e:
+        logging.error(f"単元完了申請エラー: {str(e)}")
+        return jsonify({
+            'status': 'error',
+            'message': '申請処理中にエラーが発生しました'
+        }), 500
+
+
+@api_bp.route('/units/my-selections', methods=['GET'])
+@login_required
+@api_limit()
+def get_my_unit_selections():
+    """学生の単元選択一覧取得API"""
+    if current_user.role != 'student':
+        return jsonify({'error': '学生のみアクセス可能です'}), 403
+    
+    try:
+        class_id = request.args.get('class_id', type=int)
+        status_filter = request.args.get('status')
+        approval_filter = request.args.get('approval_status')
+        
+        # 基本クエリ
+        query = StudentUnitSelection.query.filter_by(student_id=current_user.id)
+        
+        # フィルタ適用
+        if class_id:
+            query = query.filter_by(class_id=class_id)
+        if status_filter:
+            query = query.filter_by(status=status_filter)
+        if approval_filter:
+            query = query.filter_by(approval_status=approval_filter)
+        
+        selections = query.order_by(StudentUnitSelection.updated_at.desc()).all()
+        
+        # 詳細データ構築
+        selections_data = []
+        for selection in selections:
+            unit_data = selection.curriculum_unit.to_dict()
+            selection_data = selection.to_dict()
+            selection_data['unit'] = unit_data
+            selections_data.append(selection_data)
+        
+        return jsonify({
+            'status': 'success',
+            'selections': selections_data,
+            'total_count': len(selections_data)
+        })
+        
+    except Exception as e:
+        logging.error(f"選択一覧取得エラー: {str(e)}")
+        return jsonify({
+            'status': 'error',
+            'message': '選択一覧の取得に失敗しました'
+        }), 500
+
+
+@api_bp.route('/units/completion-history', methods=['GET'])
+@login_required
+@api_limit()
+def get_completion_history():
+    """学生の完了履歴取得API"""
+    if current_user.role != 'student':
+        return jsonify({'error': '学生のみアクセス可能です'}), 403
+    
+    try:
+        limit = request.args.get('limit', 20, type=int)
+        
+        result = UnitCompletionService.get_student_completion_history(
+            student_id=current_user.id,
+            limit=limit
+        )
+        
+        return jsonify({
+            'status': 'success' if result['success'] else 'error',
+            'completion_history': result.get('completion_history', []),
+            'total_completed': result.get('total_completed', 0),
+            'message': result.get('message')
+        })
+        
+    except Exception as e:
+        logging.error(f"完了履歴取得エラー: {str(e)}")
+        return jsonify({
+            'status': 'error',
+            'message': '完了履歴の取得に失敗しました'
+        }), 500
+
+
+@api_bp.route('/approvals/pending', methods=['GET'])
+@login_required
+@api_limit()
+def get_pending_approvals():
+    """承認待ち申請一覧取得API - 教師用"""
+    if current_user.role != 'teacher':
+        return jsonify({'error': '教師のみアクセス可能です'}), 403
+    
+    try:
+        class_id = request.args.get('class_id', type=int)
+        limit = request.args.get('limit', 50, type=int)
+        
+        result = UnitCompletionService.get_pending_approvals(
+            teacher_id=current_user.id,
+            class_id=class_id,
+            limit=limit
+        )
+        
+        return jsonify({
+            'status': 'success' if result['success'] else 'error',
+            'pending_approvals': result.get('pending_approvals', []),
+            'total_count': result.get('total_count', 0),
+            'message': result.get('message')
+        })
+        
+    except Exception as e:
+        logging.error(f"承認待ち一覧取得エラー: {str(e)}")
+        return jsonify({
+            'status': 'error',
+            'message': '承認待ち一覧の取得に失敗しました'
+        }), 500
+
+
+@api_bp.route('/approvals/<int:selection_id>/approve', methods=['POST'])
+@login_required
+@api_limit()
+def approve_unit_completion(selection_id):
+    """単元完了承認API - 教師用"""
+    if current_user.role != 'teacher':
+        return jsonify({'error': '教師のみアクセス可能です'}), 403
+    
+    try:
+        data = request.get_json() or {}
+        comments = data.get('comments', '')
+        
+        result = UnitCompletionService.approve_completion(
+            selection_id=selection_id,
+            teacher_id=current_user.id,
+            comments=comments
+        )
+        
+        status_code = 200 if result['success'] else 400
+        return jsonify({
+            'status': 'success' if result['success'] else 'error',
+            'message': result['message'],
+            'selection_data': result.get('selection_data'),
+            'error_type': result.get('error_type')
+        }), status_code
+        
+    except Exception as e:
+        logging.error(f"承認処理エラー: {str(e)}")
+        return jsonify({
+            'status': 'error',
+            'message': '承認処理中にエラーが発生しました'
+        }), 500
+
+
+@api_bp.route('/approvals/<int:selection_id>/reject', methods=['POST'])
+@login_required
+@api_limit()
+def reject_unit_completion(selection_id):
+    """単元完了却下API - 教師用"""
+    if current_user.role != 'teacher':
+        return jsonify({'error': '教師のみアクセス可能です'}), 403
+    
+    try:
+        data = request.get_json() or {}
+        reason = data.get('reason', '').strip()
+        
+        if not reason or len(reason) < 5:
+            return jsonify({
+                'status': 'error',
+                'message': '却下理由は5文字以上入力してください'
+            }), 400
+        
+        result = UnitCompletionService.reject_completion(
+            selection_id=selection_id,
+            teacher_id=current_user.id,
+            reason=reason
+        )
+        
+        status_code = 200 if result['success'] else 400
+        return jsonify({
+            'status': 'success' if result['success'] else 'error',
+            'message': result['message'],
+            'selection_data': result.get('selection_data'),
+            'error_type': result.get('error_type')
+        }), status_code
+        
+    except Exception as e:
+        logging.error(f"却下処理エラー: {str(e)}")
+        return jsonify({
+            'status': 'error',
+            'message': '却下処理中にエラーが発生しました'
+        }), 500
+
+
+@api_bp.route('/approvals/batch-approve', methods=['POST'])
+@login_required
+@api_limit()
+def batch_approve_completions():
+    """一括承認API - 教師用"""
+    if current_user.role != 'teacher':
+        return jsonify({'error': '教師のみアクセス可能です'}), 403
+    
+    try:
+        data = request.get_json() or {}
+        selection_ids = data.get('selection_ids', [])
+        comments = data.get('comments', '')
+        
+        if not selection_ids or not isinstance(selection_ids, list):
+            return jsonify({
+                'status': 'error',
+                'message': '承認対象が指定されていません'
+            }), 400
+        
+        if len(selection_ids) > 50:  # 一度に処理する上限
+            return jsonify({
+                'status': 'error',
+                'message': '一度に承認できるのは最大50件です'
+            }), 400
+        
+        result = UnitCompletionService.batch_approve(
+            selection_ids=selection_ids,
+            teacher_id=current_user.id,
+            comments=comments
+        )
+        
+        return jsonify({
+            'status': 'success' if result['success'] else 'error',
+            'message': result['message'],
+            'approved_count': result.get('approved_count', 0),
+            'failed_count': result.get('failed_count', 0),
+            'failed_selections': result.get('failed_selections', [])
+        })
+        
+    except Exception as e:
+        logging.error(f"一括承認エラー: {str(e)}")
+        return jsonify({
+            'status': 'error',
+            'message': '一括承認処理中にエラーが発生しました'
+        }), 500
+
+
+@api_bp.route('/approvals/statistics', methods=['GET'])
+@login_required
+@api_limit()
+def get_approval_statistics():
+    """承認統計取得API - 教師用"""
+    if current_user.role != 'teacher':
+        return jsonify({'error': '教師のみアクセス可能です'}), 403
+    
+    try:
+        days = request.args.get('days', 30, type=int)
+        
+        result = UnitCompletionService.get_approval_statistics(
+            teacher_id=current_user.id,
+            days=days
+        )
+        
+        return jsonify({
+            'status': 'success' if result['success'] else 'error',
+            'statistics': result.get('statistics', {}),
+            'message': result.get('message')
+        })
+        
+    except Exception as e:
+        logging.error(f"承認統計取得エラー: {str(e)}")
+        return jsonify({
+            'status': 'error',
+            'message': '承認統計の取得に失敗しました'
         }), 500

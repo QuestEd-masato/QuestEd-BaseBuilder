@@ -2960,3 +2960,13 @@ def get_sync_task_status(curriculum_id, task_id):
             'success': False,
             'message': 'タスクステータス取得エラー'
         }), 500
+
+
+# ==================== 単元完了承認機能 ====================
+
+@teacher_bp.route('/unit-approvals')
+@login_required
+@teacher_required
+def pending_unit_approvals():
+    """単元完了承認画面"""
+    return render_template('teacher/pending_unit_approvals.html')

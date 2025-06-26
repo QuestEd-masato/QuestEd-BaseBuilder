@@ -178,6 +178,15 @@ class StudentUnitSelection(db.Model):
     last_activity_at = db.Column(db.DateTime, nullable=True, comment='最終活動日時')
     study_time_minutes = db.Column(db.Integer, default=0, comment='学習時間（分）')
     notes = db.Column(db.Text, comment='学習メモ')
+    
+    # 承認ワークフロー機能
+    approval_status = db.Column(db.Enum('none', 'pending', 'approved', 'rejected'), default='none', comment='承認状況')
+    completion_request_date = db.Column(db.DateTime, nullable=True, comment='完了申請日時')
+    teacher_comments = db.Column(db.Text, nullable=True, comment='教師コメント')
+    approved_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True, comment='承認者ID')
+    approved_at = db.Column(db.DateTime, nullable=True, comment='承認日時')
+    rejection_reason = db.Column(db.Text, nullable=True, comment='却下理由')
+    
     created_at = db.Column(db.DateTime, default=datetime.utcnow, comment='作成日時')
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, comment='更新日時')
     
@@ -190,11 +199,15 @@ class StudentUnitSelection(db.Model):
         db.Index('idx_status', 'status'),
         db.Index('idx_last_activity_at', 'last_activity_at'),
         db.Index('idx_progress_percentage', 'progress_percentage'),
+        db.Index('idx_approval_status', 'approval_status'),
+        db.Index('idx_completion_request_date', 'completion_request_date'),
+        db.Index('idx_approved_by', 'approved_by'),
     )
     
     # リレーションシップ
-    student = db.relationship('User', backref='unit_selections')
+    student = db.relationship('User', foreign_keys=[student_id], backref='unit_selections')
     class_obj = db.relationship('Class', backref='unit_selections')
+    approver = db.relationship('User', foreign_keys=[approved_by], backref='approved_unit_selections')
     
     def update_progress(self):
         """進捗率を再計算"""
@@ -224,6 +237,49 @@ class StudentUnitSelection(db.Model):
             return (self.correct_items / self.completed_items) * 100
         return 0.0
     
+    def request_completion(self, notes=None):
+        """完了申請を送信"""
+        self.approval_status = 'pending'
+        self.completion_request_date = datetime.utcnow()
+        if notes:
+            self.notes = notes
+        self.updated_at = datetime.utcnow()
+    
+    def approve_completion(self, teacher_id, comments=None):
+        """完了を承認"""
+        self.approval_status = 'approved'
+        self.approved_by = teacher_id
+        self.approved_at = datetime.utcnow()
+        self.teacher_comments = comments
+        self.status = 'completed'
+        if not self.completed_at:
+            self.completed_at = datetime.utcnow()
+        self.updated_at = datetime.utcnow()
+    
+    def reject_completion(self, teacher_id, reason):
+        """完了申請を却下"""
+        self.approval_status = 'rejected'
+        self.approved_by = teacher_id
+        self.approved_at = datetime.utcnow()
+        self.rejection_reason = reason
+        self.updated_at = datetime.utcnow()
+    
+    def can_request_completion(self):
+        """完了申請が可能かチェック"""
+        return (self.status in ['in_progress', 'completed'] and 
+                self.approval_status in ['none', 'rejected'] and
+                self.progress_percentage >= 80)  # 80%以上で申請可能
+    
+    def get_approval_status_label(self):
+        """承認状況のラベルを取得"""
+        status_labels = {
+            'none': '未申請',
+            'pending': '承認待ち',
+            'approved': '承認済み',
+            'rejected': '却下'
+        }
+        return status_labels.get(self.approval_status, '不明')
+    
     def to_dict(self):
         """辞書形式に変換"""
         return {
@@ -242,6 +298,14 @@ class StudentUnitSelection(db.Model):
             'last_activity_at': self.last_activity_at.isoformat() if self.last_activity_at else None,
             'study_time_minutes': self.study_time_minutes,
             'notes': self.notes,
+            'approval_status': self.approval_status,
+            'approval_status_label': self.get_approval_status_label(),
+            'completion_request_date': self.completion_request_date.isoformat() if self.completion_request_date else None,
+            'teacher_comments': self.teacher_comments,
+            'approved_by': self.approved_by,
+            'approved_at': self.approved_at.isoformat() if self.approved_at else None,
+            'rejection_reason': self.rejection_reason,
+            'can_request_completion': self.can_request_completion(),
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'updated_at': self.updated_at.isoformat() if self.updated_at else None
         }
@@ -263,6 +327,13 @@ class ClassLearningSettings(db.Model):
     allow_unit_skip = db.Column(db.Boolean, default=False, comment='単元スキップ許可')
     show_difficulty_level = db.Column(db.Boolean, default=True, comment='難易度表示')
     enable_peer_comparison = db.Column(db.Boolean, default=False, comment='他生徒との比較表示')
+    
+    # 承認ワークフロー設定
+    require_teacher_approval = db.Column(db.Boolean, default=True, comment='教師承認必須')
+    auto_approve_threshold = db.Column(db.Numeric(5,2), default=90.00, comment='自動承認閾値（%）')
+    approval_comment_required = db.Column(db.Boolean, default=True, comment='承認コメント必須')
+    allow_resubmission = db.Column(db.Boolean, default=True, comment='再申請許可')
+    
     created_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, comment='設定作成者ID')
     created_at = db.Column(db.DateTime, default=datetime.utcnow, comment='作成日時')
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, comment='更新日時')
@@ -289,6 +360,10 @@ class ClassLearningSettings(db.Model):
             'allow_unit_skip': self.allow_unit_skip,
             'show_difficulty_level': self.show_difficulty_level,
             'enable_peer_comparison': self.enable_peer_comparison,
+            'require_teacher_approval': self.require_teacher_approval,
+            'auto_approve_threshold': float(self.auto_approve_threshold) if self.auto_approve_threshold else None,
+            'approval_comment_required': self.approval_comment_required,
+            'allow_resubmission': self.allow_resubmission,
             'created_by': self.created_by,
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'updated_at': self.updated_at.isoformat() if self.updated_at else None

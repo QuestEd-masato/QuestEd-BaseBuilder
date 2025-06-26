@@ -4,13 +4,88 @@
 
 {% block content %}
 <div class="container mt-4">
-    <h2>ダッシュボード</h2>
+    <h2>学習ダッシュボード</h2>
     
-    <div class="alert alert-info">
-        <p>現在、一部の機能が利用できません。</p>
+    <!-- 学習進捗サマリー -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">学習進捗サマリー</h5>
+                    <div class="row" id="progress-summary">
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <h3 class="text-primary" id="total-units">-</h3>
+                                <small>総単元数</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <h3 class="text-success" id="completed-units">-</h3>
+                                <small>完了単元数</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <h3 class="text-warning" id="pending-approvals">-</h3>
+                                <small>承認待ち</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <h3 class="text-info" id="in-progress-units">-</h3>
+                                <small>学習中</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
     
     <div class="row">
+        <!-- 学習中の単元 -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">学習中の単元</h5>
+                    <button type="button" class="btn btn-sm btn-primary" onclick="refreshSelections()">
+                        <i class="fas fa-sync-alt"></i> 更新
+                    </button>
+                </div>
+                <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+                    <div id="in-progress-list">
+                        <div class="text-center">
+                            <div class="spinner-border" role="status">
+                                <span class="sr-only">読み込み中...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 申請可能な単元 -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">申請可能な単元</h5>
+                </div>
+                <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+                    <div id="requestable-list">
+                        <div class="text-center">
+                            <div class="spinner-border" role="status">
+                                <span class="sr-only">読み込み中...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 基本メニュー -->
+    <div class="row mt-4">
         <div class="col-md-6">
             <div class="card">
                 <div class="card-body">
@@ -21,6 +96,7 @@
                         <li><a href="{{ url_for('student.todos') }}">ToDo</a></li>
                         <li><a href="{{ url_for('student.goals') }}">目標管理</a></li>
                         <li><a href="{{ url_for('student.surveys') }}">アンケート</a></li>
+                        <li><a href="#" onclick="showCompletionHistory()">完了履歴</a></li>
                     </ul>
                 </div>
             </div>
@@ -29,11 +105,349 @@
         <div class="col-md-6">
             <div class="card">
                 <div class="card-body">
-                    <h5 class="card-title">サポート</h5>
-                    <p>技術的な問題が発生している場合は、管理者にお問い合わせください。</p>
+                    <h5 class="card-title">承認状況</h5>
+                    <div id="approval-status-list">
+                        <p class="text-muted">承認状況を読み込み中...</p>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<!-- 単元完了申請モーダル -->
+<div class="modal fade" id="completionRequestModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">単元完了申請</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="request-unit-info"></div>
+                <form id="completion-request-form">
+                    <div class="form-group">
+                        <label for="completion-notes">学習メモ（任意）</label>
+                        <textarea class="form-control" id="completion-notes" rows="3" 
+                                  placeholder="この単元で学んだことや気づいたことを記入してください"></textarea>
+                    </div>
+                    <input type="hidden" id="request-unit-id">
+                    <input type="hidden" id="request-class-id">
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">キャンセル</button>
+                <button type="button" class="btn btn-primary" onclick="submitCompletionRequest()">
+                    申請を送信
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 完了履歴モーダル -->
+<div class="modal fade" id="completionHistoryModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">完了履歴</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="completion-history-list">
+                    <div class="text-center">
+                        <div class="spinner-border" role="status">
+                            <span class="sr-only">読み込み中...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// 学習ダッシュボードのJavaScript
+$(document).ready(function() {
+    loadDashboardData();
+});
+
+function loadDashboardData() {
+    loadUnitSelections();
+    loadProgressSummary();
+}
+
+function loadUnitSelections() {
+    // 学習中の単元と申請可能な単元を取得
+    $.get('/api/units/my-selections')
+        .done(function(data) {
+            if (data.status === 'success') {
+                displayInProgressUnits(data.selections);
+                displayRequestableUnits(data.selections);
+                displayApprovalStatus(data.selections);
+                updateProgressSummary(data.selections);
+            } else {
+                showError('単元情報の取得に失敗しました: ' + data.message);
+            }
+        })
+        .fail(function() {
+            showError('サーバーとの通信に失敗しました');
+        });
+}
+
+function displayInProgressUnits(selections) {
+    const inProgressList = $('#in-progress-list');
+    const inProgress = selections.filter(s => s.status === 'in_progress' && s.approval_status === 'none');
+    
+    if (inProgress.length === 0) {
+        inProgressList.html('<p class="text-muted">学習中の単元はありません</p>');
+        return;
+    }
+    
+    let html = '';
+    inProgress.forEach(function(selection) {
+        const progressPercent = Math.round(selection.progress_percentage || 0);
+        html += `
+            <div class="border-bottom pb-2 mb-2">
+                <h6>${selection.unit.title}</h6>
+                <div class="progress mb-2" style="height: 20px;">
+                    <div class="progress-bar" role="progressbar" style="width: ${progressPercent}%">
+                        ${progressPercent}%
+                    </div>
+                </div>
+                <small class="text-muted">
+                    正解: ${selection.correct_items}/${selection.total_items} 問 | 
+                    学習時間: ${Math.round((selection.study_time_minutes || 0) / 60)}時間
+                </small>
+                ${progressPercent >= 80 ? `
+                    <div class="mt-2">
+                        <button class="btn btn-sm btn-success" onclick="requestCompletion(${selection.unit_id}, ${selection.class_id}, '${selection.unit.title}')">
+                            完了申請
+                        </button>
+                    </div>
+                ` : ''}
+            </div>
+        `;
+    });
+    
+    inProgressList.html(html);
+}
+
+function displayRequestableUnits(selections) {
+    const requestableList = $('#requestable-list');
+    const requestable = selections.filter(s => s.can_request_completion && s.approval_status === 'none');
+    
+    if (requestable.length === 0) {
+        requestableList.html('<p class="text-muted">申請可能な単元はありません</p>');
+        return;
+    }
+    
+    let html = '';
+    requestable.forEach(function(selection) {
+        const progressPercent = Math.round(selection.progress_percentage || 0);
+        html += `
+            <div class="border-bottom pb-2 mb-2">
+                <h6>${selection.unit.title}</h6>
+                <div class="progress mb-2" style="height: 20px;">
+                    <div class="progress-bar bg-success" role="progressbar" style="width: ${progressPercent}%">
+                        ${progressPercent}%
+                    </div>
+                </div>
+                <small class="text-muted">
+                    正解: ${selection.correct_items}/${selection.total_items} 問
+                </small>
+                <div class="mt-2">
+                    <button class="btn btn-sm btn-success" onclick="requestCompletion(${selection.unit_id}, ${selection.class_id}, '${selection.unit.title}')">
+                        完了申請
+                    </button>
+                </div>
+            </div>
+        `;
+    });
+    
+    requestableList.html(html);
+}
+
+function displayApprovalStatus(selections) {
+    const approvalList = $('#approval-status-list');
+    const pending = selections.filter(s => s.approval_status === 'pending');
+    const rejected = selections.filter(s => s.approval_status === 'rejected');
+    
+    let html = '';
+    
+    if (pending.length > 0) {
+        html += `<div class="mb-2"><strong class="text-warning">承認待ち: ${pending.length}件</strong></div>`;
+        pending.forEach(function(selection) {
+            html += `
+                <div class="small border-bottom pb-1 mb-1">
+                    <span class="badge badge-warning">承認待ち</span> ${selection.unit.title}
+                    <br><small class="text-muted">申請日: ${formatDate(selection.completion_request_date)}</small>
+                </div>
+            `;
+        });
+    }
+    
+    if (rejected.length > 0) {
+        html += `<div class="mb-2"><strong class="text-danger">却下: ${rejected.length}件</strong></div>`;
+        rejected.forEach(function(selection) {
+            html += `
+                <div class="small border-bottom pb-1 mb-1">
+                    <span class="badge badge-danger">却下</span> ${selection.unit.title}
+                    <br><small class="text-muted">理由: ${selection.rejection_reason}</small>
+                </div>
+            `;
+        });
+    }
+    
+    if (html === '') {
+        html = '<p class="text-muted">承認待ちの単元はありません</p>';
+    }
+    
+    approvalList.html(html);
+}
+
+function updateProgressSummary(selections) {
+    const total = selections.length;
+    const completed = selections.filter(s => s.approval_status === 'approved').length;
+    const pending = selections.filter(s => s.approval_status === 'pending').length;
+    const inProgress = selections.filter(s => s.status === 'in_progress').length;
+    
+    $('#total-units').text(total);
+    $('#completed-units').text(completed);
+    $('#pending-approvals').text(pending);
+    $('#in-progress-units').text(inProgress);
+}
+
+function requestCompletion(unitId, classId, unitTitle) {
+    $('#request-unit-id').val(unitId);
+    $('#request-class-id').val(classId);
+    $('#request-unit-info').html(`<p><strong>単元:</strong> ${unitTitle}</p>`);
+    $('#completion-notes').val('');
+    $('#completionRequestModal').modal('show');
+}
+
+function submitCompletionRequest() {
+    const unitId = $('#request-unit-id').val();
+    const classId = $('#request-class-id').val();
+    const notes = $('#completion-notes').val();
+    
+    $.ajax({
+        url: `/api/units/${unitId}/request-completion`,
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({
+            class_id: classId ? parseInt(classId) : null,
+            notes: notes
+        }),
+        success: function(data) {
+            $('#completionRequestModal').modal('hide');
+            if (data.status === 'success') {
+                showSuccess(data.message);
+                if (data.auto_approved) {
+                    showSuccess('自動承認により単元が完了しました！');
+                }
+                loadDashboardData(); // データを再読み込み
+            } else {
+                showError(data.message);
+            }
+        },
+        error: function() {
+            $('#completionRequestModal').modal('hide');
+            showError('申請の送信に失敗しました');
+        }
+    });
+}
+
+function showCompletionHistory() {
+    $('#completionHistoryModal').modal('show');
+    
+    $.get('/api/units/completion-history')
+        .done(function(data) {
+            if (data.status === 'success') {
+                displayCompletionHistory(data.completion_history);
+            } else {
+                $('#completion-history-list').html('<p class="text-danger">履歴の取得に失敗しました</p>');
+            }
+        })
+        .fail(function() {
+            $('#completion-history-list').html('<p class="text-danger">サーバーとの通信に失敗しました</p>');
+        });
+}
+
+function displayCompletionHistory(history) {
+    const historyList = $('#completion-history-list');
+    
+    if (history.length === 0) {
+        historyList.html('<p class="text-muted">完了履歴はありません</p>');
+        return;
+    }
+    
+    let html = '';
+    history.forEach(function(item) {
+        html += `
+            <div class="border-bottom pb-2 mb-2">
+                <h6>${item.unit.title}</h6>
+                <p class="mb-1">
+                    <span class="badge badge-success">完了</span>
+                    承認者: ${item.approver_name}
+                </p>
+                <small class="text-muted">
+                    完了日: ${formatDate(item.selection.approved_at)} | 
+                    正解率: ${Math.round(item.selection.accuracy_rate)}%
+                </small>
+                ${item.selection.teacher_comments ? `
+                    <div class="mt-1">
+                        <small><strong>教師コメント:</strong> ${item.selection.teacher_comments}</small>
+                    </div>
+                ` : ''}
+            </div>
+        `;
+    });
+    
+    historyList.html(html);
+}
+
+function refreshSelections() {
+    loadDashboardData();
+    showSuccess('データを更新しました');
+}
+
+function formatDate(dateString) {
+    if (!dateString) return '未設定';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('ja-JP');
+}
+
+function showSuccess(message) {
+    // 簡易的な成功メッセージ表示
+    const alert = $(`
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            ${message}
+            <button type="button" class="close" data-dismiss="alert">
+                <span>&times;</span>
+            </button>
+        </div>
+    `);
+    $('body').prepend(alert);
+    setTimeout(() => alert.remove(), 5000);
+}
+
+function showError(message) {
+    // 簡易的なエラーメッセージ表示
+    const alert = $(`
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            ${message}
+            <button type="button" class="close" data-dismiss="alert">
+                <span>&times;</span>
+            </button>
+        </div>
+    `);
+    $('body').prepend(alert);
+    setTimeout(() => alert.remove(), 8000);
+}
+</script>
 {% endblock %}
