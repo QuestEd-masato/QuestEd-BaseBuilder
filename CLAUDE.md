@@ -204,23 +204,27 @@ Currently no automated tests. To add tests:
 
 ### Database Overview
 - **MySQL Version**: 8.0.40
-- **Character Set**: utf8mb4_unicode_ci
-- **Total Tables**: 59 (including 2 views)
+- **Character Set**: utf8mb4_unicode_ci  
+- **Total Tables**: 55 (detailed structure documented 2025-06-26)
 - **Database Size**: 3.39 MB
 - **Active Students**: 46 users (40 students, 5 teachers, 1 admin)
+- **Key Learning Data**: 3,811 answer_records, 546 student_unit_selections, 642 word_proficiency_records
 
 ### Critical Field Name Consistency
 ⚠️ **IMPORTANT**: Ensure field naming consistency across the application:
 
-#### ✅ Standardized Fields (Fixed)
+#### ✅ Standardized Fields (Fixed - 2025-06-26)
+- **Timestamps**: Unified to `created_at` and `updated_at` (NO `timestamp` or `last_updated`)
 - **Difficulty**: Use `difficulty_level` everywhere (NOT `difficulty`)
-- **Timestamps**: Use `timestamp` for ActivityLog, `created_at` for others
 - **User References**: Context-dependent (`student_id` vs `user_id`)
 
-#### 🔧 Fixed Issues
-- `static/js/learning_portal.js`: Updated `unit.difficulty` → `unit.difficulty_level`
-- `app/api/__init__.py`: Consistent use of `difficulty_level` field
-- `app/services/ranking_service.py`: Fixed tuple access patterns
+#### 🔧 Fixed Issues (Architecture Audit Implementation)
+- **Timestamp Fields**: `timestamp` → `created_at`, `last_updated` → `updated_at`
+  - ActivityLog, ChatHistory, AnswerRecord models
+  - 16 files updated with field references
+  - All templates and JavaScript updated
+- **Duplicate Implementations**: Removed duplicate `utils/email_sender.py`
+- **Database Consistency**: All 6 models using non-standard field names corrected
 
 ### Core Table Structure
 
@@ -674,3 +678,182 @@ watch -n 10 'curl -s http://localhost:5000/teacher/sync-overview-stats | jq .sta
 - スケーラブルなアーキテクチャ
 - 包括的なエラーハンドリング
 - セキュアな実装
+
+---
+
+## 🚨 発見された重要な問題と修正計画 (2025-06-26)
+
+### 発見された主要問題
+
+#### 1. **カリキュラム変換システムの設計欠陥**
+```
+問題: 教師が作成したカリキュラムを単元変換する際の権限・データ不整合
+
+データベースの問題:
+- curriculums.teacher_id (5, 18) ≠ curriculum_units.created_by (全て4)
+- curriculum_units.school_id = 全てNULL
+- subject_id の不適切な継承
+
+根本原因: app/services/curriculum_bridge_service.py の変換ロジック
+```
+
+#### 2. **学習進捗管理システムの断絶**  
+```
+問題: 実際の学習活動が単元進捗に反映されない
+
+データベースの問題:
+- answer_records: 3,811件の活発な学習記録
+- student_unit_selections: 546件全てが'not_started'状態
+- unit_item_mappings: 0件（単元と問題の関連付けなし）
+
+根本原因: 進捗更新ロジックの未実装
+```
+
+#### 3. **ランキングシステムのデータ問題**
+```
+問題: 学習ランキングが実際のデータを反映しない
+
+データベースの問題:
+- users.class_id = 多くがNULL
+- class_enrollments で実際の所属管理
+- ランキング計算でのJOIN不整合
+
+根本原因: 二重管理による集計エラー
+```
+
+### 📋 詳細修正計画
+
+#### **Phase 1: 緊急修正（1週間）**
+
+##### 1.1 カリキュラム変換修正
+**対象ファイル**: `app/services/curriculum_bridge_service.py`
+```python
+# L143の修正内容
+unit = CurriculumUnit(
+    created_by=curriculum.teacher_id,  # 修正: 実際の教師ID
+    subject_id=curriculum.subject_id,  # 追加: 教科情報継承  
+    school_id=curriculum.class_obj.school_id,  # 修正: 学校情報設定
+    # その他フィールド...
+)
+```
+
+##### 1.2 進捗データ連携修正
+**新機能**: UnitProgressManager クラス実装
+```python
+@staticmethod
+def update_unit_progress(student_id: int, unit_id: int):
+    """学習記録から単元進捗を自動計算・更新"""
+    # unit_item_mappings から関連問題取得
+    # answer_records から正解数計算
+    # progress_percentage 更新
+    # status 自動設定
+```
+
+##### 1.3 ランキングデータ修正
+**対象ファイル**: `app/services/ranking_service.py`
+```python
+# class_enrollments を使用した正しいJOIN
+# 複数データソースの統合集計
+# NULL値の適切な処理
+```
+
+#### **Phase 2: システム統合（2-3週間）**
+
+##### 2.1 新しいデータモデル実装
+```sql
+-- 単元達成申請テーブル
+CREATE TABLE unit_completion_requests (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    student_id INT NOT NULL,
+    unit_id INT NOT NULL,
+    status ENUM('pending', 'approved', 'rejected') DEFAULT 'pending',
+    submitted_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    evidence_data JSON,
+    teacher_id INT,
+    review_comment TEXT,
+    FOREIGN KEY (student_id) REFERENCES users(id),
+    FOREIGN KEY (unit_id) REFERENCES curriculum_units(id)
+);
+
+-- 単元達成記録テーブル  
+CREATE TABLE unit_achievements (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    student_id INT NOT NULL,
+    unit_id INT NOT NULL,
+    achieved_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    achievement_type ENUM('auto', 'teacher_approved'),
+    mastery_level ENUM('basic', 'proficient', 'advanced'),
+    UNIQUE KEY unique_achievement (student_id, unit_id)
+);
+```
+
+##### 2.2 統合UI実装
+**生徒側フロー:**
+```
+クラスカード表示 → 進捗率表示 → 未達成単元一覧 → 
+単元学習 → 達成申請 → 教師承認 → 達成確定
+```
+
+**教師側フロー:**
+```
+/class/{id} - 「取り組み中の単元」列追加
+/class/{id}/curriculums - 達成人数表示  
+/curriculum/{id} - 達成申請承認画面
+```
+
+#### **Phase 3: データ整合性確保（1週間）**
+
+##### 3.1 既存データ修正SQL
+```sql
+-- curriculum_units の created_by 修正
+UPDATE curriculum_units cu
+JOIN curriculums c ON cu.legacy_curriculum_id = c.id
+SET cu.created_by = c.teacher_id;
+
+-- school_id 設定
+UPDATE curriculum_units cu  
+JOIN curriculums c ON cu.legacy_curriculum_id = c.id
+JOIN classes cl ON c.class_id = cl.id
+SET cu.school_id = cl.school_id;
+```
+
+##### 3.2 unit_item_mappings 構築
+```python
+def create_unit_item_mappings():
+    """単元と問題の自動マッピング作成"""
+    # 教科・難易度・キーワードベースで関連問題特定
+    # マッピングテーブル構築
+    # 重み付け計算
+```
+
+### 🎯 実装優先度と期待効果
+
+#### **高優先度（即座実装）**
+1. カリキュラム変換修正 - 教師権限問題解決
+2. 進捗データ連携 - 学習活動可視化  
+3. ランキング修正 - 正確な成績表示
+
+#### **期待される改善効果**
+- **即時効果**: エラー解消、データ表示正常化
+- **中期効果**: 統一学習フロー、管理負荷軽減
+- **長期効果**: データドリブン学習支援基盤
+
+### ⚠️ 重要な技術的制約
+
+#### **データベースマイグレーション必要**
+```sql
+-- カラム名変更（RDS側で実行必要）
+ALTER TABLE activity_logs CHANGE COLUMN timestamp created_at DATETIME;
+ALTER TABLE chat_history CHANGE COLUMN timestamp created_at DATETIME;  
+ALTER TABLE answer_records CHANGE COLUMN timestamp created_at DATETIME;
+ALTER TABLE proficiency_records CHANGE COLUMN last_updated updated_at DATETIME;
+ALTER TABLE text_proficiency_records CHANGE COLUMN last_updated updated_at DATETIME;
+ALTER TABLE word_proficiency_records CHANGE COLUMN last_updated updated_at DATETIME;
+```
+
+#### **段階的実装の重要性**
+- 各Phase完了時の検証テスト必須
+- 既存データのバックアップ確保
+- ユーザー影響の最小化
+
+このドキュメントにより、QuestEdシステムの現状と改善計画が包括的に把握できます。

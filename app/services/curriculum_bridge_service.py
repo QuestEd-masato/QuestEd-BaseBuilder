@@ -87,7 +87,7 @@ class CurriculumBridgeService:
                 
                 if existing_unit:
                     # 既存単元を更新
-                    cls._update_curriculum_unit(existing_unit, item, index)
+                    cls._update_curriculum_unit(existing_unit, curriculum, item, index)
                     updated_count += 1
                 else:
                     # 新規単元を作成
@@ -143,6 +143,7 @@ class CurriculumBridgeService:
         unit = CurriculumUnit(
             title=title,
             description=description,
+            subject_id=curriculum.subject_id,  # 追加: 教科情報の継承
             difficulty_level=difficulty_level,
             estimated_minutes=estimated_minutes,
             order_index=index,
@@ -164,11 +165,12 @@ class CurriculumBridgeService:
         return unit
     
     @classmethod
-    def _update_curriculum_unit(cls, unit: CurriculumUnit, item: Dict, index: int):
+    def _update_curriculum_unit(cls, unit: CurriculumUnit, curriculum: Curriculum, item: Dict, index: int):
         """既存単元をアイテム情報で更新"""
         
         unit.title = cls._generate_unit_title(item)
         unit.description = cls._generate_unit_description(item)
+        unit.subject_id = curriculum.subject_id  # 追加: 教科情報の継承
         unit.difficulty_level = cls._estimate_difficulty(item)
         unit.estimated_minutes = cls._estimate_learning_time(item)
         unit.updated_at = datetime.utcnow()

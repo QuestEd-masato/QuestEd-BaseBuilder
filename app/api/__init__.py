@@ -1367,3 +1367,102 @@ def export_ranking():
             'status': 'error',
             'message': 'エクスポートに失敗しました'
         }), 500
+
+
+# 進捗管理API
+@api_bp.route('/units/<int:unit_id>/progress', methods=['POST'])
+@login_required
+@api_limit()
+def update_unit_progress(unit_id):
+    """単元進捗更新API"""
+    if current_user.role != 'student':
+        return jsonify({'error': '学生のみアクセス可能です'}), 403
+    
+    try:
+        from app.services.unit_progress_manager import UnitProgressManager
+        
+        result = UnitProgressManager.update_unit_progress(
+            student_id=current_user.id,
+            unit_id=unit_id
+        )
+        
+        if result['success']:
+            return jsonify({
+                'status': 'success',
+                'progress': result['progress'],
+                'unit_status': result['status'],
+                'statistics': {
+                    'attempted': result['attempted'],
+                    'correct': result['correct'],
+                    'total': result['total']
+                }
+            })
+        else:
+            return jsonify({
+                'status': 'error',
+                'message': result.get('message', '進捗更新に失敗しました')
+            }), 400
+            
+    except Exception as e:
+        logging.error(f"単元進捗更新エラー: {str(e)}")
+        return jsonify({
+            'status': 'error',
+            'message': '進捗更新に失敗しました'
+        }), 500
+
+
+@api_bp.route('/progress/batch-update', methods=['POST'])
+@login_required
+@api_limit()
+def batch_update_progress():
+    """進捗一括更新API（管理者・教師用）"""
+    if current_user.role not in ['admin', 'teacher']:
+        return jsonify({'error': 'アクセス権限がありません'}), 403
+    
+    try:
+        from app.services.unit_progress_manager import UnitProgressManager
+        
+        result = UnitProgressManager.batch_update_all_progress()
+        
+        return jsonify({
+            'status': 'success' if result['success'] else 'error',
+            'updated_count': result['updated_count'],
+            'error_count': result.get('error_count', 0),
+            'processed_total': result.get('processed_total', 0),
+            'message': result.get('error') if not result['success'] else '一括更新が完了しました'
+        })
+        
+    except Exception as e:
+        logging.error(f"進捗一括更新エラー: {str(e)}")
+        return jsonify({
+            'status': 'error',
+            'message': '一括更新に失敗しました'
+        }), 500
+
+
+@api_bp.route('/units/mappings/create', methods=['POST'])
+@login_required
+@api_limit()
+def create_unit_mappings():
+    """単元-問題マッピング作成API（管理者・教師用）"""
+    if current_user.role not in ['admin', 'teacher']:
+        return jsonify({'error': 'アクセス権限がありません'}), 403
+    
+    try:
+        from app.services.unit_progress_manager import UnitProgressManager
+        
+        result = UnitProgressManager.create_unit_item_mappings()
+        
+        return jsonify({
+            'status': 'success' if result['success'] else 'error',
+            'created_mappings': result['created_mappings'],
+            'processed_units': result.get('processed_units', 0),
+            'message': result.get('error') if not result['success'] else 'マッピング作成が完了しました'
+        })
+        
+    except Exception as e:
+        logging.error(f"マッピング作成エラー: {str(e)}")
+        return jsonify({
+            'status': 'error',
+            'message': 'マッピング作成に失敗しました'
+        }), 500

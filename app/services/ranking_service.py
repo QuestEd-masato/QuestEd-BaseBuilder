@@ -524,12 +524,38 @@ class RankingService:
         )
         
         if scope == 'school' and scope_id:
-            query = query.filter(User.school_id == scope_id)
+            # 学校フィルタ: users.school_id または class_enrollments経由
+            from app.models import ClassEnrollment, Class
+            query = query.outerjoin(
+                ClassEnrollment, User.id == ClassEnrollment.student_id
+            ).outerjoin(
+                Class, ClassEnrollment.class_id == Class.id
+            ).filter(
+                or_(
+                    User.school_id == scope_id,
+                    and_(
+                        ClassEnrollment.is_active == True,
+                        Class.school_id == scope_id
+                    )
+                )
+            )
         elif scope == 'class' and scope_id:
             from app.models import ClassEnrollment
             query = query.join(ClassEnrollment, User.id == ClassEnrollment.student_id).filter(
                 ClassEnrollment.class_id == scope_id,
                 ClassEnrollment.is_active == True
+            )
+        else:
+            # グローバルランキング: 学習データがある生徒のみ
+            query = query.filter(
+                or_(
+                    User.id.in_(
+                        db.session.query(AnswerRecord.student_id).distinct()
+                    ),
+                    User.id.in_(
+                        db.session.query(ActivityLog.student_id).distinct()
+                    )
+                )
             )
         
         return query
