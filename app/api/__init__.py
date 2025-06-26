@@ -566,68 +566,6 @@ def get_units():
             'message': '単元一覧の取得に失敗しました'
         }), 500
 
-@api_bp.route('/units/<int:unit_id>/progress', methods=['POST'])
-@login_required
-@api_limit()
-def update_unit_progress(unit_id):
-    """単元進捗更新API"""
-    if current_user.role != 'student':
-        return jsonify({'error': '学生のみアクセス可能です'}), 403
-    
-    try:
-        data = request.get_json()
-        completed_items = data.get('completed_items', 0)
-        correct_items = data.get('correct_items', 0)
-        study_time_minutes = data.get('study_time_minutes', 0)
-        
-        # 選択履歴を取得
-        selection = StudentUnitSelection.query.filter_by(
-            student_id=current_user.id,
-            unit_id=unit_id
-        ).first()
-        
-        if not selection:
-            return jsonify({
-                'status': 'error',
-                'message': 'この単元は選択されていません'
-            }), 404
-        
-        # 進捗を更新
-        selection.completed_items = completed_items
-        selection.correct_items = correct_items
-        selection.study_time_minutes += study_time_minutes
-        selection.last_activity_at = datetime.utcnow()
-        
-        # 進捗率を計算
-        if selection.total_items > 0:
-            selection.progress_percentage = (completed_items / selection.total_items) * 100
-        
-        # 完了判定
-        if selection.progress_percentage >= 80:  # 80%以上で完了とする
-            selection.status = 'completed'
-            selection.completed_at = datetime.utcnow()
-        
-        db.session.commit()
-        
-        return jsonify({
-            'status': 'success',
-            'message': '進捗を更新しました',
-            'data': {
-                'progress_percentage': float(selection.progress_percentage),
-                'status': selection.status,
-                'completed_items': selection.completed_items,
-                'correct_items': selection.correct_items,
-                'study_time_minutes': selection.study_time_minutes
-            }
-        })
-        
-    except Exception as e:
-        db.session.rollback()
-        logging.error(f"単元進捗更新エラー: {str(e)}")
-        return jsonify({
-            'status': 'error',
-            'message': '進捗の更新に失敗しました'
-        }), 500
 
 @api_bp.route('/speech/transcribe', methods=['POST'])
 @login_required

@@ -499,6 +499,39 @@ app/teacher/__init__.py
   - /curriculum/<id>/sync-task-status/<task_id>: タスクステータス
 ```
 
+### API修正完了 (2025-06-26)
+
+#### ✅ Phase 1 緊急修正実装完了
+1. **重複API関数修正** - update_unit_progress重複削除 (app/api/__init__.py:572)
+2. **単元進捗管理統合** - UnitProgressManager サービス実装
+3. **ランキングデータ修正** - class_enrollments JOIN対応完了
+
+#### API エンドポイント状況
+```
+app/api/__init__.py (現在の実装状況)
+- /units/select: 単元選択API (実装済み)
+- /units/<int:unit_id>/progress: 単元進捗更新API (修正済み - 重複削除)
+- /units/<int:unit_id>/details: 単元詳細取得API (実装済み)
+- /progress/unit/<int:unit_id>: 進捗データ取得API (新規追加)
+- /progress/auto-update: 全進捗自動更新API (新規追加)
+```
+
+#### Phase 1 実装詳細
+**1.1 カリキュラム変換修正**: curriculum_bridge_service.py
+- subject_id継承修正完了 (L146, L173)
+- school_id設定修正完了 (L151) 
+- created_by権限修正完了 (L152)
+
+**1.2 進捗データ連携**: unit_progress_manager.py 新規実装
+- answer_records→student_unit_selections自動連携
+- 学習記録からの進捗率計算
+- ステータス自動更新機能
+
+**1.3 ランキングデータ修正**: ranking_service.py
+- class_enrollments JOIN修正 (L529-L541)
+- NULL class_id対応強化 (L534-L540)
+- グローバルランキング学習データフィルタ (L549-L559)
+
 #### UI統合
 ```
 templates/base.html
