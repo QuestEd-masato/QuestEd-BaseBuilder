@@ -44,11 +44,9 @@ def chat():
             limit = min(request.args.get('limit', 20, type=int), 100)
             
             # 基本クエリ
-            query = ChatHistory.query.filter_by(student_id=current_user.id)
+            query = ChatHistory.query.filter_by(user_id=current_user.id)
             
-            # テーマでフィルタ
-            if theme_id:
-                query = query.filter_by(inquiry_theme_id=theme_id)
+            # Note: テーマによるフィルタは現在のDBスキーマでは未対応
             
             # 最新の履歴を取得
             history = query.order_by(ChatHistory.created_at.desc()).limit(limit).all()
@@ -58,20 +56,10 @@ def chat():
             for chat in reversed(history):  # 時系列順に並び替え
                 chat_item = {
                     'id': chat.id,
-                    'user_message': chat.user_message,
-                    'ai_response': chat.ai_response,
-                    'inquiry_theme_id': chat.inquiry_theme_id,
-                    'created_at': chat.created_at.isoformat(),
-                    'response_time': chat.response_time
+                    'message': chat.message,
+                    'is_user': chat.is_user,
+                    'created_at': chat.created_at.isoformat()
                 }
-                
-                # テーマ情報を含める
-                if chat.inquiry_theme:
-                    chat_item['theme'] = {
-                        'id': chat.inquiry_theme.id,
-                        'theme': chat.inquiry_theme.theme
-                    }
-                
                 chat_data.append(chat_item)
             
             return jsonify({
@@ -137,17 +125,24 @@ def chat():
             # 応答時間計算
             response_time = (datetime.utcnow() - start_time).total_seconds()
             
-            # チャット履歴保存
-            chat_record = ChatHistory(
-                student_id=current_user.id,
-                user_message=user_message,
-                ai_response=ai_response,
-                inquiry_theme_id=theme_id,
-                response_time=response_time,
+            # チャット履歴保存 - ユーザーメッセージ
+            user_chat = ChatHistory(
+                user_id=current_user.id,
+                message=user_message,
+                is_user=True,
                 created_at=datetime.utcnow()
             )
             
-            db.session.add(chat_record)
+            # AIレスポンス
+            ai_chat = ChatHistory(
+                user_id=current_user.id,
+                message=ai_response,
+                is_user=False,
+                created_at=datetime.utcnow()
+            )
+            
+            db.session.add(user_chat)
+            db.session.add(ai_chat)
             db.session.commit()
             
             logging.info(f"Chat completed: student_id={current_user.id}, theme_id={theme_id}, response_time={response_time:.2f}s")

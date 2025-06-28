@@ -87,7 +87,7 @@ def dashboard():
             
             # 最新のチャット履歴を取得（1件）
             latest_chat = ChatHistory.query.filter_by(
-                student_id=current_user.id,
+                user_id=current_user.id,
                 class_id=class_obj.id
             ).order_by(ChatHistory.created_at.desc()).first()
             

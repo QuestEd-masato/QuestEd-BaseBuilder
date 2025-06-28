@@ -153,9 +153,7 @@ class WeaknessDataCollector:
                 'id': log.id,
                 'activity': log.activity,
                 'reflection': log.reflection,
-                'created_at': log.created_at,
-                'main_theme_id': log.main_theme_id,
-                'inquiry_theme_id': log.inquiry_theme_id
+                'created_at': log.created_at
             } for log in logs]
             
         except Exception as e:
