@@ -34,7 +34,7 @@ class AIRecommendation(db.Model):
     )
     
     # リレーションシップ
-    student = db.relationship('User', backref='ai_recommendations')
+    student = db.relationship('User', backref=db.backref('ai_recommendations', cascade='all, delete-orphan'))
     
     def to_dict(self):
         """辞書形式に変換"""

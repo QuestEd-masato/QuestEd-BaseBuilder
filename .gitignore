@@ -1,18 +1,92 @@
+# Environment variables
 .env
+.env.local
+.env.*.local
+
+# Python
 *.pyc
+*.pyo
+*.pyd
 __pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
 venv/
 venv_linux/
+env/
+ENV/
+.venv/
+
+# Testing
 instance/
 .pytest_cache/
 .coverage
+.coverage.*
 htmlcov/
+.tox/
+.nox/
+nosetests.xml
+coverage.xml
+*.cover
+
+# Distribution / packaging
 dist/
 build/
 *.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# IDEs
 .DS_Store
-*.log
-static/uploads/
-*.db
 .idea/
-.vscode/ACCESS_CONTROL_VULNERABILITIES.md
+.vscode/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+logs/
+
+# Uploads (keeping this as is)
+static/uploads/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Backup files
+*.backup
+*.bak
+*.old
+*_backup*
+*_old*
+*.backup_*
+
+# Temporary files
+*.tmp
+*.temp
+relationship_analysis_report.txt
+current_packages.json
+
+# Quality reports
+quality_reports/
+
+# Celery
+celerybeat-schedule
+celerybeat.pid
+
+# Flask
+instance/
+.webassets-cache
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Security
+ACCESS_CONTROL_VULNERABILITIES.md

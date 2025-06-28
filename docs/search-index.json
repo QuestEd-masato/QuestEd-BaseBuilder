@@ -1,0 +1,351 @@
+{
+  "pages": [
+    {
+      "title": "Deployment",
+      "url": "deployment.md",
+      "content": "# Deployment Guide\n\nGenerated on 2025-06-28 07:02:29\n\n## 📋 Deployment Overview\n\nQuestEd can be deployed in various environments using different strategies.\n\n## 🐳 Docker Deployment\n\n### Dockerfile\n```dockerfile\nFROM python:3.9-slim\n\nWORKDIR /app\nCOPY requirements.txt .\nRUN pip install -r requirements.txt\n\nCOPY . .\nEXPOSE 5000\n\nCMD [\"gunicorn\", \"-w\", \"4\", \"-b\", \"0.0.0.0:5000\", \"app:app\"]\n```\n\n### Docker Compose\n```yaml\nversion: '3.8'\nservices:\n  web:\n    build: .\n    ports:\n      - \"5000:5000\"\n   ..."
+    },
+    {
+      "title": "Business_Requirements",
+      "url": "business_requirements.md",
+      "content": "# QuestEd ビジネス要件仕様書\n\n## 1. システム概要\n\n### 1.1 目的\nQuestEdは探究型学習を支援する教育プラットフォームです。教師と生徒が協働で学習プロセスを管理し、個別化された教育体験を提供します。\n\n### 1.2 主要ステークホルダー\n- **教師**: クラス管理、生徒評価、カリキュラム作成\n- **生徒**: 学習活動、課題提出、進捗確認\n- **管理者**: ユーザー管理、システム設定、分析\n\n### 1.3 システムの価値\n- 個別化された学習体験の提供\n- 探究型学習プロセスの体系化\n- AI技術を活用した教育支援\n- 学習データの可視化と分析\n\n## 2. 機能要件\n\n### 2.1 教師機能\n#### 2.1.1 クラス管理\n- **機能**: クラスの作成、編集、削除\n- **詳細**: 学年、科目、期間の設定\n- **成果物**: クラス一覧、クラス詳細画面\n\n#### 2.1.2 生徒管理\n- **機能**: 生徒の登録、編集、削除\n- **詳細**: 個人情報、学習履歴、評価記録\n- **成果物**: 生徒一覧、個別プロフィール\n..."
+    },
+    {
+      "title": "Teacher Guide",
+      "url": "teacher-guide.md",
+      "content": "# Teacher Guide\n\nGenerated on 2025-06-28 07:02:29\n\n## 📋 Overview\n\nQuestEd provides teachers with powerful tools for curriculum management, student evaluation, and learning analytics.\n\n## 🚀 Getting Started\n\n### Dashboard Overview\n- View class summaries\n- Monitor student progress\n- Access quick actions\n\n### Class Management\n1. Create and configure classes\n2. Enroll students\n3. Assign learning materials\n\n## 📚 Curriculum Management\n\n### Creating Curriculums\n1. Navigate to Curriculum section\n2. Click..."
+    },
+    {
+      "title": "Curriculum_V2_Guide",
+      "url": "curriculum_v2_guide.md",
+      "content": "# QuestEd カリキュラム機能 v2 ガイド\n\n## 🎯 概要\n\nカリキュラム機能 v2 は、従来の複雑なJSON構造を廃止し、シンプルなテーブル形式でカリキュラムを管理する新しいシステムです。\n\n### 主要改善点\n\n1. **シンプルなデータ構造** - Excelライクなテーブル形式\n2. **CSVとの完全互換** - インポート/エクスポートが簡単\n3. **BaseBuilder連携** - カテゴリベースの問題提案\n4. **モダンUI** - 直感的な編集インターフェース\n5. **高速化** - SQLクエリによる効率的なデータ処理\n\n## 🗄️ データベース構造\n\n### curriculum_items テーブル\n```sql\nCREATE TABLE curriculum_items (\n    id INT PRIMARY KEY AUTO_INCREMENT,\n    curriculum_id INT NOT NULL,\n    phase VARCHAR(100),              -- フェーズ（準備期、探究前半など）\n    week..."
+    },
+    {
+      "title": "Deployment_Strategy",
+      "url": "deployment_strategy.md",
+      "content": "# QuestEd 環境分離デプロイ戦略\n\n## 環境構成\n\n### 推奨環境構成\n```\nDevelopment → Staging → Production\n    ↓           ↓          ↓\n   開発環境    ステージング  本番環境\n```\n\n### 各環境の役割\n\n#### 1. Development (開発環境)\n- **目的**: 機能開発・デバッグ\n- **場所**: ローカルマシン\n- **データ**: テストデータ\n- **設定**: `DevelopmentConfig`\n\n#### 2. Staging (ステージング環境)\n- **目的**: 本番環境と同一構成でのテスト\n- **場所**: クラウド（本番と同等環境）\n- **データ**: 本番データのサニタイズ版\n- **設定**: `StagingConfig`\n\n#### 3. Production (本番環境)\n- **目的**: 実際のサービス提供\n- **場所**: クラウド（高可用性構成）\n- **データ**: 実データ\n- **設定**: `ProductionCo..."
+    },
+    {
+      "title": "Setup",
+      "url": "setup.md",
+      "content": "# Development Setup Guide\n\nGenerated on 2025-06-28 07:02:29\n\n## 📋 Prerequisites\n\n### Required Software\n- Python 3.8+\n- MySQL 8.0+\n- Redis (for caching)\n- Node.js (for frontend tools)\n\n### Development Tools\n- Git\n- Virtual environment manager\n- Code editor (VS Code recommended)\n\n## 🚀 Installation\n\n### 1. Clone Repository\n```bash\ngit clone <repository-url>\ncd quested\n```\n\n### 2. Create Virtual Environment\n```bash\npython -m venv venv\nsource venv/bin/activate  # Linux/Mac\n# or\nvenv\\Scripts\\activate ..."
+    },
+    {
+      "title": "Technical_Specification",
+      "url": "technical_specification.md",
+      "content": "# QuestEd 技術仕様書\n\n## 1. システム概要\n\n### 1.1 プロジェクト概要\nQuestEd は Flask ベースの教育プラットフォームで、探究型学習を支援する包括的なシステムです。\n\n### 1.2 技術スタック\n- **バックエンド**: Python 3.8+, Flask 2.2.3\n- **データベース**: MySQL 8.0+\n- **フロントエンド**: HTML5, CSS3, JavaScript (ES6), Bootstrap 4\n- **認証**: Flask-Login, Flask-WTF\n- **ORM**: SQLAlchemy (Flask-SQLAlchemy)\n- **マイグレーション**: Flask-Migrate (Alembic)\n- **タスクキュー**: Celery + Redis\n- **AI統合**: OpenAI GPT-4 API\n- **メール**: SMTP + Gmail API\n\n### 1.3 アーキテクチャパターン\n- **MVC アーキテクチャ**: Model-View-Controlle..."
+    },
+    {
+      "title": "Migration_Plan",
+      "url": "migration_plan.md",
+      "content": "# QuestEd 移行・改善計画書\n\n## 1. 現状分析と課題\n\n### 1.1 現在の技術的問題\n- **セキュリティ脆弱性**: XSS、SQLインジェクションリスク\n- **パフォーマンス問題**: N+1クエリ、最適化不足\n- **コード品質**: 技術的負債、重複コード\n- **テスト不足**: カバレッジ不十分、品質保証なし\n- **ドキュメント不足**: 仕様書、運用手順なし\n\n### 1.2 ビジネス要件の変化\n- **利用者数増加**: 現在50名 → 500名へ拡張予定\n- **機能追加要求**: モバイル対応、保護者機能\n- **運用要件**: 24時間稼働、99.5%可用性\n- **コンプライアンス**: 個人情報保護、セキュリティ基準\n\n## 2. 移行戦略\n\n### 2.1 段階的移行アプローチ\n```mermaid\ngraph LR\n    A[Phase 1<br/>安定化] --> B[Phase 2<br/>基盤整備]\n    B --> C[Phase 3<br/>機能改善]\n    C --> D[Phase 4<br/>拡張対応]\n```\n..."
+    },
+    {
+      "title": "Student Guide",
+      "url": "student-guide.md",
+      "content": "# Student Guide\n\nGenerated on 2025-06-28 07:02:29\n\n## 📋 Overview\n\nWelcome to QuestEd! This guide will help you navigate the learning platform and make the most of your educational experience.\n\n## 🚀 Getting Started\n\n### First Login\n1. Access QuestEd through your school's portal\n2. Login with your credentials\n3. Complete your profile setup\n\n### Dashboard Overview\n- View your progress\n- Access assigned materials\n- Check notifications\n\n## 📚 Learning Activities\n\n### Unit Selection\n1. Browse available..."
+    },
+    {
+      "title": "Architecture",
+      "url": "architecture.md",
+      "content": "# QuestEd System Architecture\n\nGenerated on 2025-06-28 07:02:29\n\n## 📊 System Overview\n\n- **Total Modules**: 204\n- **API Endpoints**: 1\n- **Database Models**: 11\n- **Lines of Code**: 60,156\n\n## 🏗️ Architecture Layers\n\n### Presentation Layer\n- Web UI (Flask Templates)\n- REST API (Flask-RESTful)\n- Static Assets (CSS, JavaScript)\n\n### Business Logic Layer\n- Services: 35 modules\n- Blueprints: 1 modules\n- Workflow Management\n\n### Data Access Layer\n- SQLAlchemy ORM\n- Database Models: 11 models\n- Migrat..."
+    },
+    {
+      "title": "Troubleshooting",
+      "url": "troubleshooting.md",
+      "content": "# Troubleshooting Guide\n\nGenerated on 2025-06-28 07:02:29\n\n## 🚨 Common Issues\n\n### Database Connection Errors\n\n#### Error: \"Access denied for user\"\n**Cause**: Incorrect database credentials\n**Solution**:\n1. Verify `.env` file settings\n2. Check MySQL user permissions\n3. Test connection manually\n\n```bash\nmysql -h $DB_HOST -u $DB_USERNAME -p$DB_PASSWORD $DB_NAME\n```\n\n#### Error: \"Can't connect to MySQL server\"\n**Cause**: MySQL service not running\n**Solution**:\n```bash\nsudo systemctl start mysql\nsud..."
+    },
+    {
+      "title": "Coding Standards",
+      "url": "coding-standards.md",
+      "content": "# Coding Standards\n\nGenerated on 2025-06-28 07:02:29\n\n## 📋 Python Standards\n\n### PEP 8 Compliance\n- Line length: 79 characters\n- Indentation: 4 spaces\n- Import ordering: standard, third-party, local\n\n### Naming Conventions\n- Functions: `snake_case`\n- Classes: `PascalCase`\n- Constants: `UPPER_SNAKE_CASE`\n- Variables: `snake_case`\n\n### Documentation\n```python\ndef example_function(param: str) -> bool:\n    \"\"\"\n    Brief description of function.\n    \n    Args:\n        param: Description of parameter\n..."
+    },
+    {
+      "title": "Admin Guide",
+      "url": "admin-guide.md",
+      "content": "# Administrator Guide\n\nGenerated on 2025-06-28 07:02:29\n\n## 📋 Overview\n\nThe QuestEd administrator interface provides comprehensive management capabilities for the educational platform.\n\n## 🚀 Getting Started\n\n### Initial Setup\n1. Access the admin panel at `/admin`\n2. Login with administrator credentials\n3. Configure system settings\n\n### User Management\n- Create and manage user accounts\n- Assign roles (teacher, student)\n- Manage school enrollments\n\n### System Configuration\n- Configure application ..."
+    }
+  ],
+  "apis": [
+    {
+      "path": "/",
+      "method": "GET",
+      "description": "BaseBuilder メインページ - ダッシュボード機能",
+      "module": "basebuilder/routes.py"
+    }
+  ],
+  "models": [
+    {
+      "name": "ReviewSet",
+      "table": "review_sets",
+      "fields": [
+        "__tablename__",
+        "id",
+        "student_id",
+        "title",
+        "description",
+        "generation_type",
+        "target_weakness_areas",
+        "difficulty_level",
+        "total_problems",
+        "estimated_time_minutes",
+        "review_type",
+        "status",
+        "expires_at",
+        "generated_by_ai",
+        "ai_generation_params",
+        "created_at",
+        "updated_at",
+        "__table_args__",
+        "student",
+        "items"
+      ]
+    },
+    {
+      "name": "ReviewSetItem",
+      "table": "review_set_items",
+      "fields": [
+        "__tablename__",
+        "id",
+        "review_set_id",
+        "problem_id",
+        "order_index",
+        "weight",
+        "expected_difficulty",
+        "weakness_category",
+        "selection_reason",
+        "is_completed",
+        "student_answer",
+        "is_correct",
+        "time_spent_seconds",
+        "attempts_count",
+        "completed_at",
+        "__table_args__",
+        "basic_knowledge_item"
+      ]
+    },
+    {
+      "name": "CurriculumUnit",
+      "table": "curriculum_units",
+      "fields": [
+        "__tablename__",
+        "id",
+        "subject_id",
+        "unit_code",
+        "title",
+        "description",
+        "difficulty_level",
+        "estimated_minutes",
+        "prerequisites",
+        "learning_objectives",
+        "tags",
+        "order_index",
+        "is_active",
+        "school_id",
+        "created_by",
+        "legacy_curriculum_id",
+        "created_at",
+        "updated_at",
+        "__table_args__",
+        "subject",
+        "school",
+        "creator",
+        "legacy_curriculum",
+        "unit_mappings",
+        "student_selections",
+        "ai_recommendations"
+      ]
+    },
+    {
+      "name": "UnitItemMapping",
+      "table": "unit_item_mappings",
+      "fields": [
+        "__tablename__",
+        "id",
+        "unit_id",
+        "item_id",
+        "weight",
+        "order_index",
+        "is_required",
+        "created_at",
+        "__table_args__",
+        "basic_knowledge_item"
+      ]
+    },
+    {
+      "name": "StudentUnitSelection",
+      "table": "student_unit_selections",
+      "fields": [
+        "__tablename__",
+        "id",
+        "student_id",
+        "unit_id",
+        "class_id",
+        "status",
+        "progress_percentage",
+        "total_items",
+        "completed_items",
+        "correct_items",
+        "started_at",
+        "completed_at",
+        "last_activity_at",
+        "study_time_minutes",
+        "notes",
+        "approval_status",
+        "completion_request_date",
+        "teacher_comments",
+        "approved_by",
+        "approved_at",
+        "rejection_reason",
+        "created_at",
+        "updated_at",
+        "__table_args__",
+        "student",
+        "class_obj",
+        "approver"
+      ]
+    },
+    {
+      "name": "ClassLearningSettings",
+      "table": "class_learning_settings",
+      "fields": [
+        "__tablename__",
+        "id",
+        "class_id",
+        "allow_free_progress",
+        "require_unit_order",
+        "max_concurrent_units",
+        "min_completion_rate",
+        "allow_unit_skip",
+        "show_difficulty_level",
+        "enable_peer_comparison",
+        "require_teacher_approval",
+        "auto_approve_threshold",
+        "approval_comment_required",
+        "allow_resubmission",
+        "created_by",
+        "created_at",
+        "updated_at",
+        "__table_args__",
+        "class_obj",
+        "creator"
+      ]
+    },
+    {
+      "name": "LearningPath",
+      "table": "learning_paths",
+      "fields": [
+        "__tablename__",
+        "id",
+        "class_id",
+        "path_name",
+        "description",
+        "is_default",
+        "is_active",
+        "created_by",
+        "created_at",
+        "updated_at",
+        "__table_args__",
+        "class_obj",
+        "creator"
+      ]
+    },
+    {
+      "name": "EmailLog",
+      "table": "email_logs",
+      "fields": [
+        "__tablename__",
+        "id",
+        "recipient_id",
+        "recipient_email",
+        "sender_email",
+        "email_type",
+        "subject",
+        "body",
+        "template_name",
+        "template_variables",
+        "status",
+        "error_message",
+        "smtp_message_id",
+        "retry_count",
+        "max_retries",
+        "scheduled_at",
+        "sent_at",
+        "opened_at",
+        "clicked_at",
+        "bounced_at",
+        "created_at",
+        "updated_at",
+        "__table_args__",
+        "recipient"
+      ]
+    },
+    {
+      "name": "AIRecommendation",
+      "table": "ai_recommendations",
+      "fields": [
+        "__tablename__",
+        "id",
+        "student_id",
+        "recommendation_type",
+        "context_data",
+        "ai_model",
+        "prompt_template",
+        "ai_response",
+        "recommended_items",
+        "confidence_score",
+        "reasoning",
+        "is_accepted",
+        "is_effective",
+        "feedback_text",
+        "session_id",
+        "created_at",
+        "updated_at",
+        "__table_args__",
+        "student"
+      ]
+    },
+    {
+      "name": "SpeechTranscription",
+      "table": "speech_transcriptions",
+      "fields": [
+        "__tablename__",
+        "id",
+        "user_id",
+        "transcription",
+        "usage_context",
+        "duration",
+        "created_at",
+        "session_id",
+        "cleaned_text",
+        "confidence_score",
+        "language_code",
+        "context_id",
+        "is_processed",
+        "error_message",
+        "updated_at",
+        "__table_args__",
+        "user"
+      ]
+    },
+    {
+      "name": "Subject",
+      "table": "subjects",
+      "fields": [
+        "__tablename__",
+        "id",
+        "name",
+        "code",
+        "ai_system_prompt",
+        "learning_objectives",
+        "assessment_criteria",
+        "grade_level",
+        "is_active",
+        "created_at",
+        "updated_at",
+        "classes",
+        "chat_histories"
+      ]
+    }
+  ]
+}

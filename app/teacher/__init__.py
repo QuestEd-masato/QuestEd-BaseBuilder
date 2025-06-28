@@ -71,16 +71,10 @@ from .modules.synchronization import (
     auto_sync_settings
 )
 
-# 主要なルートエンドポイントを元の名前空間で維持
-@teacher_bp.route('/teacher_dashboard')
-def teacher_dashboard_redirect():
-    """元のダッシュボードルートへのリダイレクト（後方互換性）"""
-    return dashboard()
-
-@teacher_bp.route('/classes')
-def teacher_classes_redirect():
-    """元のクラス一覧ルートへのリダイレクト（後方互換性）"""
-    return classes()
+# ルート重複を回避するため、リダイレクトルートは削除
+# 既存のテンプレートは新しいURL名前空間を使用：
+# - teacher_dashboard.dashboard
+# - teacher_class_management.classes
 
 # このファイルをインポートした際の初期化
 def init_teacher_module(app):

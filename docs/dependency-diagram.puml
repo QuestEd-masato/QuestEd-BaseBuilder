@@ -1,0 +1,486 @@
+@startuml
+!theme plain
+title QuestEd Module Dependencies
+
+component celery_worker
+component migrate_curriculum_v2
+component fix_url_for
+component app
+component run_simple
+component confirm_accounts
+component start_daily_email_cron
+component test_email_simple
+component ai_helpers
+component verify_fixes
+component update_url_for_blueprints
+component initialize_curriculum_v2
+component debug_student_buttons
+component add_user_columns
+component check_and_fix_schema
+component inspect_db
+component verify_migration
+component pre_deploy_check
+component fix_final_urls
+component check_db_status
+component add_activity_column
+component test_student_dashboard_routes
+component docs_generator
+component ai_curriculum_helpers
+component update_all_accounts
+component verify_setup
+component run
+component config
+component fix_admin_urls
+component test_student_dashboard_improvements
+component quality_check
+component fix_test_issues
+component extensions
+component manage_celery
+component test_routes
+component test_models
+component fix_remaining_urls
+component db_migration
+component config_secure
+component test_fixes
+component test_csrf
+component run_tests
+component test_routes_migration
+component check_student_approval
+component simple_model_check
+component test_imports
+component academic
+component school
+component enrollment
+component staging
+component production
+component test_daily_email
+component final_deployment_check
+component send_daily_summary
+component pre_deploy_ranking_check
+component phase3_data_integrity
+component models
+component exporters
+component __init__
+component routes
+component routes_legacy
+component importers
+component app_simple
+component app_new
+component app_fixed
+component app_factory
+component test_ranking
+component test_base
+component __init__
+component conftest_fixtures
+component conftest
+component blueprint_registry
+component __init__
+component version
+component special_routes
+component email
+component admin
+component categories
+component sessions
+component progress
+component __init__
+component problems
+component analytics
+component test_models_extended
+component test_services
+component test_utils
+component test_models
+component test_refactoring
+component test_user_flows
+component test_unit_management
+component test_routes
+component test_security
+component exceptions
+component api_security
+component rate_limiting
+component security_enhancements
+component security_headers
+component csv_helper
+component milestone
+component email_sender
+component logging_config
+component auth
+component database_security
+component curriculum
+component decorators
+component health_check
+component file_security
+component input_validator
+component security
+component model_helpers
+component safe_queries
+component database
+component config_validator
+component validators
+component error_handler
+component __init__
+component user_management
+component school_management
+component analytics
+component base_service
+component security_manager
+component data_access
+component __init__
+component __init__
+component security_config
+component __init__
+component pdf_generator
+component common
+component review_system
+component curriculum_unit
+component email_log
+component __init__
+component ai_recommendation
+component speech_transcription
+component subject
+component init_subjects
+component __init__
+component review_system
+component student_tools
+component __init__
+component admin_teacher
+component chat_ai
+component __init___legacy
+component data_integrity
+component rankings
+component base
+component unit_management
+component __init__
+component helpers
+component curriculum_helpers
+component __init__
+component secure_auth
+component password_validator
+component curriculum_unit_service
+component base_service
+component spaced_repetition
+component unified_progress_service_v2
+component weakness_analyzer
+component review_service
+component auto_sync_service
+component speech_service
+component ai_recommender
+component unit_item_mapping_service
+component curriculum_service
+component __init__
+component unified_curriculum_service
+component user_service
+component unified_progress_service
+component pattern_analyzer
+component ai_recommendation_service
+component curriculum_bridge_service
+component curriculum_service_v2
+component unit_completion_service
+component ranking_service
+component pattern_analyzer_example
+component unit_progress_manager
+component scheduled_sync_service
+component __init__
+component utils
+component __init__
+component sync_tasks
+component daily_report
+component synchronization
+component dashboard
+component student_evaluation
+component class_management
+component curriculum_management
+component approval_workflow
+component analytics
+component __init__
+component progress_manager
+component statistics_calculator
+component __init__
+component data_collector
+component severity_evaluator
+component recommendation_generator
+component pattern_analyzer
+component basebuilder_analyzer
+component persistence_service
+component __init__
+component goals_todos
+component activities
+component surveys
+component dashboard
+
+celery_worker --> tasks
+celery_worker --> tasks
+migrate_curriculum_v2 --> models
+migrate_curriculum_v2 --> curriculum_service_v2
+migrate_curriculum_v2 --> models
+migrate_curriculum_v2 --> curriculum_service_v2
+test_email_simple --> email_sender
+pre_deploy_check --> models
+pre_deploy_check --> file_security
+manage_celery --> tasks
+manage_celery --> daily_report
+manage_celery --> daily_report
+manage_celery --> daily_report
+test_routes --> models
+test_models --> models
+test_fixes --> student
+test_fixes --> teacher
+test_fixes --> models
+test_fixes --> student
+test_fixes --> teacher
+run_tests --> teacher
+run_tests --> student
+run_tests --> api
+run_tests --> unit_item_mapping_service
+run_tests --> dashboard
+run_tests --> class_management
+run_tests --> curriculum_management
+run_tests --> dashboard
+run_tests --> activities
+run_tests --> surveys
+run_tests --> goals_todos
+run_tests --> teacher
+run_tests --> student
+run_tests --> models
+run_tests --> unit_item_mapping_service
+run_tests --> data_integrity
+academic --> models
+school --> models
+enrollment --> models
+send_daily_summary --> models
+send_daily_summary --> email_sender
+phase3_data_integrity --> models
+routes_legacy --> models
+app_simple --> auth
+app_simple --> admin
+app_simple --> teacher
+app_simple --> student
+app_simple --> api
+app_simple --> models
+app_simple --> models
+app_fixed --> auth
+app_fixed --> admin
+app_fixed --> teacher
+app_fixed --> student
+app_fixed --> api
+app_fixed --> models
+test_ranking --> models
+test_ranking --> ranking_service
+test_base --> models
+test_base --> models
+conftest_fixtures --> models
+conftest --> models
+conftest --> api_security
+blueprint_registry --> rate_limiting
+blueprint_registry --> auth
+blueprint_registry --> admin
+blueprint_registry --> teacher
+blueprint_registry --> student
+blueprint_registry --> api
+special_routes --> models
+admin --> models
+analytics --> models
+analytics --> ranking_service
+test_models_extended --> models
+test_services --> unified_curriculum_service
+test_services --> unified_progress_service_v2
+test_services --> progress_manager
+test_services --> models
+test_services --> models
+test_utils --> security
+test_utils --> input_validator
+test_utils --> error_handler
+test_utils --> database_security
+test_utils --> api_security
+test_refactoring --> models
+test_refactoring --> curriculum_management
+test_refactoring --> teacher
+test_refactoring --> goals_todos
+test_refactoring --> student
+test_refactoring --> unit_item_mapping_service
+test_refactoring --> analytics
+test_refactoring --> student
+test_refactoring --> dashboard
+test_refactoring --> activities
+test_user_flows --> models
+test_unit_management --> models
+test_unit_management --> models
+test_security --> models
+test_security --> security
+test_security --> input_validator
+test_security --> api_security
+test_security --> database_security
+api_security --> input_validator
+auth --> models
+curriculum --> models
+decorators --> database
+health_check --> ranking_service
+health_check --> models
+model_helpers --> models
+model_helpers --> models
+model_helpers --> models
+model_helpers --> models
+safe_queries --> models
+error_handler --> exceptions
+user_management --> models
+user_management --> admin
+user_management --> password_validator
+user_management --> file_security
+user_management --> email_sender
+user_management --> csv_helper
+school_management --> models
+school_management --> admin
+base_service --> exceptions
+review_system --> models
+review_system --> rate_limiting
+init_subjects --> models
+init_subjects --> subject
+student_tools --> models
+student_tools --> rate_limiting
+admin_teacher --> models
+admin_teacher --> rate_limiting
+chat_ai --> models
+chat_ai --> ai
+chat_ai --> rate_limiting
+__init___legacy --> models
+__init___legacy --> ai
+__init___legacy --> rate_limiting
+__init___legacy --> unit_completion_service
+__init___legacy --> models
+__init___legacy --> models
+__init___legacy --> ranking_service
+__init___legacy --> ranking_service
+__init___legacy --> models
+__init___legacy --> ai_recommender
+__init___legacy --> ai_recommender
+__init___legacy --> ai_recommender
+__init___legacy --> weakness_analyzer
+__init___legacy --> spaced_repetition
+__init___legacy --> spaced_repetition
+__init___legacy --> analytics
+__init___legacy --> ranking_service
+__init___legacy --> ranking_service
+__init___legacy --> unit_progress_manager
+__init___legacy --> unit_progress_manager
+__init___legacy --> unit_progress_manager
+__init___legacy --> models
+__init___legacy --> ai_recommender
+__init___legacy --> spaced_repetition
+__init___legacy --> validators
+__init___legacy --> csv_helper
+__init___legacy --> models
+data_integrity --> models
+data_integrity --> unit_item_mapping_service
+data_integrity --> decorators
+data_integrity --> logger
+rankings --> models
+rankings --> rate_limiting
+base --> exceptions
+unit_management --> models
+unit_management --> unit_completion_service
+unit_management --> rate_limiting
+secure_auth --> models
+secure_auth --> password_validator
+secure_auth --> security_enhancements
+secure_auth --> rate_limiting
+secure_auth --> email_sender
+curriculum_unit_service --> models
+spaced_repetition --> models
+spaced_repetition --> weakness_analyzer
+spaced_repetition --> exceptions
+unified_progress_service_v2 --> base_service
+unified_progress_service_v2 --> data_access
+unified_progress_service_v2 --> progress_manager
+weakness_analyzer --> models
+weakness_analyzer --> exceptions
+review_service --> models
+auto_sync_service --> models
+auto_sync_service --> curriculum_bridge_service
+auto_sync_service --> realtime
+speech_service --> models
+ai_recommender --> models
+ai_recommender --> pattern_analyzer
+ai_recommender --> exceptions
+unit_item_mapping_service --> models
+unit_item_mapping_service --> logger
+curriculum_service --> models
+curriculum_service --> models
+curriculum_service --> models
+unified_curriculum_service --> base_service
+unified_curriculum_service --> data_access
+unified_curriculum_service --> models
+user_service --> models
+user_service --> base_service
+user_service --> exceptions
+user_service --> validators
+user_service --> validators
+unified_progress_service --> models
+unified_progress_service --> models
+ai_recommendation_service --> models
+ai_recommendation_service --> curriculum_unit_service
+curriculum_bridge_service --> models
+curriculum_service_v2 --> models
+curriculum_service_v2 --> csv_helper
+unit_completion_service --> models
+ranking_service --> models
+ranking_service --> models
+ranking_service --> validators
+ranking_service --> models
+ranking_service --> models
+pattern_analyzer_example --> pattern_analyzer
+pattern_analyzer_example --> models
+pattern_analyzer_example --> pattern_analyzer
+unit_progress_manager --> models
+scheduled_sync_service --> models
+scheduled_sync_service --> auto_sync_service
+utils --> models
+utils --> models
+utils --> models
+utils --> models
+sync_tasks --> tasks
+sync_tasks --> auto_sync_service
+sync_tasks --> realtime
+sync_tasks --> scheduled_sync_service
+sync_tasks --> auto_sync_service
+sync_tasks --> scheduled_sync_service
+sync_tasks --> realtime
+sync_tasks --> realtime
+daily_report --> tasks
+daily_report --> models
+daily_report --> email_sender
+daily_report --> ai
+synchronization --> models
+synchronization --> curriculum_bridge_service
+synchronization --> auto_sync_service
+synchronization --> sync_service
+synchronization --> models
+synchronization --> models
+synchronization --> models
+synchronization --> models
+synchronization --> models
+dashboard --> models
+dashboard --> model_helpers
+dashboard --> models
+student_evaluation --> models
+student_evaluation --> ai
+student_evaluation --> helpers
+student_evaluation --> models
+class_management --> models
+class_management --> model_helpers
+curriculum_management --> models
+curriculum_management --> ai
+curriculum_management --> curriculum_bridge_service
+approval_workflow --> models
+approval_workflow --> unit_completion_service
+progress_manager --> base_service
+progress_manager --> models
+progress_manager --> data_access
+progress_manager --> data_access
+progress_manager --> data_access
+progress_manager --> data_access
+data_collector --> models
+persistence_service --> models
+goals_todos --> models
+goals_todos --> model_helpers
+activities --> models
+surveys --> models
+@enduml

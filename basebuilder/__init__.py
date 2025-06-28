@@ -2,9 +2,13 @@
 def init_app(app):
     """BaseBuilderモジュールをアプリケーションに初期化する"""
     
-    # Blueprintの登録 - ここでBlueprintを登録します
-    from basebuilder.routes import basebuilder_module
-    app.register_blueprint(basebuilder_module)
+    # 新しいモジュラー構造のBlueprintを登録
+    from basebuilder.routes import register_basebuilder_routes
+    register_basebuilder_routes(app)
+    
+    # レガシーサポート用（必要に応じて後で削除）
+    # from basebuilder.routes import basebuilder_module
+    # app.register_blueprint(basebuilder_module)
     
     # 管理画面へのモデル追加（Flask-Adminが利用可能な場合のみ）
     with app.app_context():

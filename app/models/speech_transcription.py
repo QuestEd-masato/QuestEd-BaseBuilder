@@ -33,7 +33,7 @@ class SpeechTranscription(db.Model):
     )
     
     # リレーションシップ
-    user = db.relationship('User', backref='speech_transcriptions')
+    user = db.relationship('User', backref=db.backref('speech_transcriptions', cascade='all, delete-orphan'))
     
     def to_dict(self):
         """辞書形式に変換"""

@@ -1,0 +1,31 @@
+{
+  "info": {
+    "name": "QuestEd API",
+    "description": "QuestEd educational platform API collection",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "GET /",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            ""
+          ]
+        },
+        "description": "BaseBuilder メインページ - ダッシュボード機能"
+      }
+    }
+  ]
+}

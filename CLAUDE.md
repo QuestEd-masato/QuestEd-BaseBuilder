@@ -338,15 +338,14 @@ student_unit_selections: (546 records)
 2. **Phase 2**: Integrated management dashboard  
 3. **Phase 3**: Automatic synchronization system
 
-#### Database Schema Changes
+#### Database Schema Changes (Updated 2025-06-28)
 ```sql
 -- Bridge-related fields added to existing tables
 ALTER TABLE curriculums ADD COLUMN is_converted_to_units BOOLEAN DEFAULT FALSE;
 ALTER TABLE curriculum_units ADD COLUMN legacy_curriculum_id INT;
 
--- New tables for auto-sync functionality  
-CREATE TABLE auto_sync_settings (...);
-CREATE TABLE sync_logs (...);
+-- Note: auto_sync_settings and sync_logs tables are NOT yet implemented
+-- Auto-sync functionality currently uses curriculum_data JSON field instead
 ```
 
 ### Performance & Indexing
@@ -943,13 +942,16 @@ def create_unit_item_mappings():
 #### **カラム名変更マイグレーション（Phase 1で修正済み）**
 ✅ **アプリケーション側対応完了** - 以下のカラム名変更に対するコード修正済み:
 ```sql
--- RDS側での実行が必要（まだ未実行の可能性）
-ALTER TABLE activity_logs CHANGE COLUMN timestamp created_at DATETIME;
-ALTER TABLE chat_history CHANGE COLUMN timestamp created_at DATETIME;  
-ALTER TABLE answer_records CHANGE COLUMN timestamp created_at DATETIME;
-ALTER TABLE proficiency_records CHANGE COLUMN last_updated updated_at DATETIME;
-ALTER TABLE text_proficiency_records CHANGE COLUMN last_updated updated_at DATETIME;
-ALTER TABLE word_proficiency_records CHANGE COLUMN last_updated updated_at DATETIME;
+-- ⚠️ 重要: これらのカラム名変更はアプリケーション側で対応済みですが、
+-- データベース側での実行はコメントアウトされています（phase2_approval_workflow.sql参照）
+-- 本番環境では手動でカラム名変更を実行する必要があります
+
+-- ALTER TABLE activity_logs CHANGE COLUMN timestamp created_at DATETIME;
+-- ALTER TABLE chat_history CHANGE COLUMN timestamp created_at DATETIME;  
+-- ALTER TABLE answer_records CHANGE COLUMN timestamp created_at DATETIME;
+-- ALTER TABLE proficiency_records CHANGE COLUMN last_updated updated_at DATETIME;
+-- ALTER TABLE text_proficiency_records CHANGE COLUMN last_updated updated_at DATETIME;
+-- ALTER TABLE word_proficiency_records CHANGE COLUMN last_updated updated_at DATETIME;
 ```
 
 #### **実装完了による運用移行**
@@ -1374,3 +1376,412 @@ def unified_progress_update():
 4. **ドキュメント**: 用途・呼び出し元の明記
 
 この包括的な分析により、QuestEdシステムの保守性・拡張性・パフォーマンスを大幅に向上させることができます。
+
+---
+
+## 🍝 スパゲッティコード撲滅計画 (2025-06-27)
+
+### 🚨 現状分析：重大な構造的問題
+
+#### 発見された主要問題
+1. **モノリシックファイル**: 3,415行のroutes.py
+2. **Godクラス**: 1,259行のサービス
+3. **深いネスト**: 6階層以上の複雑な条件分岐
+4. **重複ロジック**: 進捗計算が複数箇所に分散
+5. **密結合**: モジュール間の相互依存
+6. **マジックナンバー**: 80+ファイルにハードコード
+7. **不一致なエラーハンドリング**: print文とログの混在
+
+### 📋 段階的リファクタリング計画
+
+#### **Phase 4: 緊急構造改善（2-3週間）**
+
+##### 4.1 モノリシックファイル分割
+```python
+# basebuilder/routes.py (3,415行) → 分割計画
+basebuilder/
+├── __init__.py                 # Blueprint統合 (50行)
+├── routes/
+│   ├── __init__.py            # ルート登録 (30行)
+│   ├── categories.py          # カテゴリ管理 (400行)
+│   ├── problems.py            # 問題管理 (600行)
+│   ├── sessions.py            # セッション管理 (500行)
+│   ├── progress.py            # 進捗管理 (450行)
+│   ├── analytics.py           # 分析・統計 (300行)
+│   ├── admin.py               # 管理機能 (350行)
+│   └── api.py                 # API エンドポイント (400行)
+└── services/
+    ├── problem_service.py     # 問題ビジネスロジック
+    ├── session_service.py     # セッションロジック
+    └── analytics_service.py   # 分析ロジック
+```
+
+##### 4.2 Godクラス分解
+```python
+# app/services/unified_progress_service.py (1,259行) → 分解計画
+app/services/progress/
+├── __init__.py
+├── unit_progress.py           # 単元進捗管理 (300行)
+├── learning_analytics.py     # 学習分析 (350行)
+├── mastery_tracker.py         # 習熟度追跡 (250行)
+├── progress_calculator.py     # 進捗計算 (200行)
+└── progress_aggregator.py     # 進捗集計 (150行)
+
+# app/services/weakness_analyzer.py (1,193行) → 分解計画
+app/services/analysis/
+├── __init__.py
+├── weakness_detector.py       # 弱点検出 (300行)
+├── pattern_analyzer.py        # パターン分析 (280行)
+├── recommendation_engine.py   # 推薦エンジン (250行)
+├── difficulty_assessor.py     # 難易度評価 (200行)
+└── learning_path_optimizer.py # 学習パス最適化 (160行)
+```
+
+##### 4.3 API モジュール分割
+```python
+# app/api/__init__.py (1,710行) → 分割計画
+app/api/
+├── __init__.py                # Blueprint統合 (50行)
+├── v1/
+│   ├── __init__.py           # API v1 統合
+│   ├── units.py              # 単元API (300行)
+│   ├── progress.py           # 進捗API (250行)
+│   ├── chat.py               # チャットAPI (200行)
+│   ├── evaluations.py        # 評価API (180行)
+│   ├── rankings.py           # ランキングAPI (220行)
+│   ├── recommendations.py    # 推薦API (150行)
+│   ├── reviews.py            # 復習API (200行)
+│   └── approvals.py          # 承認API (300行)
+└── middleware/
+    ├── auth.py               # 認証ミドルウェア
+    ├── validation.py         # バリデーション
+    └── rate_limiting.py      # レート制限
+```
+
+#### **Phase 5: 構造最適化（3-4週間）**
+
+##### 5.1 ビジネスロジック抽出
+```python
+# ルートハンドラの簡素化例
+# 修正前（routes.py 内）
+@app.route('/problems/<int:problem_id>')
+def view_problem(problem_id):
+    # 50行のビジネスロジック
+    problem = Problem.query.get_or_404(problem_id)
+    if not current_user.can_access(problem):
+        flash('権限がありません')
+        return redirect('/')
+    # ... 複雑な処理 ...
+    return render_template('problem.html', problem=problem)
+
+# 修正後
+@problems_bp.route('/<int:problem_id>')
+@login_required
+def view_problem(problem_id):
+    try:
+        problem_data = ProblemService.get_problem_for_user(
+            problem_id, current_user.id
+        )
+        return render_template('problem.html', **problem_data)
+    except PermissionError:
+        flash('権限がありません')
+        return redirect(url_for('index'))
+    except Exception as e:
+        logger.error(f"Problem view error: {e}")
+        return render_template('error.html'), 500
+```
+
+##### 5.2 共通基底クラス設計
+```python
+# app/services/base.py
+from abc import ABC, abstractmethod
+from typing import Any, Dict, Optional
+from app.models import db
+from app.utils.logger import get_logger
+
+class BaseService(ABC):
+    """全サービスの基底クラス"""
+    
+    def __init__(self):
+        self.db = db
+        self.logger = get_logger(self.__class__.__name__)
+    
+    def execute_with_transaction(self, operation, *args, **kwargs):
+        """トランザクション付き実行"""
+        try:
+            self.db.session.begin()
+            result = operation(*args, **kwargs)
+            self.db.session.commit()
+            return result
+        except Exception as e:
+            self.db.session.rollback()
+            self.logger.error(f"Transaction failed: {e}")
+            raise
+    
+    @abstractmethod
+    def validate_permissions(self, user_id: int, resource_id: int) -> bool:
+        """権限検証（各サービスで実装）"""
+        pass
+    
+    def log_activity(self, action: str, user_id: int, details: Dict[str, Any]):
+        """共通アクティビティログ"""
+        self.logger.info(f"Action: {action}, User: {user_id}, Details: {details}")
+
+# 具体的な実装例
+class ProblemService(BaseService):
+    def validate_permissions(self, user_id: int, problem_id: int) -> bool:
+        # 権限チェックロジック
+        pass
+    
+    def get_problem_for_user(self, problem_id: int, user_id: int) -> Dict[str, Any]:
+        if not self.validate_permissions(user_id, problem_id):
+            raise PermissionError("Access denied")
+        
+        # ビジネスロジック
+        problem = Problem.query.get_or_404(problem_id)
+        return {
+            'problem': problem,
+            'user_progress': self._get_user_progress(user_id, problem_id),
+            'recommendations': self._get_recommendations(user_id, problem_id)
+        }
+```
+
+##### 5.3 定数・設定管理
+```python
+# app/constants.py
+"""アプリケーション定数定義"""
+
+# データベース制約
+class DBConstraints:
+    USERNAME_MAX_LENGTH = 50
+    EMAIL_MAX_LENGTH = 255
+    DESCRIPTION_MAX_LENGTH = 1000
+    TITLE_MAX_LENGTH = 200
+
+# API制限
+class APILimits:
+    DEFAULT_PAGE_SIZE = 20
+    MAX_PAGE_SIZE = 100
+    REQUEST_TIMEOUT = 30
+    RATE_LIMIT_PER_HOUR = 1000
+
+# 進捗計算
+class ProgressConstants:
+    MASTERY_THRESHOLD = 80.0
+    RETRY_PENALTY = 0.1
+    TIME_BONUS_FACTOR = 1.2
+    DIFFICULTY_WEIGHTS = {
+        1: 1.0,  # Easy
+        2: 1.5,  # Medium  
+        3: 2.0,  # Hard
+        4: 3.0,  # Expert
+        5: 5.0   # Master
+    }
+
+# エラーメッセージ
+class ErrorMessages:
+    PERMISSION_DENIED = "この操作を実行する権限がありません"
+    RESOURCE_NOT_FOUND = "指定されたリソースが見つかりません"
+    VALIDATION_ERROR = "入力データに不正な値が含まれています"
+    SERVER_ERROR = "サーバーエラーが発生しました"
+```
+
+##### 5.4 エラーハンドリング統一
+```python
+# app/utils/error_handler.py
+import logging
+from typing import Tuple, Dict, Any
+from flask import jsonify, current_app
+
+class ErrorHandler:
+    """統一エラーハンドリング"""
+    
+    @staticmethod
+    def handle_api_error(error: Exception) -> Tuple[Dict[str, Any], int]:
+        """API エラーの統一処理"""
+        error_map = {
+            PermissionError: (403, "権限エラー"),
+            ValueError: (400, "入力エラー"),
+            FileNotFoundError: (404, "リソース未発見"),
+            Exception: (500, "サーバーエラー")
+        }
+        
+        status_code, message = error_map.get(
+            type(error), error_map[Exception]
+        )
+        
+        current_app.logger.error(f"API Error: {error}")
+        
+        return {
+            'success': False,
+            'error': message,
+            'details': str(error) if current_app.debug else None
+        }, status_code
+    
+    @staticmethod
+    def handle_web_error(error: Exception) -> str:
+        """Web エラーの統一処理"""
+        current_app.logger.error(f"Web Error: {error}")
+        return render_template('error.html', error=error)
+
+# 使用例
+@api_bp.route('/problems/<int:problem_id>')
+def get_problem(problem_id):
+    try:
+        return ProblemService.get_problem_data(problem_id)
+    except Exception as e:
+        return ErrorHandler.handle_api_error(e)
+```
+
+#### **Phase 6: 品質保証強化（2-3週間）**
+
+##### 6.1 依存性注入の導入
+```python
+# app/dependencies.py
+from typing import Protocol
+
+class IProblemService(Protocol):
+    def get_problem(self, problem_id: int) -> Problem: ...
+    def update_progress(self, user_id: int, problem_id: int) -> bool: ...
+
+class IProgressService(Protocol):
+    def calculate_progress(self, user_id: int) -> float: ...
+    def get_weak_areas(self, user_id: int) -> List[str]: ...
+
+# app/services/container.py
+class ServiceContainer:
+    """サービス依存性管理"""
+    _instances = {}
+    
+    @classmethod
+    def register(cls, interface: type, implementation: type):
+        cls._instances[interface] = implementation
+    
+    @classmethod
+    def get(cls, interface: type):
+        if interface not in cls._instances:
+            raise ValueError(f"Service {interface} not registered")
+        return cls._instances[interface]()
+
+# 初期化
+ServiceContainer.register(IProblemService, ProblemService)
+ServiceContainer.register(IProgressService, ProgressService)
+```
+
+##### 6.2 コード品質ゲート
+```python
+# scripts/quality_check.py
+"""コード品質チェックスクリプト"""
+
+import ast
+import os
+from typing import List, Dict
+
+class CodeQualityChecker:
+    def __init__(self, max_function_lines=50, max_file_lines=500):
+        self.max_function_lines = max_function_lines
+        self.max_file_lines = max_file_lines
+        self.violations = []
+    
+    def check_file(self, filepath: str) -> List[Dict]:
+        """ファイルの品質チェック"""
+        violations = []
+        
+        with open(filepath, 'r') as f:
+            content = f.read()
+            lines = content.split('\n')
+        
+        # ファイルサイズチェック
+        if len(lines) > self.max_file_lines:
+            violations.append({
+                'type': 'file_too_large',
+                'file': filepath,
+                'lines': len(lines),
+                'limit': self.max_file_lines
+            })
+        
+        # 関数サイズチェック
+        try:
+            tree = ast.parse(content)
+            for node in ast.walk(tree):
+                if isinstance(node, ast.FunctionDef):
+                    func_lines = node.end_lineno - node.lineno
+                    if func_lines > self.max_function_lines:
+                        violations.append({
+                            'type': 'function_too_large',
+                            'file': filepath,
+                            'function': node.name,
+                            'lines': func_lines,
+                            'limit': self.max_function_lines
+                        })
+        except:
+            pass
+        
+        return violations
+```
+
+### 🎯 実装計画詳細
+
+#### **Week 1-2: モノリシックファイル分割**
+1. `basebuilder/routes.py` 分析・機能特定
+2. ドメイン別ルートファイル作成
+3. ビジネスロジック抽出
+4. テスト作成・実行
+
+#### **Week 3-4: Godクラス分解**
+1. `unified_progress_service.py` 責任分析
+2. 単一責任原則に基づく分割
+3. インターフェース設計
+4. 段階的移行・テスト
+
+#### **Week 5-6: API モジュール最適化**
+1. API エンドポイント分類
+2. バージョニング導入
+3. ミドルウェア実装
+4. ドキュメント更新
+
+#### **Week 7-8: 品質基盤整備**
+1. 共通基底クラス実装
+2. エラーハンドリング統一
+3. 定数・設定分離
+4. ログ標準化
+
+#### **Week 9-10: 依存性管理・テスト**
+1. 依存性注入導入
+2. 統合テスト作成
+3. パフォーマンステスト
+4. 品質ゲート設置
+
+### 📊 期待される改善効果
+
+#### 品質指標改善
+- **ファイルサイズ平均**: 3,000行 → 300行 (90%削減)
+- **関数複雑度**: 平均20 → 平均5 (75%削減)
+- **コード重複率**: 25% → 5% (80%削減)
+- **テストカバレッジ**: 30% → 85% (55%向上)
+
+#### 開発効率改善
+- **バグ修正時間**: 4時間 → 1時間 (75%短縮)
+- **新機能開発時間**: 2週間 → 1週間 (50%短縮)
+- **コードレビュー時間**: 2時間 → 30分 (75%短縮)
+
+#### システム性能改善
+- **API応答時間**: 500ms → 200ms (60%向上)
+- **メモリ使用量**: 512MB → 256MB (50%削減)
+- **起動時間**: 30秒 → 10秒 (67%短縮)
+
+### 🚀 移行戦略
+
+#### リスク軽減策
+1. **段階的移行**: 一度に1モジュールずつ
+2. **後方互換性**: 既存APIエンドポイント維持
+3. **フィーチャーフラグ**: 新旧実装の切り替え
+4. **ロールバック計画**: 問題発生時の復旧手順
+
+#### 成功指標
+1. **ゼロダウンタイム**: サービス停止なし
+2. **パフォーマンス劣化なし**: レスポンス時間維持
+3. **機能完全性**: 全機能の正常動作
+4. **開発者満足度**: コード理解度・作業効率向上
+
+この段階的リファクタリング計画により、QuestEdシステムをスパゲッティコードから**クリーンアーキテクチャ**へと変革し、長期的な保守性と拡張性を確保します。

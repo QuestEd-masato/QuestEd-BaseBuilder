@@ -1,0 +1,99 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QuestEd Documentation</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .header { text-align: center; margin-bottom: 50px; }
+        .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+        .card { border: 1px solid #ddd; border-radius: 8px; padding: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .card h3 { margin-top: 0; color: #2c3e50; }
+        .card a { color: #3498db; text-decoration: none; }
+        .card a:hover { text-decoration: underline; }
+        .stats { background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 30px; }
+        .stats h3 { margin-top: 0; }
+        .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
+        .stat-item { text-align: center; }
+        .stat-number { font-size: 2em; font-weight: bold; color: #e74c3c; }
+        .stat-label { color: #666; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📚 QuestEd Documentation</h1>
+            <p>Generated on 2025-06-28 07:02:29</p>
+        </div>
+        
+        <div class="stats">
+            <h3>📊 Project Statistics</h3>
+            <div class="stat-grid">
+                <div class="stat-item">
+                    <div class="stat-number">204</div>
+                    <div class="stat-label">Modules</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">1</div>
+                    <div class="stat-label">API Endpoints</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">11</div>
+                    <div class="stat-label">Database Models</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">60,156</div>
+                    <div class="stat-label">Lines of Code</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="cards">
+            <div class="card">
+                <h3>🔌 API Documentation</h3>
+                <p>Complete API reference with endpoints, parameters, and examples.</p>
+                <ul>
+                    <li><a href="api-documentation.html">API Reference</a></li>
+                    <li><a href="api-spec.json">OpenAPI Specification</a></li>
+                    <li><a href="postman-collection.json">Postman Collection</a></li>
+                </ul>
+            </div>
+            
+            <div class="card">
+                <h3>🏗️ Architecture</h3>
+                <p>System architecture, module dependencies, and design patterns.</p>
+                <ul>
+                    <li><a href="architecture.md">Architecture Overview</a></li>
+                    <li><a href="dependency-diagram.png">Dependency Diagram</a></li>
+                    <li><a href="system-diagram.png">System Diagram</a></li>
+                </ul>
+            </div>
+            
+            <div class="card">
+                <h3>👥 User Guides</h3>
+                <p>Step-by-step guides for different user roles.</p>
+                <ul>
+                    <li><a href="admin-guide.html">Administrator Guide</a></li>
+                    <li><a href="teacher-guide.html">Teacher Guide</a></li>
+                    <li><a href="student-guide.html">Student Guide</a></li>
+                </ul>
+            </div>
+            
+            <div class="card">
+                <h3>💻 Developer Docs</h3>
+                <p>Technical documentation for developers and contributors.</p>
+                <ul>
+                    <li><a href="setup.md">Setup Guide</a></li>
+                    <li><a href="coding-standards.md">Coding Standards</a></li>
+                    <li><a href="troubleshooting.md">Troubleshooting</a></li>
+                    <li><a href="deployment.md">Deployment Guide</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+        

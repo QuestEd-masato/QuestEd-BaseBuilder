@@ -826,7 +826,7 @@
                                 </ul>
                             </li>
                             
-                            <li><a href="{{ url_for('teacher.classes') }}"><i class="fas fa-users"></i> クラス</a></li>
+                            <li><a href="{{ url_for('teacher_class_management.classes') }}"><i class="fas fa-users"></i> クラス</a></li>
                             
                             <li><a href="{{ url_for('auth.profile') }}"><i class="fas fa-user"></i> プロフィール</a></li>
                             
@@ -866,7 +866,7 @@
                                     <a href="{{ url_for('student.goals') }}" class="mobile-submenu-item">目標管理</a>
                                 </div>
                                 
-                                <a href="{{ url_for('teacher.classes') }}" class="mobile-menu-item">
+                                <a href="{{ url_for('teacher_class_management.classes') }}" class="mobile-menu-item">
                                     <i class="fas fa-users"></i> クラス
                                 </a>
                                 
@@ -882,15 +882,15 @@
                             </div>
                         {% elif current_user.role == 'teacher' %}
                             <!-- デスクトップ用メニュー（教師） -->
-                            <li><a href="{{ url_for('teacher.dashboard') }}"><i class="fas fa-tachometer-alt"></i> ダッシュボード</a></li>
+                            <li><a href="{{ url_for('teacher_dashboard.dashboard') }}"><i class="fas fa-tachometer-alt"></i> ダッシュボード</a></li>
                             
                             <li class="nav-item dropdown">
                                 <a class="nav-link dropdown-toggle js-dropdown-toggle" href="#" role="button">
                                     <i class="fas fa-search"></i> 探究活動
                                 </a>
                                 <ul class="dropdown-menu">
-                                    <li><a href="{{ url_for('teacher.teacher_themes') }}">テーマ管理</a></li>
-                                    <li><a href="{{ url_for('teacher.classes') }}">クラス管理</a></li>
+                                    <li><a href="{{ url_for('teacher_student_evaluation.teacher_themes') }}">テーマ管理</a></li>
+                                    <li><a href="{{ url_for('teacher_class_management.classes') }}">クラス管理</a></li>
                                 </ul>
                             </li>
                             

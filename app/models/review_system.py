@@ -34,7 +34,7 @@ class ReviewSet(db.Model):
     )
     
     # リレーションシップ
-    student = db.relationship('User', backref='review_sets')
+    student = db.relationship('User', backref=db.backref('review_sets', cascade='all, delete-orphan'))
     items = db.relationship('ReviewSetItem', backref='review_set', lazy='dynamic', cascade='all, delete-orphan')
     
     def to_dict(self):

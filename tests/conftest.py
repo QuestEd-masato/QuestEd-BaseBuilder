@@ -8,6 +8,9 @@ from config import TestingConfig
 from datetime import datetime, timedelta
 import json
 
+# 追加のフィクスチャをインポート
+from .conftest_fixtures import *
+
 @pytest.fixture(scope='function')
 def app():
     """テスト用アプリケーションインスタンス"""

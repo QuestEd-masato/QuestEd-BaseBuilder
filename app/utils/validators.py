@@ -433,12 +433,3 @@ def validate_ranking_type(ranking_type: str) -> bool:
 def validate_scope(scope: str) -> bool:
     """スコープの検証（後方互換性用）"""
     return scope in ['school', 'class']
-
-
-def validate_limit(limit: Union[str, int]) -> bool:
-    """取得件数制限の検証（後方互換性用）"""
-    try:
-        limit = int(limit)
-        return 1 <= limit <= 1000
-    except (ValueError, TypeError):
-        return False

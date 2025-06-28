@@ -113,6 +113,10 @@ def create_app(config_object=None):
         
         # エラーハンドリングとセキュリティ機能を設定
         setup_error_handling_and_security(app)
+        
+        # ヘルスチェックエンドポイントを登録
+        from app.utils.health_check import create_health_endpoint
+        create_health_endpoint(app)
     
     return app
 

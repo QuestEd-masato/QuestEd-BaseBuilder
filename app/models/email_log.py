@@ -40,7 +40,7 @@ class EmailLog(db.Model):
     )
     
     # リレーションシップ
-    recipient = db.relationship('User', backref='email_logs')
+    recipient = db.relationship('User', backref=db.backref('email_logs', cascade='all, delete-orphan'))
     
     def to_dict(self):
         """辞書形式に変換"""
