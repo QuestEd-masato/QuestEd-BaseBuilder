@@ -56,7 +56,7 @@ def new_todo():
             # 新しいTODOを作成
             new_todo = Todo(
                 student_id=current_user.id,
-                content=content,
+                title=content,
                 due_date=due_date,
                 priority=priority
             )
@@ -113,15 +113,10 @@ def edit_todo(todo_id):
                     return render_template('student/edit_todo.html', todo=todo)
             
             # TODOを更新
-            todo.content = content
+            todo.title = content
             todo.due_date = due_date
             todo.priority = priority
-            todo.completed = completed
-            
-            if completed and not todo.completed_at:
-                todo.completed_at = datetime.utcnow()
-            elif not completed:
-                todo.completed_at = None
+            todo.is_completed = completed
             
             try:
                 db.session.commit()
@@ -184,16 +179,11 @@ def toggle_todo(todo_id):
             return redirect(url_for('student_goals_todos.todos'))
         
         # 完了状態を切り替え
-        todo.completed = not todo.completed
-        
-        if todo.completed:
-            todo.completed_at = datetime.utcnow()
-        else:
-            todo.completed_at = None
+        todo.is_completed = not todo.is_completed
         
         try:
             db.session.commit()
-            status = '完了' if todo.completed else '未完了'
+            status = '完了' if todo.is_completed else '未完了'
             flash(f'TODOを{status}にしました。', 'success')
             
         except Exception as e:

@@ -807,10 +807,10 @@
                                    <i class="fas fa-graduation-cap"></i> 基礎学力
                                </a>
                                <ul class="dropdown-menu">
-                                   <li><a href="{{ url_for('basebuilder_module.index') }}">基礎学力ホーム</a></li>
-                                   <li><a href="{{ url_for('basebuilder_module.problems') }}">問題に挑戦</a></li>
-                                   <li><a href="{{ url_for('basebuilder_module.view_proficiency') }}">熟練度確認</a></li>
-                                   <li><a href="{{ url_for('basebuilder_module.learning_paths') }}">学習パス</a></li>
+                                   <li><a href="{{ url_for('categories.categories') }}">基礎学力ホーム</a></li>
+                                   <li><a href="{{ url_for('problems.problems') }}">問題に挑戦</a></li>
+                                   <li><a href="{{ url_for('progress.proficiency') }}">熟練度確認</a></li>
+                                   <li><a href="{{ url_for('analytics.learning_paths') }}">学習パス</a></li>
                                </ul>
                             </li>
                             
@@ -819,7 +819,7 @@
                                     <i class="fas fa-tools"></i> ツール
                                 </a>
                                 <ul class="dropdown-menu">
-                                    <li><a href="{{ url_for('student.chat_page') }}">AIチャット</a></li>
+                                    <li><a href="{{ url_for('index') }}">AIチャット</a></li>
                                     <li><a href="{{ url_for('student_surveys.surveys') }}">アンケート</a></li>
                                     <li><a href="{{ url_for('student_goals_todos.todos') }}">To Doリスト</a></li>
                                     <li><a href="{{ url_for('student_goals_todos.goals') }}">目標管理</a></li>
@@ -850,17 +850,17 @@
                                     <i class="fas fa-graduation-cap"></i> 基礎学力
                                 </div>
                                 <div id="mobile-menu-basic" class="mobile-submenu">
-                                    <a href="{{ url_for('basebuilder_module.index') }}" class="mobile-submenu-item">基礎学力ホーム</a>
-                                    <a href="{{ url_for('basebuilder_module.problems') }}" class="mobile-submenu-item">問題に挑戦</a>
-                                    <a href="{{ url_for('basebuilder_module.view_proficiency') }}" class="mobile-submenu-item">熟練度確認</a>
-                                    <a href="{{ url_for('basebuilder_module.learning_paths') }}" class="mobile-submenu-item">学習パス</a>
+                                    <a href="{{ url_for('categories.categories') }}" class="mobile-submenu-item">基礎学力ホーム</a>
+                                    <a href="{{ url_for('problems.problems') }}" class="mobile-submenu-item">問題に挑戦</a>
+                                    <a href="{{ url_for('progress.proficiency') }}" class="mobile-submenu-item">熟練度確認</a>
+                                    <a href="{{ url_for('analytics.learning_paths') }}" class="mobile-submenu-item">学習パス</a>
                                 </div>
                                 
                                 <div class="mobile-menu-item mobile-dropdown" data-target="mobile-menu-tools">
                                     <i class="fas fa-tools"></i> ツール
                                 </div>
                                 <div id="mobile-menu-tools" class="mobile-submenu">
-                                    <a href="{{ url_for('student.chat_page') }}" class="mobile-submenu-item">AIチャット</a>
+                                    <a href="{{ url_for('index') }}" class="mobile-submenu-item">AIチャット</a>
                                     <a href="{{ url_for('student_surveys.surveys') }}" class="mobile-submenu-item">アンケート</a>
                                     <a href="{{ url_for('student_goals_todos.todos') }}" class="mobile-submenu-item">To Doリスト</a>
                                     <a href="{{ url_for('student_goals_todos.goals') }}" class="mobile-submenu-item">目標管理</a>
@@ -899,10 +899,10 @@
                                     <i class="fas fa-graduation-cap"></i> 基礎学力
                                 </a>
                                 <ul class="dropdown-menu">
-                                    <li><a href="{{ url_for('basebuilder_module.index') }}">基礎学力ホーム</a></li>
-                                    <li><a href="{{ url_for('basebuilder_module.problems') }}">問題管理</a></li>
-                                    <li><a href="{{ url_for('basebuilder_module.categories') }}">カテゴリ管理</a></li>
-                                    <li><a href="{{ url_for('basebuilder_module.analysis') }}">理解度分析</a></li>
+                                    <li><a href="{{ url_for('categories.categories') }}">基礎学力ホーム</a></li>
+                                    <li><a href="{{ url_for('problems.problems') }}">問題管理</a></li>
+                                    <li><a href="{{ url_for('categories.categories') }}">カテゴリ管理</a></li>
+                                    <li><a href="{{ url_for('analytics.analysis') }}">理解度分析</a></li>
                                 </ul>
                             </li>
                             
@@ -911,7 +911,7 @@
                                     <i class="fas fa-tools"></i> ツール
                                 </a>
                                 <ul class="dropdown-menu">
-                                    <li><a href="{{ url_for('teacher.chat_page') }}">AIチャット</a></li>
+                                    <li><a href="{{ url_for('teacher_dashboard.chat_page') }}">AIチャット</a></li>
                                 </ul>
                             </li>
                             
@@ -929,25 +929,25 @@
                                     <i class="fas fa-search"></i> 探究活動
                                 </div>
                                 <div id="mobile-menu-teacher-inquiry" class="mobile-submenu">
-                                    <a href="{{ url_for('teacher.teacher_themes') }}" class="mobile-submenu-item">テーマ管理</a>
-                                    <a href="{{ url_for('teacher.classes') }}" class="mobile-submenu-item">クラス管理</a>
+                                    <a href="{{ url_for('teacher_student_evaluation.teacher_themes') }}" class="mobile-submenu-item">テーマ管理</a>
+                                    <a href="{{ url_for('teacher_class_management.classes') }}" class="mobile-submenu-item">クラス管理</a>
                                 </div>
                                 
                                 <div class="mobile-menu-item mobile-dropdown" data-target="mobile-menu-teacher-basic">
                                     <i class="fas fa-graduation-cap"></i> 基礎学力
                                 </div>
                                 <div id="mobile-menu-teacher-basic" class="mobile-submenu">
-                                    <a href="{{ url_for('basebuilder_module.index') }}" class="mobile-submenu-item">基礎学力ホーム</a>
-                                    <a href="{{ url_for('basebuilder_module.problems') }}" class="mobile-submenu-item">問題管理</a>
-                                    <a href="{{ url_for('basebuilder_module.categories') }}" class="mobile-submenu-item">カテゴリ管理</a>
-                                    <a href="{{ url_for('basebuilder_module.analysis') }}" class="mobile-submenu-item">理解度分析</a>
+                                    <a href="{{ url_for('categories.categories') }}" class="mobile-submenu-item">基礎学力ホーム</a>
+                                    <a href="{{ url_for('problems.problems') }}" class="mobile-submenu-item">問題管理</a>
+                                    <a href="{{ url_for('categories.categories') }}" class="mobile-submenu-item">カテゴリ管理</a>
+                                    <a href="{{ url_for('analytics.analysis') }}" class="mobile-submenu-item">理解度分析</a>
                                 </div>
                                 
                                 <div class="mobile-menu-item mobile-dropdown" data-target="mobile-menu-teacher-tools">
                                     <i class="fas fa-tools"></i> ツール
                                 </div>
                                 <div id="mobile-menu-teacher-tools" class="mobile-submenu">
-                                    <a href="{{ url_for('teacher.chat_page') }}" class="mobile-submenu-item">AIチャット</a>
+                                    <a href="{{ url_for('teacher_dashboard.chat_page') }}" class="mobile-submenu-item">AIチャット</a>
                                 </div>
                                 
                                 <div class="mobile-menu-divider"></div>

@@ -59,14 +59,15 @@ def dashboard():
         # 未完了のTodoを取得（5件）
         pending_todos = Todo.query.filter_by(
             student_id=current_user.id,
-            completed=False
+            is_completed=False
         ).order_by(Todo.created_at.desc()).limit(5).all()
         student_info['pending_todos'] = pending_todos
         
         # アクティブな目標を取得（5件）
         active_goals = Goal.query.filter_by(
-            student_id=current_user.id
-        ).filter(Goal.status.in_(['not_started', 'in_progress'])).limit(5).all()
+            student_id=current_user.id,
+            is_completed=False
+        ).limit(5).all()
         student_info['active_goals'] = active_goals
         
         # Phase 2: 自由進度学習の進捗情報を取得
@@ -186,10 +187,8 @@ def api_quick_stats():
         # 基本統計
         stats = {
             'activities_count': ActivityLog.query.filter_by(student_id=current_user.id).count(),
-            'todos_pending': Todo.query.filter_by(student_id=current_user.id, completed=False).count(),
-            'goals_active': Goal.query.filter_by(student_id=current_user.id).filter(
-                Goal.status.in_(['not_started', 'in_progress'])
-            ).count(),
+            'todos_pending': Todo.query.filter_by(student_id=current_user.id, is_completed=False).count(),
+            'goals_active': Goal.query.filter_by(student_id=current_user.id, is_completed=False).count(),
             'classes_enrolled': ClassEnrollment.query.filter_by(student_id=current_user.id).count()
         }
         
@@ -319,11 +318,11 @@ def _generate_progress_stats():
     try:
         # Todo統計
         total_todos = Todo.query.filter_by(student_id=current_user.id).count()
-        completed_todos = Todo.query.filter_by(student_id=current_user.id, completed=True).count()
+        completed_todos = Todo.query.filter_by(student_id=current_user.id, is_completed=True).count()
         
         # Goal統計
         total_goals = Goal.query.filter_by(student_id=current_user.id).count()
-        completed_goals = Goal.query.filter_by(student_id=current_user.id, status='completed').count()
+        completed_goals = Goal.query.filter_by(student_id=current_user.id, is_completed=True).count()
         
         return {
             'todo_completion_rate': round((completed_todos / total_todos) * 100, 1) if total_todos > 0 else 0,
