@@ -29,7 +29,7 @@
             {% else %}
                 <h3>テーマが選択されていません</h3>
                 <p>学習記録を作成する前に、探究テーマを選択してください。</p>
-                <a href="{{ url_for('student.view_themes') }}" class="btn btn-outline-primary">テーマを選択する</a>
+                <a href="{{ url_for('student_activities.activities') }}" class="btn btn-outline-primary">テーマを選択する</a>
             {% endif %}
         </div>
         {% if theme or class_id == 0 %}

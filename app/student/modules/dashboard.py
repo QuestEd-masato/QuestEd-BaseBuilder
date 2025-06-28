@@ -139,8 +139,7 @@ def dashboard_minimal():
         
     except Exception as e:
         current_app.logger.error(f"Minimal dashboard error: {str(e)}")
-        return render_template('error.html', 
-                             error_message='ダッシュボードを読み込めませんでした。管理者に連絡してください。')
+        return render_template('errors/500.html')
 
 @dashboard_bp.route('/debug/role')
 @login_required
