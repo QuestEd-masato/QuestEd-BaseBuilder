@@ -90,3 +90,4 @@ dmypy.json
 
 # Security
 ACCESS_CONTROL_VULNERABILITIES.md
+backup_endpoint_fix_*/

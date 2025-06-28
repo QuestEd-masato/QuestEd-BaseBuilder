@@ -1,0 +1,2472 @@
+{
+  "verification_timestamp": "2025-06-28T17:31:40.772967",
+  "summary": {
+    "syntax_errors": 0,
+    "registration_issues": 0,
+    "total_unique_endpoints": 199,
+    "high_usage_endpoints": 97
+  },
+  "syntax_errors": [],
+  "registration_issues": [],
+  "endpoint_usage": {
+    "all_endpoints": {
+      "teacher_dashboard.dashboard": [
+        "fix_url_for_endpoints.py",
+        "blueprint_mapping_creator.py",
+        "blueprint_mapping_creator.py",
+        "backup_endpoint_fix_20250628_172639/blueprint_mapping_creator.py",
+        "legacy/app_simple.py",
+        "legacy/app_fixed.py",
+        "app/__init__.py",
+        "backup_endpoint_fix_20250628_172639/app/__init__.py",
+        "tests/unit/test_refactoring.py",
+        "app/auth/__init__.py",
+        "app/auth/__init__.py",
+        "app/auth/secure_auth.py",
+        "app/auth/secure_auth.py",
+        "app/teacher/modules/synchronization.py",
+        "app/teacher/modules/synchronization.py",
+        "app/teacher/modules/synchronization.py",
+        "app/teacher/modules/approval_workflow.py",
+        "app/teacher/modules/analytics.py",
+        "templates/base.html",
+        "templates/base.html",
+        "templates/index.html",
+        "templates/teacher_themes.html",
+        "templates/add_students.html",
+        "templates/change_password.html",
+        "templates/create_milestone.html",
+        "templates/profile.html",
+        "templates/errors/404.html",
+        "templates/errors/500.html",
+        "templates/teacher/pending_users.html",
+        "templates/teacher/integrated_management.html",
+        "templates/teacher/pending_unit_approvals.html",
+        "templates/teacher/import_users.html",
+        "templates/teacher/import_users.html"
+      ],
+      "student_dashboard.dashboard": [
+        "fix_url_for_endpoints.py",
+        "blueprint_mapping_creator.py",
+        "blueprint_mapping_creator.py",
+        "backup_endpoint_fix_20250628_172639/blueprint_mapping_creator.py",
+        "legacy/app_simple.py",
+        "legacy/app_fixed.py",
+        "app/__init__.py",
+        "backup_endpoint_fix_20250628_172639/app/__init__.py",
+        "tests/unit/test_refactoring.py",
+        "app/auth/__init__.py",
+        "app/auth/__init__.py",
+        "app/auth/secure_auth.py",
+        "app/auth/secure_auth.py",
+        "app/student/modules/goals_todos.py",
+        "app/student/modules/goals_todos.py",
+        "app/student/modules/activities.py",
+        "app/student/modules/activities.py",
+        "app/student/modules/activities.py",
+        "app/student/modules/surveys.py",
+        "templates/base.html",
+        "templates/base.html",
+        "templates/index.html",
+        "templates/select_class_for_themes.html",
+        "templates/select_class_for_chat.html",
+        "templates/change_password.html",
+        "templates/student_main_themes.html",
+        "templates/view_themes.html",
+        "templates/profile.html",
+        "templates/errors/404.html",
+        "templates/errors/500.html",
+        "templates/student/debug_routes.html",
+        "templates/student/class_details.html"
+      ],
+      "endpoint": [
+        "fix_url_for_endpoints.py",
+        "fix_url_for_endpoints.py"
+      ],
+      "{new_endpoint}": [
+        "fix_url_for_endpoints.py",
+        "fix_url_for_endpoints.py"
+      ],
+      "index": [
+        "core/academic.py",
+        "core/academic.py",
+        "core/school.py",
+        "core/school.py",
+        "core/enrollment.py",
+        "core/enrollment.py",
+        "core/enrollment.py",
+        "core/enrollment.py",
+        "core/enrollment.py",
+        "core/enrollment.py",
+        "core/enrollment.py",
+        "core/enrollment.py",
+        "core/enrollment.py",
+        "core/enrollment.py",
+        "core/enrollment.py",
+        "basebuilder/routes.py",
+        "backup_endpoint_fix_20250628_172639/app/auth/__init__.py",
+        "backup_endpoint_fix_20250628_172639/app/auth/__init__.py",
+        "backup_endpoint_fix_20250628_172639/app/auth/__init__.py",
+        "backup_endpoint_fix_20250628_172639/app/auth/secure_auth.py",
+        "backup_endpoint_fix_20250628_172639/app/auth/secure_auth.py",
+        "app/utils/decorators.py",
+        "app/utils/decorators.py",
+        "app/utils/decorators.py",
+        "app/admin/__init__.py",
+        "app/teacher/common.py",
+        "app/auth/__init__.py",
+        "app/auth/__init__.py",
+        "app/auth/__init__.py",
+        "app/auth/secure_auth.py",
+        "app/auth/secure_auth.py",
+        "app/student/utils.py",
+        "app/teacher/modules/class_management.py",
+        "templates/base.html",
+        "templates/base.html",
+        "templates/base.html",
+        "templates/change_password.html",
+        "templates/profile.html",
+        "templates/admin/base_admin.html",
+        "templates/admin/base_admin.html",
+        "templates/errors/404.html",
+        "templates/errors/500.html",
+        "templates/basebuilder/layout.html",
+        "templates/basebuilder/layout.html"
+      ],
+      "academic.list_years": [
+        "core/academic.py"
+      ],
+      "school.list_schools": [
+        "core/school.py"
+      ],
+      "enrollment.list_students": [
+        "core/enrollment.py",
+        "core/enrollment.py",
+        "core/enrollment.py",
+        "core/enrollment.py",
+        "core/enrollment.py"
+      ],
+      "teacher.dashboard": [
+        "backup_endpoint_fix_20250628_172639/blueprint_mapping_creator.py",
+        "backup_endpoint_fix_20250628_172639/legacy/app_simple.py",
+        "backup_endpoint_fix_20250628_172639/legacy/app_fixed.py",
+        "backup_endpoint_fix_20250628_172639/app/auth/__init__.py",
+        "backup_endpoint_fix_20250628_172639/app/auth/__init__.py",
+        "backup_endpoint_fix_20250628_172639/app/auth/secure_auth.py",
+        "backup_endpoint_fix_20250628_172639/app/auth/secure_auth.py"
+      ],
+      "student.dashboard": [
+        "backup_endpoint_fix_20250628_172639/blueprint_mapping_creator.py",
+        "backup_endpoint_fix_20250628_172639/legacy/app_simple.py",
+        "backup_endpoint_fix_20250628_172639/legacy/app_fixed.py",
+        "backup_endpoint_fix_20250628_172639/app/auth/__init__.py",
+        "backup_endpoint_fix_20250628_172639/app/auth/__init__.py",
+        "backup_endpoint_fix_20250628_172639/app/auth/secure_auth.py",
+        "backup_endpoint_fix_20250628_172639/app/auth/secure_auth.py"
+      ],
+      "admin_panel.dashboard": [
+        "legacy/app_simple.py",
+        "legacy/app_fixed.py",
+        "app/__init__.py",
+        "app/special_routes.py",
+        "backup_endpoint_fix_20250628_172639/legacy/app_simple.py",
+        "backup_endpoint_fix_20250628_172639/legacy/app_fixed.py",
+        "backup_endpoint_fix_20250628_172639/app/__init__.py",
+        "backup_endpoint_fix_20250628_172639/app/auth/__init__.py",
+        "backup_endpoint_fix_20250628_172639/app/auth/__init__.py",
+        "backup_endpoint_fix_20250628_172639/app/auth/secure_auth.py",
+        "backup_endpoint_fix_20250628_172639/app/auth/secure_auth.py",
+        "app/auth/__init__.py",
+        "app/auth/__init__.py",
+        "app/auth/secure_auth.py",
+        "app/auth/secure_auth.py",
+        "templates/base.html",
+        "templates/base.html",
+        "templates/base.html",
+        "templates/base.html",
+        "templates/base.html",
+        "templates/profile.html",
+        "templates/admin/create_class_group.html",
+        "templates/admin/school_detail.html",
+        "templates/admin/class_group_detail.html",
+        "templates/admin/add_students_to_class.html",
+        "templates/admin/access.html",
+        "templates/admin/create_school_year.html",
+        "templates/admin/edit_school.html",
+        "templates/admin/edit_school_year.html"
+      ],
+      "auth.login": [
+        "legacy/app_simple.py",
+        "legacy/app_fixed.py",
+        "app/__init__.py",
+        "app/__init__.py",
+        "app/__init__.py",
+        "backup_endpoint_fix_20250628_172639/legacy/app_simple.py",
+        "backup_endpoint_fix_20250628_172639/legacy/app_fixed.py",
+        "backup_endpoint_fix_20250628_172639/app/__init__.py",
+        "backup_endpoint_fix_20250628_172639/app/__init__.py",
+        "backup_endpoint_fix_20250628_172639/app/__init__.py",
+        "backup_endpoint_fix_20250628_172639/app/auth/__init__.py",
+        "backup_endpoint_fix_20250628_172639/app/auth/__init__.py",
+        "backup_endpoint_fix_20250628_172639/app/auth/__init__.py",
+        "backup_endpoint_fix_20250628_172639/app/auth/__init__.py",
+        "backup_endpoint_fix_20250628_172639/app/auth/__init__.py",
+        "backup_endpoint_fix_20250628_172639/app/auth/__init__.py",
+        "backup_endpoint_fix_20250628_172639/app/auth/__init__.py",
+        "app/auth/__init__.py",
+        "app/auth/__init__.py",
+        "app/auth/__init__.py",
+        "app/auth/__init__.py",
+        "app/auth/__init__.py",
+        "app/auth/__init__.py",
+        "app/auth/__init__.py",
+        "templates/base.html",
+        "templates/base.html",
+        "templates/index.html",
+        "templates/forgot_password.html",
+        "templates/awaiting_approval.html",
+        "templates/verify_email.html",
+        "templates/login.html",
+        "templates/register.html",
+        "templates/admin/access.html"
+      ],
+      "main.index": [
+        "backup_endpoint_fix_20250628_172639/basebuilder/routes.py"
+      ],
+      "basebuilder_module.index": [
+        "backup_endpoint_fix_20250628_172639/basebuilder/routes/admin.py",
+        "backup_endpoint_fix_20250628_172639/basebuilder/routes/admin.py",
+        "backup_endpoint_fix_20250628_172639/basebuilder/routes/admin.py",
+        "backup_endpoint_fix_20250628_172639/basebuilder/routes/admin.py",
+        "backup_endpoint_fix_20250628_172639/basebuilder/routes/admin.py",
+        "backup_endpoint_fix_20250628_172639/basebuilder/routes/admin.py",
+        "backup_endpoint_fix_20250628_172639/basebuilder/routes/admin.py",
+        "backup_endpoint_fix_20250628_172639/basebuilder/routes/admin.py",
+        "backup_endpoint_fix_20250628_172639/basebuilder/routes/admin.py",
+        "backup_endpoint_fix_20250628_172639/basebuilder/routes/admin.py",
+        "backup_endpoint_fix_20250628_172639/basebuilder/routes/admin.py",
+        "basebuilder/routes/admin.py",
+        "basebuilder/routes/admin.py",
+        "basebuilder/routes/admin.py",
+        "basebuilder/routes/admin.py",
+        "basebuilder/routes/admin.py",
+        "basebuilder/routes/admin.py",
+        "basebuilder/routes/admin.py",
+        "basebuilder/routes/admin.py",
+        "basebuilder/routes/admin.py",
+        "basebuilder/routes/admin.py",
+        "basebuilder/routes/admin.py",
+        "basebuilder/routes/categories.py",
+        "basebuilder/routes/sessions.py",
+        "basebuilder/routes/sessions.py",
+        "basebuilder/routes/sessions.py",
+        "basebuilder/routes/sessions.py",
+        "basebuilder/routes/sessions.py",
+        "basebuilder/routes/sessions.py",
+        "basebuilder/routes/sessions.py",
+        "basebuilder/routes/sessions.py",
+        "basebuilder/routes/sessions.py",
+        "basebuilder/routes/sessions.py",
+        "basebuilder/routes/sessions.py",
+        "basebuilder/routes/sessions.py",
+        "basebuilder/routes/progress.py",
+        "basebuilder/routes/progress.py",
+        "basebuilder/routes/progress.py",
+        "basebuilder/routes/progress.py",
+        "basebuilder/routes/problems.py",
+        "basebuilder/routes/analytics.py",
+        "basebuilder/routes/analytics.py",
+        "basebuilder/routes/analytics.py",
+        "templates/teacher_dashboard.html",
+        "templates/base.html",
+        "templates/base.html",
+        "templates/base.html",
+        "templates/base.html",
+        "templates/student_dashboard.html",
+        "templates/basebuilder/student_learning_paths.html",
+        "templates/basebuilder/layout.html"
+      ],
+      "problems.problems": [
+        "backup_endpoint_fix_20250628_172639/basebuilder/routes/admin.py",
+        "backup_endpoint_fix_20250628_172639/basebuilder/routes/admin.py",
+        "backup_endpoint_fix_20250628_172639/basebuilder/routes/admin.py",
+        "basebuilder/routes/admin.py",
+        "basebuilder/routes/admin.py",
+        "basebuilder/routes/admin.py",
+        "basebuilder/routes/problems.py",
+        "basebuilder/routes/problems.py",
+        "basebuilder/routes/problems.py",
+        "basebuilder/routes/problems.py",
+        "basebuilder/routes/problems.py",
+        "basebuilder/routes/problems.py",
+        "basebuilder/routes/problems.py",
+        "basebuilder/routes/problems.py",
+        "basebuilder/routes/problems.py",
+        "basebuilder/routes/problems.py"
+      ],
+      "admin.learning_paths": [
+        "backup_endpoint_fix_20250628_172639/basebuilder/routes/admin.py",
+        "backup_endpoint_fix_20250628_172639/basebuilder/routes/admin.py",
+        "backup_endpoint_fix_20250628_172639/basebuilder/routes/admin.py",
+        "backup_endpoint_fix_20250628_172639/basebuilder/routes/admin.py",
+        "backup_endpoint_fix_20250628_172639/basebuilder/routes/admin.py",
+        "backup_endpoint_fix_20250628_172639/basebuilder/routes/admin.py",
+        "backup_endpoint_fix_20250628_172639/basebuilder/routes/admin.py",
+        "backup_endpoint_fix_20250628_172639/basebuilder/routes/admin.py",
+        "backup_endpoint_fix_20250628_172639/basebuilder/routes/admin.py"
+      ],
+      "auth.verify_email": [
+        "backup_endpoint_fix_20250628_172639/app/auth/__init__.py",
+        "backup_endpoint_fix_20250628_172639/app/auth/__init__.py",
+        "backup_endpoint_fix_20250628_172639/app/auth/__init__.py",
+        "backup_endpoint_fix_20250628_172639/app/auth/__init__.py",
+        "app/utils/decorators.py",
+        "app/auth/__init__.py",
+        "app/auth/__init__.py",
+        "app/auth/__init__.py",
+        "app/auth/__init__.py"
+      ],
+      "auth.awaiting_approval": [
+        "backup_endpoint_fix_20250628_172639/app/auth/__init__.py",
+        "backup_endpoint_fix_20250628_172639/app/auth/__init__.py",
+        "backup_endpoint_fix_20250628_172639/app/auth/__init__.py",
+        "app/utils/decorators.py",
+        "app/auth/__init__.py",
+        "app/auth/__init__.py",
+        "app/auth/__init__.py"
+      ],
+      "auth.forgot_password": [
+        "backup_endpoint_fix_20250628_172639/app/auth/__init__.py",
+        "backup_endpoint_fix_20250628_172639/app/auth/__init__.py",
+        "app/auth/__init__.py",
+        "app/auth/__init__.py",
+        "templates/forgot_password.html",
+        "templates/login.html"
+      ],
+      "auth.profile": [
+        "backup_endpoint_fix_20250628_172639/app/auth/__init__.py",
+        "app/auth/__init__.py",
+        "templates/base.html",
+        "templates/base.html",
+        "templates/base.html",
+        "templates/base.html",
+        "templates/base.html",
+        "templates/base.html",
+        "templates/profile.html"
+      ],
+      "secure_auth.verify_email": [
+        "backup_endpoint_fix_20250628_172639/app/auth/secure_auth.py",
+        "backup_endpoint_fix_20250628_172639/app/auth/secure_auth.py",
+        "backup_endpoint_fix_20250628_172639/app/auth/secure_auth.py",
+        "backup_endpoint_fix_20250628_172639/app/auth/secure_auth.py",
+        "app/auth/secure_auth.py",
+        "app/auth/secure_auth.py",
+        "app/auth/secure_auth.py",
+        "app/auth/secure_auth.py"
+      ],
+      "secure_auth.awaiting_approval": [
+        "backup_endpoint_fix_20250628_172639/app/auth/secure_auth.py",
+        "backup_endpoint_fix_20250628_172639/app/auth/secure_auth.py",
+        "app/auth/secure_auth.py",
+        "app/auth/secure_auth.py"
+      ],
+      "secure_auth.secure_login": [
+        "backup_endpoint_fix_20250628_172639/app/auth/secure_auth.py",
+        "backup_endpoint_fix_20250628_172639/app/auth/secure_auth.py",
+        "backup_endpoint_fix_20250628_172639/app/auth/secure_auth.py",
+        "backup_endpoint_fix_20250628_172639/app/auth/secure_auth.py",
+        "app/auth/secure_auth.py",
+        "app/auth/secure_auth.py",
+        "app/auth/secure_auth.py",
+        "app/auth/secure_auth.py"
+      ],
+      "basebuilder_admin.learning_paths": [
+        "basebuilder/routes/admin.py",
+        "basebuilder/routes/admin.py",
+        "basebuilder/routes/admin.py",
+        "basebuilder/routes/admin.py",
+        "basebuilder/routes/admin.py",
+        "basebuilder/routes/admin.py",
+        "basebuilder/routes/admin.py",
+        "basebuilder/routes/admin.py",
+        "basebuilder/routes/admin.py"
+      ],
+      "categories.categories": [
+        "basebuilder/routes/categories.py",
+        "basebuilder/routes/categories.py",
+        "basebuilder/routes/categories.py",
+        "basebuilder/routes/categories.py",
+        "basebuilder/routes/categories.py",
+        "basebuilder/routes/categories.py",
+        "basebuilder/routes/categories.py",
+        "basebuilder/routes/categories.py",
+        "basebuilder/routes/categories.py",
+        "basebuilder/routes/categories.py",
+        "basebuilder/routes/categories.py",
+        "basebuilder/routes/categories.py",
+        "basebuilder/routes/categories.py",
+        "basebuilder/routes/sessions.py",
+        "basebuilder/routes/sessions.py"
+      ],
+      "sessions.next_problem": [
+        "basebuilder/routes/sessions.py",
+        "basebuilder/routes/sessions.py",
+        "basebuilder/routes/sessions.py"
+      ],
+      "categories.category_texts": [
+        "basebuilder/routes/sessions.py"
+      ],
+      "sessions.session_summary": [
+        "basebuilder/routes/sessions.py"
+      ],
+      "analytics.analysis": [
+        "basebuilder/routes/analytics.py",
+        "basebuilder/routes/analytics.py"
+      ],
+      "teacher_class_management.classes": [
+        "tests/unit/test_refactoring.py",
+        "app/teacher/modules/synchronization.py",
+        "app/teacher/modules/synchronization.py",
+        "app/teacher/modules/student_evaluation.py",
+        "app/teacher/modules/student_evaluation.py",
+        "app/teacher/modules/student_evaluation.py",
+        "app/teacher/modules/student_evaluation.py",
+        "app/teacher/modules/class_management.py",
+        "app/teacher/modules/class_management.py",
+        "app/teacher/modules/class_management.py",
+        "app/teacher/modules/class_management.py",
+        "app/teacher/modules/class_management.py",
+        "app/teacher/modules/class_management.py",
+        "app/teacher/modules/class_management.py",
+        "app/teacher/modules/class_management.py",
+        "app/teacher/modules/curriculum_management.py",
+        "app/teacher/modules/curriculum_management.py",
+        "app/teacher/modules/curriculum_management.py",
+        "app/teacher/modules/curriculum_management.py",
+        "app/teacher/modules/curriculum_management.py",
+        "app/teacher/modules/curriculum_management.py",
+        "app/teacher/modules/curriculum_management.py",
+        "app/teacher/modules/curriculum_management.py",
+        "app/teacher/modules/curriculum_management.py",
+        "app/teacher/modules/curriculum_management.py",
+        "app/teacher/modules/curriculum_management.py",
+        "app/teacher/modules/approval_workflow.py",
+        "app/teacher/modules/analytics.py",
+        "templates/base.html",
+        "templates/base.html",
+        "templates/base.html"
+      ],
+      "teacher_class_management.create_class": [
+        "tests/unit/test_refactoring.py"
+      ],
+      "student_activities.activities": [
+        "tests/unit/test_refactoring.py",
+        "app/student/modules/activities.py",
+        "app/student/modules/activities.py",
+        "app/student/modules/activities.py",
+        "app/student/modules/activities.py",
+        "app/student/modules/activities.py",
+        "app/student/modules/activities.py",
+        "app/student/modules/activities.py",
+        "app/student/modules/activities.py",
+        "app/student/modules/activities.py",
+        "app/student/modules/activities.py",
+        "app/student/modules/activities.py",
+        "app/student/modules/activities.py",
+        "app/student/modules/activities.py",
+        "app/student/modules/activities.py",
+        "templates/activities.html",
+        "templates/base.html",
+        "templates/base.html",
+        "templates/create_activity.html",
+        "templates/student_dashboard.html",
+        "templates/student_dashboard.html",
+        "templates/student_dashboard.html",
+        "templates/edit_activity.html",
+        "templates/select_class_for_activities.html",
+        "templates/select_class_for_activities.html",
+        "templates/new_activity.html",
+        "templates/new_activity.html",
+        "templates/student/dashboard_minimal.html",
+        "templates/student/class_details.html"
+      ],
+      "student_activities.new_activity": [
+        "tests/unit/test_refactoring.py"
+      ],
+      "admin_panel.users": [
+        "app/admin/__init__.py",
+        "app/admin/__init__.py",
+        "app/admin/user_management.py",
+        "templates/base.html",
+        "templates/base.html",
+        "templates/base.html",
+        "templates/base.html",
+        "templates/admin/import_users.html",
+        "templates/admin/dashboard.html",
+        "templates/admin/dashboard.html",
+        "templates/admin/dashboard.html"
+      ],
+      "admin_panel.import_users": [
+        "app/admin/user_management.py",
+        "templates/base.html",
+        "templates/base.html",
+        "templates/admin/users.html",
+        "templates/admin/users.html",
+        "templates/admin/dashboard.html",
+        "templates/admin/dashboard.html"
+      ],
+      "admin_panel.admin_school_detail": [
+        "app/admin/school_management.py",
+        "app/admin/school_management.py",
+        "app/admin/school_management.py",
+        "templates/admin/create_class_group.html",
+        "templates/admin/schools.html",
+        "templates/admin/class_group_detail.html",
+        "templates/admin/add_students_to_class.html",
+        "templates/admin/create_school_year.html",
+        "templates/admin/create_school_year.html",
+        "templates/admin/edit_school_year.html"
+      ],
+      "admin_panel.admin_school_years": [
+        "app/admin/school_management.py",
+        "app/admin/school_management.py",
+        "templates/admin/school_detail.html",
+        "templates/admin/class_groups.html",
+        "templates/admin/promote_students.html",
+        "templates/admin/edit_school_year.html",
+        "templates/admin/edit_school_year.html"
+      ],
+      "admin_panel.admin_class_groups": [
+        "app/admin/school_management.py",
+        "templates/admin/create_class_group.html",
+        "templates/admin/create_class_group.html",
+        "templates/admin/school_years.html",
+        "templates/admin/school_detail.html",
+        "templates/admin/class_group_detail.html",
+        "templates/admin/add_students_to_class.html",
+        "templates/admin/student_enrollment.html"
+      ],
+      "admin_panel.admin_student_enrollment": [
+        "app/admin/school_management.py",
+        "app/admin/school_management.py",
+        "app/admin/school_management.py",
+        "templates/admin/import_students.html",
+        "templates/admin/class_groups.html"
+      ],
+      "admin_panel.admin_schools": [
+        "app/admin/school_management.py",
+        "app/admin/school_management.py",
+        "templates/base.html",
+        "templates/base.html",
+        "templates/base.html",
+        "templates/admin/create_class_group.html",
+        "templates/admin/school_years.html",
+        "templates/admin/school_detail.html",
+        "templates/admin/create_school.html",
+        "templates/admin/class_group_detail.html",
+        "templates/admin/add_students_to_class.html",
+        "templates/admin/create_school_year.html",
+        "templates/admin/edit_school.html",
+        "templates/admin/edit_school.html",
+        "templates/admin/dashboard.html",
+        "templates/admin/dashboard.html",
+        "templates/admin/edit_school_year.html"
+      ],
+      "admin_panel.admin_class_group_detail": [
+        "app/admin/school_management.py",
+        "templates/admin/add_students_to_class.html",
+        "templates/admin/add_students_to_class.html",
+        "templates/admin/add_students_to_class.html"
+      ],
+      "teacher_curriculum_management.view_curriculum": [
+        "app/teacher/modules/synchronization.py",
+        "app/teacher/modules/synchronization.py",
+        "app/teacher/modules/curriculum_management.py",
+        "app/teacher/modules/curriculum_management.py",
+        "app/teacher/modules/curriculum_management.py"
+      ],
+      "teacher_dashboard.pending_users": [
+        "app/teacher/modules/dashboard.py",
+        "app/teacher/modules/dashboard.py"
+      ],
+      "teacher_class_management.class_details": [
+        "app/teacher/modules/student_evaluation.py",
+        "app/teacher/modules/student_evaluation.py",
+        "app/teacher/modules/student_evaluation.py",
+        "app/teacher/modules/student_evaluation.py",
+        "app/teacher/modules/class_management.py",
+        "app/teacher/modules/class_management.py",
+        "app/teacher/modules/class_management.py",
+        "app/teacher/modules/class_management.py",
+        "app/teacher/modules/class_management.py",
+        "app/teacher/modules/class_management.py",
+        "app/teacher/modules/approval_workflow.py"
+      ],
+      "teacher_curriculum_management.view_curriculums": [
+        "app/teacher/modules/curriculum_management.py",
+        "app/teacher/modules/curriculum_management.py",
+        "app/teacher/modules/curriculum_management.py",
+        "app/teacher/modules/curriculum_management.py"
+      ],
+      "teacher_curriculum_management.create_curriculum_form": [
+        "app/teacher/modules/curriculum_management.py"
+      ],
+      "teacher_curriculum_management.view_converted_units": [
+        "app/teacher/modules/curriculum_management.py",
+        "app/teacher/modules/curriculum_management.py"
+      ],
+      "student_goals_todos.todos": [
+        "app/student/modules/goals_todos.py",
+        "app/student/modules/goals_todos.py",
+        "app/student/modules/goals_todos.py",
+        "app/student/modules/goals_todos.py",
+        "app/student/modules/goals_todos.py",
+        "app/student/modules/goals_todos.py",
+        "app/student/modules/goals_todos.py",
+        "app/student/modules/goals_todos.py",
+        "app/student/modules/goals_todos.py",
+        "app/student/modules/goals_todos.py",
+        "app/student/modules/goals_todos.py",
+        "templates/base.html",
+        "templates/base.html",
+        "templates/new_todo.html",
+        "templates/edit_todo.html",
+        "templates/student_dashboard.html",
+        "templates/student/dashboard_minimal.html"
+      ],
+      "student_goals_todos.goals": [
+        "app/student/modules/goals_todos.py",
+        "app/student/modules/goals_todos.py",
+        "app/student/modules/goals_todos.py",
+        "app/student/modules/goals_todos.py",
+        "app/student/modules/goals_todos.py",
+        "app/student/modules/goals_todos.py",
+        "app/student/modules/goals_todos.py",
+        "app/student/modules/goals_todos.py",
+        "app/student/modules/goals_todos.py",
+        "app/student/modules/goals_todos.py",
+        "app/student/modules/goals_todos.py",
+        "app/student/modules/goals_todos.py",
+        "templates/base.html",
+        "templates/base.html",
+        "templates/edit_goal.html",
+        "templates/new_goal.html",
+        "templates/student_dashboard.html",
+        "templates/student/dashboard_minimal.html"
+      ],
+      "student_activities.view_activity": [
+        "app/student/modules/activities.py"
+      ],
+      "student_surveys.surveys": [
+        "app/student/modules/surveys.py",
+        "app/student/modules/surveys.py",
+        "app/student/modules/surveys.py",
+        "app/student/modules/surveys.py",
+        "app/student/modules/surveys.py",
+        "app/student/modules/surveys.py",
+        "templates/base.html",
+        "templates/base.html",
+        "templates/interest_survey_edit.html",
+        "templates/personality_survey_edit.html",
+        "templates/personality_survey.html",
+        "templates/interest_survey.html",
+        "templates/student/dashboard_minimal.html"
+      ],
+      "student_surveys.interest_survey": [
+        "app/student/modules/surveys.py",
+        "templates/surveys.html"
+      ],
+      "student_surveys.personality_survey": [
+        "app/student/modules/surveys.py"
+      ],
+      "student.interest_survey": [
+        "templates/surveys.html",
+        "templates/student_dashboard.html",
+        "templates/interest_survey.html"
+      ],
+      "student.personality_survey_edit": [
+        "templates/surveys.html",
+        "templates/personality_survey_edit.html",
+        "templates/student_dashboard.html"
+      ],
+      "student.personality_survey": [
+        "templates/surveys.html",
+        "templates/personality_survey.html",
+        "templates/student_dashboard.html"
+      ],
+      "student.view_themes": [
+        "templates/surveys.html",
+        "templates/activities.html",
+        "templates/base.html",
+        "templates/base.html",
+        "templates/select_class_for_themes.html",
+        "templates/edit_theme.html",
+        "templates/edit_theme_simple.html",
+        "templates/student_main_themes.html",
+        "templates/view_themes.html",
+        "templates/student/dashboard_minimal.html"
+      ],
+      "teacher.integrated_management": [
+        "templates/teacher_dashboard.html",
+        "templates/teacher_dashboard.html",
+        "templates/teacher/edit_unit.html",
+        "templates/teacher/edit_unit.html",
+        "templates/teacher/edit_unit.html"
+      ],
+      "teacher.create_class": [
+        "templates/teacher_dashboard.html",
+        "templates/teacher_dashboard.html",
+        "templates/create_class.html",
+        "templates/teacher_classes.html"
+      ],
+      "teacher.pending_users": [
+        "templates/teacher_dashboard.html"
+      ],
+      "teacher.view_class": [
+        "templates/teacher_dashboard.html",
+        "templates/main_themes.html",
+        "templates/add_students.html",
+        "templates/add_students.html",
+        "templates/edit_class.html",
+        "templates/view_groups.html",
+        "templates/create_milestone.html",
+        "templates/curriculums.html",
+        "templates/edit_milestone.html",
+        "templates/view_milestone.html",
+        "templates/evaluate_students.html"
+      ],
+      "teacher.create_milestone": [
+        "templates/teacher_dashboard.html",
+        "templates/view_class.html",
+        "templates/view_class.html"
+      ],
+      "teacher.view_curriculums": [
+        "templates/teacher_dashboard.html",
+        "templates/curriculum_unified.html",
+        "templates/create_curriculum.html",
+        "templates/upload_curriculum.html",
+        "templates/view_class.html",
+        "templates/view_curriculum.html",
+        "templates/curriculum/view_simple.html"
+      ],
+      "auth.change_password": [
+        "templates/teacher_dashboard.html",
+        "templates/change_password.html",
+        "templates/profile.html"
+      ],
+      "basebuilder_module.create_problem": [
+        "templates/teacher_dashboard.html",
+        "templates/basebuilder/teacher_dashboard.html",
+        "templates/basebuilder/category_problems.html",
+        "templates/basebuilder/category_problems.html",
+        "templates/basebuilder/problems.html",
+        "templates/basebuilder/create_problem.html"
+      ],
+      "basebuilder_module.theme_relations": [
+        "templates/teacher_dashboard.html",
+        "templates/basebuilder/teacher_dashboard.html",
+        "templates/basebuilder/layout.html"
+      ],
+      "basebuilder_module.analysis": [
+        "templates/teacher_dashboard.html",
+        "templates/base.html",
+        "templates/base.html",
+        "templates/basebuilder/teacher_dashboard.html",
+        "templates/basebuilder/teacher_dashboard.html",
+        "templates/basebuilder/student_analysis.html",
+        "templates/basebuilder/layout.html",
+        "templates/basebuilder/analysis.html"
+      ],
+      "teacher.ranking_analysis": [
+        "templates/teacher_dashboard.html",
+        "templates/teacher/ranking_analysis.html",
+        "templates/components/ranking_widget.html"
+      ],
+      "student.view_activity": [
+        "templates/teacher_dashboard.html"
+      ],
+      "student.new_activity": [
+        "templates/activities.html",
+        "templates/activities.html",
+        "templates/create_activity.html",
+        "templates/student_dashboard.html",
+        "templates/new_activity.html"
+      ],
+      "student.edit_activity": [
+        "templates/activities.html",
+        "templates/activities.html",
+        "templates/view_activity.html",
+        "templates/edit_activity.html"
+      ],
+      "student.delete_activity": [
+        "templates/activities.html",
+        "templates/view_activity.html"
+      ],
+      "student.export_activities": [
+        "templates/activities.html",
+        "templates/activities.html"
+      ],
+      "static": [
+        "templates/base.html",
+        "templates/base.html",
+        "templates/base.html",
+        "templates/base.html",
+        "templates/base.html",
+        "templates/base.html",
+        "templates/base.html",
+        "templates/base.html",
+        "templates/base.html",
+        "templates/base.html",
+        "templates/base.html",
+        "templates/learning_portal.html",
+        "templates/learning_portal.html",
+        "templates/learning_portal.html",
+        "templates/chat.html",
+        "templates/chat.html",
+        "templates/chat.html",
+        "templates/curriculum_unified.html",
+        "templates/edit_curriculum.html",
+        "templates/view_curriculum.html",
+        "templates/admin/import_users.html",
+        "templates/basebuilder/layout.html",
+        "templates/basebuilder/layout.html",
+        "templates/basebuilder/layout.html",
+        "templates/basebuilder/layout.html",
+        "templates/basebuilder/layout.html",
+        "templates/basebuilder/layout.html"
+      ],
+      "admin_panel.create_school": [
+        "templates/base.html",
+        "templates/base.html",
+        "templates/admin/schools.html",
+        "templates/admin/schools.html",
+        "templates/admin/dashboard.html",
+        "templates/admin/dashboard.html"
+      ],
+      "auth.logout": [
+        "templates/base.html",
+        "templates/base.html",
+        "templates/base.html",
+        "templates/base.html",
+        "templates/base.html",
+        "templates/base.html",
+        "templates/admin/base_admin.html"
+      ],
+      "basebuilder_module.problems": [
+        "templates/base.html",
+        "templates/base.html",
+        "templates/base.html",
+        "templates/base.html",
+        "templates/basebuilder/teacher_dashboard.html",
+        "templates/basebuilder/import_problems.html",
+        "templates/basebuilder/import_problems.html",
+        "templates/basebuilder/proficiency.html",
+        "templates/basebuilder/proficiency.html",
+        "templates/basebuilder/proficiency.html",
+        "templates/basebuilder/solve_problem.html",
+        "templates/basebuilder/solve_problem.html",
+        "templates/basebuilder/solve_problem.html",
+        "templates/basebuilder/categories.html",
+        "templates/basebuilder/categories.html",
+        "templates/basebuilder/category_problems.html",
+        "templates/basebuilder/category_problems.html",
+        "templates/basebuilder/category_problems.html",
+        "templates/basebuilder/problems.html",
+        "templates/basebuilder/problems.html",
+        "templates/basebuilder/student_dashboard.html",
+        "templates/basebuilder/student_dashboard.html",
+        "templates/basebuilder/history.html",
+        "templates/basebuilder/create_problem.html",
+        "templates/basebuilder/create_problem.html",
+        "templates/basebuilder/layout.html",
+        "templates/basebuilder/layout.html"
+      ],
+      "basebuilder_module.view_proficiency": [
+        "templates/base.html",
+        "templates/base.html",
+        "templates/basebuilder/category_texts.html",
+        "templates/basebuilder/session_summary.html"
+      ],
+      "basebuilder_module.learning_paths": [
+        "templates/base.html",
+        "templates/base.html",
+        "templates/basebuilder/teacher_dashboard.html",
+        "templates/basebuilder/create_learning_path.html",
+        "templates/basebuilder/create_learning_path.html",
+        "templates/basebuilder/path_progress.html",
+        "templates/basebuilder/edit_learning_path.html",
+        "templates/basebuilder/edit_learning_path.html",
+        "templates/basebuilder/start_learning_path.html",
+        "templates/basebuilder/student_dashboard.html",
+        "templates/basebuilder/layout.html",
+        "templates/basebuilder/layout.html",
+        "templates/basebuilder/assign_learning_path.html",
+        "templates/basebuilder/assign_learning_path.html"
+      ],
+      "student.chat_page": [
+        "templates/base.html",
+        "templates/base.html",
+        "templates/select_class_for_chat.html",
+        "templates/student_dashboard.html",
+        "templates/student_dashboard.html"
+      ],
+      "teacher_student_evaluation.teacher_themes": [
+        "templates/base.html"
+      ],
+      "basebuilder_module.categories": [
+        "templates/base.html",
+        "templates/base.html",
+        "templates/basebuilder/teacher_dashboard.html",
+        "templates/basebuilder/proficiency.html",
+        "templates/basebuilder/create_category.html",
+        "templates/basebuilder/create_category.html",
+        "templates/basebuilder/layout.html"
+      ],
+      "teacher.chat_page": [
+        "templates/base.html",
+        "templates/base.html"
+      ],
+      "teacher.teacher_themes": [
+        "templates/base.html"
+      ],
+      "teacher.classes": [
+        "templates/base.html",
+        "templates/add_students.html",
+        "templates/create_class.html",
+        "templates/class_details.html"
+      ],
+      "auth.register": [
+        "templates/base.html",
+        "templates/base.html",
+        "templates/index.html",
+        "templates/login.html",
+        "templates/register.html"
+      ],
+      "student.interest_survey_edit": [
+        "templates/interest_survey_edit.html",
+        "templates/student_dashboard.html"
+      ],
+      "student.submit_milestone": [
+        "templates/student_view_milestone.html",
+        "templates/student_view_milestone.html",
+        "templates/submit_milestone.html"
+      ],
+      "teacher.create_main_theme": [
+        "templates/main_themes.html",
+        "templates/teacher_themes.html"
+      ],
+      "teacher.edit_main_theme": [
+        "templates/main_themes.html",
+        "templates/teacher_themes.html",
+        "templates/edit_main_theme.html"
+      ],
+      "teacher.delete_main_theme": [
+        "templates/main_themes.html"
+      ],
+      "student.student_view_main_themes": [
+        "templates/select_class_for_themes.html",
+        "templates/create_personal_theme.html",
+        "templates/generate_theme.html"
+      ],
+      "teacher.view_main_themes": [
+        "templates/create_main_theme.html",
+        "templates/teacher_themes.html",
+        "templates/view_class.html"
+      ],
+      "teacher.view_milestone": [
+        "templates/submit_milestone.html",
+        "templates/view_class.html"
+      ],
+      "add_feedback": [
+        "templates/view_activity.html"
+      ],
+      "teacher.download_student_template": [
+        "templates/add_students.html"
+      ],
+      "student.new_todo": [
+        "templates/todos.html"
+      ],
+      "student.toggle_todo": [
+        "templates/todos.html"
+      ],
+      "student.edit_todo": [
+        "templates/todos.html"
+      ],
+      "student.delete_todo": [
+        "templates/todos.html"
+      ],
+      "teacher.edit_class": [
+        "templates/edit_class.html",
+        "templates/teacher_classes.html",
+        "templates/class_details.html"
+      ],
+      "teacher.export_curriculum": [
+        "templates/curriculum_unified.html",
+        "templates/edit_curriculum.html",
+        "templates/curriculums.html",
+        "templates/view_curriculum.html"
+      ],
+      "student.learning_portal": [
+        "templates/learning_unit.html",
+        "templates/student_dashboard.html",
+        "templates/student_dashboard.html",
+        "templates/curriculum_units_view.html"
+      ],
+      "teacher.view_groups": [
+        "templates/create_group.html",
+        "templates/view_class.html",
+        "templates/view_group.html"
+      ],
+      "teacher.create_group": [
+        "templates/view_groups.html",
+        "templates/view_groups.html",
+        "templates/view_class.html"
+      ],
+      "teacher.view_group": [
+        "templates/view_groups.html",
+        "templates/edit_group.html",
+        "templates/view_class.html"
+      ],
+      "teacher.edit_group": [
+        "templates/view_groups.html",
+        "templates/view_group.html"
+      ],
+      "delete_group": [
+        "templates/view_groups.html"
+      ],
+      "teacher.generate_curriculum": [
+        "templates/create_curriculum.html"
+      ],
+      "basebuilder_module.my_texts": [
+        "templates/student_dashboard.html",
+        "templates/basebuilder/solve_text.html",
+        "templates/basebuilder/solve_text.html",
+        "templates/basebuilder/student_dashboard.html",
+        "templates/basebuilder/layout.html",
+        "templates/basebuilder/View_text.html"
+      ],
+      "student.class_details": [
+        "templates/student_dashboard.html"
+      ],
+      "student.class_themes": [
+        "templates/student_dashboard.html",
+        "templates/student/class_details.html"
+      ],
+      "teacher.class_details": [
+        "templates/teacher_classes.html",
+        "templates/student_classes.html"
+      ],
+      "teacher.delete_class": [
+        "templates/teacher_classes.html",
+        "templates/class_details.html"
+      ],
+      "student.create_personal_theme": [
+        "templates/student_main_themes.html"
+      ],
+      "student.generate_theme": [
+        "templates/student_main_themes.html"
+      ],
+      "teacher.view_curriculum": [
+        "templates/edit_curriculum.html",
+        "templates/edit_curriculum.html",
+        "templates/curriculums.html",
+        "templates/curriculums.html",
+        "templates/curriculum_units_view.html",
+        "templates/teacher/integrated_management.html",
+        "templates/teacher/auto_sync_settings.html"
+      ],
+      "teacher.edit_curriculum": [
+        "templates/edit_curriculum.html",
+        "templates/curriculums.html",
+        "templates/view_curriculum.html",
+        "templates/view_curriculum.html"
+      ],
+      "basebuilder.solve_problem": [
+        "templates/view_themes.html"
+      ],
+      "basebuilder.problems": [
+        "templates/view_themes.html"
+      ],
+      "student.select_theme": [
+        "templates/view_themes.html"
+      ],
+      "student.edit_theme": [
+        "templates/view_themes.html",
+        "templates/view_themes.html"
+      ],
+      "student.delete_theme": [
+        "templates/view_themes.html"
+      ],
+      "student.generate_theme_ai": [
+        "templates/view_themes.html"
+      ],
+      "download_curriculum_template": [
+        "templates/upload_curriculum.html"
+      ],
+      "teacher.generate_evaluations": [
+        "templates/view_class.html",
+        "templates/evaluate_students.html",
+        "templates/evaluate_students.html",
+        "templates/evaluate_students.html"
+      ],
+      "teacher.add_students": [
+        "templates/view_class.html",
+        "templates/class_details.html",
+        "templates/class_details.html"
+      ],
+      "remove_student": [
+        "templates/view_class.html"
+      ],
+      "teacher.edit_milestone": [
+        "templates/view_class.html",
+        "templates/view_milestone.html"
+      ],
+      "delete_milestone": [
+        "templates/view_class.html",
+        "templates/view_milestone.html"
+      ],
+      "auth.reset_password": [
+        "templates/reset_password.html"
+      ],
+      "student.new_goal": [
+        "templates/goals.html"
+      ],
+      "student.edit_goal": [
+        "templates/goals.html",
+        "templates/goals.html",
+        "templates/goals.html"
+      ],
+      "student.delete_goal": [
+        "templates/goals.html",
+        "templates/goals.html",
+        "templates/goals.html"
+      ],
+      "teacher.create_curriculum_form": [
+        "templates/curriculums.html"
+      ],
+      "teacher.import_curriculum": [
+        "templates/curriculums.html"
+      ],
+      "teacher.delete_curriculum": [
+        "templates/curriculums.html"
+      ],
+      "auth.resend_verification": [
+        "templates/verify_email.html"
+      ],
+      "teacher.class_main_themes": [
+        "templates/edit_main_theme.html"
+      ],
+      "teacher.main_themes": [
+        "templates/edit_main_theme.html"
+      ],
+      "teacher.view_converted_units": [
+        "templates/view_curriculum.html",
+        "templates/teacher/integrated_management.html"
+      ],
+      "teacher.auto_sync_settings": [
+        "templates/view_curriculum.html",
+        "templates/teacher/integrated_management.html"
+      ],
+      "teacher.import_students": [
+        "templates/class_details.html"
+      ],
+      "teacher.generate_student_report": [
+        "templates/class_details.html"
+      ],
+      "teacher.remove_student": [
+        "templates/class_details.html"
+      ],
+      "leave_group": [
+        "templates/view_group.html"
+      ],
+      "join_group": [
+        "templates/view_group.html"
+      ],
+      "remove_group_member": [
+        "templates/view_group.html"
+      ],
+      "teacher.view_curriculum_simple": [
+        "templates/curriculum/edit_simple.html"
+      ],
+      "teacher.edit_curriculum_simple": [
+        "templates/curriculum/view_simple.html",
+        "templates/curriculum/view_simple.html"
+      ],
+      "teacher.export_curriculum_v2": [
+        "templates/curriculum/view_simple.html"
+      ],
+      "admin_panel.admin_create_school_year": [
+        "templates/admin/school_years.html",
+        "templates/admin/school_detail.html",
+        "templates/admin/school_detail.html"
+      ],
+      "admin_panel.admin_edit_school_year": [
+        "templates/admin/school_years.html",
+        "templates/admin/school_detail.html"
+      ],
+      "admin_panel.download_user_template": [
+        "templates/admin/import_students.html",
+        "templates/teacher/import_users.html"
+      ],
+      "admin_panel.edit_school": [
+        "templates/admin/school_detail.html",
+        "templates/admin/schools.html"
+      ],
+      "admin_panel.admin_set_current_year": [
+        "templates/admin/school_detail.html"
+      ],
+      "admin_panel.delete_school": [
+        "templates/admin/schools.html"
+      ],
+      "admin_panel.admin_create_class_group": [
+        "templates/admin/class_groups.html"
+      ],
+      "academic.edit_class": [
+        "templates/admin/class_groups.html"
+      ],
+      "admin_panel.admin_add_students_to_class": [
+        "templates/admin/class_group_detail.html"
+      ],
+      "admin_panel.admin_delete_enrollment": [
+        "templates/admin/class_group_detail.html"
+      ],
+      "admin_panel.delete_user": [
+        "templates/admin/users.html"
+      ],
+      "enrollment.import_students": [
+        "templates/admin/student_enrollment.html"
+      ],
+      "enrollment.edit_student": [
+        "templates/admin/student_enrollment.html"
+      ],
+      "admin_panel.analytics_dashboard": [
+        "templates/admin/dashboard.html"
+      ],
+      "teacher.approve_user": [
+        "templates/teacher/pending_users.html"
+      ],
+      "teacher.create_curriculum": [
+        "templates/teacher/integrated_management.html"
+      ],
+      "basebuilder_module.edit_problem": [
+        "templates/basebuilder/teacher_dashboard.html",
+        "templates/basebuilder/category_problems.html",
+        "templates/basebuilder/problems.html"
+      ],
+      "basebuilder_module.import_text_set": [
+        "templates/basebuilder/teacher_dashboard.html",
+        "templates/basebuilder/import_text.html",
+        "templates/basebuilder/category_problems.html",
+        "templates/basebuilder/text_sets.html",
+        "templates/basebuilder/text_sets.html"
+      ],
+      "basebuilder_module.create_category": [
+        "templates/basebuilder/teacher_dashboard.html",
+        "templates/basebuilder/categories.html",
+        "templates/basebuilder/create_category.html"
+      ],
+      "basebuilder_module.create_learning_path": [
+        "templates/basebuilder/teacher_dashboard.html",
+        "templates/basebuilder/create_learning_path.html",
+        "templates/basebuilder/teacher_learning_paths.html",
+        "templates/basebuilder/teacher_learning_paths.html"
+      ],
+      "basebuilder_module.download_problem_template": [
+        "templates/basebuilder/import_problems.html",
+        "templates/basebuilder/import_problems.html",
+        "templates/basebuilder/import_text.html"
+      ],
+      "basebuilder_module.import_problems": [
+        "templates/basebuilder/import_problems.html",
+        "templates/basebuilder/category_problems.html",
+        "templates/basebuilder/problems.html"
+      ],
+      "basebuilder_module.start_category_session": [
+        "templates/basebuilder/category_texts.html",
+        "templates/basebuilder/categories.html",
+        "templates/basebuilder/categories.html",
+        "templates/basebuilder/category_problems.html"
+      ],
+      "basebuilder_module.start_text_session": [
+        "templates/basebuilder/category_texts.html"
+      ],
+      "basebuilder_module.view_text_set": [
+        "templates/basebuilder/student_analysis.html",
+        "templates/basebuilder/category_problems.html",
+        "templates/basebuilder/text_sets.html",
+        "templates/basebuilder/student_dashboard.html",
+        "templates/basebuilder/my_texts.html"
+      ],
+      "basebuilder_module.view_history": [
+        "templates/basebuilder/student_analysis.html",
+        "templates/basebuilder/student_dashboard.html",
+        "templates/basebuilder/layout.html"
+      ],
+      "basebuilder_module.submit_answer": [
+        "templates/basebuilder/solve_text.html",
+        "templates/basebuilder/solve_problem.html",
+        "templates/basebuilder/solve_problem.html"
+      ],
+      "basebuilder_module.category_texts": [
+        "templates/basebuilder/proficiency.html"
+      ],
+      "basebuilder_module.text_sets": [
+        "templates/basebuilder/import_text.html",
+        "templates/basebuilder/import_text.html",
+        "templates/basebuilder/deliver_text.html",
+        "templates/basebuilder/deliver_text.html",
+        "templates/basebuilder/layout.html",
+        "templates/basebuilder/View_text.html"
+      ],
+      "basebuilder_module.solve_problem": [
+        "templates/basebuilder/solve_problem.html",
+        "templates/basebuilder/category_problems.html",
+        "templates/basebuilder/problems.html",
+        "templates/basebuilder/student_dashboard.html",
+        "templates/basebuilder/View_text.html",
+        "templates/basebuilder/View_text.html"
+      ],
+      "basebuilder_module.next_problem": [
+        "templates/basebuilder/solve_problem.html"
+      ],
+      "basebuilder_module.edit_category": [
+        "templates/basebuilder/categories.html",
+        "templates/basebuilder/categories.html"
+      ],
+      "basebuilder_module.delete_category": [
+        "templates/basebuilder/categories.html",
+        "templates/basebuilder/categories.html"
+      ],
+      "basebuilder_module.deliver_text": [
+        "templates/basebuilder/deliver_text.html",
+        "templates/basebuilder/category_problems.html",
+        "templates/basebuilder/text_sets.html",
+        "templates/basebuilder/text_sets.html",
+        "templates/basebuilder/View_text.html"
+      ],
+      "basebuilder_module.assign_learning_path": [
+        "templates/basebuilder/path_progress.html",
+        "templates/basebuilder/assign_learning_path.html",
+        "templates/basebuilder/teacher_learning_paths.html"
+      ],
+      "basebuilder_module.delete_problem": [
+        "templates/basebuilder/category_problems.html",
+        "templates/basebuilder/problems.html"
+      ],
+      "basebuilder_module.start_search_session": [
+        "templates/basebuilder/problems.html"
+      ],
+      "basebuilder_module.delete_text_sets": [
+        "templates/basebuilder/text_sets.html"
+      ],
+      "basebuilder_module.delete_single_text": [
+        "templates/basebuilder/text_sets.html"
+      ],
+      "basebuilder_module.cancel_text_delivery": [
+        "templates/basebuilder/text_sets.html"
+      ],
+      "basebuilder_module.edit_learning_path": [
+        "templates/basebuilder/edit_learning_path.html",
+        "templates/basebuilder/teacher_learning_paths.html"
+      ],
+      "basebuilder_module.start_learning_path": [
+        "templates/basebuilder/start_learning_path.html",
+        "templates/basebuilder/start_learning_path.html",
+        "templates/basebuilder/start_learning_path.html",
+        "templates/basebuilder/start_learning_path.html",
+        "templates/basebuilder/student_dashboard.html",
+        "templates/basebuilder/student_learning_paths.html",
+        "templates/basebuilder/student_learning_paths.html"
+      ],
+      "basebuilder_module.update_path_progress": [
+        "templates/basebuilder/start_learning_path.html",
+        "templates/basebuilder/start_learning_path.html",
+        "templates/basebuilder/start_learning_path.html"
+      ],
+      "basebuilder_module.solve_text": [
+        "templates/basebuilder/student_dashboard.html",
+        "templates/basebuilder/my_texts.html"
+      ],
+      "basebuilder_module.start_session": [
+        "templates/basebuilder/session_summary.html"
+      ],
+      "basebuilder_module.path_progress": [
+        "templates/basebuilder/teacher_learning_paths.html"
+      ],
+      "basebuilder_module.student_analysis": [
+        "templates/basebuilder/analysis.html"
+      ],
+      "student.ranking": [
+        "templates/components/ranking_widget.html",
+        "templates/student/ranking.html"
+      ]
+    },
+    "high_usage_endpoints": {
+      "teacher_dashboard.dashboard": [
+        "fix_url_for_endpoints.py",
+        "blueprint_mapping_creator.py",
+        "blueprint_mapping_creator.py",
+        "backup_endpoint_fix_20250628_172639/blueprint_mapping_creator.py",
+        "legacy/app_simple.py",
+        "legacy/app_fixed.py",
+        "app/__init__.py",
+        "backup_endpoint_fix_20250628_172639/app/__init__.py",
+        "tests/unit/test_refactoring.py",
+        "app/auth/__init__.py",
+        "app/auth/__init__.py",
+        "app/auth/secure_auth.py",
+        "app/auth/secure_auth.py",
+        "app/teacher/modules/synchronization.py",
+        "app/teacher/modules/synchronization.py",
+        "app/teacher/modules/synchronization.py",
+        "app/teacher/modules/approval_workflow.py",
+        "app/teacher/modules/analytics.py",
+        "templates/base.html",
+        "templates/base.html",
+        "templates/index.html",
+        "templates/teacher_themes.html",
+        "templates/add_students.html",
+        "templates/change_password.html",
+        "templates/create_milestone.html",
+        "templates/profile.html",
+        "templates/errors/404.html",
+        "templates/errors/500.html",
+        "templates/teacher/pending_users.html",
+        "templates/teacher/integrated_management.html",
+        "templates/teacher/pending_unit_approvals.html",
+        "templates/teacher/import_users.html",
+        "templates/teacher/import_users.html"
+      ],
+      "student_dashboard.dashboard": [
+        "fix_url_for_endpoints.py",
+        "blueprint_mapping_creator.py",
+        "blueprint_mapping_creator.py",
+        "backup_endpoint_fix_20250628_172639/blueprint_mapping_creator.py",
+        "legacy/app_simple.py",
+        "legacy/app_fixed.py",
+        "app/__init__.py",
+        "backup_endpoint_fix_20250628_172639/app/__init__.py",
+        "tests/unit/test_refactoring.py",
+        "app/auth/__init__.py",
+        "app/auth/__init__.py",
+        "app/auth/secure_auth.py",
+        "app/auth/secure_auth.py",
+        "app/student/modules/goals_todos.py",
+        "app/student/modules/goals_todos.py",
+        "app/student/modules/activities.py",
+        "app/student/modules/activities.py",
+        "app/student/modules/activities.py",
+        "app/student/modules/surveys.py",
+        "templates/base.html",
+        "templates/base.html",
+        "templates/index.html",
+        "templates/select_class_for_themes.html",
+        "templates/select_class_for_chat.html",
+        "templates/change_password.html",
+        "templates/student_main_themes.html",
+        "templates/view_themes.html",
+        "templates/profile.html",
+        "templates/errors/404.html",
+        "templates/errors/500.html",
+        "templates/student/debug_routes.html",
+        "templates/student/class_details.html"
+      ],
+      "index": [
+        "core/academic.py",
+        "core/academic.py",
+        "core/school.py",
+        "core/school.py",
+        "core/enrollment.py",
+        "core/enrollment.py",
+        "core/enrollment.py",
+        "core/enrollment.py",
+        "core/enrollment.py",
+        "core/enrollment.py",
+        "core/enrollment.py",
+        "core/enrollment.py",
+        "core/enrollment.py",
+        "core/enrollment.py",
+        "core/enrollment.py",
+        "basebuilder/routes.py",
+        "backup_endpoint_fix_20250628_172639/app/auth/__init__.py",
+        "backup_endpoint_fix_20250628_172639/app/auth/__init__.py",
+        "backup_endpoint_fix_20250628_172639/app/auth/__init__.py",
+        "backup_endpoint_fix_20250628_172639/app/auth/secure_auth.py",
+        "backup_endpoint_fix_20250628_172639/app/auth/secure_auth.py",
+        "app/utils/decorators.py",
+        "app/utils/decorators.py",
+        "app/utils/decorators.py",
+        "app/admin/__init__.py",
+        "app/teacher/common.py",
+        "app/auth/__init__.py",
+        "app/auth/__init__.py",
+        "app/auth/__init__.py",
+        "app/auth/secure_auth.py",
+        "app/auth/secure_auth.py",
+        "app/student/utils.py",
+        "app/teacher/modules/class_management.py",
+        "templates/base.html",
+        "templates/base.html",
+        "templates/base.html",
+        "templates/change_password.html",
+        "templates/profile.html",
+        "templates/admin/base_admin.html",
+        "templates/admin/base_admin.html",
+        "templates/errors/404.html",
+        "templates/errors/500.html",
+        "templates/basebuilder/layout.html",
+        "templates/basebuilder/layout.html"
+      ],
+      "enrollment.list_students": [
+        "core/enrollment.py",
+        "core/enrollment.py",
+        "core/enrollment.py",
+        "core/enrollment.py",
+        "core/enrollment.py"
+      ],
+      "teacher.dashboard": [
+        "backup_endpoint_fix_20250628_172639/blueprint_mapping_creator.py",
+        "backup_endpoint_fix_20250628_172639/legacy/app_simple.py",
+        "backup_endpoint_fix_20250628_172639/legacy/app_fixed.py",
+        "backup_endpoint_fix_20250628_172639/app/auth/__init__.py",
+        "backup_endpoint_fix_20250628_172639/app/auth/__init__.py",
+        "backup_endpoint_fix_20250628_172639/app/auth/secure_auth.py",
+        "backup_endpoint_fix_20250628_172639/app/auth/secure_auth.py"
+      ],
+      "student.dashboard": [
+        "backup_endpoint_fix_20250628_172639/blueprint_mapping_creator.py",
+        "backup_endpoint_fix_20250628_172639/legacy/app_simple.py",
+        "backup_endpoint_fix_20250628_172639/legacy/app_fixed.py",
+        "backup_endpoint_fix_20250628_172639/app/auth/__init__.py",
+        "backup_endpoint_fix_20250628_172639/app/auth/__init__.py",
+        "backup_endpoint_fix_20250628_172639/app/auth/secure_auth.py",
+        "backup_endpoint_fix_20250628_172639/app/auth/secure_auth.py"
+      ],
+      "admin_panel.dashboard": [
+        "legacy/app_simple.py",
+        "legacy/app_fixed.py",
+        "app/__init__.py",
+        "app/special_routes.py",
+        "backup_endpoint_fix_20250628_172639/legacy/app_simple.py",
+        "backup_endpoint_fix_20250628_172639/legacy/app_fixed.py",
+        "backup_endpoint_fix_20250628_172639/app/__init__.py",
+        "backup_endpoint_fix_20250628_172639/app/auth/__init__.py",
+        "backup_endpoint_fix_20250628_172639/app/auth/__init__.py",
+        "backup_endpoint_fix_20250628_172639/app/auth/secure_auth.py",
+        "backup_endpoint_fix_20250628_172639/app/auth/secure_auth.py",
+        "app/auth/__init__.py",
+        "app/auth/__init__.py",
+        "app/auth/secure_auth.py",
+        "app/auth/secure_auth.py",
+        "templates/base.html",
+        "templates/base.html",
+        "templates/base.html",
+        "templates/base.html",
+        "templates/base.html",
+        "templates/profile.html",
+        "templates/admin/create_class_group.html",
+        "templates/admin/school_detail.html",
+        "templates/admin/class_group_detail.html",
+        "templates/admin/add_students_to_class.html",
+        "templates/admin/access.html",
+        "templates/admin/create_school_year.html",
+        "templates/admin/edit_school.html",
+        "templates/admin/edit_school_year.html"
+      ],
+      "auth.login": [
+        "legacy/app_simple.py",
+        "legacy/app_fixed.py",
+        "app/__init__.py",
+        "app/__init__.py",
+        "app/__init__.py",
+        "backup_endpoint_fix_20250628_172639/legacy/app_simple.py",
+        "backup_endpoint_fix_20250628_172639/legacy/app_fixed.py",
+        "backup_endpoint_fix_20250628_172639/app/__init__.py",
+        "backup_endpoint_fix_20250628_172639/app/__init__.py",
+        "backup_endpoint_fix_20250628_172639/app/__init__.py",
+        "backup_endpoint_fix_20250628_172639/app/auth/__init__.py",
+        "backup_endpoint_fix_20250628_172639/app/auth/__init__.py",
+        "backup_endpoint_fix_20250628_172639/app/auth/__init__.py",
+        "backup_endpoint_fix_20250628_172639/app/auth/__init__.py",
+        "backup_endpoint_fix_20250628_172639/app/auth/__init__.py",
+        "backup_endpoint_fix_20250628_172639/app/auth/__init__.py",
+        "backup_endpoint_fix_20250628_172639/app/auth/__init__.py",
+        "app/auth/__init__.py",
+        "app/auth/__init__.py",
+        "app/auth/__init__.py",
+        "app/auth/__init__.py",
+        "app/auth/__init__.py",
+        "app/auth/__init__.py",
+        "app/auth/__init__.py",
+        "templates/base.html",
+        "templates/base.html",
+        "templates/index.html",
+        "templates/forgot_password.html",
+        "templates/awaiting_approval.html",
+        "templates/verify_email.html",
+        "templates/login.html",
+        "templates/register.html",
+        "templates/admin/access.html"
+      ],
+      "basebuilder_module.index": [
+        "backup_endpoint_fix_20250628_172639/basebuilder/routes/admin.py",
+        "backup_endpoint_fix_20250628_172639/basebuilder/routes/admin.py",
+        "backup_endpoint_fix_20250628_172639/basebuilder/routes/admin.py",
+        "backup_endpoint_fix_20250628_172639/basebuilder/routes/admin.py",
+        "backup_endpoint_fix_20250628_172639/basebuilder/routes/admin.py",
+        "backup_endpoint_fix_20250628_172639/basebuilder/routes/admin.py",
+        "backup_endpoint_fix_20250628_172639/basebuilder/routes/admin.py",
+        "backup_endpoint_fix_20250628_172639/basebuilder/routes/admin.py",
+        "backup_endpoint_fix_20250628_172639/basebuilder/routes/admin.py",
+        "backup_endpoint_fix_20250628_172639/basebuilder/routes/admin.py",
+        "backup_endpoint_fix_20250628_172639/basebuilder/routes/admin.py",
+        "basebuilder/routes/admin.py",
+        "basebuilder/routes/admin.py",
+        "basebuilder/routes/admin.py",
+        "basebuilder/routes/admin.py",
+        "basebuilder/routes/admin.py",
+        "basebuilder/routes/admin.py",
+        "basebuilder/routes/admin.py",
+        "basebuilder/routes/admin.py",
+        "basebuilder/routes/admin.py",
+        "basebuilder/routes/admin.py",
+        "basebuilder/routes/admin.py",
+        "basebuilder/routes/categories.py",
+        "basebuilder/routes/sessions.py",
+        "basebuilder/routes/sessions.py",
+        "basebuilder/routes/sessions.py",
+        "basebuilder/routes/sessions.py",
+        "basebuilder/routes/sessions.py",
+        "basebuilder/routes/sessions.py",
+        "basebuilder/routes/sessions.py",
+        "basebuilder/routes/sessions.py",
+        "basebuilder/routes/sessions.py",
+        "basebuilder/routes/sessions.py",
+        "basebuilder/routes/sessions.py",
+        "basebuilder/routes/sessions.py",
+        "basebuilder/routes/progress.py",
+        "basebuilder/routes/progress.py",
+        "basebuilder/routes/progress.py",
+        "basebuilder/routes/progress.py",
+        "basebuilder/routes/problems.py",
+        "basebuilder/routes/analytics.py",
+        "basebuilder/routes/analytics.py",
+        "basebuilder/routes/analytics.py",
+        "templates/teacher_dashboard.html",
+        "templates/base.html",
+        "templates/base.html",
+        "templates/base.html",
+        "templates/base.html",
+        "templates/student_dashboard.html",
+        "templates/basebuilder/student_learning_paths.html",
+        "templates/basebuilder/layout.html"
+      ],
+      "problems.problems": [
+        "backup_endpoint_fix_20250628_172639/basebuilder/routes/admin.py",
+        "backup_endpoint_fix_20250628_172639/basebuilder/routes/admin.py",
+        "backup_endpoint_fix_20250628_172639/basebuilder/routes/admin.py",
+        "basebuilder/routes/admin.py",
+        "basebuilder/routes/admin.py",
+        "basebuilder/routes/admin.py",
+        "basebuilder/routes/problems.py",
+        "basebuilder/routes/problems.py",
+        "basebuilder/routes/problems.py",
+        "basebuilder/routes/problems.py",
+        "basebuilder/routes/problems.py",
+        "basebuilder/routes/problems.py",
+        "basebuilder/routes/problems.py",
+        "basebuilder/routes/problems.py",
+        "basebuilder/routes/problems.py",
+        "basebuilder/routes/problems.py"
+      ],
+      "admin.learning_paths": [
+        "backup_endpoint_fix_20250628_172639/basebuilder/routes/admin.py",
+        "backup_endpoint_fix_20250628_172639/basebuilder/routes/admin.py",
+        "backup_endpoint_fix_20250628_172639/basebuilder/routes/admin.py",
+        "backup_endpoint_fix_20250628_172639/basebuilder/routes/admin.py",
+        "backup_endpoint_fix_20250628_172639/basebuilder/routes/admin.py",
+        "backup_endpoint_fix_20250628_172639/basebuilder/routes/admin.py",
+        "backup_endpoint_fix_20250628_172639/basebuilder/routes/admin.py",
+        "backup_endpoint_fix_20250628_172639/basebuilder/routes/admin.py",
+        "backup_endpoint_fix_20250628_172639/basebuilder/routes/admin.py"
+      ],
+      "auth.verify_email": [
+        "backup_endpoint_fix_20250628_172639/app/auth/__init__.py",
+        "backup_endpoint_fix_20250628_172639/app/auth/__init__.py",
+        "backup_endpoint_fix_20250628_172639/app/auth/__init__.py",
+        "backup_endpoint_fix_20250628_172639/app/auth/__init__.py",
+        "app/utils/decorators.py",
+        "app/auth/__init__.py",
+        "app/auth/__init__.py",
+        "app/auth/__init__.py",
+        "app/auth/__init__.py"
+      ],
+      "auth.awaiting_approval": [
+        "backup_endpoint_fix_20250628_172639/app/auth/__init__.py",
+        "backup_endpoint_fix_20250628_172639/app/auth/__init__.py",
+        "backup_endpoint_fix_20250628_172639/app/auth/__init__.py",
+        "app/utils/decorators.py",
+        "app/auth/__init__.py",
+        "app/auth/__init__.py",
+        "app/auth/__init__.py"
+      ],
+      "auth.forgot_password": [
+        "backup_endpoint_fix_20250628_172639/app/auth/__init__.py",
+        "backup_endpoint_fix_20250628_172639/app/auth/__init__.py",
+        "app/auth/__init__.py",
+        "app/auth/__init__.py",
+        "templates/forgot_password.html",
+        "templates/login.html"
+      ],
+      "auth.profile": [
+        "backup_endpoint_fix_20250628_172639/app/auth/__init__.py",
+        "app/auth/__init__.py",
+        "templates/base.html",
+        "templates/base.html",
+        "templates/base.html",
+        "templates/base.html",
+        "templates/base.html",
+        "templates/base.html",
+        "templates/profile.html"
+      ],
+      "secure_auth.verify_email": [
+        "backup_endpoint_fix_20250628_172639/app/auth/secure_auth.py",
+        "backup_endpoint_fix_20250628_172639/app/auth/secure_auth.py",
+        "backup_endpoint_fix_20250628_172639/app/auth/secure_auth.py",
+        "backup_endpoint_fix_20250628_172639/app/auth/secure_auth.py",
+        "app/auth/secure_auth.py",
+        "app/auth/secure_auth.py",
+        "app/auth/secure_auth.py",
+        "app/auth/secure_auth.py"
+      ],
+      "secure_auth.awaiting_approval": [
+        "backup_endpoint_fix_20250628_172639/app/auth/secure_auth.py",
+        "backup_endpoint_fix_20250628_172639/app/auth/secure_auth.py",
+        "app/auth/secure_auth.py",
+        "app/auth/secure_auth.py"
+      ],
+      "secure_auth.secure_login": [
+        "backup_endpoint_fix_20250628_172639/app/auth/secure_auth.py",
+        "backup_endpoint_fix_20250628_172639/app/auth/secure_auth.py",
+        "backup_endpoint_fix_20250628_172639/app/auth/secure_auth.py",
+        "backup_endpoint_fix_20250628_172639/app/auth/secure_auth.py",
+        "app/auth/secure_auth.py",
+        "app/auth/secure_auth.py",
+        "app/auth/secure_auth.py",
+        "app/auth/secure_auth.py"
+      ],
+      "basebuilder_admin.learning_paths": [
+        "basebuilder/routes/admin.py",
+        "basebuilder/routes/admin.py",
+        "basebuilder/routes/admin.py",
+        "basebuilder/routes/admin.py",
+        "basebuilder/routes/admin.py",
+        "basebuilder/routes/admin.py",
+        "basebuilder/routes/admin.py",
+        "basebuilder/routes/admin.py",
+        "basebuilder/routes/admin.py"
+      ],
+      "categories.categories": [
+        "basebuilder/routes/categories.py",
+        "basebuilder/routes/categories.py",
+        "basebuilder/routes/categories.py",
+        "basebuilder/routes/categories.py",
+        "basebuilder/routes/categories.py",
+        "basebuilder/routes/categories.py",
+        "basebuilder/routes/categories.py",
+        "basebuilder/routes/categories.py",
+        "basebuilder/routes/categories.py",
+        "basebuilder/routes/categories.py",
+        "basebuilder/routes/categories.py",
+        "basebuilder/routes/categories.py",
+        "basebuilder/routes/categories.py",
+        "basebuilder/routes/sessions.py",
+        "basebuilder/routes/sessions.py"
+      ],
+      "sessions.next_problem": [
+        "basebuilder/routes/sessions.py",
+        "basebuilder/routes/sessions.py",
+        "basebuilder/routes/sessions.py"
+      ],
+      "teacher_class_management.classes": [
+        "tests/unit/test_refactoring.py",
+        "app/teacher/modules/synchronization.py",
+        "app/teacher/modules/synchronization.py",
+        "app/teacher/modules/student_evaluation.py",
+        "app/teacher/modules/student_evaluation.py",
+        "app/teacher/modules/student_evaluation.py",
+        "app/teacher/modules/student_evaluation.py",
+        "app/teacher/modules/class_management.py",
+        "app/teacher/modules/class_management.py",
+        "app/teacher/modules/class_management.py",
+        "app/teacher/modules/class_management.py",
+        "app/teacher/modules/class_management.py",
+        "app/teacher/modules/class_management.py",
+        "app/teacher/modules/class_management.py",
+        "app/teacher/modules/class_management.py",
+        "app/teacher/modules/curriculum_management.py",
+        "app/teacher/modules/curriculum_management.py",
+        "app/teacher/modules/curriculum_management.py",
+        "app/teacher/modules/curriculum_management.py",
+        "app/teacher/modules/curriculum_management.py",
+        "app/teacher/modules/curriculum_management.py",
+        "app/teacher/modules/curriculum_management.py",
+        "app/teacher/modules/curriculum_management.py",
+        "app/teacher/modules/curriculum_management.py",
+        "app/teacher/modules/curriculum_management.py",
+        "app/teacher/modules/curriculum_management.py",
+        "app/teacher/modules/approval_workflow.py",
+        "app/teacher/modules/analytics.py",
+        "templates/base.html",
+        "templates/base.html",
+        "templates/base.html"
+      ],
+      "student_activities.activities": [
+        "tests/unit/test_refactoring.py",
+        "app/student/modules/activities.py",
+        "app/student/modules/activities.py",
+        "app/student/modules/activities.py",
+        "app/student/modules/activities.py",
+        "app/student/modules/activities.py",
+        "app/student/modules/activities.py",
+        "app/student/modules/activities.py",
+        "app/student/modules/activities.py",
+        "app/student/modules/activities.py",
+        "app/student/modules/activities.py",
+        "app/student/modules/activities.py",
+        "app/student/modules/activities.py",
+        "app/student/modules/activities.py",
+        "app/student/modules/activities.py",
+        "templates/activities.html",
+        "templates/base.html",
+        "templates/base.html",
+        "templates/create_activity.html",
+        "templates/student_dashboard.html",
+        "templates/student_dashboard.html",
+        "templates/student_dashboard.html",
+        "templates/edit_activity.html",
+        "templates/select_class_for_activities.html",
+        "templates/select_class_for_activities.html",
+        "templates/new_activity.html",
+        "templates/new_activity.html",
+        "templates/student/dashboard_minimal.html",
+        "templates/student/class_details.html"
+      ],
+      "admin_panel.users": [
+        "app/admin/__init__.py",
+        "app/admin/__init__.py",
+        "app/admin/user_management.py",
+        "templates/base.html",
+        "templates/base.html",
+        "templates/base.html",
+        "templates/base.html",
+        "templates/admin/import_users.html",
+        "templates/admin/dashboard.html",
+        "templates/admin/dashboard.html",
+        "templates/admin/dashboard.html"
+      ],
+      "admin_panel.import_users": [
+        "app/admin/user_management.py",
+        "templates/base.html",
+        "templates/base.html",
+        "templates/admin/users.html",
+        "templates/admin/users.html",
+        "templates/admin/dashboard.html",
+        "templates/admin/dashboard.html"
+      ],
+      "admin_panel.admin_school_detail": [
+        "app/admin/school_management.py",
+        "app/admin/school_management.py",
+        "app/admin/school_management.py",
+        "templates/admin/create_class_group.html",
+        "templates/admin/schools.html",
+        "templates/admin/class_group_detail.html",
+        "templates/admin/add_students_to_class.html",
+        "templates/admin/create_school_year.html",
+        "templates/admin/create_school_year.html",
+        "templates/admin/edit_school_year.html"
+      ],
+      "admin_panel.admin_school_years": [
+        "app/admin/school_management.py",
+        "app/admin/school_management.py",
+        "templates/admin/school_detail.html",
+        "templates/admin/class_groups.html",
+        "templates/admin/promote_students.html",
+        "templates/admin/edit_school_year.html",
+        "templates/admin/edit_school_year.html"
+      ],
+      "admin_panel.admin_class_groups": [
+        "app/admin/school_management.py",
+        "templates/admin/create_class_group.html",
+        "templates/admin/create_class_group.html",
+        "templates/admin/school_years.html",
+        "templates/admin/school_detail.html",
+        "templates/admin/class_group_detail.html",
+        "templates/admin/add_students_to_class.html",
+        "templates/admin/student_enrollment.html"
+      ],
+      "admin_panel.admin_student_enrollment": [
+        "app/admin/school_management.py",
+        "app/admin/school_management.py",
+        "app/admin/school_management.py",
+        "templates/admin/import_students.html",
+        "templates/admin/class_groups.html"
+      ],
+      "admin_panel.admin_schools": [
+        "app/admin/school_management.py",
+        "app/admin/school_management.py",
+        "templates/base.html",
+        "templates/base.html",
+        "templates/base.html",
+        "templates/admin/create_class_group.html",
+        "templates/admin/school_years.html",
+        "templates/admin/school_detail.html",
+        "templates/admin/create_school.html",
+        "templates/admin/class_group_detail.html",
+        "templates/admin/add_students_to_class.html",
+        "templates/admin/create_school_year.html",
+        "templates/admin/edit_school.html",
+        "templates/admin/edit_school.html",
+        "templates/admin/dashboard.html",
+        "templates/admin/dashboard.html",
+        "templates/admin/edit_school_year.html"
+      ],
+      "admin_panel.admin_class_group_detail": [
+        "app/admin/school_management.py",
+        "templates/admin/add_students_to_class.html",
+        "templates/admin/add_students_to_class.html",
+        "templates/admin/add_students_to_class.html"
+      ],
+      "teacher_curriculum_management.view_curriculum": [
+        "app/teacher/modules/synchronization.py",
+        "app/teacher/modules/synchronization.py",
+        "app/teacher/modules/curriculum_management.py",
+        "app/teacher/modules/curriculum_management.py",
+        "app/teacher/modules/curriculum_management.py"
+      ],
+      "teacher_class_management.class_details": [
+        "app/teacher/modules/student_evaluation.py",
+        "app/teacher/modules/student_evaluation.py",
+        "app/teacher/modules/student_evaluation.py",
+        "app/teacher/modules/student_evaluation.py",
+        "app/teacher/modules/class_management.py",
+        "app/teacher/modules/class_management.py",
+        "app/teacher/modules/class_management.py",
+        "app/teacher/modules/class_management.py",
+        "app/teacher/modules/class_management.py",
+        "app/teacher/modules/class_management.py",
+        "app/teacher/modules/approval_workflow.py"
+      ],
+      "teacher_curriculum_management.view_curriculums": [
+        "app/teacher/modules/curriculum_management.py",
+        "app/teacher/modules/curriculum_management.py",
+        "app/teacher/modules/curriculum_management.py",
+        "app/teacher/modules/curriculum_management.py"
+      ],
+      "student_goals_todos.todos": [
+        "app/student/modules/goals_todos.py",
+        "app/student/modules/goals_todos.py",
+        "app/student/modules/goals_todos.py",
+        "app/student/modules/goals_todos.py",
+        "app/student/modules/goals_todos.py",
+        "app/student/modules/goals_todos.py",
+        "app/student/modules/goals_todos.py",
+        "app/student/modules/goals_todos.py",
+        "app/student/modules/goals_todos.py",
+        "app/student/modules/goals_todos.py",
+        "app/student/modules/goals_todos.py",
+        "templates/base.html",
+        "templates/base.html",
+        "templates/new_todo.html",
+        "templates/edit_todo.html",
+        "templates/student_dashboard.html",
+        "templates/student/dashboard_minimal.html"
+      ],
+      "student_goals_todos.goals": [
+        "app/student/modules/goals_todos.py",
+        "app/student/modules/goals_todos.py",
+        "app/student/modules/goals_todos.py",
+        "app/student/modules/goals_todos.py",
+        "app/student/modules/goals_todos.py",
+        "app/student/modules/goals_todos.py",
+        "app/student/modules/goals_todos.py",
+        "app/student/modules/goals_todos.py",
+        "app/student/modules/goals_todos.py",
+        "app/student/modules/goals_todos.py",
+        "app/student/modules/goals_todos.py",
+        "app/student/modules/goals_todos.py",
+        "templates/base.html",
+        "templates/base.html",
+        "templates/edit_goal.html",
+        "templates/new_goal.html",
+        "templates/student_dashboard.html",
+        "templates/student/dashboard_minimal.html"
+      ],
+      "student_surveys.surveys": [
+        "app/student/modules/surveys.py",
+        "app/student/modules/surveys.py",
+        "app/student/modules/surveys.py",
+        "app/student/modules/surveys.py",
+        "app/student/modules/surveys.py",
+        "app/student/modules/surveys.py",
+        "templates/base.html",
+        "templates/base.html",
+        "templates/interest_survey_edit.html",
+        "templates/personality_survey_edit.html",
+        "templates/personality_survey.html",
+        "templates/interest_survey.html",
+        "templates/student/dashboard_minimal.html"
+      ],
+      "student.interest_survey": [
+        "templates/surveys.html",
+        "templates/student_dashboard.html",
+        "templates/interest_survey.html"
+      ],
+      "student.personality_survey_edit": [
+        "templates/surveys.html",
+        "templates/personality_survey_edit.html",
+        "templates/student_dashboard.html"
+      ],
+      "student.personality_survey": [
+        "templates/surveys.html",
+        "templates/personality_survey.html",
+        "templates/student_dashboard.html"
+      ],
+      "student.view_themes": [
+        "templates/surveys.html",
+        "templates/activities.html",
+        "templates/base.html",
+        "templates/base.html",
+        "templates/select_class_for_themes.html",
+        "templates/edit_theme.html",
+        "templates/edit_theme_simple.html",
+        "templates/student_main_themes.html",
+        "templates/view_themes.html",
+        "templates/student/dashboard_minimal.html"
+      ],
+      "teacher.integrated_management": [
+        "templates/teacher_dashboard.html",
+        "templates/teacher_dashboard.html",
+        "templates/teacher/edit_unit.html",
+        "templates/teacher/edit_unit.html",
+        "templates/teacher/edit_unit.html"
+      ],
+      "teacher.create_class": [
+        "templates/teacher_dashboard.html",
+        "templates/teacher_dashboard.html",
+        "templates/create_class.html",
+        "templates/teacher_classes.html"
+      ],
+      "teacher.view_class": [
+        "templates/teacher_dashboard.html",
+        "templates/main_themes.html",
+        "templates/add_students.html",
+        "templates/add_students.html",
+        "templates/edit_class.html",
+        "templates/view_groups.html",
+        "templates/create_milestone.html",
+        "templates/curriculums.html",
+        "templates/edit_milestone.html",
+        "templates/view_milestone.html",
+        "templates/evaluate_students.html"
+      ],
+      "teacher.create_milestone": [
+        "templates/teacher_dashboard.html",
+        "templates/view_class.html",
+        "templates/view_class.html"
+      ],
+      "teacher.view_curriculums": [
+        "templates/teacher_dashboard.html",
+        "templates/curriculum_unified.html",
+        "templates/create_curriculum.html",
+        "templates/upload_curriculum.html",
+        "templates/view_class.html",
+        "templates/view_curriculum.html",
+        "templates/curriculum/view_simple.html"
+      ],
+      "auth.change_password": [
+        "templates/teacher_dashboard.html",
+        "templates/change_password.html",
+        "templates/profile.html"
+      ],
+      "basebuilder_module.create_problem": [
+        "templates/teacher_dashboard.html",
+        "templates/basebuilder/teacher_dashboard.html",
+        "templates/basebuilder/category_problems.html",
+        "templates/basebuilder/category_problems.html",
+        "templates/basebuilder/problems.html",
+        "templates/basebuilder/create_problem.html"
+      ],
+      "basebuilder_module.theme_relations": [
+        "templates/teacher_dashboard.html",
+        "templates/basebuilder/teacher_dashboard.html",
+        "templates/basebuilder/layout.html"
+      ],
+      "basebuilder_module.analysis": [
+        "templates/teacher_dashboard.html",
+        "templates/base.html",
+        "templates/base.html",
+        "templates/basebuilder/teacher_dashboard.html",
+        "templates/basebuilder/teacher_dashboard.html",
+        "templates/basebuilder/student_analysis.html",
+        "templates/basebuilder/layout.html",
+        "templates/basebuilder/analysis.html"
+      ],
+      "teacher.ranking_analysis": [
+        "templates/teacher_dashboard.html",
+        "templates/teacher/ranking_analysis.html",
+        "templates/components/ranking_widget.html"
+      ],
+      "student.new_activity": [
+        "templates/activities.html",
+        "templates/activities.html",
+        "templates/create_activity.html",
+        "templates/student_dashboard.html",
+        "templates/new_activity.html"
+      ],
+      "student.edit_activity": [
+        "templates/activities.html",
+        "templates/activities.html",
+        "templates/view_activity.html",
+        "templates/edit_activity.html"
+      ],
+      "static": [
+        "templates/base.html",
+        "templates/base.html",
+        "templates/base.html",
+        "templates/base.html",
+        "templates/base.html",
+        "templates/base.html",
+        "templates/base.html",
+        "templates/base.html",
+        "templates/base.html",
+        "templates/base.html",
+        "templates/base.html",
+        "templates/learning_portal.html",
+        "templates/learning_portal.html",
+        "templates/learning_portal.html",
+        "templates/chat.html",
+        "templates/chat.html",
+        "templates/chat.html",
+        "templates/curriculum_unified.html",
+        "templates/edit_curriculum.html",
+        "templates/view_curriculum.html",
+        "templates/admin/import_users.html",
+        "templates/basebuilder/layout.html",
+        "templates/basebuilder/layout.html",
+        "templates/basebuilder/layout.html",
+        "templates/basebuilder/layout.html",
+        "templates/basebuilder/layout.html",
+        "templates/basebuilder/layout.html"
+      ],
+      "admin_panel.create_school": [
+        "templates/base.html",
+        "templates/base.html",
+        "templates/admin/schools.html",
+        "templates/admin/schools.html",
+        "templates/admin/dashboard.html",
+        "templates/admin/dashboard.html"
+      ],
+      "auth.logout": [
+        "templates/base.html",
+        "templates/base.html",
+        "templates/base.html",
+        "templates/base.html",
+        "templates/base.html",
+        "templates/base.html",
+        "templates/admin/base_admin.html"
+      ],
+      "basebuilder_module.problems": [
+        "templates/base.html",
+        "templates/base.html",
+        "templates/base.html",
+        "templates/base.html",
+        "templates/basebuilder/teacher_dashboard.html",
+        "templates/basebuilder/import_problems.html",
+        "templates/basebuilder/import_problems.html",
+        "templates/basebuilder/proficiency.html",
+        "templates/basebuilder/proficiency.html",
+        "templates/basebuilder/proficiency.html",
+        "templates/basebuilder/solve_problem.html",
+        "templates/basebuilder/solve_problem.html",
+        "templates/basebuilder/solve_problem.html",
+        "templates/basebuilder/categories.html",
+        "templates/basebuilder/categories.html",
+        "templates/basebuilder/category_problems.html",
+        "templates/basebuilder/category_problems.html",
+        "templates/basebuilder/category_problems.html",
+        "templates/basebuilder/problems.html",
+        "templates/basebuilder/problems.html",
+        "templates/basebuilder/student_dashboard.html",
+        "templates/basebuilder/student_dashboard.html",
+        "templates/basebuilder/history.html",
+        "templates/basebuilder/create_problem.html",
+        "templates/basebuilder/create_problem.html",
+        "templates/basebuilder/layout.html",
+        "templates/basebuilder/layout.html"
+      ],
+      "basebuilder_module.view_proficiency": [
+        "templates/base.html",
+        "templates/base.html",
+        "templates/basebuilder/category_texts.html",
+        "templates/basebuilder/session_summary.html"
+      ],
+      "basebuilder_module.learning_paths": [
+        "templates/base.html",
+        "templates/base.html",
+        "templates/basebuilder/teacher_dashboard.html",
+        "templates/basebuilder/create_learning_path.html",
+        "templates/basebuilder/create_learning_path.html",
+        "templates/basebuilder/path_progress.html",
+        "templates/basebuilder/edit_learning_path.html",
+        "templates/basebuilder/edit_learning_path.html",
+        "templates/basebuilder/start_learning_path.html",
+        "templates/basebuilder/student_dashboard.html",
+        "templates/basebuilder/layout.html",
+        "templates/basebuilder/layout.html",
+        "templates/basebuilder/assign_learning_path.html",
+        "templates/basebuilder/assign_learning_path.html"
+      ],
+      "student.chat_page": [
+        "templates/base.html",
+        "templates/base.html",
+        "templates/select_class_for_chat.html",
+        "templates/student_dashboard.html",
+        "templates/student_dashboard.html"
+      ],
+      "basebuilder_module.categories": [
+        "templates/base.html",
+        "templates/base.html",
+        "templates/basebuilder/teacher_dashboard.html",
+        "templates/basebuilder/proficiency.html",
+        "templates/basebuilder/create_category.html",
+        "templates/basebuilder/create_category.html",
+        "templates/basebuilder/layout.html"
+      ],
+      "teacher.classes": [
+        "templates/base.html",
+        "templates/add_students.html",
+        "templates/create_class.html",
+        "templates/class_details.html"
+      ],
+      "auth.register": [
+        "templates/base.html",
+        "templates/base.html",
+        "templates/index.html",
+        "templates/login.html",
+        "templates/register.html"
+      ],
+      "student.submit_milestone": [
+        "templates/student_view_milestone.html",
+        "templates/student_view_milestone.html",
+        "templates/submit_milestone.html"
+      ],
+      "teacher.edit_main_theme": [
+        "templates/main_themes.html",
+        "templates/teacher_themes.html",
+        "templates/edit_main_theme.html"
+      ],
+      "student.student_view_main_themes": [
+        "templates/select_class_for_themes.html",
+        "templates/create_personal_theme.html",
+        "templates/generate_theme.html"
+      ],
+      "teacher.view_main_themes": [
+        "templates/create_main_theme.html",
+        "templates/teacher_themes.html",
+        "templates/view_class.html"
+      ],
+      "teacher.edit_class": [
+        "templates/edit_class.html",
+        "templates/teacher_classes.html",
+        "templates/class_details.html"
+      ],
+      "teacher.export_curriculum": [
+        "templates/curriculum_unified.html",
+        "templates/edit_curriculum.html",
+        "templates/curriculums.html",
+        "templates/view_curriculum.html"
+      ],
+      "student.learning_portal": [
+        "templates/learning_unit.html",
+        "templates/student_dashboard.html",
+        "templates/student_dashboard.html",
+        "templates/curriculum_units_view.html"
+      ],
+      "teacher.view_groups": [
+        "templates/create_group.html",
+        "templates/view_class.html",
+        "templates/view_group.html"
+      ],
+      "teacher.create_group": [
+        "templates/view_groups.html",
+        "templates/view_groups.html",
+        "templates/view_class.html"
+      ],
+      "teacher.view_group": [
+        "templates/view_groups.html",
+        "templates/edit_group.html",
+        "templates/view_class.html"
+      ],
+      "basebuilder_module.my_texts": [
+        "templates/student_dashboard.html",
+        "templates/basebuilder/solve_text.html",
+        "templates/basebuilder/solve_text.html",
+        "templates/basebuilder/student_dashboard.html",
+        "templates/basebuilder/layout.html",
+        "templates/basebuilder/View_text.html"
+      ],
+      "teacher.view_curriculum": [
+        "templates/edit_curriculum.html",
+        "templates/edit_curriculum.html",
+        "templates/curriculums.html",
+        "templates/curriculums.html",
+        "templates/curriculum_units_view.html",
+        "templates/teacher/integrated_management.html",
+        "templates/teacher/auto_sync_settings.html"
+      ],
+      "teacher.edit_curriculum": [
+        "templates/edit_curriculum.html",
+        "templates/curriculums.html",
+        "templates/view_curriculum.html",
+        "templates/view_curriculum.html"
+      ],
+      "teacher.generate_evaluations": [
+        "templates/view_class.html",
+        "templates/evaluate_students.html",
+        "templates/evaluate_students.html",
+        "templates/evaluate_students.html"
+      ],
+      "teacher.add_students": [
+        "templates/view_class.html",
+        "templates/class_details.html",
+        "templates/class_details.html"
+      ],
+      "student.edit_goal": [
+        "templates/goals.html",
+        "templates/goals.html",
+        "templates/goals.html"
+      ],
+      "student.delete_goal": [
+        "templates/goals.html",
+        "templates/goals.html",
+        "templates/goals.html"
+      ],
+      "admin_panel.admin_create_school_year": [
+        "templates/admin/school_years.html",
+        "templates/admin/school_detail.html",
+        "templates/admin/school_detail.html"
+      ],
+      "basebuilder_module.edit_problem": [
+        "templates/basebuilder/teacher_dashboard.html",
+        "templates/basebuilder/category_problems.html",
+        "templates/basebuilder/problems.html"
+      ],
+      "basebuilder_module.import_text_set": [
+        "templates/basebuilder/teacher_dashboard.html",
+        "templates/basebuilder/import_text.html",
+        "templates/basebuilder/category_problems.html",
+        "templates/basebuilder/text_sets.html",
+        "templates/basebuilder/text_sets.html"
+      ],
+      "basebuilder_module.create_category": [
+        "templates/basebuilder/teacher_dashboard.html",
+        "templates/basebuilder/categories.html",
+        "templates/basebuilder/create_category.html"
+      ],
+      "basebuilder_module.create_learning_path": [
+        "templates/basebuilder/teacher_dashboard.html",
+        "templates/basebuilder/create_learning_path.html",
+        "templates/basebuilder/teacher_learning_paths.html",
+        "templates/basebuilder/teacher_learning_paths.html"
+      ],
+      "basebuilder_module.download_problem_template": [
+        "templates/basebuilder/import_problems.html",
+        "templates/basebuilder/import_problems.html",
+        "templates/basebuilder/import_text.html"
+      ],
+      "basebuilder_module.import_problems": [
+        "templates/basebuilder/import_problems.html",
+        "templates/basebuilder/category_problems.html",
+        "templates/basebuilder/problems.html"
+      ],
+      "basebuilder_module.start_category_session": [
+        "templates/basebuilder/category_texts.html",
+        "templates/basebuilder/categories.html",
+        "templates/basebuilder/categories.html",
+        "templates/basebuilder/category_problems.html"
+      ],
+      "basebuilder_module.view_text_set": [
+        "templates/basebuilder/student_analysis.html",
+        "templates/basebuilder/category_problems.html",
+        "templates/basebuilder/text_sets.html",
+        "templates/basebuilder/student_dashboard.html",
+        "templates/basebuilder/my_texts.html"
+      ],
+      "basebuilder_module.view_history": [
+        "templates/basebuilder/student_analysis.html",
+        "templates/basebuilder/student_dashboard.html",
+        "templates/basebuilder/layout.html"
+      ],
+      "basebuilder_module.submit_answer": [
+        "templates/basebuilder/solve_text.html",
+        "templates/basebuilder/solve_problem.html",
+        "templates/basebuilder/solve_problem.html"
+      ],
+      "basebuilder_module.text_sets": [
+        "templates/basebuilder/import_text.html",
+        "templates/basebuilder/import_text.html",
+        "templates/basebuilder/deliver_text.html",
+        "templates/basebuilder/deliver_text.html",
+        "templates/basebuilder/layout.html",
+        "templates/basebuilder/View_text.html"
+      ],
+      "basebuilder_module.solve_problem": [
+        "templates/basebuilder/solve_problem.html",
+        "templates/basebuilder/category_problems.html",
+        "templates/basebuilder/problems.html",
+        "templates/basebuilder/student_dashboard.html",
+        "templates/basebuilder/View_text.html",
+        "templates/basebuilder/View_text.html"
+      ],
+      "basebuilder_module.deliver_text": [
+        "templates/basebuilder/deliver_text.html",
+        "templates/basebuilder/category_problems.html",
+        "templates/basebuilder/text_sets.html",
+        "templates/basebuilder/text_sets.html",
+        "templates/basebuilder/View_text.html"
+      ],
+      "basebuilder_module.assign_learning_path": [
+        "templates/basebuilder/path_progress.html",
+        "templates/basebuilder/assign_learning_path.html",
+        "templates/basebuilder/teacher_learning_paths.html"
+      ],
+      "basebuilder_module.start_learning_path": [
+        "templates/basebuilder/start_learning_path.html",
+        "templates/basebuilder/start_learning_path.html",
+        "templates/basebuilder/start_learning_path.html",
+        "templates/basebuilder/start_learning_path.html",
+        "templates/basebuilder/student_dashboard.html",
+        "templates/basebuilder/student_learning_paths.html",
+        "templates/basebuilder/student_learning_paths.html"
+      ],
+      "basebuilder_module.update_path_progress": [
+        "templates/basebuilder/start_learning_path.html",
+        "templates/basebuilder/start_learning_path.html",
+        "templates/basebuilder/start_learning_path.html"
+      ]
+    },
+    "good_endpoint_counts": {
+      "teacher_dashboard\\.dashboard": 37,
+      "student_dashboard\\.dashboard": 35,
+      "admin_panel\\.dashboard": 35,
+      "auth\\.login": 46,
+      "basebuilder_module\\.index": 61,
+      "student_activities\\.activities": 32,
+      "student_surveys\\.surveys": 16,
+      "student_goals_todos\\.(goals|todos)": 41,
+      "basebuilder_admin\\.learning_paths": 12
+    }
+  },
+  "health_status": "GOOD"
+}

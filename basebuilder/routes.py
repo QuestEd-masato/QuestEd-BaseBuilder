@@ -140,7 +140,7 @@ def index():
     except Exception as e:
         current_app.logger.error(f"BaseBuilder index error: {str(e)}")
         flash('ダッシュボードの読み込み中にエラーが発生しました。')
-        return redirect(url_for('main.index'))
+        return redirect(url_for('index'))
 
 
 # 互換性のための関数

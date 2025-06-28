@@ -790,7 +790,7 @@
                     {% if current_user.is_authenticated %}
                         {% if current_user.role == 'student' %}
                             <!-- デスクトップ用メニュー（学生） -->
-                            <li><a href="{{ url_for('student.dashboard') }}"><i class="fas fa-tachometer-alt"></i> ダッシュボード</a></li>
+                            <li><a href="{{ url_for('student_dashboard.dashboard') }}"><i class="fas fa-tachometer-alt"></i> ダッシュボード</a></li>
                             
                             <li class="nav-item dropdown">
                                 <a class="nav-link dropdown-toggle js-dropdown-toggle" href="#" role="button">
@@ -798,7 +798,7 @@
                                 </a>
                                 <ul class="dropdown-menu">
                                     <li><a href="{{ url_for('student.view_themes') }}">探究テーマ</a></li>
-                                    <li><a href="{{ url_for('student.activities') }}">活動記録</a></li>
+                                    <li><a href="{{ url_for('student_activities.activities') }}">活動記録</a></li>
                                 </ul>
                             </li>
                             
@@ -820,9 +820,9 @@
                                 </a>
                                 <ul class="dropdown-menu">
                                     <li><a href="{{ url_for('student.chat_page') }}">AIチャット</a></li>
-                                    <li><a href="{{ url_for('student.surveys') }}">アンケート</a></li>
-                                    <li><a href="{{ url_for('student.todos') }}">To Doリスト</a></li>
-                                    <li><a href="{{ url_for('student.goals') }}">目標管理</a></li>
+                                    <li><a href="{{ url_for('student_surveys.surveys') }}">アンケート</a></li>
+                                    <li><a href="{{ url_for('student_goals_todos.todos') }}">To Doリスト</a></li>
+                                    <li><a href="{{ url_for('student_goals_todos.goals') }}">目標管理</a></li>
                                 </ul>
                             </li>
                             
@@ -834,7 +834,7 @@
                             
                             <!-- モバイル用メニュー（学生） -->
                             <div class="mobile-menu-list">
-                                <a href="{{ url_for('student.dashboard') }}" class="mobile-menu-item">
+                                <a href="{{ url_for('student_dashboard.dashboard') }}" class="mobile-menu-item">
                                     <i class="fas fa-tachometer-alt"></i> ダッシュボード
                                 </a>
                                 
@@ -843,7 +843,7 @@
                                 </div>
                                 <div id="mobile-menu-inquiry" class="mobile-submenu">
                                     <a href="{{ url_for('student.view_themes') }}" class="mobile-submenu-item">探究テーマ</a>
-                                    <a href="{{ url_for('student.activities') }}" class="mobile-submenu-item">活動記録</a>
+                                    <a href="{{ url_for('student_activities.activities') }}" class="mobile-submenu-item">活動記録</a>
                                 </div>
                                 
                                 <div class="mobile-menu-item mobile-dropdown" data-target="mobile-menu-basic">
@@ -861,9 +861,9 @@
                                 </div>
                                 <div id="mobile-menu-tools" class="mobile-submenu">
                                     <a href="{{ url_for('student.chat_page') }}" class="mobile-submenu-item">AIチャット</a>
-                                    <a href="{{ url_for('student.surveys') }}" class="mobile-submenu-item">アンケート</a>
-                                    <a href="{{ url_for('student.todos') }}" class="mobile-submenu-item">To Doリスト</a>
-                                    <a href="{{ url_for('student.goals') }}" class="mobile-submenu-item">目標管理</a>
+                                    <a href="{{ url_for('student_surveys.surveys') }}" class="mobile-submenu-item">アンケート</a>
+                                    <a href="{{ url_for('student_goals_todos.todos') }}" class="mobile-submenu-item">To Doリスト</a>
+                                    <a href="{{ url_for('student_goals_todos.goals') }}" class="mobile-submenu-item">目標管理</a>
                                 </div>
                                 
                                 <a href="{{ url_for('teacher_class_management.classes') }}" class="mobile-menu-item">
@@ -921,7 +921,7 @@
                             
                             <!-- モバイル用メニュー（教師） -->
                             <div class="mobile-menu-list">
-                                <a href="{{ url_for('teacher.dashboard') }}" class="mobile-menu-item">
+                                <a href="{{ url_for('teacher_dashboard.dashboard') }}" class="mobile-menu-item">
                                     <i class="fas fa-tachometer-alt"></i> ダッシュボード
                                 </a>
                                 

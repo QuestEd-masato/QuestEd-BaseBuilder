@@ -207,6 +207,13 @@ def register_blueprints(app):
     app.register_blueprint(api_bp)
     app.register_blueprint(realtime_bp)
     
+    # モジュール化されたBlueprintを登録
+    from app.teacher import register_teacher_blueprints
+    from app.student import register_student_blueprints
+    
+    register_teacher_blueprints(app)
+    register_student_blueprints(app)
+    
     # ルートURLのハンドラー
     @app.route('/')
     def index():
@@ -214,9 +221,9 @@ def register_blueprints(app):
             if current_user.role == 'admin':
                 return redirect(url_for('admin_panel.dashboard'))
             elif current_user.role == 'teacher':
-                return redirect(url_for('teacher.dashboard'))
+                return redirect(url_for('teacher_dashboard.dashboard'))
             elif current_user.role == 'student':
-                return redirect(url_for('student.dashboard'))
+                return redirect(url_for('student_dashboard.dashboard'))
         return redirect(url_for('auth.login'))
 
 

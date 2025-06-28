@@ -490,7 +490,7 @@
                    style="{{ btn_outline_style }}">
                    <i class="fas fa-book"></i> テーマ
                 </a>
-                <a href="{{ url_for('student.activities') }}?class_id={{ class_theme.class_id }}" 
+                <a href="{{ url_for('student_activities.activities') }}?class_id={{ class_theme.class_id }}" 
                    style="{{ btn_outline_style }}">
                    <i class="fas fa-clipboard-list"></i> 記録
                 </a>
@@ -560,11 +560,11 @@
         </div>
         
         <div style="margin-top: 1rem;">
-            <a href="{{ url_for('student.todos') }}" 
+            <a href="{{ url_for('student_goals_todos.todos') }}" 
                style="display: inline-block; padding: 0.375rem 0.75rem; font-size: 0.875rem; border-radius: 0.25rem; text-decoration: none; background-color: transparent; color: #5DADE2; border: 1px solid #5DADE2; margin-right: 0.5rem;">
                ToDoを見る
             </a>
-            <a href="{{ url_for('student.goals') }}" 
+            <a href="{{ url_for('student_goals_todos.goals') }}" 
                style="display: inline-block; padding: 0.375rem 0.75rem; font-size: 0.875rem; border-radius: 0.25rem; text-decoration: none; background-color: transparent; color: #5DADE2; border: 1px solid #5DADE2;">
                目標を見る
             </a>
@@ -603,7 +603,7 @@
         {% endif %}
         
         <div style="margin-top: 1rem;">
-            <a href="{{ url_for('student.activities') }}" 
+            <a href="{{ url_for('student_activities.activities') }}" 
                style="display: inline-block; padding: 0.375rem 0.75rem; font-size: 0.875rem; border-radius: 0.25rem; text-decoration: none; background-color: transparent; color: #5DADE2; border: 1px solid #5DADE2; margin-right: 0.5rem;">
                記録を見る
             </a>
@@ -613,7 +613,7 @@
                新しい記録
             </a>
             {% else %}
-            <a href="{{ url_for('student.activities') }}" 
+            <a href="{{ url_for('student_activities.activities') }}" 
                style="display: inline-block; padding: 0.375rem 0.75rem; font-size: 0.875rem; border-radius: 0.25rem; text-decoration: none; background-color: #5DADE2; color: white; border: 1px solid #5DADE2;">
                新しい記録
             </a>

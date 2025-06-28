@@ -282,7 +282,7 @@ def create_learning_path():
             
             current_app.logger.info(f"Learning path created by teacher {current_user.id}: {title}")
             flash('学習パスが作成されました。')
-            return redirect(url_for('admin.learning_paths'))
+            return redirect(url_for('basebuilder_admin.learning_paths'))
         
         # 同じ学校のカテゴリを取得（ステップ作成用）
         categories = ProblemCategory.query.filter_by(school_id=current_user.school_id).all()
@@ -295,7 +295,7 @@ def create_learning_path():
     except Exception as e:
         current_app.logger.error(f"Create learning path error: {str(e)}")
         flash('学習パス作成画面の読み込み中にエラーが発生しました。')
-        return redirect(url_for('admin.learning_paths'))
+        return redirect(url_for('basebuilder_admin.learning_paths'))
 
 
 @admin_bp.route('/learning_path/<int:path_id>/edit', methods=['GET', 'POST'])
@@ -313,7 +313,7 @@ def edit_learning_path(path_id):
         # 作成者本人か確認
         if path.created_by != current_user.id:
             flash('この学習パスを編集する権限がありません。')
-            return redirect(url_for('admin.learning_paths'))
+            return redirect(url_for('basebuilder_admin.learning_paths'))
         
         if request.method == 'POST':
             title = request.form.get('title')
@@ -342,7 +342,7 @@ def edit_learning_path(path_id):
             
             current_app.logger.info(f"Learning path {path_id} updated by teacher {current_user.id}")
             flash('学習パスが更新されました。')
-            return redirect(url_for('admin.learning_paths'))
+            return redirect(url_for('basebuilder_admin.learning_paths'))
         
         # 問題カテゴリを取得（ステップ作成用）
         categories = ProblemCategory.query.all()
@@ -356,7 +356,7 @@ def edit_learning_path(path_id):
     except Exception as e:
         current_app.logger.error(f"Edit learning path error: {str(e)}")
         flash('学習パス編集画面の読み込み中にエラーが発生しました。')
-        return redirect(url_for('admin.learning_paths'))
+        return redirect(url_for('basebuilder_admin.learning_paths'))
 
 
 @admin_bp.route('/learning_path/<int:path_id>/assign', methods=['GET', 'POST'])
@@ -425,7 +425,7 @@ def assign_learning_path(path_id):
             
             current_app.logger.info(f"Learning path {path_id} assigned to {len(student_ids)} students by teacher {current_user.id}")
             flash('学習パスが割り当てられました。')
-            return redirect(url_for('admin.learning_paths'))
+            return redirect(url_for('basebuilder_admin.learning_paths'))
         
         return render_template(
             'basebuilder/assign_learning_path.html',
@@ -436,7 +436,7 @@ def assign_learning_path(path_id):
     except Exception as e:
         current_app.logger.error(f"Assign learning path error: {str(e)}")
         flash('学習パス割り当て画面の読み込み中にエラーが発生しました。')
-        return redirect(url_for('admin.learning_paths'))
+        return redirect(url_for('basebuilder_admin.learning_paths'))
 
 
 @admin_bp.route('/learning_path/<int:assignment_id>/start')
@@ -454,7 +454,7 @@ def start_learning_path(assignment_id):
         # 自分の割り当てか確認
         if assignment.student_id != current_user.id:
             flash('この学習パスを開始する権限がありません。')
-            return redirect(url_for('admin.learning_paths'))
+            return redirect(url_for('basebuilder_admin.learning_paths'))
         
         # 学習パスを取得
         path = assignment.path
@@ -484,7 +484,7 @@ def start_learning_path(assignment_id):
     except Exception as e:
         current_app.logger.error(f"Start learning path error: {str(e)}")
         flash('学習パスの開始中にエラーが発生しました。')
-        return redirect(url_for('admin.learning_paths'))
+        return redirect(url_for('basebuilder_admin.learning_paths'))
 
 
 @admin_bp.route('/learning_path/<int:assignment_id>/update_progress', methods=['POST'])

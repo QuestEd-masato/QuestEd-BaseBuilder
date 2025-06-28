@@ -22,7 +22,7 @@
                         <i class="fas fa-info-circle"></i> クラスに紐付かない記録: {{ unassigned_count }}件
                     </p>
                     {% endif %}
-                    <a href="{{ url_for('student.activities', class_id=0) }}" class="btn btn-primary">
+                    <a href="{{ url_for('student_activities.activities', class_id=0) }}" class="btn btn-primary">
                         <i class="fas fa-eye"></i> 表示
                     </a>
                 </div>
@@ -45,7 +45,7 @@
                     <p class="small text-muted">
                         <i class="fas fa-calendar"></i> 登録日: {{ class.enrolled_at.strftime('%Y年%m月%d日') }}
                     </p>
-                    <a href="{{ url_for('student.activities', class_id=class.id) }}" class="btn btn-primary">
+                    <a href="{{ url_for('student_activities.activities', class_id=class.id) }}" class="btn btn-primary">
                         <i class="fas fa-eye"></i> 表示
                     </a>
                 </div>

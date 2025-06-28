@@ -380,13 +380,13 @@
 
     <!-- ナビゲーションボタン -->
     <div class="navigation-buttons">
-        <a href="{{ url_for('student.dashboard') }}" class="btn-modern btn-secondary">
+        <a href="{{ url_for('student_dashboard.dashboard') }}" class="btn-modern btn-secondary">
             <i class="fas fa-arrow-left"></i> ダッシュボードに戻る
         </a>
         <a href="{{ url_for('student.class_themes', class_id=class_obj.id) }}" class="btn-modern btn-success">
             <i class="fas fa-book"></i> テーマを見る
         </a>
-        <a href="{{ url_for('student.activities') }}?class_id={{ class_obj.id }}" class="btn-modern btn-info">
+        <a href="{{ url_for('student_activities.activities') }}?class_id={{ class_obj.id }}" class="btn-modern btn-info">
             <i class="fas fa-clipboard-list"></i> 活動記録
         </a>
     </div>

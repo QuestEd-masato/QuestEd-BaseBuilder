@@ -1,0 +1,278 @@
+{
+  "timestamp": "2025-06-28T17:23:02.879655",
+  "analysis": {
+    "total_blueprints": 36,
+    "total_routes": 6,
+    "mapping_rules": 9,
+    "manual_fixes": 3
+  },
+  "blueprint_definitions": {
+    "academic": {
+      "variable": "academic_bp",
+      "file": "core/academic.py",
+      "module_path": "core.academic"
+    },
+    "school": {
+      "variable": "school_bp",
+      "file": "core/school.py",
+      "module_path": "core.school"
+    },
+    "enrollment": {
+      "variable": "enrollment_bp",
+      "file": "core/enrollment.py",
+      "module_path": "core.enrollment"
+    },
+    "basebuilder_module": {
+      "variable": "basebuilder_module",
+      "file": "basebuilder/routes.py",
+      "module_path": "basebuilder.routes"
+    },
+    "basebuilder_admin": {
+      "variable": "admin_bp",
+      "file": "basebuilder/routes/admin.py",
+      "module_path": "basebuilder.routes.admin"
+    },
+    "categories": {
+      "variable": "categories_bp",
+      "file": "basebuilder/routes/categories.py",
+      "module_path": "basebuilder.routes.categories"
+    },
+    "sessions": {
+      "variable": "sessions_bp",
+      "file": "basebuilder/routes/sessions.py",
+      "module_path": "basebuilder.routes.sessions"
+    },
+    "progress": {
+      "variable": "progress_bp",
+      "file": "basebuilder/routes/progress.py",
+      "module_path": "basebuilder.routes.progress"
+    },
+    "problems": {
+      "variable": "problems_bp",
+      "file": "basebuilder/routes/problems.py",
+      "module_path": "basebuilder.routes.problems"
+    },
+    "analytics": {
+      "variable": "analytics_bp",
+      "file": "basebuilder/routes/analytics.py",
+      "module_path": "basebuilder.routes.analytics"
+    },
+    "admin_panel": {
+      "variable": "admin_bp",
+      "file": "app/admin/__init__.py",
+      "module_path": "app.admin.__init__"
+    },
+    "realtime": {
+      "variable": "realtime_bp",
+      "file": "app/realtime/__init__.py",
+      "module_path": "app.realtime.__init__"
+    },
+    "teacher": {
+      "variable": "teacher_bp",
+      "file": "app/teacher/__init__.py",
+      "module_path": "app.teacher.__init__"
+    },
+    "review_system": {
+      "variable": "review_system_bp",
+      "file": "app/api/review_system.py",
+      "module_path": "app.api.review_system"
+    },
+    "student_tools": {
+      "variable": "student_tools_bp",
+      "file": "app/api/student_tools.py",
+      "module_path": "app.api.student_tools"
+    },
+    "api": {
+      "variable": "api_bp",
+      "file": "app/api/__init__.py",
+      "module_path": "app.api.__init__"
+    },
+    "admin_teacher": {
+      "variable": "admin_teacher_bp",
+      "file": "app/api/admin_teacher.py",
+      "module_path": "app.api.admin_teacher"
+    },
+    "chat_ai": {
+      "variable": "chat_ai_bp",
+      "file": "app/api/chat_ai.py",
+      "module_path": "app.api.chat_ai"
+    },
+    "data_integrity": {
+      "variable": "data_integrity_bp",
+      "file": "app/api/data_integrity.py",
+      "module_path": "app.api.data_integrity"
+    },
+    "rankings": {
+      "variable": "rankings_bp",
+      "file": "app/api/rankings.py",
+      "module_path": "app.api.rankings"
+    },
+    "unit_management": {
+      "variable": "unit_management_bp",
+      "file": "app/api/unit_management.py",
+      "module_path": "app.api.unit_management"
+    },
+    "ai": {
+      "variable": "ai_bp",
+      "file": "app/ai/__init__.py",
+      "module_path": "app.ai.__init__"
+    },
+    "auth": {
+      "variable": "auth_bp",
+      "file": "app/auth/__init__.py",
+      "module_path": "app.auth.__init__"
+    },
+    "secure_auth": {
+      "variable": "secure_auth_bp",
+      "file": "app/auth/secure_auth.py",
+      "module_path": "app.auth.secure_auth"
+    },
+    "student": {
+      "variable": "student_bp",
+      "file": "app/student/__init__.py",
+      "module_path": "app.student.__init__"
+    },
+    "teacher_synchronization": {
+      "variable": "synchronization_bp",
+      "file": "app/teacher/modules/synchronization.py",
+      "module_path": "app.teacher.modules.synchronization"
+    },
+    "teacher_dashboard": {
+      "variable": "dashboard_bp",
+      "file": "app/teacher/modules/dashboard.py",
+      "module_path": "app.teacher.modules.dashboard"
+    },
+    "teacher_student_evaluation": {
+      "variable": "student_evaluation_bp",
+      "file": "app/teacher/modules/student_evaluation.py",
+      "module_path": "app.teacher.modules.student_evaluation"
+    },
+    "teacher_class_management": {
+      "variable": "class_management_bp",
+      "file": "app/teacher/modules/class_management.py",
+      "module_path": "app.teacher.modules.class_management"
+    },
+    "teacher_curriculum_management": {
+      "variable": "curriculum_management_bp",
+      "file": "app/teacher/modules/curriculum_management.py",
+      "module_path": "app.teacher.modules.curriculum_management"
+    },
+    "teacher_approval_workflow": {
+      "variable": "approval_workflow_bp",
+      "file": "app/teacher/modules/approval_workflow.py",
+      "module_path": "app.teacher.modules.approval_workflow"
+    },
+    "teacher_analytics": {
+      "variable": "analytics_bp",
+      "file": "app/teacher/modules/analytics.py",
+      "module_path": "app.teacher.modules.analytics"
+    },
+    "student_goals_todos": {
+      "variable": "goals_todos_bp",
+      "file": "app/student/modules/goals_todos.py",
+      "module_path": "app.student.modules.goals_todos"
+    },
+    "student_activities": {
+      "variable": "activities_bp",
+      "file": "app/student/modules/activities.py",
+      "module_path": "app.student.modules.activities"
+    },
+    "student_surveys": {
+      "variable": "surveys_bp",
+      "file": "app/student/modules/surveys.py",
+      "module_path": "app.student.modules.surveys"
+    },
+    "student_dashboard": {
+      "variable": "dashboard_bp",
+      "file": "app/student/modules/dashboard.py",
+      "module_path": "app.student.modules.dashboard"
+    }
+  },
+  "available_routes": {
+    "basebuilder_admin.admin_access": {
+      "path": "/access",
+      "file": "app/admin/user_management.py",
+      "blueprint": "basebuilder_admin",
+      "function": "admin_access"
+    },
+    "auth.verify_email": {
+      "path": "/verify_email/<int:user_id>",
+      "file": "app/auth/__init__.py",
+      "blueprint": "auth",
+      "function": "verify_email"
+    },
+    "auth.confirm_email": {
+      "path": "/confirm_email/<int:user_id>/<token>",
+      "file": "app/auth/__init__.py",
+      "blueprint": "auth",
+      "function": "confirm_email"
+    },
+    "auth.awaiting_approval": {
+      "path": "/awaiting_approval",
+      "file": "app/auth/__init__.py",
+      "blueprint": "auth",
+      "function": "awaiting_approval"
+    },
+    "secure_auth.verify_email": {
+      "path": "/verify_email/<int:user_id>",
+      "file": "app/auth/secure_auth.py",
+      "blueprint": "secure_auth",
+      "function": "verify_email"
+    },
+    "secure_auth.awaiting_approval": {
+      "path": "/awaiting_approval",
+      "file": "app/auth/secure_auth.py",
+      "blueprint": "secure_auth",
+      "function": "awaiting_approval"
+    }
+  },
+  "mapping_rules": {
+    "basebuilder.admin.admin_access": "basebuilder_admin.admin_access",
+    "basebuilder.admin_access": "basebuilder_admin.admin_access",
+    "auth.verify_email": "auth.verify_email",
+    "auth.confirm_email": "auth.confirm_email",
+    "auth.awaiting_approval": "auth.awaiting_approval",
+    "secure.auth.verify_email": "secure_auth.verify_email",
+    "secure.verify_email": "secure_auth.verify_email",
+    "secure.auth.awaiting_approval": "secure_auth.awaiting_approval",
+    "secure.awaiting_approval": "secure_auth.awaiting_approval"
+  },
+  "manual_fixes": {
+    "app/__init__.py": [
+      {
+        "line": 217,
+        "current": "url_for('teacher.dashboard')",
+        "suggested": "url_for('teacher_dashboard.dashboard')",
+        "reason": "teacher は modules に分割されています"
+      },
+      {
+        "line": 219,
+        "current": "url_for('student.dashboard')",
+        "suggested": "url_for('student_dashboard.dashboard')",
+        "reason": "student は modules に分割されています"
+      }
+    ],
+    "basebuilder/routes/admin.py": [
+      {
+        "pattern": "basebuilder_module.index",
+        "suggested": "basebuilder_module.index",
+        "reason": "正しい参照ですが、Blueprint登録を確認してください"
+      }
+    ]
+  },
+  "confidence_levels": {
+    "high": [
+      "basebuilder.admin.admin_access",
+      "basebuilder.admin_access",
+      "auth.verify_email",
+      "auth.confirm_email",
+      "auth.awaiting_approval",
+      "secure.auth.verify_email",
+      "secure.verify_email",
+      "secure.auth.awaiting_approval",
+      "secure.awaiting_approval"
+    ],
+    "medium": [],
+    "low": []
+  }
+}

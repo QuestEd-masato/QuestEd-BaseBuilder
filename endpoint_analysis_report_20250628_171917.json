@@ -1,0 +1,4002 @@
+{
+  "analysis_timestamp": "2025-06-28T17:19:17.039899",
+  "summary": {
+    "total_endpoints": 0,
+    "affected_files": 165,
+    "total_mismatches": 552,
+    "auto_fixable": 0
+  },
+  "available_endpoints": [],
+  "mismatches_by_file": {
+    "core/academic.py": {
+      "type": "python",
+      "mismatches": [
+        {
+          "used": "index",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "academic.list_years",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "core/school.py": {
+      "type": "python",
+      "mismatches": [
+        {
+          "used": "school.list_schools",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "index",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "core/enrollment.py": {
+      "type": "python",
+      "mismatches": [
+        {
+          "used": "index",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "enrollment.list_students",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "basebuilder/routes.py": {
+      "type": "python",
+      "mismatches": [
+        {
+          "used": "main.index",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "legacy/app_simple.py": {
+      "type": "python",
+      "mismatches": [
+        {
+          "used": "teacher.dashboard",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "auth.login",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "student.dashboard",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "admin_panel.dashboard",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "legacy/app_fixed.py": {
+      "type": "python",
+      "mismatches": [
+        {
+          "used": "teacher.dashboard",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "auth.login",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "student.dashboard",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "admin_panel.dashboard",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "app/__init__.py": {
+      "type": "python",
+      "mismatches": [
+        {
+          "used": "teacher.dashboard",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "auth.login",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "student.dashboard",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "admin_panel.dashboard",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "app/special_routes.py": {
+      "type": "python",
+      "mismatches": [
+        {
+          "used": "admin_panel.dashboard",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "basebuilder/routes/admin.py": {
+      "type": "python",
+      "mismatches": [
+        {
+          "used": "admin.learning_paths",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "problems.problems",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "basebuilder_module.index",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "basebuilder/routes/categories.py": {
+      "type": "python",
+      "mismatches": [
+        {
+          "used": "categories.categories",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "basebuilder_module.index",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "basebuilder/routes/sessions.py": {
+      "type": "python",
+      "mismatches": [
+        {
+          "used": "sessions.next_problem",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "categories.category_texts",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "basebuilder_module.index",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "categories.categories",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "sessions.session_summary",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "basebuilder/routes/progress.py": {
+      "type": "python",
+      "mismatches": [
+        {
+          "used": "basebuilder_module.index",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "basebuilder/routes/problems.py": {
+      "type": "python",
+      "mismatches": [
+        {
+          "used": "problems.problems",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "basebuilder_module.index",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "basebuilder/routes/analytics.py": {
+      "type": "python",
+      "mismatches": [
+        {
+          "used": "analytics.analysis",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "basebuilder_module.index",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "tests/unit/test_refactoring.py": {
+      "type": "python",
+      "mismatches": [
+        {
+          "used": "student_activities.activities",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "teacher_class_management.create_class",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "teacher_dashboard.dashboard",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "student_activities.new_activity",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "teacher_class_management.classes",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "student_dashboard.dashboard",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "app/utils/decorators.py": {
+      "type": "python",
+      "mismatches": [
+        {
+          "used": "index",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "auth.awaiting_approval",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "auth.verify_email",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "app/admin/__init__.py": {
+      "type": "python",
+      "mismatches": [
+        {
+          "used": "index",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "admin_panel.users",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "app/admin/user_management.py": {
+      "type": "python",
+      "mismatches": [
+        {
+          "used": "admin_panel.users",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "admin_panel.import_users",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "app/admin/school_management.py": {
+      "type": "python",
+      "mismatches": [
+        {
+          "used": "admin_panel.admin_school_detail",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "admin_panel.admin_schools",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "admin_panel.admin_class_group_detail",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "admin_panel.admin_class_groups",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "admin_panel.admin_student_enrollment",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "admin_panel.admin_school_years",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "app/teacher/common.py": {
+      "type": "python",
+      "mismatches": [
+        {
+          "used": "index",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "app/auth/__init__.py": {
+      "type": "python",
+      "mismatches": [
+        {
+          "used": "auth.login",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "auth.forgot_password",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "auth.awaiting_approval",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "auth.verify_email",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "student.dashboard",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "auth.profile",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "admin_panel.dashboard",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "teacher.dashboard",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "index",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "app/auth/secure_auth.py": {
+      "type": "python",
+      "mismatches": [
+        {
+          "used": "secure_auth.awaiting_approval",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "secure_auth.verify_email",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "student.dashboard",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "secure_auth.secure_login",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "admin_panel.dashboard",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "teacher.dashboard",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "index",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "app/student/utils.py": {
+      "type": "python",
+      "mismatches": [
+        {
+          "used": "index",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "app/teacher/modules/synchronization.py": {
+      "type": "python",
+      "mismatches": [
+        {
+          "used": "teacher_curriculum_management.view_curriculum",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "teacher_class_management.classes",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "teacher_dashboard.dashboard",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "app/teacher/modules/dashboard.py": {
+      "type": "python",
+      "mismatches": [
+        {
+          "used": "teacher_dashboard.pending_users",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "app/teacher/modules/student_evaluation.py": {
+      "type": "python",
+      "mismatches": [
+        {
+          "used": "teacher_class_management.classes",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "teacher_class_management.class_details",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "app/teacher/modules/class_management.py": {
+      "type": "python",
+      "mismatches": [
+        {
+          "used": "index",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "teacher_class_management.classes",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "teacher_class_management.class_details",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "app/teacher/modules/curriculum_management.py": {
+      "type": "python",
+      "mismatches": [
+        {
+          "used": "teacher_curriculum_management.view_converted_units",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "teacher_curriculum_management.view_curriculum",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "teacher_curriculum_management.create_curriculum_form",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "teacher_curriculum_management.view_curriculums",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "teacher_class_management.classes",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "app/teacher/modules/approval_workflow.py": {
+      "type": "python",
+      "mismatches": [
+        {
+          "used": "teacher_class_management.classes",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "teacher_class_management.class_details",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "teacher_dashboard.dashboard",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "app/teacher/modules/analytics.py": {
+      "type": "python",
+      "mismatches": [
+        {
+          "used": "teacher_class_management.classes",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "teacher_dashboard.dashboard",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "app/student/modules/goals_todos.py": {
+      "type": "python",
+      "mismatches": [
+        {
+          "used": "student_goals_todos.todos",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "student_goals_todos.goals",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "student_dashboard.dashboard",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "app/student/modules/activities.py": {
+      "type": "python",
+      "mismatches": [
+        {
+          "used": "student_activities.view_activity",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "student_activities.activities",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "student_dashboard.dashboard",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "app/student/modules/surveys.py": {
+      "type": "python",
+      "mismatches": [
+        {
+          "used": "student_surveys.personality_survey",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "student_surveys.surveys",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "student_surveys.interest_survey",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "student_dashboard.dashboard",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/surveys.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "student.personality_survey_edit",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "student_surveys.interest_survey",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "student.personality_survey",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "student.interest_survey",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "student.view_themes",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/teacher_dashboard.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "basebuilder_module.create_problem",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "teacher.ranking_analysis",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "basebuilder_module.index",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "teacher.pending_users",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "auth.change_password",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "basebuilder_module.theme_relations",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "student.view_activity",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "teacher.create_class",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "teacher.view_class",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "basebuilder_module.analysis",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "teacher.create_milestone",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "teacher.view_curriculums",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "teacher.integrated_management",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/activities.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "student.delete_activity",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "student.export_activities",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "student.edit_activity",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "student.new_activity",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "student.activities",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "student.view_themes",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/base.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "teacher.teacher_themes",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "student.surveys",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "teacher_student_evaluation.teacher_themes",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "basebuilder_module.analysis",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "teacher_class_management.classes",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "static",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "student.activities",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "basebuilder_module.index",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "basebuilder_module.categories",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "student.todos",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "admin_panel.create_school",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "teacher.classes",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "student.goals",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "auth.login",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "teacher_dashboard.dashboard",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "auth.register",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "admin_panel.admin_schools",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "auth.logout",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "student.dashboard",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "teacher.chat_page",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "admin_panel.dashboard",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "basebuilder_module.view_proficiency",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "teacher.dashboard",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "basebuilder_module.learning_paths",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "student.view_themes",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "admin_panel.users",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "admin_panel.import_users",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "basebuilder_module.problems",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "student.chat_page",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "auth.profile",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "index",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/interest_survey_edit.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "student.interest_survey_edit",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "student.surveys",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/learning_portal.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "static",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/edit_goal.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "student.goals",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/index.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "student.dashboard",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "auth.login",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "auth.register",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "teacher.dashboard",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/student_view_milestone.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "student.submit_milestone",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/main_themes.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "teacher.create_main_theme",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "teacher.view_class",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "teacher.delete_main_theme",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "teacher.edit_main_theme",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/select_class_for_themes.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "student.student_view_main_themes",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "student.dashboard",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "student.view_themes",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/select_class_for_chat.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "student.dashboard",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "student.chat_page",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/chat.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "static",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/create_main_theme.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "teacher.view_main_themes",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/create_personal_theme.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "student.student_view_main_themes",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/teacher_themes.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "teacher.dashboard",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "teacher.create_main_theme",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "teacher.view_main_themes",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "teacher.edit_main_theme",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/submit_milestone.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "teacher.view_milestone",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "student.submit_milestone",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/view_activity.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "add_feedback",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "student.delete_activity",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "student.edit_activity",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/new_goal.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "student.goals",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/add_students.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "teacher.dashboard",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "teacher.view_class",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "teacher.classes",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "teacher.download_student_template",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/todos.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "student.delete_todo",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "student.new_todo",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "student.edit_todo",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "student.toggle_todo",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/create_class.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "teacher.classes",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "teacher.create_class",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/personality_survey_edit.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "student.personality_survey_edit",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "student.surveys",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/edit_class.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "teacher.view_class",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "teacher.edit_class",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/curriculum_unified.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "static",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "teacher.view_curriculums",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "teacher.export_curriculum",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/learning_unit.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "student.learning_portal",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/new_todo.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "student.todos",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/edit_theme.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "student.view_themes",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/create_group.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "teacher.view_groups",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/view_groups.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "delete_group",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "teacher.view_group",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "teacher.create_group",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "teacher.view_class",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "teacher.edit_group",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/create_curriculum.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "teacher.generate_curriculum",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "teacher.view_curriculums",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/create_activity.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "student.new_activity",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "student.activities",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/edit_todo.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "student.todos",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/forgot_password.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "auth.login",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "auth.forgot_password",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/edit_theme_simple.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "student.view_themes",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/edit_group.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "teacher.view_group",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/personality_survey.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "student.personality_survey",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "student.surveys",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/student_dashboard.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "student.activities",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "basebuilder_module.index",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "student.learning_portal",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "student.interest_survey_edit",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "student.todos",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "basebuilder_module.my_texts",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "student.personality_survey_edit",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "student.personality_survey",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "student.class_details",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "student.chat_page",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "student.new_activity",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "student.interest_survey",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "student.goals",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "student.class_themes",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/teacher_classes.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "teacher.delete_class",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "teacher.class_details",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "teacher.edit_class",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "teacher.create_class",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/change_password.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "student.dashboard",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "index",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "auth.change_password",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "teacher.dashboard",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/edit_activity.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "student.activities",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "student.edit_activity",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/awaiting_approval.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "auth.login",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/student_main_themes.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "student.dashboard",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "student.create_personal_theme",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "student.generate_theme",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "student.view_themes",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/interest_survey.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "student.surveys",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "student.interest_survey",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/edit_curriculum.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "teacher.edit_curriculum",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "static",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "teacher.view_curriculum",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "teacher.export_curriculum",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/view_themes.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "student.edit_theme",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "student.generate_theme_ai",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "student.delete_theme",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "student.dashboard",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "basebuilder.solve_problem",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "student.select_theme",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "basebuilder.problems",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "student.view_themes",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/student_classes.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "teacher.class_details",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/upload_curriculum.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "download_curriculum_template",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "teacher.view_curriculums",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/view_class.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "teacher.view_groups",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "teacher.generate_evaluations",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "teacher.view_main_themes",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "teacher.create_group",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "remove_student",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "teacher.add_students",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "teacher.create_milestone",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "teacher.view_milestone",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "delete_milestone",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "teacher.view_curriculums",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "teacher.edit_milestone",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "teacher.view_group",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/select_class_for_activities.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "student.activities",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/create_milestone.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "teacher.dashboard",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "teacher.view_class",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/profile.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "student.dashboard",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "auth.profile",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "admin_panel.dashboard",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "teacher.dashboard",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "index",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "auth.change_password",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/new_activity.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "student.new_activity",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "student.activities",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/reset_password.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "auth.reset_password",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/generate_theme.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "student.student_view_main_themes",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/goals.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "student.new_goal",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "student.edit_goal",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "student.delete_goal",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/curriculums.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "teacher.import_curriculum",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "teacher.delete_curriculum",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "teacher.view_class",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "teacher.view_curriculum",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "teacher.edit_curriculum",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "teacher.create_curriculum_form",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "teacher.export_curriculum",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/curriculum_units_view.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "student.learning_portal",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "teacher.view_curriculum",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/edit_milestone.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "teacher.view_class",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/view_milestone.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "teacher.view_class",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "delete_milestone",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "teacher.edit_milestone",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/verify_email.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "auth.login",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "auth.resend_verification",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/edit_main_theme.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "teacher.class_main_themes",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "teacher.edit_main_theme",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "teacher.main_themes",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/view_curriculum.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "teacher.auto_sync_settings",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "teacher.edit_curriculum",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "teacher.view_converted_units",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "static",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "teacher.view_curriculums",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "teacher.export_curriculum",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/login.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "auth.login",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "auth.register",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "auth.forgot_password",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/class_details.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "teacher.remove_student",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "teacher.edit_class",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "teacher.classes",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "teacher.add_students",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "teacher.delete_class",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "teacher.generate_student_report",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "teacher.import_students",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/register.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "auth.login",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "auth.register",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/view_group.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "teacher.view_groups",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "leave_group",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "remove_group_member",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "join_group",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "teacher.edit_group",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/evaluate_students.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "teacher.view_class",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "teacher.generate_evaluations",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/curriculum/edit_simple.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "teacher.view_curriculum_simple",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/curriculum/view_simple.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "teacher.edit_curriculum_simple",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "teacher.view_curriculums",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "teacher.export_curriculum_v2",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/admin/create_class_group.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "admin_panel.admin_school_detail",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "admin_panel.dashboard",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "admin_panel.admin_class_groups",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "admin_panel.admin_schools",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/admin/school_years.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "admin_panel.admin_edit_school_year",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "admin_panel.admin_class_groups",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "admin_panel.admin_create_school_year",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "admin_panel.admin_schools",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/admin/import_students.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "admin_panel.download_user_template",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "admin_panel.admin_student_enrollment",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/admin/school_detail.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "admin_panel.edit_school",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "admin_panel.admin_create_school_year",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "admin_panel.admin_set_current_year",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "admin_panel.admin_schools",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "admin_panel.admin_edit_school_year",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "admin_panel.dashboard",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "admin_panel.admin_class_groups",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "admin_panel.admin_school_years",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/admin/create_school.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "admin_panel.admin_schools",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/admin/schools.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "admin_panel.edit_school",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "admin_panel.create_school",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "admin_panel.delete_school",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "admin_panel.admin_school_detail",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/admin/class_groups.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "academic.edit_class",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "admin_panel.admin_create_class_group",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "admin_panel.admin_student_enrollment",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "admin_panel.admin_school_years",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/admin/class_group_detail.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "admin_panel.admin_school_detail",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "admin_panel.admin_schools",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "admin_panel.admin_add_students_to_class",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "admin_panel.dashboard",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "admin_panel.admin_delete_enrollment",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "admin_panel.admin_class_groups",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/admin/users.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "admin_panel.delete_user",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "admin_panel.import_users",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/admin/promote_students.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "admin_panel.admin_school_years",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/admin/add_students_to_class.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "admin_panel.admin_school_detail",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "admin_panel.admin_schools",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "admin_panel.dashboard",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "admin_panel.admin_class_group_detail",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "admin_panel.admin_class_groups",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/admin/access.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "auth.login",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "admin_panel.dashboard",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/admin/student_enrollment.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "enrollment.edit_student",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "admin_panel.admin_class_groups",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "enrollment.import_students",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/admin/create_school_year.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "admin_panel.admin_school_detail",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "admin_panel.dashboard",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "admin_panel.admin_schools",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/admin/edit_school.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "admin_panel.dashboard",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "admin_panel.admin_schools",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/admin/base_admin.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "auth.logout",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "index",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/admin/import_users.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "admin_panel.users",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "static",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/admin/dashboard.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "admin_panel.users",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "admin_panel.import_users",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "admin_panel.admin_schools",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "admin_panel.create_school",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "admin_panel.analytics_dashboard",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/admin/edit_school_year.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "admin_panel.admin_school_years",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "admin_panel.admin_school_detail",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "admin_panel.dashboard",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "admin_panel.admin_schools",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/errors/404.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "student.dashboard",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "index",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "teacher.dashboard",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/errors/500.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "student.dashboard",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "index",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "teacher.dashboard",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/teacher/edit_unit.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "teacher.integrated_management",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/teacher/pending_users.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "teacher.dashboard",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "teacher.approve_user",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/teacher/integrated_management.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "teacher.view_curriculum",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "teacher.view_converted_units",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "teacher.create_curriculum",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "teacher.dashboard",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "teacher.auto_sync_settings",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/teacher/auto_sync_settings.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "teacher.view_curriculum",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/teacher/pending_unit_approvals.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "teacher.dashboard",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/teacher/ranking_analysis.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "teacher.ranking_analysis",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/teacher/import_users.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "teacher.dashboard",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "admin_panel.download_user_template",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/basebuilder/teacher_dashboard.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "basebuilder_module.create_problem",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "basebuilder_module.categories",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "basebuilder_module.create_category",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "basebuilder_module.theme_relations",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "basebuilder_module.edit_problem",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "basebuilder_module.problems",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "basebuilder_module.analysis",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "basebuilder_module.import_text_set",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "basebuilder_module.learning_paths",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "basebuilder_module.create_learning_path",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/basebuilder/import_problems.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "basebuilder_module.download_problem_template",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "basebuilder_module.problems",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "basebuilder_module.import_problems",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/basebuilder/category_texts.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "basebuilder_module.start_category_session",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "basebuilder_module.start_text_session",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "basebuilder_module.view_proficiency",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/basebuilder/student_analysis.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "basebuilder_module.analysis",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "basebuilder_module.view_text_set",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "basebuilder_module.view_history",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/basebuilder/solve_text.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "basebuilder_module.my_texts",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "basebuilder_module.submit_answer",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/basebuilder/proficiency.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "basebuilder_module.categories",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "basebuilder_module.problems",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "basebuilder_module.category_texts",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/basebuilder/import_text.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "basebuilder_module.download_problem_template",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "basebuilder_module.import_text_set",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "basebuilder_module.text_sets",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/basebuilder/solve_problem.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "basebuilder_module.problems",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "basebuilder_module.next_problem",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "basebuilder_module.solve_problem",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "basebuilder_module.submit_answer",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/basebuilder/categories.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "basebuilder_module.create_category",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "basebuilder_module.delete_category",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "basebuilder_module.problems",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "basebuilder_module.start_category_session",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "basebuilder_module.edit_category",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/basebuilder/create_learning_path.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "basebuilder_module.learning_paths",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "basebuilder_module.create_learning_path",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/basebuilder/deliver_text.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "basebuilder_module.deliver_text",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "basebuilder_module.text_sets",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/basebuilder/create_category.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "basebuilder_module.create_category",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "basebuilder_module.categories",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/basebuilder/path_progress.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "basebuilder_module.assign_learning_path",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "basebuilder_module.learning_paths",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/basebuilder/category_problems.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "basebuilder_module.create_problem",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "basebuilder_module.view_text_set",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "basebuilder_module.solve_problem",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "basebuilder_module.problems",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "basebuilder_module.edit_problem",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "basebuilder_module.start_category_session",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "basebuilder_module.deliver_text",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "basebuilder_module.import_problems",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "basebuilder_module.import_text_set",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "basebuilder_module.delete_problem",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/basebuilder/problems.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "basebuilder_module.create_problem",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "basebuilder_module.solve_problem",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "basebuilder_module.problems",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "basebuilder_module.edit_problem",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "basebuilder_module.start_search_session",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "basebuilder_module.import_problems",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "basebuilder_module.delete_problem",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/basebuilder/text_sets.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "basebuilder_module.view_text_set",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "basebuilder_module.cancel_text_delivery",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "basebuilder_module.delete_text_sets",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "basebuilder_module.deliver_text",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "basebuilder_module.import_text_set",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "basebuilder_module.delete_single_text",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/basebuilder/edit_learning_path.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "basebuilder_module.edit_learning_path",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "basebuilder_module.learning_paths",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/basebuilder/start_learning_path.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "basebuilder_module.start_learning_path",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "basebuilder_module.learning_paths",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "basebuilder_module.update_path_progress",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/basebuilder/student_dashboard.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "basebuilder_module.view_text_set",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "basebuilder_module.solve_problem",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "basebuilder_module.start_learning_path",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "basebuilder_module.my_texts",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "basebuilder_module.problems",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "basebuilder_module.view_history",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "basebuilder_module.solve_text",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "basebuilder_module.learning_paths",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/basebuilder/student_learning_paths.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "basebuilder_module.start_learning_path",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "basebuilder_module.index",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/basebuilder/history.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "basebuilder_module.problems",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/basebuilder/session_summary.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "basebuilder_module.start_session",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "basebuilder_module.view_proficiency",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/basebuilder/create_problem.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "basebuilder_module.create_problem",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "basebuilder_module.problems",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/basebuilder/layout.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "basebuilder_module.index",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "basebuilder_module.categories",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "basebuilder_module.theme_relations",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "basebuilder_module.my_texts",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "basebuilder_module.problems",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "basebuilder_module.view_history",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "basebuilder_module.text_sets",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "basebuilder_module.analysis",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "index",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "static",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "basebuilder_module.learning_paths",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/basebuilder/assign_learning_path.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "basebuilder_module.assign_learning_path",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "basebuilder_module.learning_paths",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/basebuilder/View_text.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "basebuilder_module.deliver_text",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "basebuilder_module.solve_problem",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "basebuilder_module.text_sets",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "basebuilder_module.my_texts",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/basebuilder/my_texts.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "basebuilder_module.solve_text",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "basebuilder_module.view_text_set",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/basebuilder/teacher_learning_paths.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "basebuilder_module.edit_learning_path",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "basebuilder_module.assign_learning_path",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "basebuilder_module.path_progress",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "basebuilder_module.create_learning_path",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/basebuilder/analysis.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "basebuilder_module.analysis",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "basebuilder_module.student_analysis",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/components/ranking_widget.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "student.ranking",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "teacher.ranking_analysis",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/student/ranking.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "student.ranking",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/student/dashboard_minimal.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "student.todos",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "student.surveys",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "student.goals",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "student.activities",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "student.view_themes",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/student/debug_routes.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "student.dashboard",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    },
+    "templates/student/class_details.html": {
+      "type": "template",
+      "mismatches": [
+        {
+          "used": "student.dashboard",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "student.activities",
+          "suggestions": [],
+          "confidence": "low"
+        },
+        {
+          "used": "student.class_themes",
+          "suggestions": [],
+          "confidence": "low"
+        }
+      ]
+    }
+  },
+  "suggested_mappings": {
+    "index": "# MANUAL_FIX_NEEDED",
+    "academic.list_years": "# MANUAL_FIX_NEEDED",
+    "school.list_schools": "# MANUAL_FIX_NEEDED",
+    "enrollment.list_students": "# MANUAL_FIX_NEEDED",
+    "main.index": "# MANUAL_FIX_NEEDED",
+    "teacher.dashboard": "# MANUAL_FIX_NEEDED",
+    "auth.login": "# MANUAL_FIX_NEEDED",
+    "student.dashboard": "# MANUAL_FIX_NEEDED",
+    "admin_panel.dashboard": "# MANUAL_FIX_NEEDED",
+    "admin.learning_paths": "# MANUAL_FIX_NEEDED",
+    "problems.problems": "# MANUAL_FIX_NEEDED",
+    "basebuilder_module.index": "# MANUAL_FIX_NEEDED",
+    "categories.categories": "# MANUAL_FIX_NEEDED",
+    "sessions.next_problem": "# MANUAL_FIX_NEEDED",
+    "categories.category_texts": "# MANUAL_FIX_NEEDED",
+    "sessions.session_summary": "# MANUAL_FIX_NEEDED",
+    "analytics.analysis": "# MANUAL_FIX_NEEDED",
+    "student_activities.activities": "# MANUAL_FIX_NEEDED",
+    "teacher_class_management.create_class": "# MANUAL_FIX_NEEDED",
+    "teacher_dashboard.dashboard": "# MANUAL_FIX_NEEDED",
+    "student_activities.new_activity": "# MANUAL_FIX_NEEDED",
+    "teacher_class_management.classes": "# MANUAL_FIX_NEEDED",
+    "student_dashboard.dashboard": "# MANUAL_FIX_NEEDED",
+    "auth.awaiting_approval": "# MANUAL_FIX_NEEDED",
+    "auth.verify_email": "# MANUAL_FIX_NEEDED",
+    "admin_panel.users": "# MANUAL_FIX_NEEDED",
+    "admin_panel.import_users": "# MANUAL_FIX_NEEDED",
+    "admin_panel.admin_school_detail": "# MANUAL_FIX_NEEDED",
+    "admin_panel.admin_schools": "# MANUAL_FIX_NEEDED",
+    "admin_panel.admin_class_group_detail": "# MANUAL_FIX_NEEDED",
+    "admin_panel.admin_class_groups": "# MANUAL_FIX_NEEDED",
+    "admin_panel.admin_student_enrollment": "# MANUAL_FIX_NEEDED",
+    "admin_panel.admin_school_years": "# MANUAL_FIX_NEEDED",
+    "auth.forgot_password": "# MANUAL_FIX_NEEDED",
+    "auth.profile": "# MANUAL_FIX_NEEDED",
+    "secure_auth.awaiting_approval": "# MANUAL_FIX_NEEDED",
+    "secure_auth.verify_email": "# MANUAL_FIX_NEEDED",
+    "secure_auth.secure_login": "# MANUAL_FIX_NEEDED",
+    "teacher_curriculum_management.view_curriculum": "# MANUAL_FIX_NEEDED",
+    "teacher_dashboard.pending_users": "# MANUAL_FIX_NEEDED",
+    "teacher_class_management.class_details": "# MANUAL_FIX_NEEDED",
+    "teacher_curriculum_management.view_converted_units": "# MANUAL_FIX_NEEDED",
+    "teacher_curriculum_management.create_curriculum_form": "# MANUAL_FIX_NEEDED",
+    "teacher_curriculum_management.view_curriculums": "# MANUAL_FIX_NEEDED",
+    "student_goals_todos.todos": "# MANUAL_FIX_NEEDED",
+    "student_goals_todos.goals": "# MANUAL_FIX_NEEDED",
+    "student_activities.view_activity": "# MANUAL_FIX_NEEDED",
+    "student_surveys.personality_survey": "# MANUAL_FIX_NEEDED",
+    "student_surveys.surveys": "# MANUAL_FIX_NEEDED",
+    "student_surveys.interest_survey": "# MANUAL_FIX_NEEDED",
+    "student.personality_survey_edit": "# MANUAL_FIX_NEEDED",
+    "student.personality_survey": "# MANUAL_FIX_NEEDED",
+    "student.interest_survey": "# MANUAL_FIX_NEEDED",
+    "student.view_themes": "# MANUAL_FIX_NEEDED",
+    "basebuilder_module.create_problem": "# MANUAL_FIX_NEEDED",
+    "teacher.ranking_analysis": "# MANUAL_FIX_NEEDED",
+    "teacher.pending_users": "# MANUAL_FIX_NEEDED",
+    "auth.change_password": "# MANUAL_FIX_NEEDED",
+    "basebuilder_module.theme_relations": "# MANUAL_FIX_NEEDED",
+    "student.view_activity": "# MANUAL_FIX_NEEDED",
+    "teacher.create_class": "# MANUAL_FIX_NEEDED",
+    "teacher.view_class": "# MANUAL_FIX_NEEDED",
+    "basebuilder_module.analysis": "# MANUAL_FIX_NEEDED",
+    "teacher.create_milestone": "# MANUAL_FIX_NEEDED",
+    "teacher.view_curriculums": "# MANUAL_FIX_NEEDED",
+    "teacher.integrated_management": "# MANUAL_FIX_NEEDED",
+    "student.delete_activity": "# MANUAL_FIX_NEEDED",
+    "student.export_activities": "# MANUAL_FIX_NEEDED",
+    "student.edit_activity": "# MANUAL_FIX_NEEDED",
+    "student.new_activity": "# MANUAL_FIX_NEEDED",
+    "student.activities": "# MANUAL_FIX_NEEDED",
+    "teacher.teacher_themes": "# MANUAL_FIX_NEEDED",
+    "student.surveys": "# MANUAL_FIX_NEEDED",
+    "teacher_student_evaluation.teacher_themes": "# MANUAL_FIX_NEEDED",
+    "static": "# MANUAL_FIX_NEEDED",
+    "basebuilder_module.categories": "# MANUAL_FIX_NEEDED",
+    "student.todos": "# MANUAL_FIX_NEEDED",
+    "admin_panel.create_school": "# MANUAL_FIX_NEEDED",
+    "teacher.classes": "# MANUAL_FIX_NEEDED",
+    "student.goals": "# MANUAL_FIX_NEEDED",
+    "auth.register": "# MANUAL_FIX_NEEDED",
+    "auth.logout": "# MANUAL_FIX_NEEDED",
+    "teacher.chat_page": "# MANUAL_FIX_NEEDED",
+    "basebuilder_module.view_proficiency": "# MANUAL_FIX_NEEDED",
+    "basebuilder_module.learning_paths": "# MANUAL_FIX_NEEDED",
+    "basebuilder_module.problems": "# MANUAL_FIX_NEEDED",
+    "student.chat_page": "# MANUAL_FIX_NEEDED",
+    "student.interest_survey_edit": "# MANUAL_FIX_NEEDED",
+    "student.submit_milestone": "# MANUAL_FIX_NEEDED",
+    "teacher.create_main_theme": "# MANUAL_FIX_NEEDED",
+    "teacher.delete_main_theme": "# MANUAL_FIX_NEEDED",
+    "teacher.edit_main_theme": "# MANUAL_FIX_NEEDED",
+    "student.student_view_main_themes": "# MANUAL_FIX_NEEDED",
+    "teacher.view_main_themes": "# MANUAL_FIX_NEEDED",
+    "teacher.view_milestone": "# MANUAL_FIX_NEEDED",
+    "add_feedback": "# MANUAL_FIX_NEEDED",
+    "teacher.download_student_template": "# MANUAL_FIX_NEEDED",
+    "student.delete_todo": "# MANUAL_FIX_NEEDED",
+    "student.new_todo": "# MANUAL_FIX_NEEDED",
+    "student.edit_todo": "# MANUAL_FIX_NEEDED",
+    "student.toggle_todo": "# MANUAL_FIX_NEEDED",
+    "teacher.edit_class": "# MANUAL_FIX_NEEDED",
+    "teacher.export_curriculum": "# MANUAL_FIX_NEEDED",
+    "student.learning_portal": "# MANUAL_FIX_NEEDED",
+    "teacher.view_groups": "# MANUAL_FIX_NEEDED",
+    "delete_group": "# MANUAL_FIX_NEEDED",
+    "teacher.view_group": "# MANUAL_FIX_NEEDED",
+    "teacher.create_group": "# MANUAL_FIX_NEEDED",
+    "teacher.edit_group": "# MANUAL_FIX_NEEDED",
+    "teacher.generate_curriculum": "# MANUAL_FIX_NEEDED",
+    "basebuilder_module.my_texts": "# MANUAL_FIX_NEEDED",
+    "student.class_details": "# MANUAL_FIX_NEEDED",
+    "student.class_themes": "# MANUAL_FIX_NEEDED",
+    "teacher.delete_class": "# MANUAL_FIX_NEEDED",
+    "teacher.class_details": "# MANUAL_FIX_NEEDED",
+    "student.create_personal_theme": "# MANUAL_FIX_NEEDED",
+    "student.generate_theme": "# MANUAL_FIX_NEEDED",
+    "teacher.edit_curriculum": "# MANUAL_FIX_NEEDED",
+    "teacher.view_curriculum": "# MANUAL_FIX_NEEDED",
+    "student.edit_theme": "# MANUAL_FIX_NEEDED",
+    "student.generate_theme_ai": "# MANUAL_FIX_NEEDED",
+    "student.delete_theme": "# MANUAL_FIX_NEEDED",
+    "basebuilder.solve_problem": "# MANUAL_FIX_NEEDED",
+    "student.select_theme": "# MANUAL_FIX_NEEDED",
+    "basebuilder.problems": "# MANUAL_FIX_NEEDED",
+    "download_curriculum_template": "# MANUAL_FIX_NEEDED",
+    "teacher.generate_evaluations": "# MANUAL_FIX_NEEDED",
+    "remove_student": "# MANUAL_FIX_NEEDED",
+    "teacher.add_students": "# MANUAL_FIX_NEEDED",
+    "delete_milestone": "# MANUAL_FIX_NEEDED",
+    "teacher.edit_milestone": "# MANUAL_FIX_NEEDED",
+    "auth.reset_password": "# MANUAL_FIX_NEEDED",
+    "student.new_goal": "# MANUAL_FIX_NEEDED",
+    "student.edit_goal": "# MANUAL_FIX_NEEDED",
+    "student.delete_goal": "# MANUAL_FIX_NEEDED",
+    "teacher.import_curriculum": "# MANUAL_FIX_NEEDED",
+    "teacher.delete_curriculum": "# MANUAL_FIX_NEEDED",
+    "teacher.create_curriculum_form": "# MANUAL_FIX_NEEDED",
+    "auth.resend_verification": "# MANUAL_FIX_NEEDED",
+    "teacher.class_main_themes": "# MANUAL_FIX_NEEDED",
+    "teacher.main_themes": "# MANUAL_FIX_NEEDED",
+    "teacher.auto_sync_settings": "# MANUAL_FIX_NEEDED",
+    "teacher.view_converted_units": "# MANUAL_FIX_NEEDED",
+    "teacher.remove_student": "# MANUAL_FIX_NEEDED",
+    "teacher.generate_student_report": "# MANUAL_FIX_NEEDED",
+    "teacher.import_students": "# MANUAL_FIX_NEEDED",
+    "leave_group": "# MANUAL_FIX_NEEDED",
+    "remove_group_member": "# MANUAL_FIX_NEEDED",
+    "join_group": "# MANUAL_FIX_NEEDED",
+    "teacher.view_curriculum_simple": "# MANUAL_FIX_NEEDED",
+    "teacher.edit_curriculum_simple": "# MANUAL_FIX_NEEDED",
+    "teacher.export_curriculum_v2": "# MANUAL_FIX_NEEDED",
+    "admin_panel.admin_edit_school_year": "# MANUAL_FIX_NEEDED",
+    "admin_panel.admin_create_school_year": "# MANUAL_FIX_NEEDED",
+    "admin_panel.download_user_template": "# MANUAL_FIX_NEEDED",
+    "admin_panel.edit_school": "# MANUAL_FIX_NEEDED",
+    "admin_panel.admin_set_current_year": "# MANUAL_FIX_NEEDED",
+    "admin_panel.delete_school": "# MANUAL_FIX_NEEDED",
+    "academic.edit_class": "# MANUAL_FIX_NEEDED",
+    "admin_panel.admin_create_class_group": "# MANUAL_FIX_NEEDED",
+    "admin_panel.admin_add_students_to_class": "# MANUAL_FIX_NEEDED",
+    "admin_panel.admin_delete_enrollment": "# MANUAL_FIX_NEEDED",
+    "admin_panel.delete_user": "# MANUAL_FIX_NEEDED",
+    "enrollment.edit_student": "# MANUAL_FIX_NEEDED",
+    "enrollment.import_students": "# MANUAL_FIX_NEEDED",
+    "admin_panel.analytics_dashboard": "# MANUAL_FIX_NEEDED",
+    "teacher.approve_user": "# MANUAL_FIX_NEEDED",
+    "teacher.create_curriculum": "# MANUAL_FIX_NEEDED",
+    "basebuilder_module.create_category": "# MANUAL_FIX_NEEDED",
+    "basebuilder_module.edit_problem": "# MANUAL_FIX_NEEDED",
+    "basebuilder_module.import_text_set": "# MANUAL_FIX_NEEDED",
+    "basebuilder_module.create_learning_path": "# MANUAL_FIX_NEEDED",
+    "basebuilder_module.download_problem_template": "# MANUAL_FIX_NEEDED",
+    "basebuilder_module.import_problems": "# MANUAL_FIX_NEEDED",
+    "basebuilder_module.start_category_session": "# MANUAL_FIX_NEEDED",
+    "basebuilder_module.start_text_session": "# MANUAL_FIX_NEEDED",
+    "basebuilder_module.view_text_set": "# MANUAL_FIX_NEEDED",
+    "basebuilder_module.view_history": "# MANUAL_FIX_NEEDED",
+    "basebuilder_module.submit_answer": "# MANUAL_FIX_NEEDED",
+    "basebuilder_module.category_texts": "# MANUAL_FIX_NEEDED",
+    "basebuilder_module.text_sets": "# MANUAL_FIX_NEEDED",
+    "basebuilder_module.next_problem": "# MANUAL_FIX_NEEDED",
+    "basebuilder_module.solve_problem": "# MANUAL_FIX_NEEDED",
+    "basebuilder_module.delete_category": "# MANUAL_FIX_NEEDED",
+    "basebuilder_module.edit_category": "# MANUAL_FIX_NEEDED",
+    "basebuilder_module.deliver_text": "# MANUAL_FIX_NEEDED",
+    "basebuilder_module.assign_learning_path": "# MANUAL_FIX_NEEDED",
+    "basebuilder_module.delete_problem": "# MANUAL_FIX_NEEDED",
+    "basebuilder_module.start_search_session": "# MANUAL_FIX_NEEDED",
+    "basebuilder_module.cancel_text_delivery": "# MANUAL_FIX_NEEDED",
+    "basebuilder_module.delete_text_sets": "# MANUAL_FIX_NEEDED",
+    "basebuilder_module.delete_single_text": "# MANUAL_FIX_NEEDED",
+    "basebuilder_module.edit_learning_path": "# MANUAL_FIX_NEEDED",
+    "basebuilder_module.start_learning_path": "# MANUAL_FIX_NEEDED",
+    "basebuilder_module.update_path_progress": "# MANUAL_FIX_NEEDED",
+    "basebuilder_module.solve_text": "# MANUAL_FIX_NEEDED",
+    "basebuilder_module.start_session": "# MANUAL_FIX_NEEDED",
+    "basebuilder_module.path_progress": "# MANUAL_FIX_NEEDED",
+    "basebuilder_module.student_analysis": "# MANUAL_FIX_NEEDED",
+    "student.ranking": "# MANUAL_FIX_NEEDED"
+  },
+  "fix_confidence": {
+    "index": "low",
+    "academic.list_years": "low",
+    "school.list_schools": "low",
+    "enrollment.list_students": "low",
+    "main.index": "low",
+    "teacher.dashboard": "low",
+    "auth.login": "low",
+    "student.dashboard": "low",
+    "admin_panel.dashboard": "low",
+    "admin.learning_paths": "low",
+    "problems.problems": "low",
+    "basebuilder_module.index": "low",
+    "categories.categories": "low",
+    "sessions.next_problem": "low",
+    "categories.category_texts": "low",
+    "sessions.session_summary": "low",
+    "analytics.analysis": "low",
+    "student_activities.activities": "low",
+    "teacher_class_management.create_class": "low",
+    "teacher_dashboard.dashboard": "low",
+    "student_activities.new_activity": "low",
+    "teacher_class_management.classes": "low",
+    "student_dashboard.dashboard": "low",
+    "auth.awaiting_approval": "low",
+    "auth.verify_email": "low",
+    "admin_panel.users": "low",
+    "admin_panel.import_users": "low",
+    "admin_panel.admin_school_detail": "low",
+    "admin_panel.admin_schools": "low",
+    "admin_panel.admin_class_group_detail": "low",
+    "admin_panel.admin_class_groups": "low",
+    "admin_panel.admin_student_enrollment": "low",
+    "admin_panel.admin_school_years": "low",
+    "auth.forgot_password": "low",
+    "auth.profile": "low",
+    "secure_auth.awaiting_approval": "low",
+    "secure_auth.verify_email": "low",
+    "secure_auth.secure_login": "low",
+    "teacher_curriculum_management.view_curriculum": "low",
+    "teacher_dashboard.pending_users": "low",
+    "teacher_class_management.class_details": "low",
+    "teacher_curriculum_management.view_converted_units": "low",
+    "teacher_curriculum_management.create_curriculum_form": "low",
+    "teacher_curriculum_management.view_curriculums": "low",
+    "student_goals_todos.todos": "low",
+    "student_goals_todos.goals": "low",
+    "student_activities.view_activity": "low",
+    "student_surveys.personality_survey": "low",
+    "student_surveys.surveys": "low",
+    "student_surveys.interest_survey": "low",
+    "student.personality_survey_edit": "low",
+    "student.personality_survey": "low",
+    "student.interest_survey": "low",
+    "student.view_themes": "low",
+    "basebuilder_module.create_problem": "low",
+    "teacher.ranking_analysis": "low",
+    "teacher.pending_users": "low",
+    "auth.change_password": "low",
+    "basebuilder_module.theme_relations": "low",
+    "student.view_activity": "low",
+    "teacher.create_class": "low",
+    "teacher.view_class": "low",
+    "basebuilder_module.analysis": "low",
+    "teacher.create_milestone": "low",
+    "teacher.view_curriculums": "low",
+    "teacher.integrated_management": "low",
+    "student.delete_activity": "low",
+    "student.export_activities": "low",
+    "student.edit_activity": "low",
+    "student.new_activity": "low",
+    "student.activities": "low",
+    "teacher.teacher_themes": "low",
+    "student.surveys": "low",
+    "teacher_student_evaluation.teacher_themes": "low",
+    "static": "low",
+    "basebuilder_module.categories": "low",
+    "student.todos": "low",
+    "admin_panel.create_school": "low",
+    "teacher.classes": "low",
+    "student.goals": "low",
+    "auth.register": "low",
+    "auth.logout": "low",
+    "teacher.chat_page": "low",
+    "basebuilder_module.view_proficiency": "low",
+    "basebuilder_module.learning_paths": "low",
+    "basebuilder_module.problems": "low",
+    "student.chat_page": "low",
+    "student.interest_survey_edit": "low",
+    "student.submit_milestone": "low",
+    "teacher.create_main_theme": "low",
+    "teacher.delete_main_theme": "low",
+    "teacher.edit_main_theme": "low",
+    "student.student_view_main_themes": "low",
+    "teacher.view_main_themes": "low",
+    "teacher.view_milestone": "low",
+    "add_feedback": "low",
+    "teacher.download_student_template": "low",
+    "student.delete_todo": "low",
+    "student.new_todo": "low",
+    "student.edit_todo": "low",
+    "student.toggle_todo": "low",
+    "teacher.edit_class": "low",
+    "teacher.export_curriculum": "low",
+    "student.learning_portal": "low",
+    "teacher.view_groups": "low",
+    "delete_group": "low",
+    "teacher.view_group": "low",
+    "teacher.create_group": "low",
+    "teacher.edit_group": "low",
+    "teacher.generate_curriculum": "low",
+    "basebuilder_module.my_texts": "low",
+    "student.class_details": "low",
+    "student.class_themes": "low",
+    "teacher.delete_class": "low",
+    "teacher.class_details": "low",
+    "student.create_personal_theme": "low",
+    "student.generate_theme": "low",
+    "teacher.edit_curriculum": "low",
+    "teacher.view_curriculum": "low",
+    "student.edit_theme": "low",
+    "student.generate_theme_ai": "low",
+    "student.delete_theme": "low",
+    "basebuilder.solve_problem": "low",
+    "student.select_theme": "low",
+    "basebuilder.problems": "low",
+    "download_curriculum_template": "low",
+    "teacher.generate_evaluations": "low",
+    "remove_student": "low",
+    "teacher.add_students": "low",
+    "delete_milestone": "low",
+    "teacher.edit_milestone": "low",
+    "auth.reset_password": "low",
+    "student.new_goal": "low",
+    "student.edit_goal": "low",
+    "student.delete_goal": "low",
+    "teacher.import_curriculum": "low",
+    "teacher.delete_curriculum": "low",
+    "teacher.create_curriculum_form": "low",
+    "auth.resend_verification": "low",
+    "teacher.class_main_themes": "low",
+    "teacher.main_themes": "low",
+    "teacher.auto_sync_settings": "low",
+    "teacher.view_converted_units": "low",
+    "teacher.remove_student": "low",
+    "teacher.generate_student_report": "low",
+    "teacher.import_students": "low",
+    "leave_group": "low",
+    "remove_group_member": "low",
+    "join_group": "low",
+    "teacher.view_curriculum_simple": "low",
+    "teacher.edit_curriculum_simple": "low",
+    "teacher.export_curriculum_v2": "low",
+    "admin_panel.admin_edit_school_year": "low",
+    "admin_panel.admin_create_school_year": "low",
+    "admin_panel.download_user_template": "low",
+    "admin_panel.edit_school": "low",
+    "admin_panel.admin_set_current_year": "low",
+    "admin_panel.delete_school": "low",
+    "academic.edit_class": "low",
+    "admin_panel.admin_create_class_group": "low",
+    "admin_panel.admin_add_students_to_class": "low",
+    "admin_panel.admin_delete_enrollment": "low",
+    "admin_panel.delete_user": "low",
+    "enrollment.edit_student": "low",
+    "enrollment.import_students": "low",
+    "admin_panel.analytics_dashboard": "low",
+    "teacher.approve_user": "low",
+    "teacher.create_curriculum": "low",
+    "basebuilder_module.create_category": "low",
+    "basebuilder_module.edit_problem": "low",
+    "basebuilder_module.import_text_set": "low",
+    "basebuilder_module.create_learning_path": "low",
+    "basebuilder_module.download_problem_template": "low",
+    "basebuilder_module.import_problems": "low",
+    "basebuilder_module.start_category_session": "low",
+    "basebuilder_module.start_text_session": "low",
+    "basebuilder_module.view_text_set": "low",
+    "basebuilder_module.view_history": "low",
+    "basebuilder_module.submit_answer": "low",
+    "basebuilder_module.category_texts": "low",
+    "basebuilder_module.text_sets": "low",
+    "basebuilder_module.next_problem": "low",
+    "basebuilder_module.solve_problem": "low",
+    "basebuilder_module.delete_category": "low",
+    "basebuilder_module.edit_category": "low",
+    "basebuilder_module.deliver_text": "low",
+    "basebuilder_module.assign_learning_path": "low",
+    "basebuilder_module.delete_problem": "low",
+    "basebuilder_module.start_search_session": "low",
+    "basebuilder_module.cancel_text_delivery": "low",
+    "basebuilder_module.delete_text_sets": "low",
+    "basebuilder_module.delete_single_text": "low",
+    "basebuilder_module.edit_learning_path": "low",
+    "basebuilder_module.start_learning_path": "low",
+    "basebuilder_module.update_path_progress": "low",
+    "basebuilder_module.solve_text": "low",
+    "basebuilder_module.start_session": "low",
+    "basebuilder_module.path_progress": "low",
+    "basebuilder_module.student_analysis": "low",
+    "student.ranking": "low"
+  },
+  "blueprint_summary": {}
+}

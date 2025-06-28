@@ -34,7 +34,7 @@
         
         <div class="form-actions">
             <button type="submit" class="btn btn-primary">マイルストーンを作成</button>
-            <a href="{{ url_for('teacher.view_class', class_id=class_.id) if class_ else url_for('teacher.dashboard') }}" class="btn btn-secondary">キャンセル</a>
+            <a href="{{ url_for('teacher.view_class', class_id=class_.id) if class_ else {{ url_for('teacher_dashboard.dashboard') }}" class="btn btn-secondary">キャンセル</a>
         </div>
     </form>
     

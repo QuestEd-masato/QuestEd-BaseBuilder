@@ -114,9 +114,9 @@ def register_blueprints(app):
             if current_user.role == 'admin':
                 return redirect(url_for('admin_panel.dashboard'))
             elif current_user.role == 'teacher':
-                return redirect(url_for('teacher.dashboard'))
+                return redirect(url_for('teacher_dashboard.dashboard'))
             elif current_user.role == 'student':
-                return redirect(url_for('student.dashboard'))
+                return redirect(url_for('student_dashboard.dashboard'))
         return redirect(url_for('auth.login'))
 
 
