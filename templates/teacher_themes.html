@@ -43,7 +43,7 @@
                     <a href="{{ url_for('teacher.view_main_themes', class_id=cls.class.id) }}" class="btn btn-outline-primary">
                       <i class="fas fa-cog"></i> 大テーマを管理
                     </a>
-                    <a href="{{ url_for('teacher.create_main_theme', class_id=cls.class.id) }}" class="btn btn-outline-success">
+                    <a href="{{ url_for('teacher_curriculum_management.create_main_theme', class_id=cls.class.id) }}" class="btn btn-outline-success">
                       <i class="fas fa-plus"></i> 新しい大テーマを作成
                     </a>
                   </div>
@@ -66,7 +66,7 @@
                               <td>{{ theme.description|truncate(50) }}</td>
                               <td>{{ theme.created_at.strftime('%Y-%m-%d') }}</td>
                               <td>
-                                <a href="{{ url_for('teacher.edit_main_theme', theme_id=theme.id) }}" class="btn btn-sm btn-outline-primary">
+                                <a href="{{ url_for('teacher_curriculum_management.edit_main_theme', theme_id=theme.id) }}" class="btn btn-sm btn-outline-primary">
                                   <i class="fas fa-edit"></i> 編集
                                 </a>
                               </td>

@@ -60,7 +60,7 @@
         <h5 class="card-title">学生への割り当て</h5>
       </div>
       <div class="card-body">
-        <form method="POST" action="{{ url_for('basebuilder_module.assign_learning_path', path_id=path.id) }}">
+        <form method="POST" action="{{ url_for('basebuilder_admin.assign_learning_path', path_id=path.id) }}">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           
           <div class="mb-3">

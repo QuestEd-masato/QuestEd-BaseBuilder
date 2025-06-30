@@ -219,15 +219,15 @@
 
     <!-- アクションボタン -->
     <div class="action-buttons">
-        <a href="{{ url_for('teacher.view_curriculums', class_id=class_obj.id) }}" class="btn-modern btn-secondary">
+        <a href="{{ url_for('teacher_curriculum_management.view_curriculums', class_id=class_obj.id) }}" class="btn-modern btn-secondary">
             <i class="fas fa-arrow-left"></i> 一覧に戻る
         </a>
         {% if current_user.role == 'teacher' and current_user.id == curriculum.teacher_id %}
-        <a href="{{ url_for('teacher.edit_curriculum_simple', curriculum_id=curriculum.id) }}" class="btn-modern btn-primary">
+        <a href="{{ url_for('teacher_curriculum_management.edit_curriculum_simple', curriculum_id=curriculum.id) }}" class="btn-modern btn-primary">
             <i class="fas fa-edit"></i> 編集
         </a>
         {% endif %}
-        <a href="{{ url_for('teacher.export_curriculum_v2', curriculum_id=curriculum.id) }}" class="btn-modern btn-success">
+        <a href="{{ url_for('teacher_curriculum_management.export_curriculum_v2', curriculum_id=curriculum.id) }}" class="btn-modern btn-success">
             <i class="fas fa-file-csv"></i> CSV出力
         </a>
         {% if curriculum.format == 'json' %}
@@ -318,7 +318,7 @@
         <h4>カリキュラムデータがありません</h4>
         <p>カリキュラムの内容がまだ設定されていません。</p>
         {% if current_user.role == 'teacher' and current_user.id == curriculum.teacher_id %}
-        <a href="{{ url_for('teacher.edit_curriculum_simple', curriculum_id=curriculum.id) }}" class="btn-modern btn-primary">
+        <a href="{{ url_for('teacher_curriculum_management.edit_curriculum_simple', curriculum_id=curriculum.id) }}" class="btn-modern btn-primary">
             <i class="fas fa-plus"></i> 内容を追加
         </a>
         {% endif %}

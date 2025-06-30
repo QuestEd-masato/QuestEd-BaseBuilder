@@ -50,7 +50,7 @@
                 <a href="{{ url_for('teacher_class_management.edit_class', class_id=class_obj.id) }}" class="btn btn-primary">
                     <i class="fas fa-edit"></i> クラス情報を編集
                 </a>
-                <a href="{{ url_for('teacher.add_students', class_id=class_obj.id) }}" class="btn btn-success">
+                <a href="{{ url_for('teacher_class_management.add_students', class_id=class_obj.id) }}" class="btn btn-success">
                     <i class="fas fa-user-plus"></i> 学生を追加
                 </a>
                 <a href="{{ url_for('teacher.import_students', class_id=class_obj.id) }}" class="btn btn-info">
@@ -138,7 +138,7 @@
                     <i class="fas fa-users fa-3x text-muted mb-3"></i>
                     <p class="text-muted">このクラスにはまだ学生がいません。</p>
                     {% if current_user.role == 'teacher' and current_user.id == class_obj.teacher_id %}
-                    <a href="{{ url_for('teacher.add_students', class_id=class_obj.id) }}" class="btn btn-primary">
+                    <a href="{{ url_for('teacher_class_management.add_students', class_id=class_obj.id) }}" class="btn btn-primary">
                         <i class="fas fa-user-plus"></i> 学生を追加
                     </a>
                     {% endif %}
@@ -208,7 +208,7 @@
     {% endif %}
     
     <div class="mt-4">
-        <a href="{{ url_for('teacher.classes') }}" class="btn btn-secondary">
+        <a href="{{ url_for('teacher_class_management.class_list') }}" class="btn btn-secondary">
             <i class="fas fa-arrow-left"></i> クラス一覧に戻る
         </a>
     </div>

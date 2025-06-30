@@ -20,7 +20,7 @@
     <!-- ここに新しいボタン群を追加 -->
     {% if is_teacher %}
     <div class="mt-3 mb-4">
-        <a href="{{ url_for('teacher.view_curriculums', class_id=class_.id) }}" class="btn btn-primary me-2">
+        <a href="{{ url_for('teacher_curriculum_management.view_curriculums', class_id=class_.id) }}" class="btn btn-primary me-2">
             <i class="fas fa-book"></i> カリキュラム
         </a>
         <a href="{{ url_for('teacher.view_main_themes', class_id=class_.id) }}" class="btn btn-primary me-2">
@@ -43,7 +43,7 @@
         <div class="tab-header">
             <h3>学生一覧</h3>
             {% if is_teacher %}
-            <a href="{{ url_for('teacher.add_students', class_id=class_.id) }}" class="btn btn-sm btn-primary">学生を追加</a>
+            <a href="{{ url_for('teacher_class_management.add_students', class_id=class_.id) }}" class="btn btn-sm btn-primary">学生を追加</a>
             {% endif %}
         </div>
         
@@ -121,7 +121,7 @@
         <div class="tab-header">
             <h3>マイルストーン</h3>
             {% if is_teacher %}
-            <a href="{{ url_for('teacher.create_milestone', class_id=class_.id) }}" class="btn btn-sm btn-primary">マイルストーンを追加</a>
+            <a href="{{ url_for('teacher_class_management.create_milestone', class_id=class_.id) }}" class="btn btn-sm btn-primary">マイルストーンを追加</a>
             {% endif %}
         </div>
         
@@ -161,7 +161,7 @@
         <div class="no-milestones">
             <p>このクラスにはまだマイルストーンがありません。</p>
             {% if is_teacher %}
-            <a href="{{ url_for('teacher.create_milestone', class_id=class_.id) }}" class="btn btn-primary">マイルストーンを作成する</a>
+            <a href="{{ url_for('teacher_class_management.create_milestone', class_id=class_.id) }}" class="btn btn-primary">マイルストーンを作成する</a>
             {% endif %}
         </div>
         {% endif %}

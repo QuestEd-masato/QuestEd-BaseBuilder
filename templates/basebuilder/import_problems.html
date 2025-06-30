@@ -5,7 +5,7 @@
   <div class="col-md-8">
     <div class="d-flex justify-content-between align-items-center mb-4">
       <h1 class="section-title">問題インポート</h1>
-      <a href="{{ url_for('basebuilder_module.problems') }}" class="btn btn-outline">
+      <a href="{{ url_for('problems.problems') }}" class="btn btn-outline">
         <i class="fas fa-arrow-left"></i> 問題一覧に戻る
       </a>
     </div>
@@ -17,10 +17,10 @@
       <div class="card-body">
         <p>問題データをインポートするには、以下のCSVテンプレートをダウンロードし、必要事項を入力してください。</p>
         <div class="d-grid gap-2 d-md-flex">
-          <a href="{{ url_for('basebuilder_module.download_problem_template', template_type='example') }}" class="btn btn-primary">
+          <a href="{{ url_for('basebuilder_admin.download_problem_template', template_type='example') }}" class="btn btn-primary">
             <i class="fas fa-download"></i> サンプル入り テンプレート
           </a>
-          <a href="{{ url_for('basebuilder_module.download_problem_template', template_type='empty') }}" class="btn btn-outline">
+          <a href="{{ url_for('basebuilder_admin.download_problem_template', template_type='empty') }}" class="btn btn-outline">
             <i class="fas fa-download"></i> 空のテンプレート
           </a>
         </div>
@@ -32,7 +32,7 @@
         <h5 class="card-title">CSVファイルのインポート</h5>
       </div>
       <div class="card-body">
-        <form method="POST" action="{{ url_for('basebuilder_module.import_problems') }}" enctype="multipart/form-data">
+        <form method="POST" action="{{ url_for('basebuilder_admin.import_problems') }}" enctype="multipart/form-data">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           
           <div class="form-group mb-3">
@@ -71,7 +71,7 @@
             <button type="submit" class="btn btn-primary">
               <i class="fas fa-upload"></i> インポート実行
             </button>
-            <a href="{{ url_for('basebuilder_module.problems') }}" class="btn btn-outline">キャンセル</a>
+            <a href="{{ url_for('problems.problems') }}" class="btn btn-outline">キャンセル</a>
           </div>
         </form>
       </div>

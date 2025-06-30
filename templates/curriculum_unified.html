@@ -289,7 +289,7 @@
                 <p id="curriculumDescription">{{ curriculum.description or 'カリキュラムの説明はありません' }}</p>
             </div>
             <div class="d-flex gap-2 flex-wrap">
-                <a href="{{ url_for('teacher.view_curriculums', class_id=class_obj.id) }}" class="btn btn-light btn-sm d-flex align-items-center">
+                <a href="{{ url_for('teacher_curriculum_management.view_curriculums', class_id=class_obj.id) }}" class="btn btn-light btn-sm d-flex align-items-center">
                     <i class="fas fa-arrow-left me-2"></i> 一覧に戻る
                 </a>
                 {% if can_edit %}

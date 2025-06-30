@@ -4,15 +4,15 @@
 <div class="d-flex justify-content-between align-items-center mb-4">
   <h1 class="section-title">{{ current_category.name }} の単語一覧</h1>
   <div>
-    <a href="{{ url_for('basebuilder_module.problems') }}" class="btn btn-outline me-2">
+    <a href="{{ url_for('problems.problems') }}" class="btn btn-outline me-2">
       <i class="fas fa-arrow-left"></i> カテゴリ一覧に戻る
     </a>
     {% if current_user.role == 'teacher' %}
-      <a href="{{ url_for('basebuilder_module.create_problem', category_id=current_category.id) }}" class="btn btn-primary">
+      <a href="{{ url_for('problems.create_problem', category_id=current_category.id) }}" class="btn btn-primary">
         <i class="fas fa-plus"></i> 新規単語
       </a>
     {% elif current_user.role == 'student' %}
-      <a href="{{ url_for('basebuilder_module.start_category_session', category_id=current_category.id) }}" class="btn btn-primary">
+      <a href="{{ url_for('sessions.start_category_session', category_id=current_category.id) }}" class="btn btn-primary">
         <i class="fas fa-play"></i> 学習セッションを開始
       </a>
     {% endif %}
@@ -25,7 +25,7 @@
     <h5 class="card-title">検索</h5>
   </div>
   <div class="card-body">
-    <form method="GET" action="{{ url_for('basebuilder_module.problems', category_id=current_category.id) }}" class="row g-3">
+    <form method="GET" action="{{ url_for('problems.problems', category_id=current_category.id) }}" class="row g-3">
       <!-- テキスト検索 -->
       <div class="col-md-4">
         <label for="search" class="form-label">キーワード検索</label>
@@ -37,7 +37,7 @@
         <button type="submit" class="btn btn-primary">
           <i class="fas fa-search"></i> 検索
         </button>
-        <a href="{{ url_for('basebuilder_module.problems', category_id=current_category.id) }}" class="btn btn-outline">
+        <a href="{{ url_for('problems.problems', category_id=current_category.id) }}" class="btn btn-outline">
           <i class="fas fa-redo"></i> リセット
         </a>
       </div>
@@ -96,14 +96,14 @@
                 {% endif %}
                 <td>
                   {% if current_user.role == 'student' %}
-                    <a href="{{ url_for('basebuilder_module.solve_problem', problem_id=problem.id) }}" class="btn btn-sm btn-primary">
+                    <a href="{{ url_for('sessions.solve_problem', problem_id=problem.id) }}" class="btn btn-sm btn-primary">
                       学習する
                     </a>
                   {% else %}
-                    <a href="{{ url_for('basebuilder_module.edit_problem', problem_id=problem.id) }}" class="btn btn-sm btn-outline">
+                    <a href="{{ url_for('problems.edit_problem', problem_id=problem.id) }}" class="btn btn-sm btn-outline">
                       編集
                     </a>
-                    <form method="POST" action="{{ url_for('basebuilder_module.delete_problem', problem_id=problem.id) }}" class="d-inline">
+                    <form method="POST" action="{{ url_for('problems.delete_problem', problem_id=problem.id) }}" class="d-inline">
                       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                       <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('本当にこの単語を削除しますか？')">
                         削除
@@ -120,10 +120,10 @@
       <p class="text-muted">このカテゴリには単語がありません。</p>
       {% if current_user.role == 'teacher' %}
         <div class="text-center mt-3">
-          <a href="{{ url_for('basebuilder_module.create_problem', category_id=current_category.id) }}" class="btn btn-primary">
+          <a href="{{ url_for('problems.create_problem', category_id=current_category.id) }}" class="btn btn-primary">
             <i class="fas fa-plus"></i> 最初の単語を追加
           </a>
-          <a href="{{ url_for('basebuilder_module.import_problems') }}" class="btn btn-outline">
+          <a href="{{ url_for('basebuilder_admin.import_problems') }}" class="btn btn-outline">
             <i class="fas fa-file-import"></i> CSVから一括インポート
           </a>
         </div>
@@ -156,10 +156,10 @@
                   <td>{{ text_set.problems|length }}</td>
                   <td>{{ text_set.created_at.strftime('%Y-%m-%d') }}</td>
                   <td>
-                    <a href="{{ url_for('basebuilder_module.view_text_set', text_id=text_set.id) }}" class="btn btn-sm btn-outline">
+                    <a href="{{ url_for('basebuilder_admin.view_text_set', text_id=text_set.id) }}" class="btn btn-sm btn-outline">
                       <i class="fas fa-eye"></i> 詳細
                     </a>
-                    <a href="{{ url_for('basebuilder_module.deliver_text', text_id=text_set.id) }}" class="btn btn-sm btn-primary">
+                    <a href="{{ url_for('basebuilder_admin.deliver_text', text_id=text_set.id) }}" class="btn btn-sm btn-primary">
                       <i class="fas fa-paper-plane"></i> 配信
                     </a>
                   </td>
@@ -173,7 +173,7 @@
       {% endif %}
       
       <div class="mt-3">
-        <a href="{{ url_for('basebuilder_module.import_text_set') }}" class="btn btn-primary">
+        <a href="{{ url_for('basebuilder_admin.import_text_set') }}" class="btn btn-primary">
           <i class="fas fa-plus"></i> 新規テキストセットを作成
         </a>
       </div>

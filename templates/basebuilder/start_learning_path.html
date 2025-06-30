@@ -201,14 +201,14 @@
           
           <div class="nav-buttons">
             {% if current_step_index > 0 %}
-              <a href="{{ url_for('basebuilder_module.start_learning_path', assignment_id=assignment.id, step=current_step_index-1) }}" class="btn btn-outline">
+              <a href="{{ url_for('basebuilder_admin.start_learning_path', assignment_id=assignment.id, step=current_step_index-1) }}" class="btn btn-outline">
                 <i class="fas fa-arrow-left"></i> 前のステップ
               </a>
             {% else %}
               <div></div>
             {% endif %}
             
-            <form method="POST" action="{{ url_for('basebuilder_module.update_path_progress', assignment_id=assignment.id) }}">
+            <form method="POST" action="{{ url_for('basebuilder_admin.update_path_progress', assignment_id=assignment.id) }}">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
               <input type="hidden" name="progress" value="{{ assignment.progress }}">
               <input type="hidden" name="current_step" value="{{ current_step_index }}">
@@ -248,14 +248,14 @@
               
               <div class="nav-buttons">
                 {% if current_step_index > 0 %}
-                  <a href="{{ url_for('basebuilder_module.start_learning_path', assignment_id=assignment.id, step=current_step_index-1) }}" class="btn btn-outline">
+                  <a href="{{ url_for('basebuilder_admin.start_learning_path', assignment_id=assignment.id, step=current_step_index-1) }}" class="btn btn-outline">
                     <i class="fas fa-arrow-left"></i> 前のステップ
                   </a>
                 {% else %}
                   <div></div>
                 {% endif %}
                 
-                <form method="POST" action="{{ url_for('basebuilder_module.update_path_progress', assignment_id=assignment.id) }}">
+                <form method="POST" action="{{ url_for('basebuilder_admin.update_path_progress', assignment_id=assignment.id) }}">
                   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                   <input type="hidden" name="progress" value="{{ assignment.progress }}">
                   <input type="hidden" name="current_step" value="{{ current_step_index }}">
@@ -297,14 +297,14 @@
               
               <div class="nav-buttons">
                 {% if current_step_index > 0 %}
-                  <a href="{{ url_for('basebuilder_module.start_learning_path', assignment_id=assignment.id, step=current_step_index-1) }}" class="btn btn-outline">
+                  <a href="{{ url_for('basebuilder_admin.start_learning_path', assignment_id=assignment.id, step=current_step_index-1) }}" class="btn btn-outline">
                     <i class="fas fa-arrow-left"></i> 前のステップ
                   </a>
                 {% else %}
                   <div></div>
                 {% endif %}
                 
-                <form method="POST" action="{{ url_for('basebuilder_module.update_path_progress', assignment_id=assignment.id) }}">
+                <form method="POST" action="{{ url_for('basebuilder_admin.update_path_progress', assignment_id=assignment.id) }}">
                   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                   <input type="hidden" name="progress" value="{{ assignment.progress }}">
                   <input type="hidden" name="current_step" value="{{ current_step_index }}">
@@ -338,7 +338,7 @@
     document.querySelectorAll('.step-item').forEach(item => {
       item.addEventListener('click', function() {
         const stepIndex = this.dataset.step;
-        window.location.href = `{{ url_for('basebuilder_module.start_learning_path', assignment_id=assignment.id) }}?step=${stepIndex}`;
+        window.location.href = `{{ url_for('basebuilder_admin.start_learning_path', assignment_id=assignment.id) }}?step=${stepIndex}`;
       });
     });
     

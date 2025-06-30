@@ -6,7 +6,7 @@
 <div class="create-class-container">
     <h2>新規クラスの作成</h2>
     
-    <form method="POST" action="{{ url_for('teacher.create_class') }}">
+    <form method="POST" action="{{ url_for('teacher_class_management.create_class') }}">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         
         <div class="form-group">
@@ -35,7 +35,7 @@
         
         <div class="form-actions">
             <button type="submit" class="btn btn-primary">クラスを作成</button>
-            <a href="{{ url_for('teacher.classes') }}" class="btn btn-secondary">キャンセル</a>
+            <a href="{{ url_for('teacher_class_management.class_list') }}" class="btn btn-secondary">キャンセル</a>
         </div>
     </form>
     

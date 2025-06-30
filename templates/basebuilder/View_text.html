@@ -5,10 +5,10 @@
   <h1 class="section-title">テキスト詳細</h1>
   {% if current_user.role == 'teacher' %}
     <div>
-      <a href="{{ url_for('basebuilder_module.deliver_text', text_id=text_set.id) }}" class="btn btn-primary">
+      <a href="{{ url_for('basebuilder_admin.deliver_text', text_id=text_set.id) }}" class="btn btn-primary">
         <i class="fas fa-paper-plane"></i> 配信
       </a>
-      <a href="{{ url_for('basebuilder_module.text_sets') }}" class="btn btn-outline">
+      <a href="{{ url_for('basebuilder_admin.text_sets') }}" class="btn btn-outline">
         <i class="fas fa-arrow-left"></i> テキスト一覧に戻る
       </a>
     </div>
@@ -17,13 +17,13 @@
       <!-- ここを修正: 最初の問題を解くリンクに変更 -->
       {% set first_problem = problems|first %}
       {% if first_problem %}
-        <a href="{{ url_for('basebuilder_module.solve_problem', problem_id=first_problem.id) }}" class="btn btn-primary">
+        <a href="{{ url_for('sessions.solve_problem', problem_id=first_problem.id) }}" class="btn btn-primary">
           <i class="fas fa-edit"></i> 学習を開始
         </a>
       {% else %}
         <button class="btn btn-primary" disabled>問題がありません</button>
       {% endif %}
-      <a href="{{ url_for('basebuilder_module.my_texts') }}" class="btn btn-outline">
+      <a href="{{ url_for('basebuilder_admin.my_texts') }}" class="btn btn-outline">
         <i class="fas fa-arrow-left"></i> テキスト一覧に戻る
       </a>
     </div>
@@ -126,7 +126,7 @@
                     {% endif %}
                   </td>
                   <td>
-                    <a href="{{ url_for('basebuilder_module.solve_problem', problem_id=problem.id) }}" 
+                    <a href="{{ url_for('sessions.solve_problem', problem_id=problem.id) }}" 
                        class="btn btn-sm btn-primary">
                       学習する
                     </a>

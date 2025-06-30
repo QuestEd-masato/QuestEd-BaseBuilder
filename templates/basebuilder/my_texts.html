@@ -53,14 +53,14 @@
                 {% endif %}
                 
                 <div class="mt-3">
-                  <a href="{{ url_for('basebuilder_module.solve_text', text_id=delivery.text_set_id) }}" class="btn btn-primary">
+                  <a href="{{ url_for('sessions.solve_text', text_id=delivery.text_set_id) }}" class="btn btn-primary">
                     {% if text_proficiency.get(delivery.text_set_id, {}).get('level', 0) > 0 %}
                       続ける
                     {% else %}
                       開始する
                     {% endif %}
                   </a>
-                  <a href="{{ url_for('basebuilder_module.view_text_set', text_id=delivery.text_set_id) }}" class="btn btn-outline">
+                  <a href="{{ url_for('basebuilder_admin.view_text_set', text_id=delivery.text_set_id) }}" class="btn btn-outline">
                     詳細
                   </a>
                 </div>

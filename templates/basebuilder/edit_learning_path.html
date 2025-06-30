@@ -68,7 +68,7 @@
         <h5 class="card-title">基本情報</h5>
       </div>
       <div class="card-body">
-        <form id="learning-path-form" method="POST" action="{{ url_for('basebuilder_module.edit_learning_path', path_id=path.id) }}">
+        <form id="learning-path-form" method="POST" action="{{ url_for('basebuilder_admin.edit_learning_path', path_id=path.id) }}">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <input type="hidden" name="steps" id="steps-data" value="{{ path.steps }}">
           

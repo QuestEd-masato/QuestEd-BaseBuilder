@@ -5,7 +5,7 @@
   <div class="col-md-8">
     <div class="d-flex justify-content-between align-items-center mb-4">
       <h1 class="section-title">テキスト配信</h1>
-      <a href="{{ url_for('basebuilder_module.text_sets') }}" class="btn btn-outline">
+      <a href="{{ url_for('basebuilder_admin.text_sets') }}" class="btn btn-outline">
         <i class="fas fa-arrow-left"></i> テキスト一覧に戻る
       </a>
     </div>
@@ -29,7 +29,7 @@
         <h5 class="card-title">配信先クラスを選択</h5>
       </div>
       <div class="card-body">
-        <form method="POST" action="{{ url_for('basebuilder_module.deliver_text', text_id=text_set.id) }}">
+        <form method="POST" action="{{ url_for('basebuilder_admin.deliver_text', text_id=text_set.id) }}">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           
           <div class="form-group mb-3">
@@ -64,7 +64,7 @@
             <button type="submit" class="btn btn-primary" {% if not classes %}disabled{% endif %}>
               <i class="fas fa-paper-plane"></i> テキストを配信
             </button>
-            <a href="{{ url_for('basebuilder_module.text_sets') }}" class="btn btn-outline">キャンセル</a>
+            <a href="{{ url_for('basebuilder_admin.text_sets') }}" class="btn btn-outline">キャンセル</a>
           </div>
         </form>
       </div>

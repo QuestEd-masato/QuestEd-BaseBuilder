@@ -11,7 +11,7 @@
                     <h4 class="mb-0">メインテーマ編集</h4>
                 </div>
                 <div class="card-body">
-                    <form method="POST" action="{{ url_for('teacher.edit_main_theme', theme_id=theme.id) }}">
+                    <form method="POST" action="{{ url_for('teacher_curriculum_management.edit_main_theme', theme_id=theme.id) }}">
                         {{ form.hidden_tag() if form }}
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                         

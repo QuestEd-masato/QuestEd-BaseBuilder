@@ -47,10 +47,10 @@
   <h1 class="section-title">単語検索</h1>
   {% if current_user.role == 'teacher' %}
     <div>
-      <a href="{{ url_for('basebuilder_module.import_problems') }}" class="btn btn-outline me-2">
+      <a href="{{ url_for('basebuilder_admin.import_problems') }}" class="btn btn-outline me-2">
         <i class="fas fa-file-import"></i> CSVインポート
       </a>
-      <a href="{{ url_for('basebuilder_module.create_problem') }}" class="btn btn-primary">
+      <a href="{{ url_for('problems.create_problem') }}" class="btn btn-primary">
         <i class="fas fa-plus"></i> 新規単語
       </a>
     </div>
@@ -62,13 +62,13 @@
   <div class="card-header d-flex justify-content-between align-items-center">
     <h5 class="card-title">検索とフィルター</h5>
     {% if current_user.role == 'student' %}
-      <a href="{{ url_for('basebuilder_module.start_search_session') }}" class="btn btn-primary">
+      <a href="{{ url_for('problems.start_search_session') }}" class="btn btn-primary">
         <i class="fas fa-play"></i> この検索結果から学習
       </a>
     {% endif %}
   </div>
   <div class="card-body">
-    <form method="GET" action="{{ url_for('basebuilder_module.problems') }}" class="row g-3">
+    <form method="GET" action="{{ url_for('problems.problems') }}" class="row g-3">
       <!-- テキスト検索 -->
       <div class="col-md-4">
         <label for="search" class="form-label">キーワード検索</label>
@@ -131,7 +131,7 @@
         <button type="submit" class="btn btn-primary">
           <i class="fas fa-search"></i> 検索
         </button>
-        <a href="{{ url_for('basebuilder_module.problems') }}" class="btn btn-outline">
+        <a href="{{ url_for('problems.problems') }}" class="btn btn-outline">
           <i class="fas fa-redo"></i> リセット
         </a>
       </div>
@@ -197,16 +197,16 @@
                 {% endif %}
                 <td style="white-space: nowrap;">
                   {% if current_user.role == 'student' %}
-                    <a href="{{ url_for('basebuilder_module.solve_problem', problem_id=problem.id) }}" class="btn btn-sm btn-primary">
+                    <a href="{{ url_for('sessions.solve_problem', problem_id=problem.id) }}" class="btn btn-sm btn-primary">
                       学習する
                     </a>
                   {% else %}
                     <div style="display: inline-flex; gap: 5px;">
-                      <a href="{{ url_for('basebuilder_module.edit_problem', problem_id=problem.id) }}" class="btn btn-sm btn-primary">
+                      <a href="{{ url_for('problems.edit_problem', problem_id=problem.id) }}" class="btn btn-sm btn-primary">
                         <i class="fas fa-edit"></i>
                         <span class="d-none d-md-inline">編集</span>
                       </a>
-                      <form method="POST" action="{{ url_for('basebuilder_module.delete_problem', problem_id=problem.id) }}" class="d-inline">
+                      <form method="POST" action="{{ url_for('problems.delete_problem', problem_id=problem.id) }}" class="d-inline">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('本当にこの単語を削除しますか？')">
                           <i class="fas fa-trash"></i>

@@ -39,7 +39,7 @@
   {% if is_choice_mode %}
     <!-- 選択肢問題タイプの解答エリア -->
     <div id="choice-answer-area">
-      <form id="answer-form" method="POST" action="{{ url_for('basebuilder_module.submit_answer', problem_id=problem.id) }}">
+      <form id="answer-form" method="POST" action="{{ url_for('sessions.submit_answer', problem_id=problem.id) }}">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <input type="hidden" name="problem_id" value="{{ problem.id }}">
         <input type="hidden" name="answer_time" id="answer-time" value="0">
@@ -113,7 +113,7 @@
                   style="padding: 12px 20px; background-color: #339af0; color: white; 
                          border: none; border-radius: 8px; font-weight: 500; font-size: 1rem;
                          cursor: pointer; transition: all 0.2s;">解答する</button>
-          <a href="{{ url_for('basebuilder_module.problems') }}" 
+          <a href="{{ url_for('problems.problems') }}" 
              style="padding: 12px 20px; background-color: #f1f3f5; color: #495057; text-align: center;
                     border: none; border-radius: 8px; font-weight: 500; text-decoration: none;">
             問題一覧に戻る
@@ -124,7 +124,7 @@
   {% else %}
     <!-- 記述問題タイプの解答エリア -->
     <div id="text-answer-area">
-      <form id="answer-form" method="POST" action="{{ url_for('basebuilder_module.submit_answer', problem_id=problem.id) }}">
+      <form id="answer-form" method="POST" action="{{ url_for('sessions.submit_answer', problem_id=problem.id) }}">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <input type="hidden" name="problem_id" value="{{ problem.id }}">
         <input type="hidden" name="answer_time" id="answer-time" value="0">
@@ -150,7 +150,7 @@
                   style="padding: 12px 20px; background-color: #339af0; color: white; 
                          border: none; border-radius: 8px; font-weight: 500; font-size: 1rem;
                          cursor: pointer; transition: all 0.2s;">解答する</button>
-          <a href="{{ url_for('basebuilder_module.problems') }}" 
+          <a href="{{ url_for('problems.problems') }}" 
              style="padding: 12px 20px; background-color: #f1f3f5; color: #495057; text-align: center;
                     border: none; border-radius: 8px; font-weight: 500; text-decoration: none;">
             問題一覧に戻る
@@ -178,19 +178,19 @@
     <!-- 次のアクションボタン -->
     <div style="margin-top: 25px; display: grid; gap: 10px;">
       {% if text_context and text_context.next_problem_id %}
-        <a href="{{ url_for('basebuilder_module.solve_problem', problem_id=text_context.next_problem_id) }}" 
+        <a href="{{ url_for('sessions.solve_problem', problem_id=text_context.next_problem_id) }}" 
            style="padding: 12px 20px; background-color: #339af0; color: white; text-align: center;
                   border: none; border-radius: 8px; font-weight: 500; text-decoration: none;">
           次の問題へ進む <i class="fas fa-arrow-right"></i>
         </a>
       {% elif in_session %}
-        <a href="{{ url_for('basebuilder_module.next_problem') }}" 
+        <a href="{{ url_for('sessions.next_problem') }}" 
            style="padding: 12px 20px; background-color: #339af0; color: white; text-align: center;
                   border: none; border-radius: 8px; font-weight: 500; text-decoration: none;">
           次の問題へ進む <i class="fas fa-arrow-right"></i>
         </a>
       {% else %}
-        <a href="{{ url_for('basebuilder_module.problems') }}" 
+        <a href="{{ url_for('problems.problems') }}" 
            style="padding: 12px 20px; background-color: #339af0; color: white; text-align: center;
                   border: none; border-radius: 8px; font-weight: 500; text-decoration: none;">
           問題一覧に戻る <i class="fas fa-list"></i>

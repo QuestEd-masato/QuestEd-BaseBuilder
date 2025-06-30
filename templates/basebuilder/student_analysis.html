@@ -3,7 +3,7 @@
 {% block basebuilder_content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
   <h1 class="section-title">生徒詳細分析 - {{ student.display_name }}</h1>
-  <a href="{{ url_for('basebuilder_module.analysis') }}" class="btn btn-outline">
+  <a href="{{ url_for('analytics.analysis') }}" class="btn btn-outline">
     <i class="fas fa-arrow-left"></i> 分析一覧に戻る
   </a>
 </div>
@@ -114,7 +114,7 @@
                   <span class="text-primary">中級: {{ data.levels.get(3, 0) + data.levels.get(4, 0) }}</span> |
                   <span class="text-success">習得: {{ data.levels.get(5, 0) }}</span>
                 </small>
-                <a href="{{ url_for('basebuilder_module.view_text_set', text_id=data.text_set_id) }}" class="btn btn-sm btn-outline-primary">
+                <a href="{{ url_for('basebuilder_admin.view_text_set', text_id=data.text_set_id) }}" class="btn btn-sm btn-outline-primary">
                   詳細
                 </a>
               </div>
@@ -129,7 +129,7 @@
     <div class="card">
       <div class="card-header d-flex justify-content-between align-items-center">
         <h5 class="card-title mb-0">最近の解答履歴</h5>
-        <a href="{{ url_for('basebuilder_module.view_history') }}" class="btn btn-sm btn-outline">すべての履歴</a>
+        <a href="{{ url_for('progress.view_history') }}" class="btn btn-sm btn-outline">すべての履歴</a>
       </div>
       <div class="card-body">
         {% if answer_records and answer_records|length > 0 %}
