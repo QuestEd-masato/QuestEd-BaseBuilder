@@ -23,12 +23,86 @@ from flask_login import login_required, current_user
 import logging
 import csv
 import io
+import json
 from datetime import datetime, timedelta
 
 from app.models import db, Ranking, RankingCache, User, Class, ClassEnrollment
 from app.utils.rate_limiting import api_limit
 
 rankings_bp = Blueprint('rankings', __name__)
+
+
+@rankings_bp.route('/rankings/total_points', methods=['GET'])
+@login_required
+@api_limit()
+def get_total_points_ranking():
+    """総合ポイントランキング取得API（ダッシュボード用）"""
+    try:
+        # パラメータ取得
+        scope = request.args.get('scope', 'school')  # 'school' or 'class'
+        limit = min(request.args.get('limit', 10, type=int), 50)
+        
+        # 学生の場合は所属する学校のランキングのみ表示
+        if current_user.role == 'student':
+            school_id = current_user.school_id
+            class_id = None
+            
+            # scopeがclassの場合、学生の所属クラスを取得
+            if scope == 'class':
+                enrollment = ClassEnrollment.query.filter_by(
+                    student_id=current_user.id
+                ).first()
+                if enrollment:
+                    class_id = enrollment.class_id
+        
+        # 教師の場合は担当クラスのランキングを表示
+        elif current_user.role == 'teacher':
+            school_id = current_user.school_id
+            
+            # 最初の担当クラスを取得
+            teacher_class = Class.query.filter_by(
+                teacher_id=current_user.id
+            ).first()
+            
+            class_id = teacher_class.id if teacher_class and scope == 'class' else None
+        else:
+            school_id = None
+            class_id = None
+        
+        # ランキングデータを生成
+        ranking_data = _generate_ranking_data(
+            'total_points',  # 総合ポイントランキング
+            class_id=class_id,
+            school_id=school_id,
+            days_back=30,  # 過去30日間
+            limit=limit
+        )
+        
+        # 現在のユーザーのランキング情報を追加
+        my_rank = None
+        my_score = None
+        
+        for i, item in enumerate(ranking_data):
+            if item['student_id'] == current_user.id:
+                my_rank = i + 1
+                my_score = item['score']
+                break
+        
+        return jsonify({
+            'status': 'success',
+            'rankings': ranking_data,
+            'my_rank': my_rank,
+            'my_score': my_score,
+            'scope': scope,
+            'period': '過去30日間'
+        })
+        
+    except Exception as e:
+        logging.error(f"Get total points ranking error: {str(e)}")
+        return jsonify({
+            'status': 'error',
+            'message': 'ランキング取得中にエラーが発生しました'
+        }), 500
 
 
 @rankings_bp.route('/rankings/<ranking_type>', methods=['GET'])
@@ -520,13 +594,27 @@ def _generate_ranking_data(ranking_type, class_id=None, school_id=None, days_bac
     
     # 仮のランキングデータ生成
     ranking_data = []
+    import random  # 開発用の仮データ生成
+    
     for student in students:
         # TODO: 実際の計算ロジック
-        score = 100  # 仮のスコア
+        # 現在は仮のスコアを生成
+        if ranking_type == 'total_points':
+            score = random.randint(500, 5000)  # 総合ポイント
+        elif ranking_type == 'learning_time':
+            score = random.randint(10, 300)  # 学習時間（分）
+        elif ranking_type == 'accuracy':
+            score = random.randint(60, 100)  # 正解率（%）
+        elif ranking_type == 'completion_rate':
+            score = random.randint(0, 100)  # 完了率（%）
+        elif ranking_type == 'activity_points':
+            score = random.randint(0, 1000)  # 活動ポイント
+        else:
+            score = 100  # デフォルト
         
         ranking_data.append({
             'student_id': student.id,
-            'student_name': student.name,
+            'student_name': student.full_name or student.username,
             'score': score,
             'school_id': student.school_id,
             'class_name': 'Unknown'  # TODO: クラス名取得

@@ -158,7 +158,7 @@
                             <div class="class-actions">
                                 <a href="{{ url_for('teacher_class_management.view_class', class_id=class_data.class.id) }}" class="btn btn-sm btn-primary">クラス詳細</a>    
                                 <a href="{{ url_for('teacher_class_management.view_class', class_id=class_data.class.id) }}#milestones" class="btn btn-sm btn-info">マイルストーン</a>
-                                <a href="{{ url_for('teacher_curriculum_management.view_curriculums') }}" class="btn btn-sm btn-info">カリキュラム管理</a>
+                                <a href="{{ url_for('teacher_curriculum_management.view_curriculums', class_id=class_data.class.id) }}" class="btn btn-sm btn-info">カリキュラム管理</a>
                             </div>
                         </div>
                     {% endfor %}
@@ -192,24 +192,24 @@
     
            <div class="stats-overview d-flex justify-content-around mb-3">
                <div class="stat-card text-center">
-                   <div class="stat-value">{{ problem_count }}</div>
+                   <div class="stat-value">{{ problem_count|default(0) }}</div>
                    <div class="stat-label">問題数</div>
                </div>
                <div class="stat-card text-center">
-                   <div class="stat-value">{{ category_count }}</div>
+                   <div class="stat-value">{{ category_count|default(0) }}</div>
                    <div class="stat-label">カテゴリ数</div>
                </div>
            </div>
     
            <div class="quick-actions">
                <div class="d-grid gap-2">
-                  <a href="{{ url_for('problems.create_problem') }}" class="btn btn-outline">
+                  <a href="{{ url_for('basebuilder_module.create_problem') }}" class="btn btn-outline">
                      <i class="fas fa-plus"></i> 新規問題作成
                   </a>
-                  <a href="{{ url_for('admin.theme_relations') }}" class="btn btn-outline">
+                  <a href="{{ url_for('basebuilder_module.theme_relations') }}" class="btn btn-outline">
                      <i class="fas fa-link"></i> テーマと問題の関連付け
                   </a>
-                  <a href="{{ url_for('analytics.analysis') }}" class="btn btn-outline">
+                  <a href="{{ url_for('basebuilder_module.analysis') }}" class="btn btn-outline">
                      <i class="fas fa-chart-bar"></i> 理解度分析
                   </a>
                </div>
