@@ -111,7 +111,7 @@
                                 {% if current_user.role == 'teacher' and current_user.id == class_obj.teacher_id %}
                                 <td>
                                     <!-- PDF生成ボタン -->
-                                    <form method="POST" action="{{ url_for('teacher.generate_student_report', class_id=class_obj.id, student_id=info.student.id) }}" style="display: inline;">
+                                    <form method="POST" action="{{ url_for('teacher_student_evaluation.generate_student_report', class_id=class_obj.id, student_id=info.student.id) }}" style="display: inline;">
                                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                         <button type="submit" class="btn btn-sm btn-info" title="活動報告PDFを生成">
                                             <i class="fas fa-file-pdf"></i> <span class="d-none d-md-inline">PDF</span>

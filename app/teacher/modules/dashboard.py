@@ -194,6 +194,6 @@ def chat_page():
         user_id=current_user.id
     ).order_by(ChatHistory.created_at.desc()).limit(10).all()
     
-    return render_template('teacher/chat.html', 
+    return render_template('chat.html', 
                          classes=classes,
                          recent_chats=recent_chats)

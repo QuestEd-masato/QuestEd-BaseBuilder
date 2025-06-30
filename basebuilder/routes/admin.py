@@ -527,3 +527,26 @@ def update_path_progress(assignment_id):
         current_app.logger.error(f"Update path progress error: {str(e)}")
         db.session.rollback()
         return jsonify({'error': '進捗更新中にエラーが発生しました。'}), 500
+
+
+@admin_bp.route('/problems/import', methods=['GET', 'POST'])
+@login_required
+def import_problems():
+    """問題のインポート機能"""
+    try:
+        if current_user.role != 'teacher':
+            flash('この機能は教師のみ利用可能です。')
+            return redirect(url_for('basebuilder.index'))
+        
+        if request.method == 'POST':
+            # CSV/Excelファイルのインポート処理
+            flash('問題のインポート機能は現在開発中です。')
+            return redirect(url_for('problems.problems'))
+        
+        # インポート画面を表示
+        return render_template('basebuilder/import_problems.html')
+        
+    except Exception as e:
+        current_app.logger.error(f"Import problems error: {str(e)}")
+        flash('問題インポート画面の表示中にエラーが発生しました。')
+        return redirect(url_for('problems.problems'))

@@ -298,7 +298,7 @@ class AIRecommendationService:
             推薦結果
         """
         # 生徒の学習履歴から適切な難易度を判定
-        recent_answers = AnswerRecord.query.filter_by(user_id=student_id)\
+        recent_answers = AnswerRecord.query.filter_by(student_id=student_id)\
             .order_by(AnswerRecord.answered_at.desc())\
             .limit(10).all()
         
@@ -431,7 +431,7 @@ class AIRecommendationService:
         }
         
         # 最近のパフォーマンス
-        recent_answers = AnswerRecord.query.filter_by(user_id=student_id)\
+        recent_answers = AnswerRecord.query.filter_by(student_id=student_id)\
             .order_by(AnswerRecord.answered_at.desc())\
             .limit(20).all()
         

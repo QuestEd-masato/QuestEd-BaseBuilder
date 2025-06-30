@@ -49,7 +49,7 @@ def problems():
             query = query.filter_by(text_set_id=text_id)
         
         if difficulty:
-            query = query.filter_by(difficulty_level=difficulty)
+            query = query.filter_by(difficulty=difficulty)
         
         # ページネーション
         problems_pagination = query.order_by(
@@ -160,7 +160,7 @@ def create_problem():
                 explanation=explanation,
                 category_id=category_id,
                 text_set_id=text_set_id if text_set_id else None,
-                difficulty_level=difficulty_level or 1,
+                difficulty=difficulty_level or 1,
                 created_by=current_user.id,
                 created_at=datetime.utcnow(),
                 is_active=True
@@ -253,7 +253,7 @@ def edit_problem(problem_id):
             problem.explanation = explanation
             problem.category_id = category_id
             problem.text_set_id = text_set_id if text_set_id else None
-            problem.difficulty_level = difficulty_level or 1
+            problem.difficulty = difficulty_level or 1
             problem.is_active = is_active
             problem.updated_at = datetime.utcnow()
             
@@ -327,7 +327,7 @@ def get_problem_details(problem_id):
         problem_data = {
             'id': problem.id,
             'content': problem.content,
-            'difficulty_level': problem.difficulty_level,
+            'difficulty': problem.difficulty,
             'explanation': problem.explanation,
             'category': problem.category.name if problem.category else None,
             'text_set': problem.text_set.title if problem.text_set else None

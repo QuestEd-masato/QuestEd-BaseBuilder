@@ -89,7 +89,7 @@ def start_category_session(category_id):
         category_problems = BasicKnowledgeItem.query.filter_by(
             category_id=category_id,
             is_active=True
-        ).order_by(BasicKnowledgeItem.difficulty_level).all()
+        ).order_by(BasicKnowledgeItem.difficulty).all()
         
         if not category_problems:
             flash(f'カテゴリ「{category.name}」には現在利用可能な問題がありません。')
@@ -136,7 +136,7 @@ def start_text_session(text_id):
         text_problems = BasicKnowledgeItem.query.filter_by(
             text_set_id=text_id,
             is_active=True
-        ).order_by(BasicKnowledgeItem.difficulty_level).all()
+        ).order_by(BasicKnowledgeItem.difficulty).all()
         
         if not text_problems:
             flash(f'テキスト「{text_set.title}」には現在利用可能な問題がありません。')
@@ -297,7 +297,7 @@ def _get_adaptive_problems(student_id, limit=20):
             problems = BasicKnowledgeItem.query.filter(
                 BasicKnowledgeItem.category_id.in_(weak_categories),
                 BasicKnowledgeItem.is_active == True
-            ).order_by(BasicKnowledgeItem.difficulty_level).limit(limit).all()
+            ).order_by(BasicKnowledgeItem.difficulty).limit(limit).all()
         else:
             # 弱点がない場合は全体からランダム選択
             problems = BasicKnowledgeItem.query.filter_by(
