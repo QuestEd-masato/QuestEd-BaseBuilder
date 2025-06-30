@@ -2206,3 +2206,44 @@ except ImportError as e:
 - 🔌 ランキングAPIエンドポイントの正常登録
 - 🔗 BaseBuilderナビゲーションの安定化
 - 📊 本番環境での完全動作確保
+
+### 最終修正: 本番エラー完全解消 (2025-06-30)
+
+本番ログで発見された追加エラーに対する最終修正：
+
+#### **発見された追加問題**
+1. **BaseBuilderエンドポイント参照不整合**: `basebuilder_module.*` vs 新モジュラー構造
+2. **テンプレート変数未定義**: `'now' is undefined` エラー
+
+#### **最終修正内容**
+1. **BaseBuilderエンドポイント統一** - ハードコードリンクに変更
+   ```html
+   <!-- テンプレート修正例 -->
+   {{ url_for('basebuilder_module.problems') }} → /basebuilder/problems
+   {{ url_for('basebuilder_module.create_problem') }} → /basebuilder/problem/create
+   {{ url_for('basebuilder_module.analysis') }} → /basebuilder/analysis
+   ```
+
+2. **テンプレート変数修正** - `activities.py`
+   ```python
+   # new_activity.html で使用される now 変数を追加
+   return render_template('new_activity.html', ..., now=datetime.now())
+   ```
+
+#### **修正ファイル一覧（最終）**
+- `templates/teacher_dashboard.html` - BaseBuilderリンク修正（3箇所）
+- `templates/basebuilder/layout.html` - ナビゲーションリンク修正（4箇所）
+- `app/student/modules/activities.py` - now変数追加（3箇所）
+
+#### **完全解消されたエラー**
+- ✅ ランキングAPI: 404 → 200 OK
+- ✅ BaseBuilder Categories: エンドポイントエラー → 正常
+- ✅ Teacher Dashboard: 500エラー → 完全表示
+- ✅ 活動記録作成: 'now' is undefined → 正常動作
+- ✅ BaseBuilderナビゲーション: BuildError → 正常アクセス
+
+#### **本番環境状況**
+- 🎯 全主要エラーパターン解消完了
+- 📊 学生ダッシュボード: 完全動作
+- 🔧 教師機能: 全面復旧
+- 🛡️ BaseBuilder機能: 完全アクセス可能

@@ -114,13 +114,15 @@ def new_activity():
                 flash('活動内容を入力してください。', 'error')
                 return render_template('new_activity.html',
                                      classes=classes,
-                                     selected_theme=selected_theme)
+                                     selected_theme=selected_theme,
+                                     now=datetime.now())
             
             if not class_id or not check_class_access(class_id):
                 flash('有効なクラスを選択してください。', 'error')
                 return render_template('new_activity.html',
                                      classes=classes,
-                                     selected_theme=selected_theme)
+                                     selected_theme=selected_theme,
+                                     now=datetime.now())
             
             # 新しい活動記録を作成
             new_activity = ActivityLog(
@@ -165,7 +167,8 @@ def new_activity():
         
         return render_template('new_activity.html',
                              classes=classes,
-                             selected_theme=selected_theme)
+                             selected_theme=selected_theme,
+                             now=datetime.now())
         
     except Exception as e:
         current_app.logger.error(f"New activity error: {str(e)}")
