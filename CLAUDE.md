@@ -1885,3 +1885,64 @@ for class_obj in classes:
 
 ### 緊急対応完了時刻
 2025-06-30 Phase 1 完了 - 詳細診断機能実装済み
+
+---
+
+### Phase 2: 最小動作バージョン作成 (2025-06-30)
+
+#### 🎯 根本原因確定
+Phase 1の診断ログにより具体的な原因が判明：
+```
+ERROR: 'total_words_attempted' is undefined
+Location: templates/student_dashboard.html line 249
+Type: jinja2.exceptions.UndefinedError
+```
+
+#### 📋 完全な変数監査結果
+
+##### **テンプレートで要求される変数 (21個)**
+1. **BaseBuilder統計** (6個): total_words_attempted, total_mastered_words, weekly_words_learned, mastery_rate, weekly_target, total_basic_words
+2. **自由進度学習** (5個): total_units, completed_units, in_progress_units, completion_rate, total_study_time  
+3. **アンケート** (2個): interest_survey, personality_survey
+4. **クラス・活動** (8個): all_class_themes, class_info, class_todos, class_goals, pending_todos_count, active_goals_count, recent_activities, weekly_activities_count, monthly_chat_count, class_top_learners, weekly_top_learners
+
+##### **dashboard()関数で提供済み変数 (5個)**
+- student_info, class_details, weekly_stats, progress_stats, learning_progress
+
+#### ✅ 実装完了: 最小動作バージョン
+
+##### **修正内容**
+```python
+# Phase 2: 不足している必須変数を追加 (21個)
+basebuilder_stats = {
+    'total_words_attempted': 0,      # エラー発生源
+    'total_mastered_words': 0,       # 定着度5の単語数  
+    'weekly_words_learned': 0,       # 今週習得単語数
+    'mastery_rate': 0,               # 達成率％
+    'weekly_target': 20,             # 週間目標（設定値）
+    'total_basic_words': 0           # 総基礎単語数
+}
+
+# 自由進度学習統計・アンケート・活動情報も同様に仮値で追加
+return render_template('student_dashboard.html',
+    # 既存変数
+    student_info=student_info, class_details=class_details, ...,
+    # Phase 2: 新規追加変数（21個すべて）
+    **basebuilder_stats, **unit_stats, **survey_info, **activity_info)
+```
+
+#### 📊 期待される効果
+
+##### **即時効果**
+- ✅ `UndefinedError` の解消
+- ✅ メインダッシュボードの表示成功
+- ✅ ミニマル版からの脱却
+
+##### **段階的改善の基盤**
+- 🔧 各変数の実データ取得実装準備完了
+- 📈 機能別の段階的復旧が可能
+- 🛡️ フォールバック機構の維持
+
+### Phase 2 実装ファイル
+- `app/student/modules/dashboard.py` - 必須変数21個の仮値追加
+- `CLAUDE.md` - Phase 2修正ログ追加

@@ -140,12 +140,60 @@ def dashboard():
             current_app.logger.error(f"[DASHBOARD] Progress stats error: {str(e)}")
             progress_stats = {'todo_completion_rate': 0, 'goal_completion_rate': 0}
         
+        # Phase 2: 不足している必須変数を追加
+        # BaseBuilder統計変数 (最優先修正)
+        basebuilder_stats = {
+            'total_words_attempted': 0,      # エラー発生源
+            'total_mastered_words': 0,       # 定着度5の単語数  
+            'weekly_words_learned': 0,       # 今週習得単語数
+            'mastery_rate': 0,               # 達成率％
+            'weekly_target': 20,             # 週間目標（設定値）
+            'total_basic_words': 0           # 総基礎単語数
+        }
+        
+        # 自由進度学習統計
+        unit_stats = {
+            'total_units': 0,                # 総学習単元数
+            'completed_units': 0,            # 完了単元数
+            'in_progress_units': 0,          # 進行中単元数
+            'completion_rate': 0,            # 完了率％
+            'total_study_time': 0            # 総学習時間（分）
+        }
+        
+        # アンケート情報（後でget_student_survey_status()から取得）
+        survey_info = {
+            'interest_survey': None,         # 興味関心アンケート
+            'personality_survey': None       # 性格診断アンケート
+        }
+        
+        # クラス・活動情報
+        activity_info = {
+            'all_class_themes': [],          # 全クラステーマ
+            'class_info': {},                # クラス情報
+            'class_todos': [],               # クラスTODO
+            'class_goals': [],               # クラス目標
+            'pending_todos_count': 0,        # 未完了TODO数
+            'active_goals_count': 0,         # アクティブ目標数
+            'recent_activities': [],         # 最近の活動
+            'weekly_activities_count': 0,    # 週間活動数
+            'monthly_chat_count': 0,         # 月間チャット数
+            'class_top_learners': [],        # クラスランキング
+            'weekly_top_learners': []        # 週間ランキング
+        }
+        
+        current_app.logger.info(f"[DASHBOARD] Phase 2: Adding missing template variables for student {current_user.id}")
+        
         return render_template('student_dashboard.html',
                              student_info=student_info,
                              class_details=class_details,
                              weekly_stats=weekly_stats,
                              progress_stats=progress_stats,
-                             learning_progress=learning_progress)
+                             learning_progress=learning_progress,
+                             # Phase 2: 新規追加変数
+                             **basebuilder_stats,
+                             **unit_stats,
+                             **survey_info,
+                             **activity_info)
         
     except ImportError as e:
         current_app.logger.error(f"[DASHBOARD] Import error for student {current_user.id}: {str(e)}")
