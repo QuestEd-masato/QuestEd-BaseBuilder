@@ -573,16 +573,16 @@
         
                     {% if current_user.role == 'student' %}
                         <li><a href="/basebuilder/problems"><i class="fas fa-book"></i> 問題を検索</a></li>
-                        <li><a href="{{ url_for('basebuilder_module.my_texts') }}"><i class="fas fa-file-alt"></i> テキスト</a></li>
-                        <li><a href="{{ url_for('basebuilder_module.view_history') }}"><i class="fas fa-history"></i> 学習履歴</a></li>
-                        <li><a href="{{ url_for('basebuilder_admin.learning_paths') }}"><i class="fas fa-road"></i> 学習パス</a></li>
+                        <li><a href="/basebuilder/my_texts"><i class="fas fa-file-alt"></i> テキスト</a></li>
+                        <li><a href="/basebuilder/history"><i class="fas fa-history"></i> 学習履歴</a></li>
+                        <li><a href="/basebuilder/learning_paths"><i class="fas fa-road"></i> 学習パス</a></li>
                     {% elif current_user.role == 'teacher' %}
                         <li><a href="/basebuilder/categories"><i class="fas fa-folder"></i> カテゴリ管理</a></li>
                         <li><a href="/basebuilder/problems"><i class="fas fa-tasks"></i> 問題管理</a></li>
-                        <li><a href="{{ url_for('basebuilder_module.text_sets') }}"><i class="fas fa-file-alt"></i> テキスト管理</a></li>
-                        <li><a href="{{ url_for('basebuilder_admin.learning_paths') }}"><i class="fas fa-road"></i> 学習パス</a></li>
+                        <li><a href="/basebuilder/text_sets"><i class="fas fa-file-alt"></i> テキスト管理</a></li>
+                        <li><a href="/basebuilder/learning_paths"><i class="fas fa-road"></i> 学習パス</a></li>
                         <li><a href="/basebuilder/theme_relations"><i class="fas fa-link"></i> テーマ関連付け</a></li>
-                        <li><a href="{{ url_for('basebuilder_module.analysis') }}"><i class="fas fa-chart-bar"></i> 理解度分析</a></li>
+                        <li><a href="/basebuilder/analysis"><i class="fas fa-chart-bar"></i> 理解度分析</a></li>
                     {% endif %}
         
                     <li><a href="{{ url_for('index') }}"><i class="fas fa-arrow-left"></i> QuestEdに戻る</a></li>

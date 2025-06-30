@@ -7,7 +7,7 @@
     <h1>{{ class_obj.name }} - カリキュラム一覧</h1>
     
     <div class="d-flex justify-content-between mb-4">
-        <a href="{{ url_for('teacher.view_class', class_id=class_obj.id) }}" class="btn btn-secondary">
+        <a href="{{ url_for('teacher_class_management.view_class', class_id=class_obj.id) }}" class="btn btn-secondary">
             <i class="fas fa-arrow-left"></i> クラスに戻る
         </a>
         <a href="{{ url_for('teacher.create_curriculum_form', class_id=class_obj.id) }}" class="btn btn-primary">

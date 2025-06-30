@@ -7,7 +7,7 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2>{{ class_obj.name }} - グループ一覧</h2>
         <div>
-            <a href="{{ url_for('teacher.view_class', class_id=class_obj.id) }}" class="btn btn-outline-secondary">クラスに戻る</a>
+            <a href="{{ url_for('teacher_class_management.view_class', class_id=class_obj.id) }}" class="btn btn-outline-secondary">クラスに戻る</a>
             <a href="{{ url_for('teacher.create_group', class_id=class_obj.id) }}" class="btn btn-primary">グループを作成</a>
         </div>
     </div>

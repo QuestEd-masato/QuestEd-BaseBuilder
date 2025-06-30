@@ -8,6 +8,7 @@ from .modules.dashboard import dashboard_bp
 from .modules.activities import activities_bp
 from .modules.surveys import surveys_bp
 from .modules.goals_todos import goals_todos_bp
+from .modules.themes import themes_bp
 
 # 共通機能をインポート
 from .utils import student_required
@@ -23,6 +24,7 @@ def register_student_blueprints(app):
     app.register_blueprint(activities_bp, url_prefix='/student')
     app.register_blueprint(surveys_bp, url_prefix='/student')
     app.register_blueprint(goals_todos_bp, url_prefix='/student')
+    app.register_blueprint(themes_bp, url_prefix='/student')
 
 # 後方互換性のため、主要な関数をこのモジュールレベルで公開
 from .modules.dashboard import dashboard
@@ -56,12 +58,12 @@ IMPLEMENTED_MODULES = [
     'dashboard',     # ダッシュボード機能
     'activities',    # 活動記録
     'surveys',       # アンケート機能
-    'goals_todos'    # 目標・TODO管理
+    'goals_todos',   # 目標・TODO管理
+    'themes'         # テーマ選択
 ]
 
 # 未実装機能モジュールリスト（今後実装予定）
 PENDING_MODULES = [
-    'themes',           # テーマ選択
     'learning_progress', # 学習進捗
     'unit_completion'   # 単元完了申請
 ]

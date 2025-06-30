@@ -7,7 +7,7 @@
   <h1>大テーマ管理 - {{ class_obj.name }}</h1>
   
   <div class="mb-4">
-    <a href="{{ url_for('teacher.view_class', class_id=class_obj.id) }}" class="btn btn-secondary">
+    <a href="{{ url_for('teacher_class_management.view_class', class_id=class_obj.id) }}" class="btn btn-secondary">
       <i class="fas fa-arrow-left"></i> クラス詳細に戻る
     </a>
     <a href="{{ url_for('teacher.create_main_theme', class_id=class_obj.id) }}" class="btn btn-primary">
