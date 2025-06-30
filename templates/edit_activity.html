@@ -13,7 +13,7 @@
     </div>
     {% endif %}
     
-    <form method="POST" action="{{ url_for('student.edit_activity', log_id=log.id) }}" enctype="multipart/form-data" id="activity-form">
+    <form method="POST" action="{{ url_for('student_activities.edit_activity', activity_id=log.id) }}" enctype="multipart/form-data" id="activity-form">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         
         <div class="form-row">

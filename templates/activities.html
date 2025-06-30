@@ -33,7 +33,7 @@
             {% endif %}
         </div>
         {% if theme or class_id == 0 %}
-            <a href="{{ url_for('student.new_activity', class_id=class_id) }}" class="btn btn-primary">新しい学習を記録</a>
+            <a href="{{ url_for('student_activities.new_activity', class_id=class_id) }}" class="btn btn-primary">新しい学習を記録</a>
         {% endif %}
     </div>
     
@@ -99,10 +99,10 @@
                 {% endif %}
                 
                 <div class="record-actions">
-                    <a href="{{ url_for('student.edit_activity', log_id=activity.id) }}" class="btn btn-sm btn-primary">
+                    <a href="{{ url_for('student_activities.edit_activity', activity_id=activity.id) }}" class="btn btn-sm btn-primary">
                         <i class="fas fa-edit"></i> 編集
                     </a>
-                    <a href="{{ url_for('student.delete_activity', log_id=activity.id) }}" class="btn btn-sm btn-danger" 
+                    <a href="{{ url_for('student_activities.delete_activity', activity_id=activity.id) }}" class="btn btn-sm btn-danger" 
                        onclick="return confirm('この学習記録を削除してもよろしいですか？この操作は取り消せません。');">
                         <i class="fas fa-trash"></i> 削除
                     </a>
@@ -139,7 +139,7 @@
             </div>
             
             <div class="card-actions">
-                <a href="{{ url_for('student.edit_activity', log_id=activity.id) }}" class="btn btn-sm btn-primary">
+                <a href="{{ url_for('student_activities.edit_activity', activity_id=activity.id) }}" class="btn btn-sm btn-primary">
                     <i class="fas fa-edit"></i> 編集
                 </a>
             </div>
@@ -150,10 +150,10 @@
     <div class="export-options">
         <h4>学習記録をエクスポート</h4>
         <div class="export-buttons">
-            <a href="{{ url_for('student.export_activities', format='pdf', class_id=class_id) }}" class="btn btn-secondary">
+            <a href="{{ url_for('student_activities.export_activities', format='pdf', class_id=class_id) }}" class="btn btn-secondary">
                 <i class="fas fa-file-pdf"></i> PDFでダウンロード
             </a>
-            <a href="{{ url_for('student.export_activities', format='csv', class_id=class_id) }}" class="btn btn-secondary">
+            <a href="{{ url_for('student_activities.export_activities', format='csv', class_id=class_id) }}" class="btn btn-secondary">
                 <i class="fas fa-file-csv"></i> CSVでダウンロード
             </a>
         </div>
@@ -162,7 +162,7 @@
     {% else %}
     <div class="no-records">
         <p>まだ学習記録がありません。「新しい学習を記録」ボタンから記録を始めましょう。</p>
-        <a href="{{ url_for('student.new_activity') }}" class="btn btn-primary">学習記録を作成</a>
+        <a href="{{ url_for('student_activities.new_activity') }}" class="btn btn-primary">学習記録を作成</a>
     </div>
     {% endif %}
 </div>

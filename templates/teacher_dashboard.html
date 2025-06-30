@@ -247,7 +247,7 @@
                                 <p class="activity-excerpt">{{ activity_data.activity.content|truncate(100) }}</p>
                             </div>
                             <div class="activity-actions">
-                                <a href="{{ url_for('student.view_activity', activity_id=activity_data.activity.id) }}" class="btn btn-sm btn-primary">フィードバック</a>
+                                <a href="{{ url_for('student_activities.view_activity', activity_id=activity_data.activity.id) }}" class="btn btn-sm btn-primary">フィードバック</a>
                             </div>
                         </div>
                     {% endfor %}

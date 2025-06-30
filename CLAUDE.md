@@ -1977,3 +1977,53 @@ return render_template('student_dashboard.html',
 - 📊 本番ログによる問題発見パターン確立
 - 🔧 エラー→修正→デプロイ→次エラー発見の効率的サイクル
 - 🎯 Blueprint構造不整合の体系的解決
+
+### Phase 2.8: 包括的エンドポイント修正 (2025-06-30)
+
+全テンプレートファイルの古い`student.*`エンドポイント参照を新しいBlueprint名に一括修正：
+
+#### **修正パターン**
+- `student.new_activity` → `student_activities.new_activity`
+- `student.edit_activity` → `student_activities.edit_activity` 
+- `student.delete_activity` → `student_activities.delete_activity`
+- `student.export_activities` → `student_activities.export_activities`
+- `student.view_activity` → `student_activities.view_activity`
+- `student.new_goal` → `student_goals_todos.new_goal`
+- `student.edit_goal` → `student_goals_todos.edit_goal`
+- `student.delete_goal` → `student_goals_todos.delete_goal`
+- `student.new_todo` → `student_goals_todos.new_todo`
+- `student.edit_todo` → `student_goals_todos.edit_todo`
+- `student.delete_todo` → `student_goals_todos.delete_todo`
+- `student.toggle_todo` → `student_goals_todos.toggle_todo`
+- `student.interest_survey` → `student_surveys.interest_survey`
+- `student.personality_survey` → `student_surveys.personality_survey`
+- `student.interest_survey_edit` → `student_surveys.interest_survey_edit`
+- `student.personality_survey_edit` → `student_surveys.personality_survey_edit`
+
+#### **修正ファイル (19ファイル)**
+- `templates/activities.html` - 活動記録関連エンドポイント修正
+- `templates/goals.html` - 目標関連エンドポイント修正
+- `templates/todos.html` - TODO関連エンドポイント修正
+- `templates/surveys.html` - アンケート関連エンドポイント修正
+- `templates/interest_survey_edit.html` - 興味調査修正
+- `templates/teacher_dashboard.html` - 教師画面の学生活動参照修正
+- `templates/student_view_milestone.html` - 未実装機能を適切にリダイレクト
+- `templates/select_class_for_themes.html` - クラス選択修正
+- `templates/select_class_for_chat.html` - チャット機能修正
+- `templates/create_personal_theme.html` - テーマ作成修正
+- `templates/view_activity.html` - 活動詳細表示修正
+- `templates/personality_survey_edit.html` - 性格診断修正
+- `templates/learning_unit.html` - 学習単元修正
+- `templates/create_activity.html` - 活動作成修正
+- `templates/personality_survey.html` - 性格診断修正
+- `templates/edit_activity.html` - 活動編集修正
+- `templates/interest_survey.html` - 興味調査修正
+- `templates/new_activity.html` - 新規活動修正
+- `templates/generate_theme.html` - テーマ生成修正
+- `templates/curriculum_units_view.html` - カリキュラム単元修正
+
+#### **効果**
+- ✅ Blueprint命名規則の完全統一
+- ✅ 全templateファイルのエンドポイント整合性確保
+- ✅ 存在しない機能の適切なリダイレクト対応
+- 🎯 今後の同様エラーの予防措置完了

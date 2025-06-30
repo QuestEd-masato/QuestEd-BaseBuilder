@@ -7,7 +7,7 @@
     <h2>性格診断アンケート</h2>
     <p class="survey-intro">あなたの学習スタイルや取り組み方の特徴を知るために、以下の質問に答えてください。各質問に対して、自分に最も当てはまる選択肢を選んでください。</p>
     
-    <form method="POST" action="{{ url_for('student.personality_survey') }}">
+    <form method="POST" action="{{ url_for('student_surveys.personality_survey') }}">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         
         <div class="survey-section">

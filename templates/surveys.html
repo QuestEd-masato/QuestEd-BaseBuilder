@@ -28,7 +28,7 @@
                 {% if interest_survey %}
                 <a href="{{ url_for('student_surveys.interest_survey') }}" class="btn">回答を編集する</a>
                 {% else %}
-                <a href="{{ url_for('student.interest_survey') }}" class="btn btn-primary">回答する</a>
+                <a href="{{ url_for('student_surveys.interest_survey') }}" class="btn btn-primary">回答する</a>
                 {% endif %}
             </div>
             
@@ -57,9 +57,9 @@
             
             <div class="survey-actions">
                 {% if personality_survey %}
-                <a href="{{ url_for('student.personality_survey_edit') }}" class="btn">回答を編集する</a>
+                <a href="{{ url_for('student_surveys.personality_survey_edit') }}" class="btn">回答を編集する</a>
                 {% else %}
-                <a href="{{ url_for('student.personality_survey') }}" class="btn btn-primary">回答する</a>
+                <a href="{{ url_for('student_surveys.personality_survey') }}" class="btn btn-primary">回答する</a>
                 {% endif %}
             </div>
             

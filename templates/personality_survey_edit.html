@@ -7,7 +7,7 @@
     <h1>思考特性アンケート編集</h1>
     <p class="survey-description">あなたの回答を更新してください。</p>
     
-    <form method="post" action="{{ url_for('student.personality_survey_edit') }}">
+    <form method="post" action="{{ url_for('student_surveys.personality_survey_edit') }}">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         
         <!-- 質問1 -->
