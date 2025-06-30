@@ -5,7 +5,7 @@
             <i class="fas fa-trophy"></i>
             {% if current_user.role == 'student' %}学習ランキング{% else %}クラスランキング{% endif %}
         </h3>
-        <a href="{% if current_user.role == 'student' %}{{ url_for('student.ranking') }}{% else %}{{ url_for('teacher.ranking_analysis') }}{% endif %}" 
+        <a href="{% if current_user.role == 'student' %}{{ url_for('student_dashboard.dashboard') }}{% else %}{{ url_for('teacher_analytics.ranking_analysis') }}{% endif %}" 
            class="widget-link">
             詳細を見る <i class="fas fa-arrow-right"></i>
         </a>

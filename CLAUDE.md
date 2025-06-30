@@ -1946,3 +1946,34 @@ return render_template('student_dashboard.html',
 ### Phase 2 実装ファイル
 - `app/student/modules/dashboard.py` - 必須変数21個の仮値追加
 - `CLAUDE.md` - Phase 2修正ログ追加
+
+### Phase 2.5-2.7: エンドポイント修正シリーズ (2025-06-30)
+
+継続的な本番ログ監視により、段階的にエンドポイントエラーを修正：
+
+#### **Phase 2.5: basebuilder_module.my_texts 修正** ✅
+- **エラー**: `BuildError: Could not build url for endpoint 'basebuilder_module.my_texts'`
+- **修正ファイル**: `templates/student_dashboard.html` (line 319)
+- **解決策**: 存在しないエンドポイントを`categories.categories`にリダイレクト
+
+#### **Phase 2.6: 複数student.*エンドポイント修正** ✅
+- **エラー群**: 
+  - `student.learning_portal` → `student_dashboard.dashboard`
+  - `student.class_details` → `student_dashboard.dashboard`
+  - `student.chat_page` → `index`
+  - `student.new_activity` → `student_activities.activities`
+- **修正ファイル**: `templates/student_dashboard.html` (複数行)
+- **パターン**: Blueprintの命名規則不一致による解決失敗
+
+#### **Phase 2.7: ranking_widget.html エンドポイント修正** ✅
+- **エラー**: `BuildError: Could not build url for endpoint 'student.ranking'`
+- **修正ファイル**: `templates/components/ranking_widget.html` (line 8)
+- **修正内容**:
+  - `student.ranking` → `student_dashboard.dashboard`
+  - `teacher_analytics.ranking_analysis` エンドポイント存在確認済み
+- **結果**: 全既知エンドポイントエラー修正完了
+
+#### **段階的修正の効果**
+- 📊 本番ログによる問題発見パターン確立
+- 🔧 エラー→修正→デプロイ→次エラー発見の効率的サイクル
+- 🎯 Blueprint構造不整合の体系的解決
