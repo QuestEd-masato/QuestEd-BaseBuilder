@@ -28,9 +28,22 @@ def dashboard():
         enrollments = ClassEnrollment.query.filter_by(student_id=current_user.id).all()
         classes = [enrollment.class_obj for enrollment in enrollments]
         
+        # ClassEnrollmentが空の場合、User.class_idから取得を試行
+        if not classes and current_user.class_id:
+            direct_class = Class.query.get(current_user.class_id)
+            if direct_class:
+                classes = [direct_class]
+                current_app.logger.info(f"[DASHBOARD] Student {current_user.id}: Using direct class_id {current_user.class_id}")
+        
+        # デバッグ情報をログに記録
+        current_app.logger.info(f"[DASHBOARD] Student {current_user.id} ({current_user.username}): "
+                               f"Found {len(enrollments)} enrollments, {len(classes)} classes, class_id={current_user.class_id}")
+        
         if not classes:
             flash('履修しているクラスがありません。先生に連絡して、クラスに登録してもらってください。')
-            return render_template('student_dashboard_no_classes.html')
+            return render_template('student/dashboard_minimal.html', 
+                                 student_info={'class_count': 0},
+                                 classes=[])
         
         # 学生の基本情報
         student_info = {

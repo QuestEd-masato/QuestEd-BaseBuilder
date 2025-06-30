@@ -25,6 +25,10 @@ def dashboard():
     # 教師が担当するクラスを取得
     classes = Class.query.filter_by(teacher_id=current_user.id).all()
     
+    # デバッグ情報をログに記録
+    current_app.logger.info(f"[DASHBOARD] Teacher {current_user.id} ({current_user.username}): "
+                           f"Found {len(classes)} classes")
+    
     # 統合統計情報の初期化
     integrated_stats = {
         'total_curriculums': 0,
