@@ -53,10 +53,10 @@
                 <a href="{{ url_for('teacher_class_management.add_students', class_id=class_obj.id) }}" class="btn btn-success">
                     <i class="fas fa-user-plus"></i> 学生を追加
                 </a>
-                <a href="{{ url_for('teacher.import_students', class_id=class_obj.id) }}" class="btn btn-info">
+                <a href="{{ url_for('teacher_class_management.import_students', class_id=class_obj.id) }}" class="btn btn-info">
                     <i class="fas fa-file-import"></i> 一括インポート
                 </a>
-                <a href="{{ url_for('teacher.delete_class', class_id=class_obj.id) }}" class="btn btn-danger" 
+                <a href="{{ url_for('teacher_class_management.delete_class', class_id=class_obj.id) }}" class="btn btn-danger" 
                    onclick="return confirm('本当にこのクラスを削除しますか？');">
                     <i class="fas fa-trash"></i> クラスを削除
                 </a>
@@ -208,7 +208,7 @@
     {% endif %}
     
     <div class="mt-4">
-        <a href="{{ url_for('teacher_class_management.class_list') }}" class="btn btn-secondary">
+        <a href="{{ url_for('teacher_class_management.classes') }}" class="btn btn-secondary">
             <i class="fas fa-arrow-left"></i> クラス一覧に戻る
         </a>
     </div>

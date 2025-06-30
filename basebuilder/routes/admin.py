@@ -38,7 +38,7 @@ def theme_relations():
     try:
         if current_user.role != 'teacher':
             flash('この機能は教師のみ利用可能です。')
-            return redirect(url_for('basebuilder_module.index'))
+            return redirect(url_for('basebuilder.index'))
         
         current_app.logger.info(f"Theme relations accessed by teacher {current_user.id}")
         
@@ -163,7 +163,7 @@ def delete_problem(problem_id):
     try:
         if current_user.role != 'teacher':
             flash('この機能は教師のみ利用可能です。')
-            return redirect(url_for('basebuilder_module.index'))
+            return redirect(url_for('basebuilder.index'))
         
         # 問題を取得
         problem = BasicKnowledgeItem.query.get_or_404(problem_id)
@@ -202,7 +202,7 @@ def learning_paths():
         # 学校に所属していない場合の対応
         if not current_user.school_id:
             flash('学習パスを表示するには学校に所属している必要があります。')
-            return redirect(url_for('basebuilder_module.index'))
+            return redirect(url_for('basebuilder.index'))
         
         current_app.logger.info(f"Learning paths accessed by user {current_user.id}")
         
@@ -245,12 +245,12 @@ def create_learning_path():
     try:
         if current_user.role != 'teacher':
             flash('この機能は教師のみ利用可能です。')
-            return redirect(url_for('basebuilder_module.index'))
+            return redirect(url_for('basebuilder.index'))
         
         # 学校に所属していない場合の対応
         if not current_user.school_id:
             flash('学習パスを作成するには学校に所属している必要があります。')
-            return redirect(url_for('basebuilder_module.index'))
+            return redirect(url_for('basebuilder.index'))
         
         if request.method == 'POST':
             title = request.form.get('title')
@@ -305,7 +305,7 @@ def edit_learning_path(path_id):
     try:
         if current_user.role != 'teacher':
             flash('この機能は教師のみ利用可能です。')
-            return redirect(url_for('basebuilder_module.index'))
+            return redirect(url_for('basebuilder.index'))
         
         # 学習パスを取得
         path = BaseBuilderLearningPath.query.get_or_404(path_id)
@@ -366,7 +366,7 @@ def assign_learning_path(path_id):
     try:
         if current_user.role != 'teacher':
             flash('この機能は教師のみ利用可能です。')
-            return redirect(url_for('basebuilder_module.index'))
+            return redirect(url_for('basebuilder.index'))
         
         # 学習パスを取得
         path = BaseBuilderLearningPath.query.get_or_404(path_id)
@@ -446,7 +446,7 @@ def start_learning_path(assignment_id):
     try:
         if current_user.role != 'student':
             flash('この機能は学生のみ利用可能です。')
-            return redirect(url_for('basebuilder_module.index'))
+            return redirect(url_for('basebuilder.index'))
         
         # 割り当てを取得
         assignment = PathAssignment.query.get_or_404(assignment_id)

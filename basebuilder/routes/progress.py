@@ -27,7 +27,7 @@ def view_proficiency():
     try:
         if current_user.role != 'student':
             flash('この機能は学生のみ利用可能です。')
-            return redirect(url_for('basebuilder_module.index'))
+            return redirect(url_for('basebuilder.index'))
         
         current_app.logger.info(f"Proficiency view accessed by user {current_user.id}")
         
@@ -68,7 +68,7 @@ def view_proficiency():
     except Exception as e:
         current_app.logger.error(f"Proficiency view error: {str(e)}")
         flash('習熟度データの取得中にエラーが発生しました。')
-        return redirect(url_for('basebuilder_module.index'))
+        return redirect(url_for('basebuilder.index'))
 
 
 @progress_bp.route('/history')
@@ -78,7 +78,7 @@ def view_history():
     try:
         if current_user.role != 'student':
             flash('この機能は学生のみ利用可能です。')
-            return redirect(url_for('basebuilder_module.index'))
+            return redirect(url_for('basebuilder.index'))
         
         current_app.logger.info(f"History view accessed by user {current_user.id}")
         
@@ -119,4 +119,4 @@ def view_history():
     except Exception as e:
         current_app.logger.error(f"History view error: {str(e)}")
         flash('学習履歴の取得中にエラーが発生しました。')
-        return redirect(url_for('basebuilder_module.index'))
+        return redirect(url_for('basebuilder.index'))

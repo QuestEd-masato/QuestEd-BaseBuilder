@@ -191,7 +191,7 @@ def chat_page():
     """教師チャット機能"""
     classes = Class.query.filter_by(teacher_id=current_user.id).all()
     recent_chats = ChatHistory.query.filter_by(
-        teacher_id=current_user.id
+        user_id=current_user.id
     ).order_by(ChatHistory.created_at.desc()).limit(10).all()
     
     return render_template('teacher/chat.html', 

@@ -64,8 +64,9 @@ def problems():
         categories = ProblemCategory.query.order_by(ProblemCategory.name).all()
         text_sets = TextSet.query.order_by(TextSet.title).all()
         
-        # 学生の場合、自分の回答記録を取得
+        # 学生の場合、自分の回答記録と習熟度を取得
         user_answers = {}
+        word_proficiencies = {}
         if current_user.role == 'student':
             answer_records = AnswerRecord.query.filter_by(
                 student_id=current_user.id
@@ -75,6 +76,15 @@ def problems():
                 if record.problem_id not in user_answers:
                     user_answers[record.problem_id] = []
                 user_answers[record.problem_id].append(record)
+            
+            # 単語習熟度記録を取得
+            from basebuilder.models import WordProficiency
+            proficiency_records = WordProficiency.query.filter_by(
+                student_id=current_user.id
+            ).all()
+            
+            for record in proficiency_records:
+                word_proficiencies[record.word_id] = record
         
         return render_template('basebuilder/problems.html',
                              problems=problems_pagination.items,
@@ -82,6 +92,7 @@ def problems():
                              categories=categories,
                              text_sets=text_sets,
                              user_answers=user_answers,
+                             word_proficiencies=word_proficiencies,
                              selected_category=category_id,
                              selected_text=text_id,
                              selected_difficulty=difficulty)

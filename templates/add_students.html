@@ -13,7 +13,7 @@
             <nav aria-label="breadcrumb" class="mb-4">
                 <ol class="breadcrumb">
                     <li class="breadcrumb-item"><a href="{{ url_for('teacher_dashboard.dashboard') }}">ダッシュボード</a></li>
-                    <li class="breadcrumb-item"><a href="{{ url_for('teacher_class_management.class_list') }}">クラス管理</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('teacher_class_management.classes') }}">クラス管理</a></li>
                     <li class="breadcrumb-item"><a href="{{ url_for('teacher_class_management.view_class', class_id=class_obj.id) }}">{{ class_obj.name }}</a></li>
                     <li class="breadcrumb-item active" aria-current="page">生徒一括登録</li>
                 </ol>

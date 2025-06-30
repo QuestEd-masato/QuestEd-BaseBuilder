@@ -33,7 +33,7 @@ def start_session():
     try:
         if current_user.role != 'student':
             flash('学習セッションは学生のみアクセス可能です。')
-            return redirect(url_for('basebuilder_module.index'))
+            return redirect(url_for('basebuilder.index'))
         
         # セッション初期化
         session.clear()
@@ -48,7 +48,7 @@ def start_session():
         
         if not available_problems:
             flash('現在利用可能な問題がありません。')
-            return redirect(url_for('basebuilder_module.index'))
+            return redirect(url_for('basebuilder.index'))
         
         # 問題IDをセッションに保存
         session['problem_ids'] = [p.id for p in available_problems]
@@ -62,7 +62,7 @@ def start_session():
     except Exception as e:
         current_app.logger.error(f"Start session error: {str(e)}")
         flash('学習セッションの開始中にエラーが発生しました。')
-        return redirect(url_for('basebuilder_module.index'))
+        return redirect(url_for('basebuilder.index'))
 
 
 @sessions_bp.route('/category/<int:category_id>/start_session')
@@ -72,7 +72,7 @@ def start_category_session(category_id):
     try:
         if current_user.role != 'student':
             flash('学習セッションは学生のみアクセス可能です。')
-            return redirect(url_for('basebuilder_module.index'))
+            return redirect(url_for('basebuilder.index'))
         
         category = ProblemCategory.query.get_or_404(category_id)
         
@@ -119,7 +119,7 @@ def start_text_session(text_id):
     try:
         if current_user.role != 'student':
             flash('学習セッションは学生のみアクセス可能です。')
-            return redirect(url_for('basebuilder_module.index'))
+            return redirect(url_for('basebuilder.index'))
         
         text_set = TextSet.query.get_or_404(text_id)
         
@@ -153,7 +153,7 @@ def start_text_session(text_id):
     except Exception as e:
         current_app.logger.error(f"Start text session error: {str(e)}")
         flash('テキスト学習セッションの開始中にエラーが発生しました。')
-        return redirect(url_for('basebuilder_module.index'))
+        return redirect(url_for('basebuilder.index'))
 
 
 @sessions_bp.route('/next_problem', methods=['GET', 'POST'])
@@ -163,12 +163,12 @@ def next_problem():
     try:
         if current_user.role != 'student':
             flash('学習セッションは学生のみアクセス可能です。')
-            return redirect(url_for('basebuilder_module.index'))
+            return redirect(url_for('basebuilder.index'))
         
         # セッション情報の確認
         if 'problem_ids' not in session:
             flash('学習セッションが見つかりません。新しいセッションを開始してください。')
-            return redirect(url_for('basebuilder_module.index'))
+            return redirect(url_for('basebuilder.index'))
         
         problem_ids = session['problem_ids']
         current_index = session.get('current_problem_index', 0)
@@ -217,7 +217,7 @@ def next_problem():
     except Exception as e:
         current_app.logger.error(f"Next problem error: {str(e)}")
         flash('問題表示中にエラーが発生しました。')
-        return redirect(url_for('basebuilder_module.index'))
+        return redirect(url_for('basebuilder.index'))
 
 
 @sessions_bp.route('/session_summary')
@@ -227,12 +227,12 @@ def session_summary():
     try:
         if current_user.role != 'student':
             flash('学習セッションは学生のみアクセス可能です。')
-            return redirect(url_for('basebuilder_module.index'))
+            return redirect(url_for('basebuilder.index'))
         
         # セッション情報の確認
         if 'start_time' not in session:
             flash('セッション情報が見つかりません。')
-            return redirect(url_for('basebuilder_module.index'))
+            return redirect(url_for('basebuilder.index'))
         
         # セッション統計を計算
         start_time = datetime.fromisoformat(session['start_time'])
@@ -276,7 +276,7 @@ def session_summary():
     except Exception as e:
         current_app.logger.error(f"Session summary error: {str(e)}")
         flash('セッション結果の表示中にエラーが発生しました。')
-        return redirect(url_for('basebuilder_module.index'))
+        return redirect(url_for('basebuilder.index'))
 
 
 def _get_adaptive_problems(student_id, limit=20):
