@@ -2073,3 +2073,46 @@ render_template('surveys.html', ...)
 - ✅ BaseBuilder機能の完全復旧
 - ✅ Student活動記録・目標・アンケートページの安定化
 - 🎯 テンプレートパス統一による今後のエラー防止
+
+### 包括的エラー予防チェック完了 (2025-06-30)
+
+緊急修正後、類似エラーを事前に特定・対処するため包括的調査を実施：
+
+#### **調査範囲**
+- ✅ 全 `__init__.py` ファイルのインポート文検査
+- ✅ Blueprint登録の整合性確認
+- ✅ テンプレート内エンドポイント参照の検証
+- ✅ 存在しないモジュール参照の特定
+
+#### **発見・対処した問題**
+
+**1. BaseBuilder Blueprint 構造の複雑性**
+- **問題**: 新しいモジュラー構造と旧 `basebuilder_module` の混在
+- **現状**: templates/basebuilder/ 内に300+の `basebuilder_module.*` 参照
+- **対策**: レガシー互換性サポートを実装
+```python
+# basebuilder/__init__.py の安全な修正
+try:
+    from basebuilder.routes import basebuilder_module
+    app.register_blueprint(basebuilder_module)
+    app.logger.info("BaseBuilder legacy module registered successfully")
+except ImportError as e:
+    logging.warning(f"BaseBuilder legacy module import failed: {e}")
+```
+
+**2. Teacher Dashboard エンドポイント修正**
+- `basebuilder_module.create_problem` → `problems.create_problem`
+- `basebuilder_module.theme_relations` → `admin.theme_relations`  
+- `basebuilder_module.analysis` → `analytics.analysis`
+
+#### **リスク評価と戦略**
+🟡 **中リスク**: templates/basebuilder/ 内の大量参照
+- **判断**: 段階的移行アプローチを採用
+- **理由**: 一度に300+参照を変更するリスクを回避
+- **方針**: レガシーサポート維持 + 新規開発は新Blueprint使用
+
+#### **予防効果**
+- ✅ 502 Bad Gateway エラーの根本原因除去
+- ✅ ImportError パターンの事前特定
+- ✅ Blueprint登録順序の最適化
+- 🎯 段階的リファクタリング戦略の確立

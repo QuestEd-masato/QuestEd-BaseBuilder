@@ -6,10 +6,18 @@ def init_app(app):
     from basebuilder.routes import register_basebuilder_routes
     register_basebuilder_routes(app)
     
-    # メインBaseBuilderモジュール登録（重複のためコメントアウト）
-    # 注意: register_basebuilder_routes(app) ですでに全ルートが登録済み
-    # from basebuilder.routes import basebuilder_module
-    # app.register_blueprint(basebuilder_module)
+    # メインBaseBuilderモジュール登録（レガシーサポート）
+    # 注意: templates内で多数のbasebuilder_module.*参照があるため、互換性維持
+    try:
+        import sys
+        sys.path.insert(0, '.')
+        from basebuilder.routes import basebuilder_module
+        app.register_blueprint(basebuilder_module)
+        app.logger.info("BaseBuilder legacy module registered successfully")
+    except ImportError as e:
+        import logging
+        logging.warning(f"BaseBuilder legacy module import failed: {e}")
+        # 新しいモジュラー構造のみ使用
     
     # 管理画面へのモデル追加（Flask-Adminが利用可能な場合のみ）
     with app.app_context():
