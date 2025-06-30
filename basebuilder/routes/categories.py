@@ -53,7 +53,7 @@ def categories():
     except Exception as e:
         current_app.logger.error(f"Categories list error: {str(e)}")
         flash('カテゴリ一覧の取得中にエラーが発生しました。')
-        return redirect(url_for('basebuilder_module.index'))
+        return redirect(url_for('categories.categories'))
 
 
 @categories_bp.route('/category/create', methods=['GET', 'POST'])

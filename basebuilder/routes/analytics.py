@@ -30,7 +30,7 @@ def analysis(class_id=None):
     try:
         if current_user.role != 'teacher':
             flash('この機能は教師のみ利用可能です。')
-            return redirect(url_for('basebuilder_module.index'))
+            return redirect(url_for('analytics.analysis'))
         
         current_app.logger.info(f"Analysis dashboard accessed by teacher {current_user.id}")
         
@@ -90,7 +90,7 @@ def analysis(class_id=None):
     except Exception as e:
         current_app.logger.error(f"Analysis dashboard error: {str(e)}")
         flash('分析ダッシュボードの読み込み中にエラーが発生しました。')
-        return redirect(url_for('basebuilder_module.index'))
+        return redirect(url_for('analytics.analysis'))
 
 
 @analytics_bp.route('/analysis/student/<int:student_id>')
@@ -100,7 +100,7 @@ def student_analysis(student_id):
     try:
         if current_user.role != 'teacher':
             flash('この機能は教師のみ利用可能です。')
-            return redirect(url_for('basebuilder_module.index'))
+            return redirect(url_for('analytics.analysis'))
         
         current_app.logger.info(f"Student analysis accessed by teacher {current_user.id} for student {student_id}")
         

@@ -89,7 +89,7 @@ def problems():
     except Exception as e:
         current_app.logger.error(f"Problems list error: {str(e)}")
         flash('問題一覧の取得中にエラーが発生しました。')
-        return redirect(url_for('basebuilder_module.index'))
+        return redirect(url_for('problems.problems'))
 
 
 @problems_bp.route('/problem/create', methods=['GET', 'POST'])

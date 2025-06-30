@@ -83,8 +83,8 @@
             <div class="section-header">
                 <h3>担当クラス</h3>
                 <div>
-                    <a href="{{ url_for('teacher.create_class') }}" class="btn btn-sm btn-primary">新規クラスを作成</a>
-                    <a href="{{ url_for('teacher.pending_users') }}" class="btn btn-sm btn-info">承認待ちユーザー</a>
+                    <a href="{{ url_for('teacher_class_management.create_class') }}" class="btn btn-sm btn-primary">新規クラスを作成</a>
+                    <a href="{{ url_for('teacher_dashboard.pending_users') }}" class="btn btn-sm btn-info">承認待ちユーザー</a>
                 </div>
             </div>
             
@@ -156,9 +156,9 @@
                             {% endif %}
                             
                             <div class="class-actions">
-                                <a href="{{ url_for('teacher.view_class', class_id=class_data.class.id) }}" class="btn btn-sm btn-primary">クラス詳細</a>    
-                                <a href="{{ url_for('teacher.create_milestone', class_id=class_data.class.id) }}" class="btn btn-sm btn-info">マイルストーン作成</a>
-                                <a href="{{ url_for('teacher.view_curriculums', class_id=class_data.class.id) }}" class="btn btn-sm btn-info">カリキュラム管理</a>
+                                <a href="{{ url_for('teacher_class_management.view_class', class_id=class_data.class.id) }}" class="btn btn-sm btn-primary">クラス詳細</a>    
+                                <a href="{{ url_for('teacher_class_management.view_class', class_id=class_data.class.id) }}#milestones" class="btn btn-sm btn-info">マイルストーン</a>
+                                <a href="{{ url_for('teacher_curriculum_management.view_curriculums') }}" class="btn btn-sm btn-info">カリキュラム管理</a>
                             </div>
                         </div>
                     {% endfor %}
@@ -166,7 +166,7 @@
             {% else %}
                 <div class="no-classes">
                     <p>担当クラスがありません</p>
-                    <a href="{{ url_for('teacher.create_class') }}" class="btn btn-primary">クラスを作成する</a>
+                    <a href="{{ url_for('teacher_class_management.create_class') }}" class="btn btn-primary">クラスを作成する</a>
                 </div>
             {% endif %}
         </div>
@@ -220,7 +220,7 @@
         <div class="dashboard-section ranking-analysis">
             <div class="section-header">
                 <h3>ランキング分析</h3>
-                <a href="{{ url_for('teacher.ranking_analysis') }}" class="btn btn-sm btn-primary">詳細分析へ</a>
+                <a href="{{ url_for('teacher_analytics.ranking_analysis') }}" class="btn btn-sm btn-primary">詳細分析へ</a>
             </div>
             
             <div style="max-height: 400px;">
@@ -753,7 +753,7 @@
 function showBatchConversion() {
     // 簡易実装：統合管理画面にリダイレクト
     if (confirm('統合管理画面で一括変換を行いますか？')) {
-        window.location.href = '{{ url_for("teacher.integrated_management") }}';
+        window.location.href = '{{ url_for("teacher_synchronization.integrated_management") }}';
     }
 }
 
