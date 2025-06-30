@@ -917,6 +917,99 @@ def create_unit_item_mappings():
     # 重み付け計算
 ```
 
+#### **✅ Phase 3.4: BaseBuilder・教師機能・探究テーマアクセス問題修正（完了 2025-06-30）**
+
+**期間**: 1日（緊急対応）  
+**目的**: 本番環境の重要なアクセス問題を包括的に修正  
+
+##### 3.4.1 BaseBuilder機能復旧 ✅
+**問題**: `/basebuilder/` 404エラー、categories無限ループ
+
+**解決策**:
+```python
+# basebuilder/routes/__init__.py - メインインデックスルート追加
+basebuilder_main_bp = Blueprint('basebuilder', __name__)
+
+@basebuilder_main_bp.route('/')
+@login_required  
+def index():
+    """BaseBuilderダッシュボード - ロール別表示"""
+    # ✅ 学生・教師・管理者向けダッシュボード実装
+    # ✅ 統計情報、活動履歴、習熟度表示
+```
+
+**修正ファイル**:
+- `basebuilder/routes/__init__.py`: メインルート追加
+- `templates/basebuilder/layout.html`: ナビゲーション修正
+
+##### 3.4.2 教師機能エンドポイント整合性確保 ✅
+**問題**: teacher.view_class, teacher.edit_class エンドポイント不整合
+
+**解決範囲**: 12テンプレートファイル、14参照箇所を一括修正
+```bash
+# 修正内容
+teacher.view_class → teacher_class_management.view_class (11箇所)
+teacher.edit_class → teacher_class_management.edit_class (3箇所)
+```
+
+**修正テンプレート**:
+- `create_milestone.html`, `add_students.html`, `curriculums.html`
+- `edit_class.html`, `evaluate_students.html`, `edit_milestone.html`
+- `main_themes.html`, `view_groups.html`, `view_milestone.html`
+- `teacher_classes.html`, `class_details.html`
+
+##### 3.4.3 探究テーマアクセス機能実装 ✅
+**問題**: `/student/dashboard#themes` ルート未定義、テーマ機能未実装
+
+**新規実装**:
+```python
+# app/student/modules/themes.py - 完全新規作成
+class student_themes Blueprint:
+    ✅ /themes - テーマ一覧・クラス選択
+    ✅ /select_theme/<id> - テーマ選択
+    ✅ /create_personal_theme - 個人テーマ作成
+    ✅ /main_theme/<id>/create_personal - メインテーマから派生
+    ✅ /theme/<id>/edit - テーマ編集
+    ✅ /theme/<id>/delete - テーマ削除
+```
+
+**システム統合**:
+- `app/student/__init__.py`: Blueprint登録
+- `IMPLEMENTED_MODULES`: themes追加
+- `PENDING_MODULES`: themes削除
+
+##### 3.4.4 テンプレート参照修正 ✅
+**対象**: BaseBuilder関連テンプレートのエンドポイント参照
+
+**修正方針**: 
+- 重要ナビゲーション: ハードコードURL使用
+- レガシー参照: 段階的移行で互換性維持
+
+**結果**:
+```
+✅ BaseBuilder /basebuilder/ → 正常ダッシュボード表示
+✅ カテゴリページ → 無限ループ解消
+✅ 教師クラス管理 → 完全アクセス復旧
+✅ 探究テーマ → フル機能利用可能
+```
+
+#### **Phase 3.4 技術的成果**
+
+**アクセス問題解決率**: 100%（全4項目完全解決）
+
+**実装モジュール**:
+- BaseBuilder: インデックスルート復旧
+- Teacher: エンドポイント整合性確保  
+- Student: テーマモジュール完全実装
+- Templates: 参照整合性修正
+
+**残存課題**:
+- 単語マスターランキング: 実装要検討
+- BaseBuilder詳細テンプレート: 段階的URL移行
+- データ統合: ランキングシステム改善
+
+**本番影響**: 即座にアクセス問題解消、全機能正常動作確認
+
 ### 🎯 実装完了と達成効果 (2025-06-26)
 
 #### **✅ 完了した高優先度実装**
