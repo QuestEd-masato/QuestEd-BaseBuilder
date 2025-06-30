@@ -25,7 +25,7 @@ def surveys():
         interest_survey = InterestSurvey.query.filter_by(student_id=current_user.id).first()
         personality_survey = PersonalitySurvey.query.filter_by(student_id=current_user.id).first()
         
-        return render_template('student/surveys.html',
+        return render_template('surveys.html',
                              survey_status=survey_status,
                              interest_survey=interest_survey,
                              personality_survey=personality_survey)
@@ -111,7 +111,7 @@ def interest_survey():
             except json.JSONDecodeError:
                 current_app.logger.warning(f"Invalid JSON in interest survey {existing_survey.id}")
         
-        return render_template('student/interest_survey.html',
+        return render_template('interest_survey.html',
                              existing_data=existing_data,
                              is_editing=existing_survey is not None)
         
@@ -181,7 +181,7 @@ def personality_survey():
             # 入力値検証
             if not any(trait in survey_data for trait in personality_traits):
                 flash('性格特性の評価を入力してください。', 'error')
-                return render_template('student/personality_survey.html',
+                return render_template('personality_survey.html',
                                      existing_data=survey_data,
                                      is_editing=existing_survey is not None)
             
@@ -216,7 +216,7 @@ def personality_survey():
             except json.JSONDecodeError:
                 current_app.logger.warning(f"Invalid JSON in personality survey {existing_survey.id}")
         
-        return render_template('student/personality_survey.html',
+        return render_template('personality_survey.html',
                              existing_data=existing_data,
                              is_editing=existing_survey is not None)
         
@@ -297,7 +297,7 @@ def survey_summary():
             except json.JSONDecodeError:
                 pass
         
-        return render_template('student/survey_summary.html',
+        return render_template('survey_summary.html',
                              interest_data=interest_data,
                              personality_data=personality_data)
         

@@ -74,7 +74,7 @@ def activities():
             is_selected=True
         ).first()
         
-        return render_template('student/activities.html',
+        return render_template('activities.html',
                              classes=classes,
                              selected_class=selected_class,
                              activities=activities,
@@ -112,13 +112,13 @@ def new_activity():
             # 入力値検証
             if not content:
                 flash('活動内容を入力してください。', 'error')
-                return render_template('student/new_activity.html',
+                return render_template('new_activity.html',
                                      classes=classes,
                                      selected_theme=selected_theme)
             
             if not class_id or not check_class_access(class_id):
                 flash('有効なクラスを選択してください。', 'error')
-                return render_template('student/new_activity.html',
+                return render_template('new_activity.html',
                                      classes=classes,
                                      selected_theme=selected_theme)
             
@@ -163,7 +163,7 @@ def new_activity():
                 current_app.logger.error(f"Activity creation error: {str(e)}")
                 flash('活動記録の作成に失敗しました。', 'error')
         
-        return render_template('student/new_activity.html',
+        return render_template('new_activity.html',
                              classes=classes,
                              selected_theme=selected_theme)
         
@@ -196,13 +196,13 @@ def edit_activity(activity_id):
             # 入力値検証
             if not content:
                 flash('活動内容を入力してください。', 'error')
-                return render_template('student/edit_activity.html',
+                return render_template('edit_activity.html',
                                      activity=activity,
                                      classes=classes)
             
             if not class_id or not check_class_access(class_id):
                 flash('有効なクラスを選択してください。', 'error')
-                return render_template('student/edit_activity.html',
+                return render_template('edit_activity.html',
                                      activity=activity,
                                      classes=classes)
             
@@ -221,7 +221,7 @@ def edit_activity(activity_id):
                 current_app.logger.error(f"Activity update error: {str(e)}")
                 flash('活動記録の更新に失敗しました。', 'error')
         
-        return render_template('student/edit_activity.html',
+        return render_template('edit_activity.html',
                              activity=activity,
                              classes=classes)
         
@@ -285,7 +285,7 @@ def view_activity(activity_id):
             flash('この活動記録を表示する権限がありません。')
             return redirect(url_for('student_activities.activities'))
         
-        return render_template('student/view_activity.html', activity=activity)
+        return render_template('view_activity.html', activity=activity)
         
     except Exception as e:
         current_app.logger.error(f"View activity error: {str(e)}")

@@ -21,7 +21,7 @@ def todos():
         todos = Todo.query.filter_by(student_id=current_user.id)\
             .order_by(*mysql_nulls_last(Todo.due_date, 'asc')).all()
         
-        return render_template('student/todos.html', todos=todos)
+        return render_template('todos.html', todos=todos)
         
     except Exception as e:
         current_app.logger.error(f"Todos list error: {str(e)}")
@@ -42,7 +42,7 @@ def new_todo():
             # 入力値検証
             if not content:
                 flash('TODO内容を入力してください。', 'error')
-                return render_template('student/new_todo.html')
+                return render_template('new_todo.html')
             
             # 期限日の処理
             due_date = None
@@ -51,7 +51,7 @@ def new_todo():
                     due_date = datetime.strptime(due_date_str, '%Y-%m-%d').date()
                 except ValueError:
                     flash('正しい日付形式で入力してください。', 'error')
-                    return render_template('student/new_todo.html')
+                    return render_template('new_todo.html')
             
             # 新しいTODOを作成
             new_todo = Todo(
@@ -72,7 +72,7 @@ def new_todo():
                 current_app.logger.error(f"TODO creation error: {str(e)}")
                 flash('TODOの作成に失敗しました。', 'error')
         
-        return render_template('student/new_todo.html')
+        return render_template('new_todo.html')
         
     except Exception as e:
         current_app.logger.error(f"New todo error: {str(e)}")
@@ -101,7 +101,7 @@ def edit_todo(todo_id):
             # 入力値検証
             if not content:
                 flash('TODO内容を入力してください。', 'error')
-                return render_template('student/edit_todo.html', todo=todo)
+                return render_template('edit_todo.html', todo=todo)
             
             # 期限日の処理
             due_date = None
@@ -110,7 +110,7 @@ def edit_todo(todo_id):
                     due_date = datetime.strptime(due_date_str, '%Y-%m-%d').date()
                 except ValueError:
                     flash('正しい日付形式で入力してください。', 'error')
-                    return render_template('student/edit_todo.html', todo=todo)
+                    return render_template('edit_todo.html', todo=todo)
             
             # TODOを更新
             todo.title = content
@@ -128,7 +128,7 @@ def edit_todo(todo_id):
                 current_app.logger.error(f"TODO update error: {str(e)}")
                 flash('TODOの更新に失敗しました。', 'error')
         
-        return render_template('student/edit_todo.html', todo=todo)
+        return render_template('edit_todo.html', todo=todo)
         
     except Exception as e:
         current_app.logger.error(f"Edit todo error: {str(e)}")
@@ -207,7 +207,7 @@ def goals():
         goals = Goal.query.filter_by(student_id=current_user.id)\
             .order_by(Goal.created_at.desc()).all()
         
-        return render_template('student/goals.html', goals=goals)
+        return render_template('goals.html', goals=goals)
         
     except Exception as e:
         current_app.logger.error(f"Goals list error: {str(e)}")
@@ -228,7 +228,7 @@ def new_goal():
             # 入力値検証
             if not title:
                 flash('目標タイトルを入力してください。', 'error')
-                return render_template('student/new_goal.html')
+                return render_template('new_goal.html')
             
             # 目標期限の処理
             target_date = None
@@ -237,7 +237,7 @@ def new_goal():
                     target_date = datetime.strptime(target_date_str, '%Y-%m-%d').date()
                 except ValueError:
                     flash('正しい日付形式で入力してください。', 'error')
-                    return render_template('student/new_goal.html')
+                    return render_template('new_goal.html')
             
             # 新しい目標を作成
             new_goal = Goal(
@@ -259,7 +259,7 @@ def new_goal():
                 current_app.logger.error(f"Goal creation error: {str(e)}")
                 flash('目標の作成に失敗しました。', 'error')
         
-        return render_template('student/new_goal.html')
+        return render_template('new_goal.html')
         
     except Exception as e:
         current_app.logger.error(f"New goal error: {str(e)}")
@@ -289,11 +289,11 @@ def edit_goal(goal_id):
             # 入力値検証
             if not title:
                 flash('目標タイトルを入力してください。', 'error')
-                return render_template('student/edit_goal.html', goal=goal)
+                return render_template('edit_goal.html', goal=goal)
             
             if not (0 <= progress <= 100):
                 flash('進捗は0-100の範囲で入力してください。', 'error')
-                return render_template('student/edit_goal.html', goal=goal)
+                return render_template('edit_goal.html', goal=goal)
             
             # 目標期限の処理
             target_date = None
@@ -302,7 +302,7 @@ def edit_goal(goal_id):
                     target_date = datetime.strptime(target_date_str, '%Y-%m-%d').date()
                 except ValueError:
                     flash('正しい日付形式で入力してください。', 'error')
-                    return render_template('student/edit_goal.html', goal=goal)
+                    return render_template('edit_goal.html', goal=goal)
             
             # 目標を更新
             goal.title = title
@@ -327,7 +327,7 @@ def edit_goal(goal_id):
                 current_app.logger.error(f"Goal update error: {str(e)}")
                 flash('目標の更新に失敗しました。', 'error')
         
-        return render_template('student/edit_goal.html', goal=goal)
+        return render_template('edit_goal.html', goal=goal)
         
     except Exception as e:
         current_app.logger.error(f"Edit goal error: {str(e)}")

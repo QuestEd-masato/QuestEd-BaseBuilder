@@ -2027,3 +2027,49 @@ return render_template('student_dashboard.html',
 - ✅ 全templateファイルのエンドポイント整合性確保
 - ✅ 存在しない機能の適切なリダイレクト対応
 - 🎯 今後の同様エラーの予防措置完了
+
+### Phase 2.9: 新規エンドポイント・テンプレートエラー修正 (2025-06-30)
+
+本番ログで発見された新たなエラーパターンを段階的に修正：
+
+#### **修正エラー 1: teacher.integrated_management**
+- **エラー**: `Could not build url for endpoint 'teacher.integrated_management'`
+- **原因**: Blueprint名の不一致
+- **修正**: `teacher.integrated_management` → `teacher_synchronization.integrated_management`
+- **修正ファイル**: 
+  - `templates/teacher_dashboard.html` (2箇所)
+  - `templates/teacher/edit_unit.html` (3箇所)
+
+#### **修正エラー 2: basebuilder_module.index**
+- **エラー**: `Could not build url for endpoint 'basebuilder_module.index'`
+- **原因**: Blueprint登録がコメントアウトされていた
+- **修正**: `basebuilder/__init__.py`でBlueprint登録を有効化
+- **修正内容**: `app.register_blueprint(basebuilder_module)`
+
+#### **修正エラー 3: Activities list error**
+- **エラー**: `Activities list error: student/activities.html`
+- **原因**: テンプレートパスの不一致（`student/`プレフィックス問題）
+- **修正**: 正しいテンプレートパスに統一
+- **修正ファイル**: 
+  - `app/student/modules/activities.py` - 4個のテンプレートパス修正
+  - `app/student/modules/goals_todos.py` - 6個のテンプレートパス修正
+  - `app/student/modules/surveys.py` - 4個のテンプレートパス修正
+
+#### **修正パターン**
+```python
+# Before (間違い)
+render_template('student/activities.html', ...)
+render_template('student/goals.html', ...)
+render_template('student/surveys.html', ...)
+
+# After (正しい)
+render_template('activities.html', ...)
+render_template('goals.html', ...)
+render_template('surveys.html', ...)
+```
+
+#### **効果**
+- ✅ Teacher統合管理画面アクセス修復
+- ✅ BaseBuilder機能の完全復旧
+- ✅ Student活動記録・目標・アンケートページの安定化
+- 🎯 テンプレートパス統一による今後のエラー防止

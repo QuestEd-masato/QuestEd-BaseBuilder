@@ -6,9 +6,9 @@ def init_app(app):
     from basebuilder.routes import register_basebuilder_routes
     register_basebuilder_routes(app)
     
-    # レガシーサポート用（必要に応じて後で削除）
-    # from basebuilder.routes import basebuilder_module
-    # app.register_blueprint(basebuilder_module)
+    # メインBaseBuilderモジュール登録
+    from basebuilder.routes import basebuilder_module
+    app.register_blueprint(basebuilder_module)
     
     # 管理画面へのモデル追加（Flask-Adminが利用可能な場合のみ）
     with app.app_context():
