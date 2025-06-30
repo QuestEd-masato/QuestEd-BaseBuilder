@@ -388,7 +388,7 @@
         {% endif %}
         
         <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-            <a href="{{ url_for('student.learning_portal') }}" 
+            <a href="{{ url_for('student_dashboard.dashboard') }}" 
                style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1rem; 
                       background: linear-gradient(135deg, #007bff, #0056b3); color: white; 
                       border-radius: 8px; text-decoration: none; font-size: 0.9rem; font-weight: 500;
@@ -400,7 +400,7 @@
             </a>
             
             {% if in_progress_units is defined and in_progress_units > 0 %}
-            <a href="{{ url_for('student.learning_portal') }}#continue-learning" 
+            <a href="{{ url_for('student_dashboard.dashboard') }}#continue-learning" 
                style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1rem; 
                       background: transparent; color: #28a745; border: 1px solid #28a745;
                       border-radius: 8px; text-decoration: none; font-size: 0.9rem;
@@ -484,11 +484,11 @@
                 </div>
             </div>
             <div style="margin-top: 0.5rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                <a href="{{ url_for('student.class_details', class_id=class_theme.class_id) }}" 
+                <a href="{{ url_for('student_dashboard.dashboard') }}" 
                    style="{{ btn_primary_style }}">
                    <i class="fas fa-info-circle"></i> 詳細
                 </a>
-                <a href="{{ url_for('student.class_themes', class_id=class_theme.class_id) }}" 
+                <a href="{{ url_for('student_dashboard.dashboard') }}" 
                    style="{{ btn_outline_style }}">
                    <i class="fas fa-book"></i> テーマ
                 </a>
@@ -496,7 +496,7 @@
                    style="{{ btn_outline_style }}">
                    <i class="fas fa-clipboard-list"></i> 記録
                 </a>
-                <a href="{{ url_for('student.chat_page') }}?class_id={{ class_theme.class_id }}" 
+                <a href="{{ url_for('index') }}?class_id={{ class_theme.class_id }}" 
                    style="{{ btn_outline_style }}">
                    <i class="fas fa-robot"></i> AI
                 </a>
@@ -610,7 +610,7 @@
                記録を見る
             </a>
             {% if class_info %}
-            <a href="{{ url_for('student.new_activity') }}?class_id={{ all_class_themes[0].class_id if all_class_themes else '' }}" 
+            <a href="{{ url_for('student_activities.activities') }}?class_id={{ all_class_themes[0].class_id if all_class_themes else '' }}" 
                style="display: inline-block; padding: 0.375rem 0.75rem; font-size: 0.875rem; border-radius: 0.25rem; text-decoration: none; background-color: #5DADE2; color: white; border: 1px solid #5DADE2;">
                新しい記録
             </a>
@@ -634,7 +634,7 @@
         </div>
         
         <div style="margin-top: 1rem;">
-            <a href="{{ url_for('student.chat_page') }}" 
+            <a href="{{ url_for('index') }}" 
                style="display: inline-block; padding: 0.375rem 0.75rem; font-size: 0.875rem; border-radius: 0.25rem; text-decoration: none; background-color: #5DADE2; color: white; border: 1px solid #5DADE2;">
                AIチャットを開く
             </a>
