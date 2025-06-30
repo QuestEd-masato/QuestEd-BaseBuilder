@@ -569,7 +569,7 @@
             <!-- ナビゲーションの修正部分 -->
             <div class="main-nav">
                 <ul id="main-menu">
-                    <li><a href="{{ url_for('basebuilder_module.index') }}"><i class="fas fa-home"></i> ホーム</a></li>
+                    <li><a href="/basebuilder/"><i class="fas fa-home"></i> ホーム</a></li>
         
                     {% if current_user.role == 'student' %}
                         <li><a href="{{ url_for('basebuilder_module.problems') }}"><i class="fas fa-book"></i> 問題を検索</a></li>

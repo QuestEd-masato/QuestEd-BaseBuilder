@@ -197,14 +197,14 @@ def register_blueprints(app):
     from app.admin import admin_bp
     from app.teacher import teacher_bp
     from app.student import student_bp
-    from app.api import api_bp
+    from app.api import register_api_routes
     from app.realtime import realtime_bp
     
     app.register_blueprint(auth_bp)
     app.register_blueprint(admin_bp)
     app.register_blueprint(teacher_bp)
     app.register_blueprint(student_bp)
-    app.register_blueprint(api_bp)
+    register_api_routes(app)  # モジュラーAPI構造を登録
     app.register_blueprint(realtime_bp)
     
     # モジュール化されたBlueprintを登録

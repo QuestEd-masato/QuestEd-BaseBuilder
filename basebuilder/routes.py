@@ -21,7 +21,7 @@ from flask_login import login_required, current_user
 from datetime import datetime
 
 # Import the registration function for all modular routes
-from .routes import register_basebuilder_routes
+from basebuilder.routes import register_basebuilder_routes
 
 # Import models for the main index route
 from extensions import db

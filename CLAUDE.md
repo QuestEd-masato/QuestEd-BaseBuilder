@@ -2165,3 +2165,44 @@ except ImportError as e:
 - ✅ ランキング機能の動作開始
 - ✅ エンドポイント整合性の確保
 - 🎯 他の機能への影響なし（既存APIの変更なし）
+
+### 緊急追加修正: 本番エラー対応 (2025-06-30)
+
+本番環境で新たに発見されたエラーに対する緊急修正：
+
+#### **発見された問題**
+1. **循環インポートエラー**: `basebuilder/routes.py`で自分自身をインポート
+2. **API登録問題**: モジュラーAPI構造が正しく登録されていない
+3. **basebuilder_module.index**: 複数箇所で未定義エンドポイント参照
+
+#### **緊急修正内容**
+1. **循環インポート解消**
+   ```python
+   # 修正前: from .routes import register_basebuilder_routes
+   # 修正後: from basebuilder.routes import register_basebuilder_routes
+   ```
+
+2. **API登録修正** - `app/__init__.py`
+   ```python
+   # 修正前: from app.api import api_bp
+   # 修正後: from app.api import register_api_routes
+   # 追加: register_api_routes(app)
+   ```
+
+3. **安全なリンク修正**
+   - `{{ url_for('basebuilder_module.index') }}` → `/basebuilder/`
+   - テンプレート修正: teacher_dashboard.html, layout.html
+   - リダイレクト修正: categories.py
+
+#### **修正ファイル一覧**
+- `basebuilder/routes.py` - 循環インポート解消
+- `app/__init__.py` - API登録修正
+- `templates/teacher_dashboard.html` - ハードコードリンク
+- `templates/basebuilder/layout.html` - ナビゲーション修正
+- `basebuilder/routes/categories.py` - リダイレクト先修正
+
+#### **修正効果**
+- 🚨 循環インポートによるモジュール読み込み失敗解消
+- 🔌 ランキングAPIエンドポイントの正常登録
+- 🔗 BaseBuilderナビゲーションの安定化
+- 📊 本番環境での完全動作確保
