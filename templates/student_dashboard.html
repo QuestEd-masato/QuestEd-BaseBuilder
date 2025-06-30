@@ -427,12 +427,12 @@
             </div>
             <div>
                 {% if interest_survey %}
-                <a href="{{ url_for('student.interest_survey_edit') }}" 
+                <a href="{{ url_for('student_surveys.interest_survey') }}" 
                    style="display: inline-block; padding: 0.375rem 0.75rem; font-size: 0.875rem; border-radius: 0.25rem; text-decoration: none; background-color: transparent; color: #5DADE2; border: 1px solid #5DADE2;">
                    編集
                 </a>
                 {% else %}
-                <a href="{{ url_for('student.interest_survey') }}" 
+                <a href="{{ url_for('student_surveys.interest_survey') }}" 
                    style="display: inline-block; padding: 0.375rem 0.75rem; font-size: 0.875rem; border-radius: 0.25rem; text-decoration: none; background-color: #5DADE2; color: white; border: 1px solid #5DADE2;">
                    回答する
                 </a>
@@ -451,12 +451,12 @@
             </div>
             <div>
                 {% if personality_survey %}
-                <a href="{{ url_for('student.personality_survey_edit') }}" 
+                <a href="{{ url_for('student_surveys.personality_survey') }}" 
                    style="display: inline-block; padding: 0.375rem 0.75rem; font-size: 0.875rem; border-radius: 0.25rem; text-decoration: none; background-color: transparent; color: #5DADE2; border: 1px solid #5DADE2;">
                    編集
                 </a>
                 {% else %}
-                <a href="{{ url_for('student.personality_survey') }}" 
+                <a href="{{ url_for('student_surveys.personality_survey') }}" 
                    style="display: inline-block; padding: 0.375rem 0.75rem; font-size: 0.875rem; border-radius: 0.25rem; text-decoration: none; background-color: #5DADE2; color: white; border: 1px solid #5DADE2;">
                    回答する
                 </a>
