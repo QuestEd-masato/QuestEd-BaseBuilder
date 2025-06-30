@@ -71,39 +71,74 @@ def dashboard():
         student_info['active_goals'] = active_goals
         
         # Phase 2: 自由進度学習の進捗情報を取得
-        learning_progress = _get_learning_progress_summary()
+        try:
+            learning_progress = _get_learning_progress_summary()
+            current_app.logger.info(f"[DASHBOARD] Learning progress loaded for student {current_user.id}")
+        except Exception as e:
+            current_app.logger.error(f"[DASHBOARD] Learning progress error: {str(e)}")
+            learning_progress = {'selected_units': [], 'stats': {'total_selected': 0}}
         
         # クラス別の詳細情報を取得
         class_details = []
         for class_obj in classes:
-            # クラスのメインテーマを取得
-            main_themes = MainTheme.query.filter_by(class_id=class_obj.id).all()
-            
-            # 最新のマイルストーンを取得
-            from app.models import Milestone
-            next_milestone = Milestone.query.filter_by(class_id=class_obj.id)\
-                .filter(Milestone.due_date >= datetime.now().date())\
-                .order_by(*mysql_nulls_last(Milestone.due_date, 'asc')).first()
-            
-            # 最新のチャット履歴を取得（1件）
-            latest_chat = ChatHistory.query.filter_by(
-                user_id=current_user.id,
-                class_id=class_obj.id
-            ).order_by(ChatHistory.created_at.desc()).first()
-            
-            class_detail = {
-                'class': class_obj,
-                'main_themes': main_themes,
-                'next_milestone': next_milestone,
-                'latest_chat': latest_chat
-            }
-            class_details.append(class_detail)
+            try:
+                # クラスのメインテーマを取得
+                main_themes = MainTheme.query.filter_by(class_id=class_obj.id).all()
+                current_app.logger.debug(f"[DASHBOARD] Main themes loaded for class {class_obj.id}")
+                
+                # 最新のマイルストーンを取得
+                try:
+                    from app.models import Milestone
+                    next_milestone = Milestone.query.filter_by(class_id=class_obj.id)\
+                        .filter(Milestone.due_date >= datetime.now().date())\
+                        .order_by(*mysql_nulls_last(Milestone.due_date, 'asc')).first()
+                except Exception as milestone_e:
+                    current_app.logger.error(f"[DASHBOARD] Milestone query error: {str(milestone_e)}")
+                    next_milestone = None
+                
+                # 最新のチャット履歴を取得（1件）
+                try:
+                    latest_chat = ChatHistory.query.filter_by(
+                        user_id=current_user.id,
+                        class_id=class_obj.id
+                    ).order_by(ChatHistory.created_at.desc()).first()
+                except Exception as chat_e:
+                    current_app.logger.error(f"[DASHBOARD] Chat history error: {str(chat_e)}")
+                    latest_chat = None
+                
+                class_detail = {
+                    'class': class_obj,
+                    'main_themes': main_themes,
+                    'next_milestone': next_milestone,
+                    'latest_chat': latest_chat
+                }
+                class_details.append(class_detail)
+                
+            except Exception as class_e:
+                current_app.logger.error(f"[DASHBOARD] Class detail error for class {class_obj.id}: {str(class_e)}")
+                # 基本的なクラス情報だけでも追加
+                class_details.append({
+                    'class': class_obj,
+                    'main_themes': [],
+                    'next_milestone': None,
+                    'latest_chat': None
+                })
         
         # 週間活動統計を生成
-        weekly_stats = _generate_weekly_activity_stats()
+        try:
+            weekly_stats = _generate_weekly_activity_stats()
+            current_app.logger.info(f"[DASHBOARD] Weekly stats loaded for student {current_user.id}")
+        except Exception as e:
+            current_app.logger.error(f"[DASHBOARD] Weekly stats error: {str(e)}")
+            weekly_stats = []
         
         # 学習進捗統計
-        progress_stats = _generate_progress_stats()
+        try:
+            progress_stats = _generate_progress_stats()
+            current_app.logger.info(f"[DASHBOARD] Progress stats loaded for student {current_user.id}")
+        except Exception as e:
+            current_app.logger.error(f"[DASHBOARD] Progress stats error: {str(e)}")
+            progress_stats = {'todo_completion_rate': 0, 'goal_completion_rate': 0}
         
         return render_template('student_dashboard.html',
                              student_info=student_info,
@@ -112,10 +147,42 @@ def dashboard():
                              progress_stats=progress_stats,
                              learning_progress=learning_progress)
         
-    except Exception as e:
-        current_app.logger.error(f"Dashboard error for student {current_user.id}: {str(e)}")
+    except ImportError as e:
+        current_app.logger.error(f"[DASHBOARD] Import error for student {current_user.id}: {str(e)}")
         current_app.logger.error(f"Traceback: {traceback.format_exc()}")
-        flash('ダッシュボードの読み込み中にエラーが発生しました。')
+        flash('システムモジュールの読み込みエラーが発生しました。')
+        return dashboard_minimal()
+    except AttributeError as e:
+        current_app.logger.error(f"[DASHBOARD] Attribute error for student {current_user.id}: {str(e)}")
+        current_app.logger.error(f"Traceback: {traceback.format_exc()}")
+        flash('データベースモデルのアクセスエラーが発生しました。')
+        return dashboard_minimal()
+    except KeyError as e:
+        current_app.logger.error(f"[DASHBOARD] Missing context variable for student {current_user.id}: {str(e)}")
+        current_app.logger.error(f"Traceback: {traceback.format_exc()}")
+        flash('テンプレート変数の不足エラーが発生しました。')
+        return dashboard_minimal()
+    except Exception as e:
+        # 詳細なエラー情報をログに記録
+        error_context = {
+            'student_id': current_user.id,
+            'error_type': type(e).__name__,
+            'error_message': str(e),
+            'function': 'dashboard()',
+            'line_info': traceback.format_exc()
+        }
+        current_app.logger.error(f"[DASHBOARD] Unexpected error: {error_context}")
+        
+        # エラーの種類によって詳細なメッセージを設定
+        if 'template' in str(e).lower():
+            flash('テンプレートレンダリングでエラーが発生しました。')
+        elif 'database' in str(e).lower() or 'sql' in str(e).lower():
+            flash('データベース接続でエラーが発生しました。')
+        elif 'permission' in str(e).lower() or 'access' in str(e).lower():
+            flash('データアクセス権限でエラーが発生しました。')
+        else:
+            flash('予期しないエラーが発生しました。')
+        
         return dashboard_minimal()
 
 @dashboard_bp.route('/dashboard_minimal')

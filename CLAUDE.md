@@ -1785,3 +1785,103 @@ class CodeQualityChecker:
 4. **開発者満足度**: コード理解度・作業効率向上
 
 この段階的リファクタリング計画により、QuestEdシステムをスパゲッティコードから**クリーンアーキテクチャ**へと変革し、長期的な保守性と拡張性を確保します。
+
+---
+
+## 🔧 学生ダッシュボード修正ログ (2025-06-30)
+
+### 問題概要
+本番環境でメインの学生ダッシュボード (`student_dashboard.html`) が表示されず、ミニマル版 (`student/dashboard_minimal.html`) にフォールバックする問題が発生。
+
+### Phase 1: 緊急診断・問題特定 (2025-06-30)
+
+#### 🚨 発見された根本原因
+
+##### 1. **例外処理の粗雑さ**
+```python
+# 修正前 (app/student/modules/dashboard.py:115-119)
+except Exception as e:
+    current_app.logger.error(f"Dashboard error for student {current_user.id}: {str(e)}")
+    # → 一括例外処理で具体的原因が不明
+```
+
+##### 2. **潜在的失敗箇所の特定**
+- **Line 28**: `ClassEnrollment.query.filter_by(student_id=current_user.id).all()`
+- **Line 86**: `MainTheme.query.filter_by(class_id=class_obj.id).all()`
+- **Line 92-94**: `mysql_nulls_last()` を使った複雑な Milestone クエリ
+- **Line 101-104**: `ChatHistory` クエリ
+- **Line 74, 129, 137**: ヘルパー関数の呼び出し
+
+#### ✅ 実装完了: 詳細例外処理
+
+##### **修正内容**
+```python
+# 修正後: 段階的例外処理の実装
+except ImportError as e:
+    current_app.logger.error(f"[DASHBOARD] Import error for student {current_user.id}: {str(e)}")
+except AttributeError as e:
+    current_app.logger.error(f"[DASHBOARD] Attribute error for student {current_user.id}: {str(e)}")
+except KeyError as e:
+    current_app.logger.error(f"[DASHBOARD] Missing context variable for student {current_user.id}: {str(e)}")
+except Exception as e:
+    # 詳細なエラー情報をログに記録
+    error_context = {
+        'student_id': current_user.id,
+        'error_type': type(e).__name__,
+        'error_message': str(e),
+        'function': 'dashboard()',
+        'line_info': traceback.format_exc()
+    }
+    current_app.logger.error(f"[DASHBOARD] Unexpected error: {error_context}")
+```
+
+##### **個別処理の保護**
+```python
+# ヘルパー関数の個別保護
+try:
+    learning_progress = _get_learning_progress_summary()
+    current_app.logger.info(f"[DASHBOARD] Learning progress loaded for student {current_user.id}")
+except Exception as e:
+    current_app.logger.error(f"[DASHBOARD] Learning progress error: {str(e)}")
+    learning_progress = {'selected_units': [], 'stats': {'total_selected': 0}}
+
+# クラス詳細処理の保護
+for class_obj in classes:
+    try:
+        # メインテーマ・マイルストーン・チャット履歴の個別例外処理
+    except Exception as class_e:
+        # 基本情報だけでも表示
+        class_details.append({'class': class_obj, 'main_themes': [], ...})
+```
+
+#### 📊 期待される効果
+
+##### **診断能力向上**
+- **具体的エラー特定**: ImportError, AttributeError, KeyError の分離
+- **詳細ログ情報**: エラータイプ・メッセージ・関数・行情報
+- **段階的デグレード**: 部分的失敗でも基本機能を維持
+
+##### **運用監視改善**
+- **ログフィルタリング**: `[DASHBOARD]` タグによる検索容易性
+- **エラー分類**: システム・データベース・テンプレート・アクセス権限別
+- **影響範囲限定**: 個別機能の失敗が全体に波及しない
+
+### 次フェーズ予定
+
+#### **Phase 2: 最小動作バージョン作成**
+1. テンプレート変数監査 (`student_dashboard.html` の全変数特定)
+2. 未提供変数の仮値設定
+3. 基本レンダリング成功確認
+
+#### **Phase 3-6: 段階的機能復旧**
+- クラス・学習データ復旧
+- アンケート機能復旧
+- 統計・分析機能復旧
+- パフォーマンス最適化
+
+### 修正ファイル
+- `app/student/modules/dashboard.py` - 例外処理詳細化・ログ強化
+- `CLAUDE.md` - 修正ログセクション追加
+
+### 緊急対応完了時刻
+2025-06-30 Phase 1 完了 - 詳細診断機能実装済み
