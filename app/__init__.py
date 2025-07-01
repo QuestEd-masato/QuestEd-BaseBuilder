@@ -105,8 +105,49 @@ def create_app(config_object=None):
         register_special_routes(app)
         
         # BaseBuilderモジュールを初期化
-        from basebuilder import init_app as init_basebuilder
-        init_basebuilder(app)
+        try:
+            # 従来の初期化も実行
+            from basebuilder import init_app as init_basebuilder
+            init_basebuilder(app)
+            
+            # 追加で個別Blueprint登録を確実に実行
+            from basebuilder.routes import basebuilder_module
+            from basebuilder.routes.categories import categories_bp
+            from basebuilder.routes.problems import problems_bp
+            from basebuilder.routes.sessions import sessions_bp
+            from basebuilder.routes.progress import progress_bp
+            from basebuilder.routes.analytics import analytics_bp
+            from basebuilder.routes.admin import admin_bp
+            
+            # 重複登録を防ぐため、既存チェック
+            existing_blueprints = [bp.name for bp in app.blueprints.values()]
+            
+            # メインのbasebuilder_moduleを確実に登録
+            if 'basebuilder_module' not in existing_blueprints:
+                app.register_blueprint(basebuilder_module)
+                app.logger.info("✅ basebuilder_module registered")
+            
+            # 個別のBlueprintも確実に登録
+            blueprints_to_register = [
+                (categories_bp, 'categories'),
+                (problems_bp, 'problems'),
+                (sessions_bp, 'sessions'),
+                (progress_bp, 'progress'),
+                (analytics_bp, 'analytics'),
+                (admin_bp, 'admin')
+            ]
+            
+            for blueprint, name in blueprints_to_register:
+                if name not in existing_blueprints:
+                    app.register_blueprint(blueprint, url_prefix='/basebuilder')
+                    app.logger.info(f"✅ {name} blueprint registered")
+            
+            app.logger.info("✅ BaseBuilder and all sub-blueprints registered successfully")
+            
+        except ImportError as e:
+            app.logger.error(f"❌ Failed to import BaseBuilder routes: {e}")
+            import traceback
+            app.logger.error(traceback.format_exc())
         
         # シェルコンテキストプロセッサを登録
         register_shell_context(app)

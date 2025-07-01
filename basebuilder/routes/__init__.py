@@ -12,12 +12,35 @@ from flask import Blueprint, render_template, redirect, url_for, flash, current_
 from flask_login import login_required, current_user
 from datetime import datetime
 
+# 個別モジュールのBlueprintをインポート
 from .categories import categories_bp
 from .problems import problems_bp
 from .sessions import sessions_bp
 from .progress import progress_bp
 from .analytics import analytics_bp
 from .admin import admin_bp
+
+# 親ディレクトリのbasebuilder_moduleもインポート
+import sys
+import os
+sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
+try:
+    from routes import basebuilder_module
+except ImportError:
+    # フォールバック: 直接相対インポート
+    from ..routes import basebuilder_module
+
+# すべてのBlueprintをエクスポート
+__all__ = [
+    'basebuilder_module',
+    'categories_bp',
+    'problems_bp', 
+    'sessions_bp',
+    'progress_bp',
+    'analytics_bp',
+    'admin_bp',
+    'register_basebuilder_routes'
+]
 
 # メインのBaseBuilderインデックス用Blueprint
 basebuilder_main_bp = Blueprint('basebuilder', __name__)
