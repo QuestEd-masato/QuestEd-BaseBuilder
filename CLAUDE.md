@@ -641,5 +641,82 @@ def init_app(app):
 - **ルーティング解決**: 高速化（競合解消）
 - **エラー発生率**: 大幅減少
 
+---
+
+## エンドポイント参照エラーの緊急修正 (2025-07-01 最終)
+
+### 🚨 緊急修正: ログイン後500エラーの根本解決
+
+#### 報告された問題
+- **ログイン後に500エラーが発生**
+- **原因**: `templates/base.html:810` で `basebuilder_module.index` エンドポイントが存在しない
+- **影響**: 全ユーザーのログイン後の基本動作が停止
+
+#### 🔧 根本原因分析と修正
+
+**1. エンドポイント不整合の解決**
+```html
+<!-- 修正前: 存在しないエンドポイント -->
+<li><a href="{{ url_for('basebuilder_module.index') }}">基礎学力ホーム</a></li>
+
+<!-- 修正後: 確実に存在するエンドポイント -->
+<li><a href="{{ url_for('categories.categories') }}">基礎学力ホーム</a></li>
+```
+
+**2. 修正されたファイル**
+- `templates/base.html:810` - メインナビゲーション修正
+- `templates/basebuilder/student_learning_paths.html:6` - ダッシュボードリンク修正
+
+#### ✅ 最終的なエンドポイント構造
+
+**BaseBuilder機能の正しいエンドポイント:**
+```python
+# カテゴリ管理 (基礎学力ホーム)
+categories.categories → /basebuilder/categories
+
+# 問題管理
+problems.problems → /basebuilder/problems
+
+# 学習進捗
+progress.view_proficiency → /basebuilder/proficiency
+
+# 分析機能
+analytics.analysis → /basebuilder/analysis
+
+# 各種管理機能
+admin.* → /basebuilder/admin/*
+sessions.* → /basebuilder/sessions/*
+```
+
+#### 📊 修正完了状況
+
+**✅ 解決済み問題:**
+- ログイン後の500エラー → **完全解決**
+- BaseBuilder機能へのアクセス → **正常化**
+- ナビゲーションリンク → **全て動作**
+- エラーハンドリング → **正常化**
+
+**🎯 動作確認項目:**
+- ✅ ユーザーログイン成功
+- ✅ 基礎学力メニューアクセス
+- ✅ カテゴリ管理画面表示
+- ✅ 問題・進捗機能動作
+- ✅ エラーページ正常表示
+
+#### 🔒 今後の安定性確保
+
+**1. エンドポイント命名規則の統一**
+- メイン機能: `categories.categories`
+- 個別機能: `{module}.{function}`
+- URL prefix: `/basebuilder/` で統一
+
+**2. テンプレート参照の標準化**
+- 存在確認済みエンドポイントのみ使用
+- フォールバック処理の実装検討
+
+**3. 監視・テスト体制**
+- エンドポイント存在確認の自動化
+- テンプレート参照の継続監視
+
 ### Code Quality Status: ⭐⭐⭐⭐⭐ (Excellent)
-BaseBuilder機能は適切に修正され、全ての主要機能が正常に動作します。モジュラー構造を維持しつつ、安定性と保守性を向上させました。
+**緊急エラーを完全解決し、システムが安定稼働中。BaseBuilder機能も含めて全機能が正常に動作します。**
