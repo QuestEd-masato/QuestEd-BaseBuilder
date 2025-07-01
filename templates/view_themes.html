@@ -93,12 +93,12 @@
                                     <span class="problem-difficulty difficulty-{{ problem.difficulty }}">
                                         難易度: {{ problem.difficulty }}
                                     </span>
-                                    <a href="{{ url_for('basebuilder.solve_problem', problem_id=problem.id) }}" 
+                                    <a href="{{ url_for('sessions.solve_problem', problem_id=problem.id) }}" 
                                        class="btn btn-sm btn-outline">挑戦する</a>
                                 </div>
                             {% endfor %}
                         </div>
-                        <a href="{{ url_for('basebuilder.problems', theme_id=item.theme.id) }}" 
+                        <a href="{{ url_for('problems.problems', theme_id=item.theme.id) }}" 
                            class="btn btn-sm">すべての関連問題を見る</a>
                     </div>
                     {% endif %}
