@@ -173,16 +173,42 @@ def dashboard():
             'total_study_time': 0            # 総学習時間（分）
         }
         
-        # アンケート情報（後でget_student_survey_status()から取得）
+        # アンケート情報を実際に取得
+        try:
+            from app.models import InterestSurvey, PersonalitySurvey
+            interest_survey = InterestSurvey.query.filter_by(student_id=current_user.id).first()
+            personality_survey = PersonalitySurvey.query.filter_by(student_id=current_user.id).first()
+        except Exception as survey_e:
+            current_app.logger.error(f"[DASHBOARD] Survey query error: {str(survey_e)}")
+            interest_survey = None
+            personality_survey = None
+        
         survey_info = {
-            'interest_survey': None,         # 興味関心アンケート
-            'personality_survey': None       # 性格診断アンケート
+            'interest_survey': interest_survey,      # 興味関心アンケート
+            'personality_survey': personality_survey # 性格診断アンケート
         }
         
-        # クラス・活動情報
+        # クラス・活動情報を構築
+        all_class_themes = []
+        for class_detail in class_details:
+            class_obj = class_detail['class']
+            main_themes = class_detail['main_themes']
+            
+            # メインテーマがある場合は最初のテーマを使用、ない場合はデフォルト
+            theme_title = None
+            if main_themes:
+                theme_title = main_themes[0].title
+            
+            class_theme = {
+                'class_id': class_obj.id,
+                'class_name': class_obj.name,
+                'theme_title': theme_title
+            }
+            all_class_themes.append(class_theme)
+        
         activity_info = {
-            'all_class_themes': [],          # 全クラステーマ
-            'class_info': {},                # クラス情報
+            'all_class_themes': all_class_themes,   # 構築されたクラステーマ
+            'class_info': {'class_count': len(classes)} if classes else {},  # クラス情報
             'class_todos': [],               # クラスTODO
             'class_goals': [],               # クラス目標
             'pending_todos_count': 0,        # 未完了TODO数
@@ -194,7 +220,14 @@ def dashboard():
             'weekly_top_learners': []        # 週間ランキング
         }
         
+        # テンプレート用のスタイル変数を追加
+        template_styles = {
+            'btn_primary_style': 'display: inline-block; padding: 0.375rem 0.75rem; font-size: 0.875rem; border-radius: 0.25rem; text-decoration: none; background-color: #0056b3; color: white; border: 1px solid #0056b3;',
+            'btn_outline_style': 'display: inline-block; padding: 0.375rem 0.75rem; font-size: 0.875rem; border-radius: 0.25rem; text-decoration: none; background-color: transparent; color: #0056b3; border: 1px solid #0056b3;'
+        }
+        
         current_app.logger.info(f"[DASHBOARD] Phase 2: Adding missing template variables for student {current_user.id}")
+        current_app.logger.info(f"[DASHBOARD] Providing {len(all_class_themes)} class themes to template")
         
         return render_template('student_dashboard.html',
                              student_info=student_info,
@@ -206,7 +239,8 @@ def dashboard():
                              **basebuilder_stats,
                              **unit_stats,
                              **survey_info,
-                             **activity_info)
+                             **activity_info,
+                             **template_styles)
         
     except ImportError as e:
         current_app.logger.error(f"[DASHBOARD] Import error for student {current_user.id}: {str(e)}")
