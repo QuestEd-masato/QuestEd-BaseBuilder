@@ -30,7 +30,7 @@
           <div class="card-body">
             <h5 class="card-title">学習パス数</h5>
             <p class="display-4">{{ path_count }}</p>
-            <a href="{{ url_for('basebuilder_admin.learning_paths') }}" class="btn btn-sm btn-outline">管理する</a>
+            <a href="{{ url_for('admin.learning_paths') }}" class="btn btn-sm btn-outline">管理する</a>
           </div>
         </div>
       </div>
@@ -111,10 +111,10 @@
       <div class="card-body">
         <div class="d-grid gap-2">
           <a href="{{ url_for('problems.create_problem') }}" class="btn btn-primary">問題を作成</a>
-          <a href="{{ url_for('basebuilder_admin.import_text_set') }}" class="btn btn-outline">テキストを作成</a>
+          <a href="{{ url_for('admin.import_text_set') }}" class="btn btn-outline">テキストを作成</a>
           <a href="{{ url_for('categories.create_category') }}" class="btn btn-outline">カテゴリを作成</a>
-          <a href="{{ url_for('basebuilder_admin.create_learning_path') }}" class="btn btn-outline">学習パスを作成</a>
-          <a href="{{ url_for('basebuilder_admin.theme_relations') }}" class="btn btn-outline">テーマと問題を関連付け</a>
+          <a href="{{ url_for('admin.create_learning_path') }}" class="btn btn-outline">学習パスを作成</a>
+          <a href="{{ url_for('admin.theme_relations') }}" class="btn btn-outline">テーマと問題を関連付け</a>
         </div>
       </div>
     </div>

@@ -20,8 +20,13 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from flask_login import login_required, current_user
 from datetime import datetime
 
-# Import the registration function for all modular routes
-from basebuilder.routes import register_basebuilder_routes
+# Import individual route modules directly
+from .routes.categories import categories_bp
+from .routes.problems import problems_bp  
+from .routes.sessions import sessions_bp
+from .routes.progress import progress_bp
+from .routes.analytics import analytics_bp
+from .routes.admin import admin_bp
 
 # Import models for the main index route
 from extensions import db
@@ -143,10 +148,74 @@ def index():
         return redirect(url_for('index'))
 
 
-# 互換性のための関数
-def register_legacy_routes(app):
-    """レガシールートを登録（必要に応じて使用）"""
-    app.register_blueprint(basebuilder_module)
+# 統合されたルート登録関数
+def register_integrated_routes(app):
+    """BaseBuilderの全ルートを統合して登録"""
+    # 各機能モジュールをメインBlueprintに統合
+    try:
+        # カテゴリ管理機能を統合
+        for rule in categories_bp.url_map.iter_rules():
+            basebuilder_module.add_url_rule(
+                rule.rule, 
+                rule.endpoint.replace('categories.', ''), 
+                view_func=app.view_functions.get(rule.endpoint)
+            )
+        
+        # 問題管理機能を統合  
+        for rule in problems_bp.url_map.iter_rules():
+            basebuilder_module.add_url_rule(
+                rule.rule,
+                rule.endpoint.replace('problems.', ''),
+                view_func=app.view_functions.get(rule.endpoint)
+            )
+            
+        # セッション管理機能を統合
+        for rule in sessions_bp.url_map.iter_rules():
+            basebuilder_module.add_url_rule(
+                rule.rule,
+                rule.endpoint.replace('sessions.', ''),
+                view_func=app.view_functions.get(rule.endpoint)
+            )
+            
+        # 進捗管理機能を統合
+        for rule in progress_bp.url_map.iter_rules():
+            basebuilder_module.add_url_rule(
+                rule.rule,
+                rule.endpoint.replace('progress.', ''),
+                view_func=app.view_functions.get(rule.endpoint)
+            )
+            
+        # 分析機能を統合
+        for rule in analytics_bp.url_map.iter_rules():
+            basebuilder_module.add_url_rule(
+                rule.rule,
+                rule.endpoint.replace('analytics.', ''),
+                view_func=app.view_functions.get(rule.endpoint)
+            )
+            
+        # 管理機能を統合
+        for rule in admin_bp.url_map.iter_rules():
+            basebuilder_module.add_url_rule(
+                rule.rule,
+                rule.endpoint.replace('admin.', ''),
+                view_func=app.view_functions.get(rule.endpoint)
+            )
+            
+        app.logger.info("BaseBuilder integrated routes registered successfully")
+        
+    except Exception as e:
+        app.logger.warning(f"BaseBuilder route integration failed: {e}")
+        # フォールバック: 個別に登録
+        register_fallback_routes(app)
+
+def register_fallback_routes(app):
+    """統合失敗時のフォールバック登録"""
+    app.register_blueprint(categories_bp, url_prefix='/basebuilder')
+    app.register_blueprint(problems_bp, url_prefix='/basebuilder')
+    app.register_blueprint(sessions_bp, url_prefix='/basebuilder')
+    app.register_blueprint(progress_bp, url_prefix='/basebuilder')
+    app.register_blueprint(analytics_bp, url_prefix='/basebuilder')
+    app.register_blueprint(admin_bp, url_prefix='/basebuilder')
 
 
 # モジュール情報

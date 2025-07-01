@@ -2,22 +2,39 @@
 def init_app(app):
     """BaseBuilderモジュールをアプリケーションに初期化する"""
     
-    # 新しいモジュラー構造のBlueprintを登録
-    from basebuilder.routes import register_basebuilder_routes
-    register_basebuilder_routes(app)
-    
-    # メインBaseBuilderモジュール登録（レガシーサポート）
-    # 注意: templates内で多数のbasebuilder_module.*参照があるため、互換性維持
+    # BaseBuilderモジュール登録（シンプルなフォールバック方式）
     try:
-        import sys
-        sys.path.insert(0, '.')
+        # メインのbasebuilder_module Blueprint登録
         from basebuilder.routes import basebuilder_module
         app.register_blueprint(basebuilder_module)
-        app.logger.info("BaseBuilder legacy module registered successfully")
+        
+        # 各機能モジュールを個別登録（安全な方式）
+        from basebuilder.routes.categories import categories_bp
+        from basebuilder.routes.problems import problems_bp  
+        from basebuilder.routes.sessions import sessions_bp
+        from basebuilder.routes.progress import progress_bp
+        from basebuilder.routes.analytics import analytics_bp
+        from basebuilder.routes.admin import admin_bp
+        
+        app.register_blueprint(categories_bp, url_prefix='/basebuilder')
+        app.register_blueprint(problems_bp, url_prefix='/basebuilder')
+        app.register_blueprint(sessions_bp, url_prefix='/basebuilder')
+        app.register_blueprint(progress_bp, url_prefix='/basebuilder')
+        app.register_blueprint(analytics_bp, url_prefix='/basebuilder')
+        app.register_blueprint(admin_bp, url_prefix='/basebuilder')
+        
+        app.logger.info("BaseBuilder all modules registered successfully")
+        
     except ImportError as e:
-        import logging
-        logging.warning(f"BaseBuilder legacy module import failed: {e}")
-        # 新しいモジュラー構造のみ使用
+        app.logger.error(f"BaseBuilder module import failed: {e}")
+        # 最小限の機能でも動作させる
+        try:
+            from basebuilder.routes import basebuilder_module
+            app.register_blueprint(basebuilder_module)
+            app.logger.info("BaseBuilder minimal module registered")
+        except:
+            app.logger.error("BaseBuilder initialization completely failed")
+            raise e
     
     # 管理画面へのモデル追加（Flask-Adminが利用可能な場合のみ）
     with app.app_context():

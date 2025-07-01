@@ -68,7 +68,7 @@
                           開始する
                         {% endif %}
                       </a>
-                      <a href="{{ url_for('basebuilder_admin.view_text_set', text_id=delivery.text_set_id) }}" class="btn btn-outline">
+                      <a href="{{ url_for('admin.view_text_set', text_id=delivery.text_set_id) }}" class="btn btn-outline">
                         詳細
                       </a>
                     </div>
@@ -80,7 +80,7 @@
               </div>
             {% endfor %}
           </div>
-          <a href="{{ url_for('basebuilder_admin.my_texts') }}" class="btn btn-outline mt-2">
+          <a href="{{ url_for('admin.my_texts') }}" class="btn btn-outline mt-2">
             すべてのテキストを見る
           </a>
         {% else %}
@@ -143,7 +143,7 @@
           <a href="{{ url_for('problems.problems') }}" class="btn btn-primary">
             <i class="fas fa-book"></i> 問題を検索
           </a>
-          <a href="{{ url_for('basebuilder_admin.learning_paths') }}" class="btn btn-outline">
+          <a href="{{ url_for('admin.learning_paths') }}" class="btn btn-outline">
             <i class="fas fa-road"></i> 学習パスを見る
           </a>
         </div>
@@ -199,7 +199,7 @@
                   {{ assignment.progress }}%
                 </div>
               </div>
-              <a href="{{ url_for('basebuilder_admin.start_learning_path', assignment_id=assignment.id) }}" class="btn btn-sm btn-outline">
+              <a href="{{ url_for('admin.start_learning_path', assignment_id=assignment.id) }}" class="btn btn-sm btn-outline">
                 続ける
               </a>
             </div>
