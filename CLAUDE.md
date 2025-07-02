@@ -246,13 +246,11 @@ student_unit_selections: (546 records)
 
 ### Current System Status
 
-#### ✅ Fully Operational Features
-- **Authentication System**: Complete with email verification
-- **Teacher Dashboard**: All functionality working
-- **Student Dashboard**: Restored to full functionality  
-- **BaseBuilder Module**: Complete access and functionality
-- **API Endpoints**: All critical endpoints operational
-- **Class Management**: Full teacher and student functionality
+#### ✅ Infrastructure & Basic Features (Confirmed Working)
+- **Authentication System**: Core login/logout functionality
+- **Blueprint Registration**: All modules properly registered
+- **Basic Routing**: Main dashboards and navigation
+- **Template System**: Base layouts and core templates
 
 #### 🔧 Recent Quality Improvements
 - **Blueprint Architecture**: Modular structure implemented
@@ -262,41 +260,35 @@ student_unit_selections: (546 records)
 
 ### Blueprint Structure
 
-#### Teacher Module (Modular)
+#### Main Application Modules
 ```
-app/teacher/
-├── __init__.py              # Blueprint registration
-├── modules/
-│   ├── dashboard.py         # Dashboard functionality (199 lines)
-│   ├── class_management.py  # Class operations
-│   ├── curriculum_management.py # Curriculum features
-│   ├── synchronization.py   # Auto-sync functionality
-│   └── analytics.py         # Teacher analytics
-└── common.py               # Shared decorators/utilities
+app/
+├── auth/                    # Authentication Blueprint
+├── admin/                   # Admin functionality Blueprint  
+├── teacher/                 # Teacher features Blueprint (modular)
+├── student/                 # Student features Blueprint (modular)
+└── api/                     # REST API Blueprint (organized)
 ```
 
-#### Student Module (Modular)
+#### BaseBuilder Module (Current Structure)
 ```
-app/student/
-├── __init__.py              # Blueprint registration  
-├── modules/
-│   ├── dashboard.py         # Student dashboard
-│   ├── activities.py        # Activity management
-│   ├── surveys.py           # Interest/personality surveys
-│   ├── goals_todos.py       # Goal and todo management
-│   └── themes.py            # Inquiry theme selection
+basebuilder/
+├── __init__.py                    # init_app() entry point
+├── routes.py                      # Central Blueprint registration
+├── models.py                      # All BaseBuilder models  
+├── utils.py                       # Common utilities (NEW)
+├── services.py                    # Business logic services (NEW)
+└── routes/                        # Individual route modules
+    ├── __init__.py               # Empty (prevents circular imports)
+    ├── categories.py             # Category management
+    ├── problems.py               # Problem management
+    ├── sessions.py               # Learning sessions
+    ├── progress.py               # Progress tracking
+    ├── analytics.py              # Analytics & statistics
+    └── admin.py                  # Administrative functions
 ```
 
-#### API Module (Organized)
-```
-app/api/
-├── __init__.py              # Main API registration
-├── units.py                 # Unit management APIs
-├── progress.py              # Progress tracking APIs
-├── approvals.py             # Approval workflow APIs
-├── rankings.py              # Ranking system APIs
-└── analytics.py             # Analytics APIs
-```
+*Note: Teacher, Student, API module structures remain as documented in previous sections.*
 
 ### Code Quality Assessment (2025-06-30)
 
@@ -340,25 +332,15 @@ mysql -u $DB_USER -p$DB_PASS -h $DB_HOST -e "SHOW PROCESSLIST;"
 
 ### Development Guidelines
 
-#### Code Style
+*For current development guidelines and technical specifications, see:*
+- **"BaseBuilder技術仕様書 (2025-07-02確定版)"** - Complete current specifications
+- **"📝 未実装項目の正確な記録"** - Implementation priorities
+
+#### Legacy Code Style (Historical Reference)
 - **Language**: Python 3.8+, Flask 2.x
-- **Database**: MySQL with SQLAlchemy ORM
+- **Database**: MySQL with SQLAlchemy ORM  
 - **Frontend**: Jinja2 templates, Bootstrap 5, jQuery
 - **API**: RESTful JSON APIs with proper error handling
-
-#### Adding New Features
-1. **Create appropriate Blueprint module**
-2. **Add database models if needed**
-3. **Implement service layer logic**
-4. **Add template files**
-5. **Update endpoint references**
-6. **Add proper error handling**
-
-#### Database Changes
-1. **Create migration**: `flask db migrate -m "Description"`
-2. **Review migration file** for correctness
-3. **Apply migration**: `flask db upgrade`
-4. **Update model definitions** if needed
 
 ### Security Considerations
 
@@ -451,272 +433,25 @@ All major production errors have been resolved. The system is now fully operatio
 
 ---
 
-## Emergency Fixes - Phase 2 (2025-06-30 Evening)
+## 修正履歴統合版 (2025-06-30 ~ 2025-07-02)
 
-### 🚨 Additional Critical Issues Resolved
+### 📊 主要な修正内容
 
-#### Blueprint Endpoint Reference Errors
-**Problems Discovered**:
-- `teacher.import_curriculum` → `teacher_curriculum_management.import_curriculum`
-- `teacher.generate_student_report` → `teacher_student_evaluation.generate_student_report`
-- `basebuilder_admin.import_problems` → Missing endpoint
+#### ✅ 解決済み問題（確実）
+1. **Student dashboard cards not displaying** → 修正完了 (2025-06-30)
+2. **Blueprint endpoint reference errors** → 修正完了 (2025-06-30)
+3. **Model field consistency issues** → 修正完了 (2025-06-30)
+4. **BaseBuilder Blueprint registration conflicts** → 修正完了 (2025-07-01)
+5. **Template endpoint reference errors** → 修正完了 (2025-07-02)
 
-**Solutions Implemented**:
-- ✅ Fixed curriculum import endpoint reference in `templates/curriculums.html`
-- ✅ Fixed student report generation endpoint in `templates/class_details.html`
-- ✅ Implemented missing `import_problems` endpoint in `basebuilder/routes/admin.py`
-- ✅ Fixed teacher chat template path: `teacher/chat.html` → `chat.html`
+#### 🔧 重要な技術修正
+- **ログイン500エラー**: base.html `basebuilder_admin.learning_paths` → `admin.learning_paths`
+- **インポートエラー**: sessions.py に `sqlalchemy.func` 追加
+- **循環インポート**: basebuilder/routes/__init__.py 空ファイル化
+- **Blueprint統一**: 全モジュールで `url_prefix='/basebuilder'` 統一
 
-#### Model Field Consistency Issues
-**Problems Discovered**:
-- `difficulty_level` vs `difficulty` field confusion (83 occurrences)
-- `answer_records.user_id` vs `student_id` field misuse (2 occurrences)
-
-**Solutions Implemented**:
-- ✅ Fixed BasicKnowledgeItem field references: `difficulty_level` → `difficulty`
-- ✅ Fixed AnswerRecord field references: `user_id` → `student_id`
-- ✅ Updated 5 locations in `basebuilder/routes/problems.py`
-- ✅ Updated 3 locations in `basebuilder/routes/sessions.py`
-- ✅ Updated 2 locations in `app/services/ai_recommendation_service.py`
-
-### 📊 Current Error Status
-
-#### Production Error Monitoring Results
-- **BuildErrors**: 📉 Reduced from 4/hour to 0 (target endpoints fixed)
-- **404 Errors**: 📉 Reduced from 48/hour to minimal
-- **500 Errors**: 📉 Eliminated critical endpoint failures
-- **AttributeErrors**: ✅ All database field mismatches resolved
-
-### 🎯 Endpoint Role Documentation
-
-#### Teacher Module Endpoints
-```
-teacher_curriculum_management.import_curriculum - CSV/Excel curriculum import
-teacher_student_evaluation.generate_student_report - PDF report generation  
-teacher_dashboard.chat_page - Teacher chat interface
-```
-
-#### BaseBuilder Module Endpoints  
-```
-basebuilder_admin.import_problems - Problem CSV/Excel import (newly implemented)
-problems.problems - Problem listing and management
-sessions.solve_problem - Problem solving interface
-```
-
-#### Template File Mapping
-```
-templates/curriculums.html - Curriculum management (teacher)
-templates/class_details.html - Class overview with student reports
-templates/chat.html - Universal chat interface
-templates/basebuilder/import_problems.html - Problem import form
-```
-
-### 🔧 Database Field Standards
-
-#### Model Field Reference Guide
-```python
-# Correct Usage:
-BasicKnowledgeItem.difficulty      # ✅ NOT difficulty_level
-CurriculumUnit.difficulty_level    # ✅ NOT difficulty
-AnswerRecord.student_id           # ✅ NOT user_id
-ChatHistory.user_id               # ✅ NOT teacher_id
-
-# Field Type Mapping:
-difficulty (BasicKnowledgeItem): INT(1-5) - Problem difficulty
-difficulty_level (CurriculumUnit): INT(1-3) - Unit complexity
-student_id (AnswerRecord): INT FK to users.id
-user_id (ChatHistory): INT FK to users.id
-```
-
----
-
-## BaseBuilder機能修正完了 (2025-07-01)
-
-### 🔧 BaseBuilder機能の修正内容
-
-#### 修正された問題点
-
-**1. Blueprint登録の重複解決**
-- **問題**: `basebuilder/__init__.py` で新しいモジュラー構造とレガシー構造が重複登録
-- **解決策**: シンプルなフォールバック方式を採用し、安全な個別登録を実装
-- **修正ファイル**: `basebuilder/__init__.py`
-
-**2. ルーティング構造の統一**
-```python
-# 修正前: 重複するBlueprint登録
-register_basebuilder_routes(app)  # 新構造
-app.register_blueprint(basebuilder_module)  # レガシー構造
-
-# 修正後: 統一された登録方式
-app.register_blueprint(basebuilder_module)  # メイン
-app.register_blueprint(各機能_bp, url_prefix='/basebuilder')  # モジュール
-```
-
-**3. テンプレート内エンドポイント参照の統一**
-- **修正対象**: BaseBuilderテンプレート18ファイル
-- **変更内容**: `basebuilder_admin.` → `admin.` に統一
-- **影響範囲**: 問題インポート、学習パス管理、テキスト管理機能
-
-#### 修正されたエンドポイント
-```python
-# 問題管理機能
-admin.import_problems - 問題CSVインポート
-admin.download_problem_template - テンプレートダウンロード
-
-# 学習パス管理
-admin.learning_paths - 学習パス一覧
-admin.create_learning_path - 学習パス作成
-admin.assign_learning_path - 学習パス割り当て
-
-# テキスト管理
-admin.text_sets - テキスト一覧
-admin.import_text_set - テキストインポート
-admin.view_text_set - テキスト詳細表示
-```
-
-### ✅ 修正完了ステータス
-
-#### 正常に動作する機能
-- **BaseBuilderメインダッシュボード** (`/basebuilder/`)
-- **問題管理とインポート機能**
-- **学習パス作成・管理機能**
-- **テキスト管理・配信機能**
-- **学生向け学習インターフェース**
-
-#### Blueprint構造
-```python
-# 統一されたBaseBuilder構造
-basebuilder_module ('/basebuilder' prefix)
-├── categories_bp - カテゴリ管理
-├── problems_bp - 問題管理  
-├── sessions_bp - セッション管理
-├── progress_bp - 進捗管理
-├── analytics_bp - 分析機能
-└── admin_bp - 管理機能
-```
-
-#### 修正されたテンプレートファイル
-- `templates/basebuilder/import_problems.html`
-- `templates/basebuilder/teacher_dashboard.html` 
-- `templates/basebuilder/student_dashboard.html`
-- `templates/basebuilder/solve_text.html`
-- `templates/basebuilder/text_sets.html`
-- その他13ファイル
-
-### 🎯 BaseBuilder機能の技術仕様
-
-#### 安全なBlueprint初期化
-```python
-def init_app(app):
-    try:
-        # メインBlueprint登録
-        from basebuilder.routes import basebuilder_module
-        app.register_blueprint(basebuilder_module)
-        
-        # 各機能モジュールを個別登録（安全な方式）
-        from basebuilder.routes.admin import admin_bp
-        app.register_blueprint(admin_bp, url_prefix='/basebuilder')
-        
-    except ImportError as e:
-        # フォールバック処理
-        app.logger.error(f"BaseBuilder initialization failed: {e}")
-```
-
-#### エンドポイント命名規則
-- **メインダッシュボード**: `basebuilder_module.index`
-- **管理機能**: `admin.function_name`
-- **問題機能**: `problems.function_name`
-- **セッション機能**: `sessions.function_name`
-
-### 📊 修正結果
-
-#### テスト結果
-- ✅ **構文エラー**: なし（全ファイル py_compile 通過）
-- ✅ **インポートエラー**: 解決済み
-- ✅ **Blueprint競合**: 解決済み
-- ✅ **テンプレート参照**: 統一完了
-
-#### パフォーマンス改善
-- **Blueprint登録時間**: 短縮（重複処理削除）
-- **ルーティング解決**: 高速化（競合解消）
-- **エラー発生率**: 大幅減少
-
----
-
-## エンドポイント参照エラーの緊急修正 (2025-07-01 最終)
-
-### 🚨 緊急修正: ログイン後500エラーの根本解決
-
-#### 報告された問題
-- **ログイン後に500エラーが発生**
-- **原因**: `templates/base.html:810` で `basebuilder_module.index` エンドポイントが存在しない
-- **影響**: 全ユーザーのログイン後の基本動作が停止
-
-#### 🔧 根本原因分析と修正
-
-**1. エンドポイント不整合の解決**
-```html
-<!-- 修正前: 存在しないエンドポイント -->
-<li><a href="{{ url_for('basebuilder_module.index') }}">基礎学力ホーム</a></li>
-
-<!-- 修正後: 確実に存在するエンドポイント -->
-<li><a href="{{ url_for('categories.categories') }}">基礎学力ホーム</a></li>
-```
-
-**2. 修正されたファイル**
-- `templates/base.html:810` - メインナビゲーション修正
-- `templates/basebuilder/student_learning_paths.html:6` - ダッシュボードリンク修正
-
-#### ✅ 最終的なエンドポイント構造
-
-**BaseBuilder機能の正しいエンドポイント:**
-```python
-# カテゴリ管理 (基礎学力ホーム)
-categories.categories → /basebuilder/categories
-
-# 問題管理
-problems.problems → /basebuilder/problems
-
-# 学習進捗
-progress.view_proficiency → /basebuilder/proficiency
-
-# 分析機能
-analytics.analysis → /basebuilder/analysis
-
-# 各種管理機能
-admin.* → /basebuilder/admin/*
-sessions.* → /basebuilder/sessions/*
-```
-
-#### 📊 修正完了状況
-
-**✅ 解決済み問題:**
-- ログイン後の500エラー → **完全解決**
-- BaseBuilder機能へのアクセス → **正常化**
-- ナビゲーションリンク → **全て動作**
-- エラーハンドリング → **正常化**
-
-**🎯 動作確認項目:**
-- ✅ ユーザーログイン成功
-- ✅ 基礎学力メニューアクセス
-- ✅ カテゴリ管理画面表示
-- ✅ 問題・進捗機能動作
-- ✅ エラーページ正常表示
-
-#### 🔒 今後の安定性確保
-
-**1. エンドポイント命名規則の統一**
-- メイン機能: `categories.categories`
-- 個別機能: `{module}.{function}`
-- URL prefix: `/basebuilder/` で統一
-
-**2. テンプレート参照の標準化**
-- 存在確認済みエンドポイントのみ使用
-- フォールバック処理の実装検討
-
-**3. 監視・テスト体制**
-- エンドポイント存在確認の自動化
-- テンプレート参照の継続監視
+### 📋 現在の確定仕様（2025-07-02時点）
+この仕様は「BaseBuilder技術仕様書」セクションを参照してください。
 
 ---
 
@@ -946,3 +681,43 @@ path_assignments
 - **ロールバック準備**: 問題発生時の復旧手順確保
 
 この記録により、将来の開発者は何が実装済みで何が未実装かを正確に把握でき、適切な優先順位で作業を進めることができます。
+
+---
+
+## 📚 ドキュメント構成ガイド (2025-07-02)
+
+### 🎯 現在の開発に重要なセクション
+
+#### 最優先参照
+1. **"現在の実際の状況 (2025-07-02)"** - 何が動作し、何が不明かの正確な把握
+2. **"BaseBuilder技術仕様書 (2025-07-02確定版)"** - 確定した技術仕様
+3. **"📝 未実装項目の正確な記録"** - 実装すべき項目と優先順位
+
+#### 開発作業時参照
+1. **"⚠️ 重要な制約事項"** - やってはいけないことの確認
+2. **"📋 開発ガイドライン"** - 安全な開発手順
+3. **"🗄️ データベース標準仕様"** - フィールド命名規則
+
+### 📖 履歴参照セクション
+
+#### 修正履歴
+- **"修正履歴統合版 (2025-06-30 ~ 2025-07-02)"** - 主要修正の要約
+- **"Critical Issues Resolution (2025-06-30)"** - 初期の重要修正
+
+#### アーキテクチャ
+- **"Blueprint Structure"** - 現在のモジュール構造
+- **"Database Structure (Updated 2025-06-30)"** - データベース概要
+
+### ⚠️ ドキュメント保守上の注意
+
+#### 更新が必要な場合
+- **現状が変わったとき**: "現在の実際の状況"セクションを更新
+- **仕様が確定したとき**: "BaseBuilder技術仕様書"セクションを更新
+- **実装が完了したとき**: "未実装項目の正確な記録"セクションを更新
+
+#### 更新してはいけないもの
+- **履歴セクション**: 過去の記録として保持
+- **重複削除済み記述**: 再度追加しない
+- **過度に楽観的な記述**: 現実的な表現を維持
+
+この構成により、CLAUDE.mdは開発者にとって実用的で信頼できるリファレンスとして機能します。
