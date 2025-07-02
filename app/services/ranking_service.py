@@ -153,102 +153,83 @@ class RankingService:
 
     @classmethod
     def _calculate_total_points_ranking(cls, scope: str, scope_id: int, limit: int) -> Dict[str, Any]:
-        """総合ポイントランキングを計算"""
+        """総合ポイントランキングを計算（修正版）"""
         logger.info(f"Calculating total points ranking: scope={scope}, scope_id={scope_id}, limit={limit}")
         
-        base_query = cls._get_base_user_query(scope, scope_id)
-        logger.debug(f"Base query filters applied for scope={scope}, scope_id={scope_id}")
-        
-        # ポイント計算のサブクエリ（BaseBuilderモデル対応）
-        points_subquery = db.session.query(
-            User.id.label('user_id'),
-            (
-                # 学習時間ポイント（分）
-                func.coalesce(
-                    func.sum(0), 0  # study_durationフィールドが存在しないためゼロで置き換え
-                ) +
-                # 単元完了ポイント
-                func.coalesce(
-                    func.sum(
-                        case(
-                            (StudentUnitSelection.progress_percentage >= 100, 
-                              cls.POINTS_CONFIG['unit_completion']),
-                            else_=0
-                        )
-                    ), 0
-                )
-            ).label('total_points')
-        ).select_from(User).outerjoin(
-            ActivityLog, User.id == ActivityLog.student_id
-        ).outerjoin(
-            StudentUnitSelection, User.id == StudentUnitSelection.student_id
-        ).filter(
-            User.role == 'student',
-            User.is_active == True
-        ).group_by(User.id).subquery()
-        
-        # BaseBuilderの正解ポイントを追加
-        answer_points_subquery = db.session.query(
-            AnswerRecord.student_id,
-            func.sum(AnswerRecord.is_correct * cls.POINTS_CONFIG['correct_answer']).label('answer_points')
-        ).group_by(AnswerRecord.student_id).subquery()
-        
-        points_subquery = db.session.query(
-            points_subquery.c.user_id,
-            (points_subquery.c.total_points + 
-             func.coalesce(answer_points_subquery.c.answer_points, 0)).label('total_points')
-        ).outerjoin(
-            answer_points_subquery, points_subquery.c.user_id == answer_points_subquery.c.student_id
-        ).subquery()
-        
-        # ランキングクエリ
-        ranking_query = base_query.join(
-            points_subquery, User.id == points_subquery.c.user_id
-        ).add_columns(
-            points_subquery.c.total_points,
-            func.row_number().over(order_by=desc(points_subquery.c.total_points)).label('rank')
-        ).order_by(desc(points_subquery.c.total_points)).limit(limit)
-        
-        results = ranking_query.all()
-        logger.info(f"Found {len(results)} ranking entries for total_points")
-        
-        if not results:
-            logger.warning("No ranking data found - checking user count and activity data")
-            user_count = base_query.count()
-            activity_count = ActivityLog.query.count()
-            logger.warning(f"Total users matching criteria: {user_count}, Total activities: {activity_count}")
+        try:
+            # シンプルな直接結合クエリで正確なユーザー情報を取得
+            ranking_query = db.session.query(
+                User.id.label('student_id'),
+                User.username.label('student_name'),
+                func.coalesce(func.sum(AnswerRecord.is_correct * cls.POINTS_CONFIG['correct_answer']), 0).label('total_points'),
+                func.count(AnswerRecord.id).label('total_answers'),
+                func.sum(AnswerRecord.is_correct).label('correct_answers')
+            ).select_from(User).join(
+                AnswerRecord, User.id == AnswerRecord.student_id
+            ).filter(
+                User.role == 'student',
+                User.is_active == True
+            )
             
-            # データが空の場合は基本的なユーザーリストを返す（開発・テスト用）
-            fallback_users = base_query.limit(limit).all()
-            logger.info(f"Fallback: returning {len(fallback_users)} users with base scores")
+            # スコープフィルタリング
+            if scope == 'school' and scope_id:
+                ranking_query = ranking_query.filter(User.school_id == scope_id)
+            elif scope == 'class' and scope_id:
+                from app.models import ClassEnrollment
+                ranking_query = ranking_query.join(
+                    ClassEnrollment, User.id == ClassEnrollment.student_id
+                ).filter(
+                    ClassEnrollment.class_id == scope_id,
+                    ClassEnrollment.is_active == True
+                )
+            
+            ranking_query = ranking_query.group_by(
+                User.id, User.username
+            ).order_by(
+                desc('total_points')
+            ).limit(limit)
+            
+            results = ranking_query.all()
+            logger.info(f"Found {len(results)} ranking entries with correct user joins")
+            
+            if not results:
+                logger.warning("No students with answer data found")
+                return {
+                    'rankings': [],
+                    'total_participants': 0,
+                    'last_updated': datetime.utcnow().isoformat(),
+                    'ranking_type': 'total_points'
+                }
             
             return {
                 'rankings': [
                     {
                         'rank': idx + 1,
-                        'student_id': user.id,
-                        'student_name': user.username,
-                        'score': 10.0,  # デフォルトスコア
-                        'school_name': user.school.name if user.school else None,
-                        'class_name': ', '.join([c.name for c in user.classes]) if user.classes else None
+                        'student_id': result.student_id,
+                        'student_name': result.student_name,
+                        'score': float(result.total_points),
+                        'total_answers': result.total_answers,
+                        'correct_answers': result.correct_answers,
+                        'accuracy_rate': round((result.correct_answers / result.total_answers) * 100, 1) if result.total_answers > 0 else 0,
+                        'school_name': None,  # 簡素化のため一時的にNone
+                        'class_name': None
                     }
-                    for idx, user in enumerate(fallback_users)
+                    for idx, result in enumerate(results)
                 ],
-                'total_participants': user_count,
+                'total_participants': len(results),
+                'last_updated': datetime.utcnow().isoformat(),
+                'ranking_type': 'total_points'
+            }
+            
+        except Exception as e:
+            logger.error(f"Total points ranking calculation error: {str(e)}")
+            return {
+                'rankings': [],
+                'total_participants': 0,
                 'last_updated': datetime.utcnow().isoformat(),
                 'ranking_type': 'total_points',
-                'is_fallback': True  # フォールバックデータであることを示す
+                'error': str(e)
             }
-        
-        return {
-            'rankings': [
-                cls._format_ranking_entry(result, getattr(result, 'rank', idx + 1), 'total_points')
-                for idx, result in enumerate(results)
-            ],
-            'total_participants': cls._count_participants(scope, scope_id),
-            'last_updated': datetime.utcnow().isoformat(),
-            'ranking_type': 'total_points'
-        }
 
     @classmethod
     def _calculate_weekly_points_ranking(cls, scope: str, scope_id: int, limit: int) -> Dict[str, Any]:
@@ -381,49 +362,75 @@ class RankingService:
 
     @classmethod
     def _calculate_accuracy_ranking(cls, scope: str, scope_id: int, limit: int) -> Dict[str, Any]:
-        """正答率ランキングを計算（最低20問回答必須）"""
-        base_query = cls._get_base_user_query(scope, scope_id)
+        """正答率ランキングを計算（最低20問回答必須）（修正版）"""
+        logger.info(f"Calculating accuracy ranking: scope={scope}, scope_id={scope_id}, limit={limit}")
         
-        accuracy_subquery = db.session.query(
-            User.id.label('user_id'),
-            func.avg(AnswerRecord.is_correct * 100).label('accuracy_rate'),
-            func.count(AnswerRecord.id).label('total_answers')
-        ).select_from(User).join(
-            AnswerRecord, User.id == AnswerRecord.student_id
-        ).filter(
-            User.role == 'student',
-            User.is_active == True
-        ).group_by(User.id).having(
-            func.count(AnswerRecord.id) >= 20  # 最低20問回答必須
-        ).subquery()
-        
-        ranking_query = base_query.join(
-            accuracy_subquery, User.id == accuracy_subquery.c.user_id
-        ).add_columns(
-            accuracy_subquery.c.accuracy_rate,
-            accuracy_subquery.c.total_answers,
-            func.row_number().over(order_by=desc(accuracy_subquery.c.accuracy_rate)).label('rank')
-        ).order_by(desc(accuracy_subquery.c.accuracy_rate)).limit(limit)
-        
-        results = ranking_query.all()
-        
-        return {
-            'rankings': [
-                {
-                    'rank': result.rank,
-                    'student_id': result.id,
-                    'student_name': result.username,
-                    'score': round(float(result.accuracy_rate), 1),
-                    'total_answers': result.total_answers,
-                    'school_name': result.school.name if result.school else None,
-                    'class_name': ', '.join([c.name for c in result.classes]) if result.classes else None
-                }
-                for result in results
-            ],
-            'total_participants': cls._count_participants(scope, scope_id),
-            'last_updated': datetime.utcnow().isoformat(),
-            'ranking_type': 'accuracy_rate'
-        }
+        try:
+            # シンプルな直接結合クエリで正確なユーザー情報を取得
+            ranking_query = db.session.query(
+                User.id.label('student_id'),
+                User.username.label('student_name'),
+                (func.sum(AnswerRecord.is_correct) / func.count(AnswerRecord.id) * 100).label('accuracy_rate'),
+                func.count(AnswerRecord.id).label('total_answers'),
+                func.sum(AnswerRecord.is_correct).label('correct_answers')
+            ).select_from(User).join(
+                AnswerRecord, User.id == AnswerRecord.student_id
+            ).filter(
+                User.role == 'student',
+                User.is_active == True
+            )
+            
+            # スコープフィルタリング
+            if scope == 'school' and scope_id:
+                ranking_query = ranking_query.filter(User.school_id == scope_id)
+            elif scope == 'class' and scope_id:
+                from app.models import ClassEnrollment
+                ranking_query = ranking_query.join(
+                    ClassEnrollment, User.id == ClassEnrollment.student_id
+                ).filter(
+                    ClassEnrollment.class_id == scope_id,
+                    ClassEnrollment.is_active == True
+                )
+            
+            ranking_query = ranking_query.group_by(
+                User.id, User.username
+            ).having(
+                func.count(AnswerRecord.id) >= 20  # 最低20問回答必須
+            ).order_by(
+                desc('accuracy_rate')
+            ).limit(limit)
+            
+            results = ranking_query.all()
+            logger.info(f"Found {len(results)} accuracy ranking entries with correct user joins")
+            
+            return {
+                'rankings': [
+                    {
+                        'rank': idx + 1,
+                        'student_id': result.student_id,
+                        'student_name': result.student_name,
+                        'score': round(float(result.accuracy_rate), 1),
+                        'total_answers': result.total_answers,
+                        'correct_answers': result.correct_answers,
+                        'school_name': None,  # 簡素化のため一時的にNone
+                        'class_name': None
+                    }
+                    for idx, result in enumerate(results)
+                ],
+                'total_participants': len(results),
+                'last_updated': datetime.utcnow().isoformat(),
+                'ranking_type': 'accuracy_rate'
+            }
+            
+        except Exception as e:
+            logger.error(f"Accuracy ranking calculation error: {str(e)}")
+            return {
+                'rankings': [],
+                'total_participants': 0,
+                'last_updated': datetime.utcnow().isoformat(),
+                'ranking_type': 'accuracy_rate',
+                'error': str(e)
+            }
 
     @classmethod
     def _calculate_study_time_ranking(cls, scope: str, scope_id: int, limit: int) -> Dict[str, Any]:

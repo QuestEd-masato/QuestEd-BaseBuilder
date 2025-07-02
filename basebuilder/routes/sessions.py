@@ -221,6 +221,188 @@ def next_problem():
         return redirect(url_for('basebuilder.index'))
 
 
+@sessions_bp.route('/solve_text/<int:text_id>')
+@login_required
+def solve_text(text_id):
+    """テキスト問題解答セッション開始"""
+    try:
+        if current_user.role != 'student':
+            flash('学習セッションは学生のみアクセス可能です。', 'error')
+            return redirect(url_for('basebuilder.index'))
+        
+        # テキストセットを取得
+        text_set = TextSet.query.get_or_404(text_id)
+        
+        # アクセス権限チェック（配信されたテキストか確認）
+        from app.models import ClassEnrollment
+        from basebuilder.models import TextDelivery
+        
+        enrolled_class_ids = [enrollment.class_id for enrollment in 
+                            ClassEnrollment.query.filter_by(
+                                student_id=current_user.id,
+                                is_active=True
+                            ).all()]
+        
+        delivery_exists = TextDelivery.query.filter(
+            TextDelivery.text_set_id == text_id,
+            TextDelivery.class_id.in_(enrolled_class_ids)
+        ).first()
+        
+        if not delivery_exists:
+            flash('このテキストにアクセスする権限がありません。', 'error')
+            return redirect(url_for('texts.my_texts'))
+        
+        # テキストの問題を取得
+        problems = BasicKnowledgeItem.query.filter_by(
+            text_set_id=text_id
+        ).order_by(BasicKnowledgeItem.order_in_text).all()
+        
+        if not problems:
+            flash('このテキストには問題が登録されていません。', 'warning')
+            return redirect(url_for('texts.my_texts'))
+        
+        # セッション初期化
+        session.clear()
+        session['session_type'] = 'text'
+        session['text_id'] = text_id
+        session['start_time'] = datetime.now().isoformat()
+        session['problems_answered'] = 0
+        session['correct_answers'] = 0
+        session['current_problem_index'] = 0
+        session['problem_ids'] = [p.id for p in problems]
+        
+        # 最初の問題に進む
+        return redirect(url_for('sessions.solve_problem', problem_id=problems[0].id))
+        
+    except Exception as e:
+        current_app.logger.error(f"Solve text error: {str(e)}")
+        flash('テキスト学習の開始中にエラーが発生しました。', 'error')
+        return redirect(url_for('texts.my_texts'))
+
+
+@sessions_bp.route('/solve_problem/<int:problem_id>')
+@login_required
+def solve_problem(problem_id):
+    """個別問題表示・解答画面"""
+    try:
+        if current_user.role != 'student':
+            flash('学習セッションは学生のみアクセス可能です。', 'error')
+            return redirect(url_for('basebuilder.index'))
+        
+        problem = BasicKnowledgeItem.query.get_or_404(problem_id)
+        
+        # 進捗情報を計算
+        progress = {}
+        if 'problem_ids' in session and session['problem_ids']:
+            problem_ids = session['problem_ids']
+            try:
+                current_index = problem_ids.index(problem_id)
+                progress = {
+                    'current': current_index + 1,
+                    'total': len(problem_ids),
+                    'percentage': round(((current_index + 1) / len(problem_ids)) * 100, 1)
+                }
+            except ValueError:
+                progress = {'current': 1, 'total': 1, 'percentage': 100}
+        else:
+            progress = {'current': 1, 'total': 1, 'percentage': 100}
+        
+        # 選択肢の処理
+        options = []
+        if problem.choices:
+            try:
+                options = json.loads(problem.choices)
+            except:
+                options = []
+        
+        # 過去の回答履歴を取得
+        past_answers = AnswerRecord.query.filter_by(
+            student_id=current_user.id,
+            problem_id=problem_id
+        ).order_by(AnswerRecord.created_at.desc()).limit(3).all()
+        
+        return render_template('basebuilder/solve_problem.html',
+                             problem=problem,
+                             options=options,
+                             progress=progress,
+                             past_answers=past_answers,
+                             session_info=session)
+        
+    except Exception as e:
+        current_app.logger.error(f"Solve problem error: {str(e)}")
+        flash('問題表示中にエラーが発生しました。', 'error')
+        return redirect(url_for('texts.my_texts'))
+
+
+@sessions_bp.route('/submit_answer/<int:problem_id>', methods=['POST'])
+@login_required
+def submit_answer(problem_id):
+    """問題回答提出処理"""
+    try:
+        if current_user.role != 'student':
+            return jsonify({'success': False, 'message': 'アクセス権限がありません。'})
+        
+        problem = BasicKnowledgeItem.query.get_or_404(problem_id)
+        student_answer = request.form.get('answer', '').strip()
+        
+        if not student_answer:
+            return jsonify({'success': False, 'message': '回答を入力してください。'})
+        
+        # 正解判定
+        is_correct = _check_answer(problem, student_answer)
+        
+        # 回答記録を保存
+        answer_record = AnswerRecord(
+            student_id=current_user.id,
+            problem_id=problem_id,
+            student_answer=student_answer,
+            is_correct=is_correct,
+            created_at=datetime.utcnow()
+        )
+        
+        db.session.add(answer_record)
+        
+        # セッション統計を更新
+        if 'problems_answered' in session:
+            session['problems_answered'] += 1
+            if is_correct:
+                session['correct_answers'] += 1
+        
+        # 単語習熟度の更新（英単語の場合）
+        if problem.category and '英単語' in problem.category.name:
+            _update_word_proficiency(current_user.id, problem, is_correct)
+        
+        db.session.commit()
+        
+        # 次の問題のURLを決定
+        next_url = None
+        if 'problem_ids' in session and session['problem_ids']:
+            try:
+                current_index = session['problem_ids'].index(problem_id)
+                if current_index + 1 < len(session['problem_ids']):
+                    next_problem_id = session['problem_ids'][current_index + 1]
+                    next_url = url_for('sessions.solve_problem', problem_id=next_problem_id)
+                else:
+                    # 最後の問題の場合
+                    next_url = url_for('sessions.session_summary')
+            except ValueError:
+                next_url = url_for('sessions.session_summary')
+        else:
+            next_url = url_for('sessions.session_summary')
+        
+        return jsonify({
+            'success': True,
+            'is_correct': is_correct,
+            'correct_answer': problem.correct_answer,
+            'explanation': problem.explanation,
+            'next_url': next_url
+        })
+        
+    except Exception as e:
+        current_app.logger.error(f"Submit answer error: {str(e)}")
+        return jsonify({'success': False, 'message': 'サーバーエラーが発生しました。'})
+
+
 @sessions_bp.route('/session_summary')
 @login_required
 def session_summary():
@@ -391,4 +573,73 @@ def _update_proficiency_after_session(student_id, session_data):
             
     except Exception as e:
         current_app.logger.error(f"Update proficiency error: {str(e)}")
+        db.session.rollback()
+
+
+def _check_answer(problem, student_answer):
+    """回答の正誤判定"""
+    try:
+        student_answer = student_answer.strip()
+        correct_answer = problem.correct_answer.strip()
+        
+        # 複数の正解パターンがある場合（カンマ区切り）
+        if ',' in correct_answer:
+            correct_answers = [ans.strip().lower() for ans in correct_answer.split(',')]
+            return student_answer.lower() in correct_answers
+        
+        # 単一の正解
+        return student_answer.lower() == correct_answer.lower()
+        
+    except Exception as e:
+        current_app.logger.error(f"Check answer error: {str(e)}")
+        return False
+
+
+def _update_word_proficiency(student_id, problem, is_correct):
+    """単語習熟度の更新"""
+    try:
+        # 問題が単語問題の場合のみ更新
+        if not problem.title or len(problem.title.split()) > 3:
+            return
+        
+        word = problem.title.strip().lower()
+        
+        # 既存の習熟度記録を取得
+        proficiency = WordProficiency.query.filter_by(
+            student_id=student_id,
+            word=word
+        ).first()
+        
+        if not proficiency:
+            # 新規作成
+            proficiency = WordProficiency(
+                student_id=student_id,
+                word=word,
+                correct_count=1 if is_correct else 0,
+                total_count=1,
+                proficiency_level=80 if is_correct else 20,
+                last_studied_at=datetime.utcnow()
+            )
+            db.session.add(proficiency)
+        else:
+            # 既存レコード更新
+            proficiency.total_count += 1
+            if is_correct:
+                proficiency.correct_count += 1
+            
+            # 習熟度レベル再計算
+            accuracy = proficiency.correct_count / proficiency.total_count
+            if accuracy >= 0.9:
+                proficiency.proficiency_level = min(100, proficiency.proficiency_level + 10)
+            elif accuracy >= 0.7:
+                proficiency.proficiency_level = min(100, proficiency.proficiency_level + 5)
+            elif accuracy < 0.5:
+                proficiency.proficiency_level = max(0, proficiency.proficiency_level - 5)
+            
+            proficiency.last_studied_at = datetime.utcnow()
+        
+        db.session.commit()
+        
+    except Exception as e:
+        current_app.logger.error(f"Update word proficiency error: {str(e)}")
         db.session.rollback()

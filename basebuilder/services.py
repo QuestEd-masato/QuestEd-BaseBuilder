@@ -221,3 +221,163 @@ class AnalyticsService:
                 })
         
         return analysis
+
+
+class CategoryService:
+    """カテゴリ管理サービス"""
+    
+    @staticmethod
+    def get_all_with_stats():
+        """統計情報付きで全カテゴリを取得"""
+        categories = ProblemCategory.query.order_by(ProblemCategory.name).all()
+        
+        category_data = []
+        for category in categories:
+            stats = {
+                'category': category,
+                'problem_count': BasicKnowledgeItem.query.filter_by(
+                    category_id=category.id
+                ).count(),
+                'text_count': TextSet.query.filter_by(
+                    category_id=category.id
+                ).count(),
+                'usage_count': AnswerRecord.query.join(BasicKnowledgeItem).filter(
+                    BasicKnowledgeItem.category_id == category.id
+                ).count()
+            }
+            category_data.append(stats)
+        
+        return category_data
+    
+    @staticmethod
+    def create_category(name, description=None):
+        """カテゴリ作成"""
+        category = ProblemCategory(
+            name=name,
+            description=description,
+            created_at=datetime.now(),
+            updated_at=datetime.now()
+        )
+        
+        db.session.add(category)
+        db.session.commit()
+        
+        return category
+    
+    @staticmethod
+    def update_category(category_id, name, description=None):
+        """カテゴリ更新"""
+        category = ProblemCategory.query.get(category_id)
+        if not category:
+            return None
+        
+        category.name = name
+        category.description = description
+        category.updated_at = datetime.now()
+        
+        db.session.commit()
+        return category
+
+
+class ProblemService:
+    """問題管理サービス"""
+    
+    @staticmethod
+    def get_problems_by_category(category_id, page=1, per_page=20):
+        """カテゴリ別問題取得（ページネーション付き）"""
+        query = BasicKnowledgeItem.query.filter_by(category_id=category_id)
+        query = query.order_by(BasicKnowledgeItem.created_at.desc())
+        
+        return query.paginate(page=page, per_page=per_page, error_out=False)
+    
+    @staticmethod
+    def create_problem(category_id, content, answer, difficulty=3, school_id=None):
+        """問題作成"""
+        problem = BasicKnowledgeItem(
+            category_id=category_id,
+            content=content,
+            answer=answer,
+            difficulty=difficulty,
+            school_id=school_id,
+            created_at=datetime.now(),
+            updated_at=datetime.now()
+        )
+        
+        db.session.add(problem)
+        db.session.commit()
+        
+        return problem
+    
+    @staticmethod
+    def get_problem_statistics(problem_id):
+        """問題の統計情報取得"""
+        problem = BasicKnowledgeItem.query.get(problem_id)
+        if not problem:
+            return None
+        
+        records = AnswerRecord.query.filter_by(problem_id=problem_id).all()
+        
+        stats = {
+            'problem': problem,
+            'total_attempts': len(records),
+            'correct_count': sum(1 for r in records if r.is_correct),
+            'incorrect_count': sum(1 for r in records if not r.is_correct),
+            'accuracy': 0,
+            'avg_response_time': 0
+        }
+        
+        if records:
+            stats['accuracy'] = round((stats['correct_count'] / stats['total_attempts']) * 100, 1)
+            times = [r.response_time for r in records if r.response_time]
+            if times:
+                stats['avg_response_time'] = round(sum(times) / len(times), 1)
+        
+        return stats
+
+
+class TextSetService:
+    """テキストセット管理サービス"""
+    
+    @staticmethod
+    def get_available_for_class(class_id):
+        """クラスで利用可能なテキストセット取得"""
+        from app.models import Class
+        
+        class_obj = Class.query.get(class_id)
+        if not class_obj:
+            return []
+        
+        # 学校フィルタ適用
+        query = TextSet.query
+        if class_obj.school_id:
+            query = query.filter(
+                (TextSet.school_id == class_obj.school_id) | 
+                (TextSet.school_id == None)
+            )
+        
+        return query.order_by(TextSet.created_at.desc()).all()
+    
+    @staticmethod
+    def deliver_to_class(text_set_id, class_id, teacher_id):
+        """テキストセットをクラスに配信"""
+        delivery = TextDelivery(
+            text_set_id=text_set_id,
+            class_id=class_id,
+            teacher_id=teacher_id,
+            delivered_at=datetime.now()
+        )
+        
+        db.session.add(delivery)
+        db.session.commit()
+        
+        return delivery
+    
+    @staticmethod
+    def get_delivery_history(class_id=None, limit=20):
+        """配信履歴取得"""
+        query = TextDelivery.query
+        
+        if class_id:
+            query = query.filter_by(class_id=class_id)
+        
+        return query.order_by(TextDelivery.delivered_at.desc()).limit(limit).all()

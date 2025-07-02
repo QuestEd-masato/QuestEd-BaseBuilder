@@ -74,3 +74,62 @@ def get_category_statistics(category_id=None):
         'problem_count': problem_count,
         'text_count': text_count
     }
+
+
+def paginate_query(query, page=1, per_page=20):
+    """クエリのページネーション処理"""
+    try:
+        page = int(page)
+        if page < 1:
+            page = 1
+    except (ValueError, TypeError):
+        page = 1
+    
+    return query.paginate(page=page, per_page=per_page, error_out=False)
+
+
+def format_datetime(dt):
+    """日時のフォーマット処理"""
+    if not dt:
+        return ''
+    return dt.strftime('%Y年%m月%d日 %H:%M')
+
+
+def validate_form_data(data, required_fields):
+    """フォームデータの検証"""
+    errors = []
+    
+    for field in required_fields:
+        if field not in data or not data[field].strip():
+            errors.append(f'{field}は必須項目です。')
+    
+    return errors
+
+
+def safe_int_conversion(value, default=0):
+    """安全な整数変換"""
+    try:
+        return int(value)
+    except (ValueError, TypeError):
+        return default
+
+
+def get_user_school_filter(user):
+    """ユーザーの学校に基づくフィルタ条件を取得"""
+    if user.role == 'admin':
+        return {}  # 管理者は全て見れる
+    elif hasattr(user, 'school_id') and user.school_id:
+        return {'school_id': user.school_id}
+    else:
+        return {'school_id': -1}  # 存在しないIDで何も表示しない
+
+
+def log_activity(activity_type, details, user_id=None):
+    """アクティビティログ記録"""
+    try:
+        user_id = user_id or current_user.id
+        current_app.logger.info(
+            f"Activity: {activity_type} | User: {user_id} | Details: {details}"
+        )
+    except Exception as e:
+        current_app.logger.error(f"Failed to log activity: {str(e)}")

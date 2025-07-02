@@ -12,6 +12,7 @@ from .routes.sessions import sessions_bp
 from .routes.progress import progress_bp
 from .routes.analytics import analytics_bp
 from .routes.admin import admin_bp
+from .routes.texts import texts_bp
 
 # メインのbasebuilder Blueprint
 basebuilder_bp = Blueprint('basebuilder', __name__, url_prefix='/basebuilder')
@@ -120,5 +121,6 @@ def register_all_blueprints(app):
     app.register_blueprint(progress_bp)
     app.register_blueprint(analytics_bp)
     app.register_blueprint(admin_bp)
+    app.register_blueprint(texts_bp)
     
     print("✅ All BaseBuilder blueprints registered")

@@ -17,169 +17,153 @@ from datetime import datetime
 
 from extensions import db
 from basebuilder.models import ProblemCategory, BasicKnowledgeItem, TextSet
+from basebuilder.utils import require_roles, handle_db_error, get_category_statistics, log_activity
+from basebuilder.services import CategoryService
 
 categories_bp = Blueprint('categories', __name__, url_prefix='/basebuilder')
 
 
 @categories_bp.route('/categories')
 @login_required
+@require_roles('admin', 'teacher', 'student')  # 権限チェック追加
+@handle_db_error("カテゴリ一覧取得")  # エラーハンドリング強化
 def categories():
-    """カテゴリ一覧表示"""
-    try:
-        current_app.logger.info(f"Categories list accessed by user {current_user.id}")
-        
-        categories = ProblemCategory.query.order_by(ProblemCategory.name).all()
-        
-        # 各カテゴリの問題数を計算
-        category_stats = {}
-        for category in categories:
-            problem_count = BasicKnowledgeItem.query.filter_by(
-                category_id=category.id
-            ).count()
-            
-            text_count = TextSet.query.filter_by(
-                category_id=category.id
-            ).count()
-            
-            category_stats[category.id] = {
-                'problem_count': problem_count,
-                'text_count': text_count
-            }
-        
-        return render_template('basebuilder/categories.html', 
-                             categories=categories,
-                             category_stats=category_stats)
-        
-    except Exception as e:
-        current_app.logger.error(f"Categories list error: {str(e)}")
-        flash('カテゴリ一覧の取得中にエラーが発生しました。')
-        # 安全なベースページにリダイレクト（無限ループ回避）
-        return redirect('/basebuilder/')
+    """カテゴリ一覧表示
+    
+    Returns:
+        カテゴリ一覧画面のHTMLレスポンス
+    """
+    # アクティビティログ記録
+    log_activity("category_list_view", "Categories list accessed")
+    
+    # サービス層を使用して統計情報付きカテゴリを取得
+    category_data = CategoryService.get_all_with_stats()
+    
+    # テンプレート用にデータを整形
+    categories = []
+    category_stats = {}
+    
+    for data in category_data:
+        category = data['category']
+        categories.append(category)
+        category_stats[category.id] = {
+            'problem_count': data['problem_count'],
+            'text_count': data['text_count'],
+            'usage_count': data['usage_count']  # 使用回数も追加
+        }
+    
+    return render_template('basebuilder/categories.html', 
+                         categories=categories,
+                         category_stats=category_stats)
 
 
 @categories_bp.route('/category/create', methods=['GET', 'POST'])
 @login_required
+@require_roles('admin', 'teacher')  # 権限チェックをデコレータに統一
+@handle_db_error("カテゴリ作成")
 def create_category():
-    """カテゴリ作成"""
-    try:
-        if current_user.role not in ['admin', 'teacher']:
-            flash('カテゴリの作成権限がありません。')
-            return redirect(url_for('categories.categories'))
+    """カテゴリ作成
+    
+    Returns:
+        GET: カテゴリ作成フォーム
+        POST: カテゴリ作成処理後のリダイレクト
+    """
+    if request.method == 'POST':
+        name = request.form.get('name', '').strip()
+        description = request.form.get('description', '').strip()
+        subject = request.form.get('subject', '').strip()
+        grade_level = request.form.get('grade_level', type=int)
+        difficulty_level = request.form.get('difficulty_level', type=int)
         
-        if request.method == 'POST':
-            name = request.form.get('name', '').strip()
-            description = request.form.get('description', '').strip()
-            subject = request.form.get('subject', '').strip()
-            grade_level = request.form.get('grade_level', type=int)
-            difficulty_level = request.form.get('difficulty_level', type=int)
-            
-            # 入力値検証
-            if not name:
-                flash('カテゴリ名を入力してください。', 'error')
-                return render_template('basebuilder/create_category.html')
-            
-            # 同名カテゴリの重複チェック
-            existing_category = ProblemCategory.query.filter_by(name=name).first()
-            if existing_category:
-                flash('同じ名前のカテゴリが既に存在します。', 'error')
-                return render_template('basebuilder/create_category.html')
-            
-            # 新しいカテゴリを作成
-            new_category = ProblemCategory(
-                name=name,
-                description=description,
-                subject=subject,
-                grade_level=grade_level,
-                difficulty_level=difficulty_level,
-                created_by=current_user.id,
-                created_at=datetime.utcnow()
-            )
-            
-            try:
-                db.session.add(new_category)
-                db.session.commit()
-                
-                current_app.logger.info(f"Category created: {name} by user {current_user.id}")
-                flash(f'カテゴリ「{name}」を作成しました。', 'success')
-                return redirect(url_for('categories.categories'))
-                
-            except Exception as e:
-                db.session.rollback()
-                current_app.logger.error(f"Category creation error: {str(e)}")
-                flash('カテゴリの作成に失敗しました。', 'error')
+        # 入力値検証
+        if not name:
+            flash('カテゴリ名を入力してください。', 'error')
+            return render_template('basebuilder/create_category.html')
         
-        return render_template('basebuilder/create_category.html')
+        # 同名カテゴリの重複チェック
+        existing_category = ProblemCategory.query.filter_by(name=name).first()
+        if existing_category:
+            flash('同じ名前のカテゴリが既に存在します。', 'error')
+            return render_template('basebuilder/create_category.html')
         
-    except Exception as e:
-        current_app.logger.error(f"Create category error: {str(e)}")
-        flash('カテゴリ作成画面の読み込み中にエラーが発生しました。')
+        # 新しいカテゴリを作成（既存のロジックを保持）
+        new_category = ProblemCategory(
+            name=name,
+            description=description,
+            subject=subject,
+            grade_level=grade_level,
+            difficulty_level=difficulty_level,
+            created_by=current_user.id,
+            created_at=datetime.utcnow()
+        )
+        
+        db.session.add(new_category)
+        db.session.commit()
+        
+        # アクティビティログ記録
+        log_activity("category_created", f"Category '{name}' created")
+        
+        flash(f'カテゴリ「{name}」を作成しました。', 'success')
         return redirect(url_for('categories.categories'))
+    
+    return render_template('basebuilder/create_category.html')
 
 
 @categories_bp.route('/category/<int:category_id>/edit', methods=['GET', 'POST'])
 @login_required
+@require_roles('admin', 'teacher')
+@handle_db_error("カテゴリ編集")
 def edit_category(category_id):
-    """カテゴリ編集"""
-    try:
-        if current_user.role not in ['admin', 'teacher']:
-            flash('カテゴリの編集権限がありません。')
-            return redirect(url_for('categories.categories'))
+    """カテゴリ編集
+    
+    Args:
+        category_id: 編集対象のカテゴリID
         
-        category = ProblemCategory.query.get_or_404(category_id)
-        
-        # 作成者または管理者のみ編集可能
-        if current_user.role != 'admin' and category.created_by != current_user.id:
-            flash('このカテゴリを編集する権限がありません。')
-            return redirect(url_for('categories.categories'))
-        
-        if request.method == 'POST':
-            name = request.form.get('name', '').strip()
-            description = request.form.get('description', '').strip()
-            subject = request.form.get('subject', '').strip()
-            grade_level = request.form.get('grade_level', type=int)
-            difficulty_level = request.form.get('difficulty_level', type=int)
-            
-            # 入力値検証
-            if not name:
-                flash('カテゴリ名を入力してください。', 'error')
-                return render_template('basebuilder/edit_category.html', category=category)
-            
-            # 同名カテゴリの重複チェック（自分以外）
-            existing_category = ProblemCategory.query.filter(
-                ProblemCategory.name == name,
-                ProblemCategory.id != category_id
-            ).first()
-            
-            if existing_category:
-                flash('同じ名前のカテゴリが既に存在します。', 'error')
-                return render_template('basebuilder/edit_category.html', category=category)
-            
-            # カテゴリ情報を更新
-            category.name = name
-            category.description = description
-            category.subject = subject
-            category.grade_level = grade_level
-            category.difficulty_level = difficulty_level
-            category.updated_at = datetime.utcnow()
-            
-            try:
-                db.session.commit()
-                
-                current_app.logger.info(f"Category updated: {name} by user {current_user.id}")
-                flash(f'カテゴリ「{name}」を更新しました。', 'success')
-                return redirect(url_for('categories.categories'))
-                
-            except Exception as e:
-                db.session.rollback()
-                current_app.logger.error(f"Category update error: {str(e)}")
-                flash('カテゴリの更新に失敗しました。', 'error')
-        
-        return render_template('basebuilder/edit_category.html', category=category)
-        
-    except Exception as e:
-        current_app.logger.error(f"Edit category error: {str(e)}")
-        flash('カテゴリ編集画面の読み込み中にエラーが発生しました。')
+    Returns:
+        GET: カテゴリ編集フォーム
+        POST: カテゴリ更新処理後のリダイレクト
+    """
+    category = ProblemCategory.query.get_or_404(category_id)
+    
+    # 作成者または管理者のみ編集可能
+    if current_user.role != 'admin' and category.created_by != current_user.id:
+        flash('このカテゴリを編集する権限がありません。')
         return redirect(url_for('categories.categories'))
+    
+    if request.method == 'POST':
+        name = request.form.get('name', '').strip()
+        description = request.form.get('description', '').strip()
+        
+        # 入力値検証
+        if not name:
+            flash('カテゴリ名を入力してください。', 'error')
+            return render_template('basebuilder/edit_category.html', category=category)
+        
+        # 同名カテゴリの重複チェック（自分以外）
+        existing_category = ProblemCategory.query.filter(
+            ProblemCategory.name == name,
+            ProblemCategory.id != category_id
+        ).first()
+        
+        if existing_category:
+            flash('同じ名前のカテゴリが既に存在します。', 'error')
+            return render_template('basebuilder/edit_category.html', category=category)
+        
+        # サービス層を使用してカテゴリ更新
+        updated_category = CategoryService.update_category(
+            category_id=category_id,
+            name=name,
+            description=description
+        )
+        
+        if updated_category:
+            log_activity("category_updated", f"Category '{name}' updated")
+            flash(f'カテゴリ「{name}」を更新しました。', 'success')
+            return redirect(url_for('categories.categories'))
+        else:
+            flash('カテゴリの更新に失敗しました。', 'error')
+    
+    return render_template('basebuilder/edit_category.html', category=category)
 
 
 @categories_bp.route('/category/<int:category_id>/delete', methods=['POST'])

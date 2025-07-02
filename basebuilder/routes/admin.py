@@ -25,7 +25,8 @@ from extensions import db
 from app.models import InquiryTheme
 from basebuilder.models import (
     ProblemCategory, BasicKnowledgeItem, KnowledgeThemeRelation,
-    AnswerRecord, BaseBuilderLearningPath, PathAssignment
+    AnswerRecord, BaseBuilderLearningPath, PathAssignment,
+    TextSet, TextDelivery
 )
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/basebuilder')
@@ -550,3 +551,46 @@ def import_problems():
         current_app.logger.error(f"Import problems error: {str(e)}")
         flash('問題インポート画面の表示中にエラーが発生しました。')
         return redirect(url_for('problems.problems'))
+
+
+@admin_bp.route('/text/<int:text_id>/view')
+@login_required
+def view_text_set(text_id):
+    """管理者向けテキストセット詳細表示"""
+    try:
+        text_set = TextSet.query.get_or_404(text_id)
+        
+        # 権限チェック
+        if current_user.role == 'teacher' and text_set.school_id != current_user.school_id:
+            flash('このテキストにアクセスする権限がありません。', 'error')
+            return redirect(url_for('texts.text_sets'))
+        
+        # テキストの問題を取得
+        problems = BasicKnowledgeItem.query.filter_by(
+            text_set_id=text_id
+        ).order_by(BasicKnowledgeItem.order_in_text).all()
+        
+        # 配信情報を取得
+        deliveries = TextDelivery.query.filter_by(
+            text_set_id=text_id
+        ).join(TextDelivery.class_).all()
+        
+        # 統計情報を計算
+        stats = {
+            'total_problems': len(problems),
+            'total_deliveries': len(deliveries),
+            'total_students': sum(len(delivery.class_.enrolled_students) for delivery in deliveries)
+        }
+        
+        return render_template('basebuilder/View_text.html',
+                             text_set=text_set,
+                             problems=problems,
+                             deliveries=deliveries,
+                             stats=stats,
+                             user_progress={},  # 管理者なので空
+                             text_proficiency=None)  # 管理者なので None
+        
+    except Exception as e:
+        current_app.logger.error(f"Admin view text set error: {str(e)}")
+        flash('テキストの表示中にエラーが発生しました。', 'error')
+        return redirect(url_for('texts.text_sets'))
