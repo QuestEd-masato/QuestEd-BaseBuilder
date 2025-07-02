@@ -229,7 +229,7 @@ def dashboard():
         current_app.logger.info(f"[DASHBOARD] Phase 2: Adding missing template variables for student {current_user.id}")
         current_app.logger.info(f"[DASHBOARD] Providing {len(all_class_themes)} class themes to template")
         
-        return render_template('student_dashboard.html',
+        return render_template('student/dashboard.html',
                              student_info=student_info,
                              class_details=class_details,
                              weekly_stats=weekly_stats,

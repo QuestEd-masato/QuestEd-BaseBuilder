@@ -1,0 +1,760 @@
+{% extends 'base.html' %}
+
+{% block title %}ダッシュボード | QuestEd{% endblock %}
+
+{% block extra_css %}
+<style>
+/* グリッドレイアウトで効率的な配置 */
+.dashboard-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 1.5rem;
+    padding: 1.5rem;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.dashboard-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    border: 1px solid #e9ecef;
+    /* ホバー効果を削除 */
+}
+
+.dashboard-card h3 {
+    color: #0056b3;
+    margin-bottom: 1rem;
+    font-size: 1.25rem;
+    border-bottom: 2px solid #e9ecef;
+    padding-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.welcome-card {
+    grid-column: 1 / -1;
+    background: linear-gradient(135deg, #0056b3 0%, #004494 100%);
+    color: white;
+    text-align: center;
+}
+
+.welcome-card h2 {
+    margin-bottom: 0.5rem;
+    font-size: 2rem;
+}
+
+.welcome-card p {
+    font-size: 1.1rem;
+    opacity: 0.9;
+}
+
+.ranking-section {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-top: 2rem;
+    grid-column: 1 / -1;
+}
+
+.ranking-card {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 1.5rem;
+}
+
+.ranking-card h3 {
+    color: #0056b3;
+    margin-bottom: 1rem;
+    font-size: 1.1rem;
+}
+
+.ranking-list {
+    list-style: none;
+    padding: 0;
+    margin: 1rem 0 0 0;
+}
+
+.ranking-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    margin-bottom: 0.5rem;
+    background: white;
+    border-radius: 6px;
+    transition: background 0.2s;
+}
+
+.ranking-item:hover {
+    background: #e9ecef;
+}
+
+.rank-number {
+    font-weight: bold;
+    color: #6c757d;
+    margin-right: 1rem;
+    min-width: 30px;
+}
+
+.rank-name {
+    flex: 1;
+    font-weight: 500;
+}
+
+.rank-score {
+    font-weight: bold;
+    color: #0056b3;
+}
+
+/* 進捗バー */
+.progress-bar {
+    background: #e9ecef;
+    height: 8px;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-top: 0.5rem;
+}
+
+.progress-fill {
+    background: #0056b3;
+    height: 100%;
+    transition: width 0.3s ease;
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+}
+
+.status-badge.completed {
+    background: #d4edda;
+    color: #155724;
+}
+
+.status-badge.pending {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.btn-sm {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.875rem;
+    border-radius: 0.25rem;
+    text-decoration: none;
+    display: inline-block;
+    transition: all 0.2s;
+}
+
+.btn-primary {
+    background-color: #5DADE2;
+    color: white;
+    border: 1px solid #5DADE2;
+}
+
+.btn-primary:hover {
+    background-color: #3498DB;
+    color: white;
+    border-color: #3498DB;
+}
+
+.btn-outline-primary {
+    background-color: transparent;
+    color: #5DADE2;
+    border: 1px solid #5DADE2;
+}
+
+.btn-outline-primary:hover {
+    background-color: #5DADE2;
+    color: white;
+    border-color: #5DADE2;
+}
+
+.metric-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #f1f3f4;
+}
+
+.metric-item:last-child {
+    border-bottom: none;
+}
+
+.metric-label {
+    font-weight: 500;
+    color: #495057;
+}
+
+.metric-value {
+    font-weight: bold;
+    color: #0056b3;
+    font-size: 1.1rem;
+}
+
+/* ボタンの機能性を保証 */
+.dashboard-card a {
+    pointer-events: auto !important;
+    cursor: pointer !important;
+    z-index: 1 !important;
+    position: relative !important;
+}
+
+/* レスポンシブ対応 */
+@media (max-width: 768px) {
+    .dashboard-container {
+        grid-template-columns: 1fr;
+        padding: 1rem;
+        gap: 1rem;
+    }
+    
+    .ranking-section {
+        grid-template-columns: 1fr;
+    }
+    
+    .welcome-card h2 {
+        font-size: 1.5rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+{% set btn_primary_style = "display: inline-block; padding: 0.375rem 0.75rem; font-size: 0.875rem; border-radius: 0.25rem; text-decoration: none; background-color: #5DADE2; color: white; border: 1px solid #5DADE2; margin-right: 0.5rem; pointer-events: auto !important; cursor: pointer !important; z-index: 1; position: relative;" %}
+{% set btn_outline_style = "display: inline-block; padding: 0.375rem 0.75rem; font-size: 0.875rem; border-radius: 0.25rem; text-decoration: none; background-color: transparent; color: #5DADE2; border: 1px solid #5DADE2; margin-right: 0.5rem; pointer-events: auto !important; cursor: pointer !important; z-index: 1; position: relative;" %}
+<div class="dashboard-container">
+    <!-- ウェルカムカード -->
+    <div class="dashboard-card welcome-card">
+        <h2>こんにちは、{{ current_user.display_name }}さん</h2>
+        <p>あなたの探究学習の進捗状況や記録を確認できます</p>
+    </div>
+    
+    <!-- 基礎学力トレーニング（コンパクト版） -->
+    <div class="dashboard-card" style="min-height: auto;">
+        <h3>🔥 基礎学力トレーニング</h3>
+        
+        <p style="font-size: 0.9rem; margin-bottom: 15px;">単語学習を通じて基礎力を向上させましょう。</p>
+        
+        <!-- 学習統計（コンパクト版） -->
+        <div style="background: #e3f2fd; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+            <h4 style="margin: 0 0 10px 0; font-size: 1rem; color: #1976d2;">学習統計</h4>
+            
+            {% if total_words_attempted > 0 %}
+            <!-- データがある場合 -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; text-align: center;">
+                <div>
+                    <div style="font-size: 1.5rem; font-weight: bold; color: #0056b3;">
+                        {{ total_mastered_words }}
+                    </div>
+                    <div style="font-size: 0.75rem; color: #666;">定着度5の<br>単語数</div>
+                </div>
+                
+                <div>
+                    <div style="font-size: 1.5rem; font-weight: bold; color: #28a745;">
+                        {{ weekly_words_learned }}
+                    </div>
+                    <div style="font-size: 0.75rem; color: #666;">今週の新規<br>マスター</div>
+                </div>
+                
+                <div>
+                    <div style="font-size: 1.5rem; font-weight: bold; color: #ff9800;">
+                        {{ mastery_rate }}%
+                    </div>
+                    <div style="font-size: 0.75rem; color: #666;">達成率</div>
+                </div>
+            </div>
+            
+            <!-- プログレスバー -->
+            <div style="margin-top: 12px;">
+                <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: #666;">
+                    <span>全体の達成率</span>
+                    <span>{{ total_mastered_words }} / {{ total_words_attempted }} 単語</span>
+                </div>
+                <div style="background: #e0e0e0; height: 6px; border-radius: 3px; overflow: hidden; margin-top: 4px;">
+                    <div style="width: {{ mastery_rate }}%; background: linear-gradient(90deg, #4caf50, #81c784); height: 100%;"></div>
+                </div>
+            </div>
+            
+            <div style="margin-top: 8px;">
+                <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: #666;">
+                    <span>週間目標達成率</span>
+                    <span>{{ weekly_words_learned }} / {{ weekly_target }} 単語</span>
+                </div>
+                <div style="background: #e0e0e0; height: 6px; border-radius: 3px; overflow: hidden; margin-top: 4px;">
+                    <div style="width: {{ ((weekly_words_learned / weekly_target * 100) if weekly_target > 0 else 0)|round }}%; background: #2196f3; height: 100%;"></div>
+                </div>
+            </div>
+            {% else %}
+            <!-- データがない場合 -->
+            <div style="text-align: center; padding: 20px 0;">
+                <div style="font-size: 3rem; margin-bottom: 10px;">🎯</div>
+                <p style="color: #666; margin: 0;">まだ学習記録がありません。<br>下のボタンから学習を始めましょう！</p>
+                {% if total_basic_words is defined %}
+                <p style="color: #999; font-size: 0.8rem; margin-top: 10px;">
+                    基礎単語: 全{{ total_basic_words }}語
+                </p>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- アクションボタン -->
+        <div style="display: flex; gap: 10px;">
+            <!-- 基礎学力機能は現在開発中のため一時的にコメントアウト
+            <a href="#" onclick="alert('基礎学力機能は現在準備中です'); return false;" 
+               style="flex: 1; display: inline-block; padding: 10px 12px; text-align: center; 
+                      background-color: #f8f9fa; color: #6c757d; border: 1px solid #dee2e6; 
+                      border-radius: 6px; text-decoration: none; font-size: 0.9rem;
+                      transition: all 0.2s; pointer-events: auto !important; z-index: 1000; position: relative;">
+                📚 テキスト一覧
+            </a>
+            -->
+            <a href="{{ url_for('categories.categories') }}" 
+               style="flex: 1; display: inline-block; padding: 10px 12px; text-align: center; 
+                      background-color: #0056b3; color: white; border: 1px solid #0056b3; 
+                      border-radius: 6px; text-decoration: none; font-size: 0.9rem;
+                      transition: all 0.2s; pointer-events: auto !important; z-index: 1000; position: relative;">
+                🎯 トレーニング
+            </a>
+        </div>
+    </div>
+    
+    <!-- 自由進度学習 -->
+    <div class="dashboard-card">
+        <h3>📚 自由進度学習</h3>
+        
+        <p style="font-size: 0.9rem; margin-bottom: 15px; color: #666;">
+            自分のペースで学習単元を選択し、進捗を管理できます。AIがあなたに最適な学習内容を推薦します。
+        </p>
+        
+        <!-- 学習統計 -->
+        {% if total_units is defined and total_units > 0 %}
+        <div style="background: #f0f8ff; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; text-align: center;">
+                <div>
+                    <div style="font-size: 1.5rem; font-weight: bold; color: #28a745;">
+                        {{ completed_units or 0 }}
+                    </div>
+                    <div style="font-size: 0.75rem; color: #666;">完了単元</div>
+                </div>
+                
+                <div>
+                    <div style="font-size: 1.5rem; font-weight: bold; color: #007bff;">
+                        {{ in_progress_units or 0 }}
+                    </div>
+                    <div style="font-size: 0.75rem; color: #666;">学習中</div>
+                </div>
+                
+                <div>
+                    <div style="font-size: 1.5rem; font-weight: bold; color: #ff9800;">
+                        {{ completion_rate or 0 }}%
+                    </div>
+                    <div style="font-size: 0.75rem; color: #666;">完了率</div>
+                </div>
+            </div>
+            
+            <!-- プログレスバー -->
+            <div style="margin-top: 12px;">
+                <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: #666;">
+                    <span>全体の進捗</span>
+                    <span>{{ completed_units or 0 }} / {{ total_units or 0 }} 単元</span>
+                </div>
+                <div style="background: #e0e0e0; height: 6px; border-radius: 3px; overflow: hidden; margin-top: 4px;">
+                    <div style="width: {{ completion_rate or 0 }}%; background: linear-gradient(90deg, #007bff, #0056b3); height: 100%;"></div>
+                </div>
+            </div>
+            
+            {% if total_study_time is defined and total_study_time > 0 %}
+            <div style="margin-top: 8px; text-align: center; font-size: 0.8rem; color: #666;">
+                総学習時間: {{ total_study_time }}分
+            </div>
+            {% endif %}
+        </div>
+        {% else %}
+        <div style="text-align: center; padding: 20px 0; background: #f8f9fa; border-radius: 8px; margin-bottom: 15px;">
+            <div style="font-size: 2.5rem; margin-bottom: 10px;">🎯</div>
+            <p style="color: #666; margin: 0; font-size: 0.9rem;">
+                自分のペースで学習を始めましょう！<br>
+                AIがあなたに最適な単元を推薦します。
+            </p>
+        </div>
+        {% endif %}
+        
+        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+            <a href="{{ url_for('student_dashboard.dashboard') }}" 
+               style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1rem; 
+                      background: linear-gradient(135deg, #007bff, #0056b3); color: white; 
+                      border-radius: 8px; text-decoration: none; font-size: 0.9rem; font-weight: 500;
+                      transition: all 0.2s; pointer-events: auto !important; z-index: 1000; position: relative;"
+               onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 12px rgba(0,123,255,0.3)';"
+               onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+                <i class="fas fa-graduation-cap"></i>
+                学習ポータル
+            </a>
+            
+            {% if in_progress_units is defined and in_progress_units > 0 %}
+            <a href="{{ url_for('student_dashboard.dashboard') }}#continue-learning" 
+               style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1rem; 
+                      background: transparent; color: #28a745; border: 1px solid #28a745;
+                      border-radius: 8px; text-decoration: none; font-size: 0.9rem;
+                      transition: all 0.2s; pointer-events: auto !important; z-index: 1000; position: relative;"
+               onmouseover="this.style.background='#28a745'; this.style.color='white';"
+               onmouseout="this.style.background='transparent'; this.style.color='#28a745';">
+                <i class="fas fa-play"></i>
+                続きから
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- アンケート状況 -->
+    <div class="dashboard-card">
+        <h3>📋 アンケート状況</h3>
+        
+        <div class="metric-item">
+            <div>
+                <div class="metric-label">好きなこと・興味アンケート</div>
+                {% if interest_survey %}
+                <span class="status-badge completed">完了</span>
+                {% else %}
+                <span class="status-badge pending">未回答</span>
+                {% endif %}
+            </div>
+            <div>
+                {% if interest_survey %}
+                <a href="{{ url_for('student_surveys.interest_survey') }}" 
+                   style="display: inline-block; padding: 0.375rem 0.75rem; font-size: 0.875rem; border-radius: 0.25rem; text-decoration: none; background-color: transparent; color: #5DADE2; border: 1px solid #5DADE2;">
+                   編集
+                </a>
+                {% else %}
+                <a href="{{ url_for('student_surveys.interest_survey') }}" 
+                   style="display: inline-block; padding: 0.375rem 0.75rem; font-size: 0.875rem; border-radius: 0.25rem; text-decoration: none; background-color: #5DADE2; color: white; border: 1px solid #5DADE2;">
+                   回答する
+                </a>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="metric-item">
+            <div>
+                <div class="metric-label">学習スタイルアンケート</div>
+                {% if personality_survey %}
+                <span class="status-badge completed">完了</span>
+                {% else %}
+                <span class="status-badge pending">未回答</span>
+                {% endif %}
+            </div>
+            <div>
+                {% if personality_survey %}
+                <a href="{{ url_for('student_surveys.personality_survey') }}" 
+                   style="display: inline-block; padding: 0.375rem 0.75rem; font-size: 0.875rem; border-radius: 0.25rem; text-decoration: none; background-color: transparent; color: #5DADE2; border: 1px solid #5DADE2;">
+                   編集
+                </a>
+                {% else %}
+                <a href="{{ url_for('student_surveys.personality_survey') }}" 
+                   style="display: inline-block; padding: 0.375rem 0.75rem; font-size: 0.875rem; border-radius: 0.25rem; text-decoration: none; background-color: #5DADE2; color: white; border: 1px solid #5DADE2;">
+                   回答する
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- クラス情報 -->
+    {% if all_class_themes %}
+    <div class="dashboard-card">
+        <h3>🏫 所属クラス</h3>
+        {% for class_theme in all_class_themes %}
+        <div style="margin-bottom: 1rem; padding: 1rem; background-color: #f8f9fa; border-radius: 8px;">
+            <div class="metric-item">
+                <div class="metric-label">{{ class_theme.class_name }}</div>
+                <div class="metric-value">
+                    {% if class_theme.theme_title %}
+                    {{ class_theme.theme_title }}
+                    {% else %}
+                    テーマ未設定
+                    {% endif %}
+                </div>
+            </div>
+            <div style="margin-top: 0.5rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                <a href="{{ url_for('student_dashboard.dashboard') }}" 
+                   style="{{ btn_primary_style }}">
+                   <i class="fas fa-info-circle"></i> 詳細
+                </a>
+                <a href="{{ url_for('student_dashboard.dashboard') }}" 
+                   style="{{ btn_outline_style }}">
+                   <i class="fas fa-book"></i> テーマ
+                </a>
+                <a href="{{ url_for('student_activities.activities') }}?class_id={{ class_theme.class_id }}" 
+                   style="{{ btn_outline_style }}">
+                   <i class="fas fa-clipboard-list"></i> 記録
+                </a>
+                <a href="{{ url_for('index') }}?class_id={{ class_theme.class_id }}" 
+                   style="{{ btn_outline_style }}">
+                   <i class="fas fa-robot"></i> AI
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    
+    <!-- ランキングウィジェット -->
+    <div class="dashboard-card">
+        {% include 'components/ranking_widget.html' %}
+    </div>
+    
+    <!-- ToDoと目標 -->
+    <div class="dashboard-card">
+        <h3>✅ ToDo・目標</h3>
+        
+        <!-- クラスのToDo表示 -->
+        {% if class_todos %}
+        <div style="margin-bottom: 1rem;">
+            <div class="metric-label">クラスのToDo</div>
+            {% for todo in class_todos[:3] %}
+            <div style="margin-top: 0.5rem; padding: 0.75rem; background-color: #f8f9fa; border-radius: 6px;">
+                <strong>{{ todo.title }}</strong>
+                {% if todo.due_date %}
+                <p class="text-muted" style="margin: 0.25rem 0;">期限: {{ todo.due_date.strftime('%Y年%m月%d日') }}</p>
+                {% endif %}
+                <span class="status-badge {% if todo.status == 'completed' %}completed{% else %}pending{% endif %}">
+                    {{ todo.status }}
+                </span>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        
+        <!-- クラスの目標表示 -->
+        {% if class_goals %}
+        <div style="margin-bottom: 1rem;">
+            <div class="metric-label">クラスの目標</div>
+            {% for goal in class_goals[:3] %}
+            <div style="margin-top: 0.5rem; padding: 0.75rem; background-color: #f8f9fa; border-radius: 6px;">
+                <strong>{{ goal.title }}</strong>
+                {% if goal.due_date %}
+                <p class="text-muted" style="margin: 0.25rem 0;">期限: {{ goal.due_date.strftime('%Y年%m月%d日') }}</p>
+                {% endif %}
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: {{ goal.progress or 0 }}%"></div>
+                </div>
+                <small>進捗: {{ goal.progress or 0 }}%</small>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        
+        <div class="metric-item">
+            <div class="metric-label">未完了のToDo</div>
+            <div class="metric-value">{{ pending_todos_count or 0 }}件</div>
+        </div>
+        <div class="metric-item">
+            <div class="metric-label">進行中の目標</div>
+            <div class="metric-value">{{ active_goals_count or 0 }}件</div>
+        </div>
+        
+        <div style="margin-top: 1rem;">
+            <a href="{{ url_for('student_goals_todos.todos') }}" 
+               style="display: inline-block; padding: 0.375rem 0.75rem; font-size: 0.875rem; border-radius: 0.25rem; text-decoration: none; background-color: transparent; color: #5DADE2; border: 1px solid #5DADE2; margin-right: 0.5rem;">
+               ToDoを見る
+            </a>
+            <a href="{{ url_for('student_goals_todos.goals') }}" 
+               style="display: inline-block; padding: 0.375rem 0.75rem; font-size: 0.875rem; border-radius: 0.25rem; text-decoration: none; background-color: transparent; color: #5DADE2; border: 1px solid #5DADE2;">
+               目標を見る
+            </a>
+        </div>
+    </div>
+    
+    <!-- 活動記録状況 -->
+    <div class="dashboard-card">
+        <h3>📝 活動記録</h3>
+        <div class="metric-item">
+            <div class="metric-label">総記録数</div>
+            <div class="metric-value">{{ recent_activities|length }}件</div>
+        </div>
+        <div class="metric-item">
+            <div class="metric-label">今週の記録</div>
+            <div class="metric-value">{{ weekly_activities_count or 0 }}件</div>
+        </div>
+        
+        {% if recent_activities %}
+        <div style="margin-top: 1rem;">
+            <div class="metric-label">最新の記録</div>
+            {% for activity in recent_activities[:3] %}
+            <div style="margin-bottom: 10px; padding: 10px; background: #f8f9fa; border-radius: 6px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <strong>{{ activity.title }}</strong>
+                    <span style="background: #e3f2fd; color: #1976d2; padding: 2px 8px; border-radius: 4px; font-size: 0.85rem;">
+                        {{ activity.class_name|default('クラス未設定') }}
+                    </span>
+                </div>
+                <div style="color: #666; font-size: 0.9rem; margin-top: 5px;">
+                    {{ activity.created_at.strftime('%Y年%m月%d日 %H:%M') if activity.created_at else '' }}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        
+        <div style="margin-top: 1rem;">
+            <a href="{{ url_for('student_activities.activities') }}" 
+               style="display: inline-block; padding: 0.375rem 0.75rem; font-size: 0.875rem; border-radius: 0.25rem; text-decoration: none; background-color: transparent; color: #5DADE2; border: 1px solid #5DADE2; margin-right: 0.5rem;">
+               記録を見る
+            </a>
+            {% if class_info %}
+            <a href="{{ url_for('student_activities.activities') }}?class_id={{ all_class_themes[0].class_id if all_class_themes else '' }}" 
+               style="display: inline-block; padding: 0.375rem 0.75rem; font-size: 0.875rem; border-radius: 0.25rem; text-decoration: none; background-color: #5DADE2; color: white; border: 1px solid #5DADE2;">
+               新しい記録
+            </a>
+            {% else %}
+            <a href="{{ url_for('student_activities.activities') }}" 
+               style="display: inline-block; padding: 0.375rem 0.75rem; font-size: 0.875rem; border-radius: 0.25rem; text-decoration: none; background-color: #5DADE2; color: white; border: 1px solid #5DADE2;">
+               新しい記録
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- AIチャット -->
+    <div class="dashboard-card">
+        <h3>🤖 AIサポート</h3>
+        <p>学習の質問や探究活動について、AIと相談できます。</p>
+        
+        <div class="metric-item">
+            <div class="metric-label">今月の利用回数</div>
+            <div class="metric-value">{{ monthly_chat_count or 0 }}回</div>
+        </div>
+        
+        <div style="margin-top: 1rem;">
+            <a href="{{ url_for('index') }}" 
+               style="display: inline-block; padding: 0.375rem 0.75rem; font-size: 0.875rem; border-radius: 0.25rem; text-decoration: none; background-color: #5DADE2; color: white; border: 1px solid #5DADE2;">
+               AIチャットを開く
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- ランキングセクション -->
+<div class="ranking-section">
+    <!-- クラス学習ランキング -->
+    <div class="ranking-card">
+        <h3>🏆 基礎学力マスターランキング（5/5達成単語数）</h3>
+        <p style="color: #666; font-size: 0.9rem; margin-top: -0.5rem; margin-bottom: 1rem;">※ランキングは毎日深夜に更新されます</p>
+        <ol class="ranking-list">
+            {% if class_top_learners %}
+                {% for learner in class_top_learners[:5] %}
+                <li class="ranking-item" {% if learner.id == current_user.id %}style="background: #e3f2fd;"{% endif %}>
+                    <span class="rank-number">{{ loop.index }}</span>
+                    <span class="rank-name">{{ learner.full_name|default(learner.username, true) }}</span>
+                    <span class="rank-score">{{ learner.word_count|default(0, true) }}単語</span>
+                </li>
+                {% endfor %}
+            {% else %}
+                <li class="ranking-item">
+                    <div class="alert alert-info mb-0">
+                        <i class="fas fa-info-circle"></i> 
+                        ランキングデータを集計中です。問題を解いて記録を作りましょう！
+                    </div>
+                </li>
+            {% endif %}
+        </ol>
+    </div>
+    
+    <!-- 週間ランキング -->
+    <div class="ranking-card">
+        <h3>📅 今週の活動ランキング</h3>
+        <ol class="ranking-list">
+            {% if weekly_top_learners %}
+                {% for learner in weekly_top_learners[:5] %}
+                <li class="ranking-item" {% if learner.id == current_user.id %}style="background: #e3f2fd;"{% endif %}>
+                    <span class="rank-number">{{ loop.index }}</span>
+                    <span class="rank-name">{{ learner.full_name|default(learner.username, true) }}</span>
+                    <span class="rank-score">{{ learner.word_count|default(0, true) }}単語</span>
+                </li>
+                {% endfor %}
+            {% else %}
+                <li class="ranking-item">
+                    <div class="alert alert-info mb-0">
+                        <i class="fas fa-info-circle"></i> 
+                        今週の活動データを集計中です。学習を始めてみましょう！
+                    </div>
+                </li>
+            {% endif %}
+        </ol>
+    </div>
+</div>
+
+<!-- ページロード時のアニメーション -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 数値のカウントアップアニメーション
+    function animateValue(element, start, end, duration) {
+        if (!element) return;
+        
+        let startTimestamp = null;
+        const step = (timestamp) => {
+            if (!startTimestamp) startTimestamp = timestamp;
+            const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+            const current = Math.floor(progress * (end - start) + start);
+            element.textContent = current;
+            if (progress < 1) {
+                window.requestAnimationFrame(step);
+            }
+        };
+        window.requestAnimationFrame(step);
+    }
+    
+    // 各統計値をアニメーション
+    const totalMasteredEl = document.getElementById('total-mastered');
+    const weeklyMasteredEl = document.getElementById('weekly-mastered');
+    const masteryRateEl = document.getElementById('mastery-rate');
+    
+    if (totalMasteredEl) {
+        animateValue(totalMasteredEl, 0, {{ total_mastered_words|default(0) }}, 1000);
+    }
+    if (weeklyMasteredEl) {
+        animateValue(weeklyMasteredEl, 0, {{ weekly_words_learned|default(0) }}, 1000);
+    }
+    if (masteryRateEl) {
+        const targetRate = {{ mastery_rate|default(0) }};
+        let currentRate = 0;
+        const rateInterval = setInterval(() => {
+            currentRate += 1;
+            if (currentRate >= targetRate) {
+                currentRate = targetRate;
+                clearInterval(rateInterval);
+            }
+            masteryRateEl.textContent = currentRate + '%';
+        }, 20);
+    }
+    
+    // プログレスバーのアニメーション
+    const masteryProgress = document.getElementById('mastery-progress');
+    const weeklyProgress = document.getElementById('weekly-progress');
+    
+    if (masteryProgress) {
+        const originalWidth = masteryProgress.style.width;
+        masteryProgress.style.width = '0%';
+        setTimeout(() => {
+            masteryProgress.style.width = originalWidth;
+        }, 500);
+    }
+    
+    if (weeklyProgress) {
+        const originalWidth = weeklyProgress.style.width;
+        weeklyProgress.style.width = '0%';
+        setTimeout(() => {
+            weeklyProgress.style.width = originalWidth;
+        }, 700);
+    }
+});
+</script>
+{% endblock %}

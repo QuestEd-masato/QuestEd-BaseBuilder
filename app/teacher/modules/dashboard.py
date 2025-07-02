@@ -1,7 +1,7 @@
 # app/teacher/modules/dashboard.py
 """教師ダッシュボード機能"""
 
-from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
+from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, current_app
 from flask_login import login_required, current_user
 from datetime import datetime
 
@@ -15,7 +15,7 @@ from ..common import teacher_required
 
 dashboard_bp = Blueprint('teacher_dashboard', __name__)
 
-@dashboard_bp.route('/teacher_dashboard')
+@dashboard_bp.route('/dashboard')
 @login_required
 @teacher_required
 def dashboard():
@@ -132,7 +132,7 @@ def dashboard():
             is_approved=False
         ).count()
     
-    return render_template('teacher_dashboard.html', 
+    return render_template('teacher/dashboard.html', 
                          classes=class_info,
                          pending_students_count=pending_students_count,
                          integrated_stats=integrated_stats)
