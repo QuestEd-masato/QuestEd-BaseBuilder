@@ -18,7 +18,7 @@ from datetime import datetime
 from extensions import db
 from basebuilder.models import ProblemCategory, BasicKnowledgeItem, TextSet
 
-categories_bp = Blueprint('categories', __name__)
+categories_bp = Blueprint('categories', __name__, url_prefix='/basebuilder')
 
 
 @categories_bp.route('/categories')

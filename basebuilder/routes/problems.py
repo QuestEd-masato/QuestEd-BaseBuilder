@@ -21,7 +21,7 @@ from basebuilder.models import (
     ProficiencyRecord, TextSet
 )
 
-problems_bp = Blueprint('problems', __name__)
+problems_bp = Blueprint('problems', __name__, url_prefix='/basebuilder')
 
 
 @problems_bp.route('/problems')

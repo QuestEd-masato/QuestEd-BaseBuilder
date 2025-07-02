@@ -19,7 +19,7 @@ from basebuilder.models import (
     ProficiencyRecord, TextSet, TextDelivery, WordProficiency
 )
 
-analytics_bp = Blueprint('analytics', __name__)
+analytics_bp = Blueprint('analytics', __name__, url_prefix='/basebuilder')
 
 
 @analytics_bp.route('/analysis')

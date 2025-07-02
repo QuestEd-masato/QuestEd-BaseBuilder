@@ -28,7 +28,7 @@ from basebuilder.models import (
     AnswerRecord, BaseBuilderLearningPath, PathAssignment
 )
 
-admin_bp = Blueprint('basebuilder_admin', __name__)
+admin_bp = Blueprint('admin', __name__, url_prefix='/basebuilder')
 
 
 @admin_bp.route('/theme_relations')

@@ -17,7 +17,7 @@ from basebuilder.models import (
     ProficiencyRecord
 )
 
-progress_bp = Blueprint('progress', __name__)
+progress_bp = Blueprint('progress', __name__, url_prefix='/basebuilder')
 
 
 @progress_bp.route('/proficiency')

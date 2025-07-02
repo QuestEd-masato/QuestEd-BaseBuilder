@@ -1,106 +1,15 @@
-# basebuilder/__init__.py
+"""
+BaseBuilder Module - 問題管理・学習パス管理モジュール
+"""
+
 def init_app(app):
-    """BaseBuilderモジュールをアプリケーションに初期化する"""
+    """アプリケーションにBaseBuilderを初期化"""
+    # routes.pyからすべてのBlueprintをインポートして登録
+    from .routes import register_all_blueprints
+    register_all_blueprints(app)
     
-    # BaseBuilderモジュール登録（シンプルなフォールバック方式）
-    try:
-        # メインのbasebuilder_module Blueprint登録
-        from basebuilder.routes import basebuilder_module
-        app.register_blueprint(basebuilder_module)
-        
-        # 各機能モジュールを個別登録（安全な方式）
-        from basebuilder.routes.categories import categories_bp
-        from basebuilder.routes.problems import problems_bp  
-        from basebuilder.routes.sessions import sessions_bp
-        from basebuilder.routes.progress import progress_bp
-        from basebuilder.routes.analytics import analytics_bp
-        from basebuilder.routes.admin import admin_bp
-        
-        app.register_blueprint(categories_bp, url_prefix='/basebuilder')
-        app.register_blueprint(problems_bp, url_prefix='/basebuilder')
-        app.register_blueprint(sessions_bp, url_prefix='/basebuilder')
-        app.register_blueprint(progress_bp, url_prefix='/basebuilder')
-        app.register_blueprint(analytics_bp, url_prefix='/basebuilder')
-        app.register_blueprint(admin_bp, url_prefix='/basebuilder')
-        
-        app.logger.info("BaseBuilder all modules registered successfully")
-        
-    except ImportError as e:
-        app.logger.error(f"BaseBuilder module import failed: {e}")
-        # 最小限の機能でも動作させる
-        try:
-            from basebuilder.routes import basebuilder_module
-            app.register_blueprint(basebuilder_module)
-            app.logger.info("BaseBuilder minimal module registered")
-        except:
-            app.logger.error("BaseBuilder initialization completely failed")
-            raise e
-    
-    # 管理画面へのモデル追加（Flask-Adminが利用可能な場合のみ）
-    with app.app_context():
-        try:
-            from extensions import admin, db
-            if admin:
-                from flask_admin.contrib.sqla import ModelView
-                from basebuilder.models import (
-                    ProblemCategory, BasicKnowledgeItem, KnowledgeThemeRelation,
-                    AnswerRecord, ProficiencyRecord, BaseBuilderLearningPath, PathAssignment,
-                    TextSet, TextDelivery, TextProficiencyRecord, WordProficiency
-                )
-                
-                # 新しく追加したモジュールをインポート
-                from basebuilder import exporters
-                from basebuilder import importers
-                
-                class BaseBuilderModelView(ModelView):
-                    def is_accessible(self):
-                        from flask_login import current_user
-                        return current_user.is_authenticated and current_user.role == 'teacher'
-                
-                # 修正: app.adminではなくadminを使用
-                admin.add_view(BaseBuilderModelView(ProblemCategory, db.session, name='問題カテゴリ'))
-                admin.add_view(BaseBuilderModelView(BasicKnowledgeItem, db.session, name='基礎知識問題'))
-                admin.add_view(BaseBuilderModelView(KnowledgeThemeRelation, db.session, name='問題テーマ関連'))
-                admin.add_view(BaseBuilderModelView(AnswerRecord, db.session, name='解答記録'))
-                admin.add_view(BaseBuilderModelView(ProficiencyRecord, db.session, name='熟練度記録'))
-                admin.add_view(BaseBuilderModelView(BaseBuilderLearningPath, db.session, name='学習パス'))
-                admin.add_view(BaseBuilderModelView(PathAssignment, db.session, name='パス割り当て'))
-                # テキスト関連のモデルを管理画面に追加
-                admin.add_view(BaseBuilderModelView(TextSet, db.session, name='テキストセット'))
-                admin.add_view(BaseBuilderModelView(TextDelivery, db.session, name='テキスト配信'))
-                admin.add_view(BaseBuilderModelView(TextProficiencyRecord, db.session, name='テキスト熟練度'))
-                admin.add_view(BaseBuilderModelView(WordProficiency, db.session, name='単語熟練度'))
-        except ImportError:
-            print("Warning: Flask-Admin not available for BaseBuilder module")
-    
-    # ナビゲーションのカスタマイズ（変更なし）
-    @app.context_processor
-    def inject_basebuilder_nav():
-        from flask_login import current_user
-        
-        # ナビゲーション項目を追加
-        nav_items = []
-        
-        if current_user.is_authenticated:
-            if current_user.role == 'student':
-                nav_items = [
-                    {'url': '/basebuilder/', 'name': '基礎学力ホーム'},
-                    {'url': '/basebuilder/my_texts', 'name': 'テキスト一覧'},
-                    {'url': '/basebuilder/proficiency', 'name': '熟練度'},
-                    {'url': '/basebuilder/history', 'name': '学習履歴'},
-                    {'url': '/basebuilder/learning_paths', 'name': '学習パス'}
-                ]
-            elif current_user.role == 'teacher':
-                nav_items = [
-                    {'url': '/basebuilder/', 'name': '基礎学力ホーム'},
-                    {'url': '/basebuilder/text_sets', 'name': 'テキスト管理'},
-                    {'url': '/basebuilder/categories', 'name': 'カテゴリ管理'},
-                    {'url': '/basebuilder/problems', 'name': '問題管理'},
-                    {'url': '/basebuilder/theme_relations', 'name': 'テーマ関連付け'},
-                    {'url': '/basebuilder/learning_paths', 'name': '学習パス管理'},
-                    {'url': '/basebuilder/analysis', 'name': '理解度分析'}
-                ]
-        
-        return {'basebuilder_nav': nav_items}
-    
-    return app
+    print("✅ BaseBuilder initialized successfully")
+    return True
+
+# エクスポート
+__all__ = ['init_app']
