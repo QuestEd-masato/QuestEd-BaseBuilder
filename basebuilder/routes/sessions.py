@@ -18,12 +18,13 @@ import random
 import json
 
 from extensions import db
+from sqlalchemy import func
 from basebuilder.models import (
     ProblemCategory, BasicKnowledgeItem, AnswerRecord, 
     ProficiencyRecord, TextSet, WordProficiency
 )
 
-sessions_bp = Blueprint('sessions', __name__)
+sessions_bp = Blueprint('sessions', __name__, url_prefix='/basebuilder')
 
 
 @sessions_bp.route('/start_session')
