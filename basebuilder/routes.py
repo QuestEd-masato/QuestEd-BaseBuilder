@@ -111,16 +111,38 @@ def index():
 
 def register_all_blueprints(app):
     """すべてのBlueprintを登録"""
-    # メインBlueprint
-    app.register_blueprint(basebuilder_bp)
-    
-    # サブBlueprints（url_prefixは各Blueprintで定義済み）
-    app.register_blueprint(categories_bp)
-    app.register_blueprint(problems_bp)
-    app.register_blueprint(sessions_bp)
-    app.register_blueprint(progress_bp)
-    app.register_blueprint(analytics_bp)
-    app.register_blueprint(admin_bp)
-    app.register_blueprint(texts_bp)
-    
-    print("✅ All BaseBuilder blueprints registered")
+    try:
+        print("🔄 Starting BaseBuilder blueprint registration...")
+        
+        # メインBlueprint
+        print("  📝 Registering main basebuilder_bp...")
+        app.register_blueprint(basebuilder_bp)
+        print("  ✅ basebuilder_bp registered")
+        
+        # サブBlueprints（url_prefixは各Blueprintで定義済み）
+        blueprints = [
+            ('categories_bp', categories_bp),
+            ('problems_bp', problems_bp),
+            ('sessions_bp', sessions_bp),
+            ('progress_bp', progress_bp),
+            ('analytics_bp', analytics_bp),
+            ('admin_bp', admin_bp),
+            ('texts_bp', texts_bp)
+        ]
+        
+        for name, blueprint in blueprints:
+            try:
+                print(f"  📝 Registering {name}...")
+                app.register_blueprint(blueprint)
+                print(f"  ✅ {name} registered")
+            except Exception as e:
+                print(f"  ❌ Failed to register {name}: {str(e)}")
+                raise e
+        
+        print("✅ All BaseBuilder blueprints registered successfully")
+        
+    except Exception as e:
+        print(f"❌ Blueprint registration failed: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise e
