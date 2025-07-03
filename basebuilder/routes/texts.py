@@ -21,18 +21,32 @@ from basebuilder.models import (
     TextProficiencyRecord, AnswerRecord
 )
 from app.models import User, Class, ClassEnrollment
-from basebuilder.utils import require_roles, handle_db_error, log_activity
+# from basebuilder.utils import require_roles, handle_db_error, log_activity
+# 依存関係を簡素化
 
 texts_bp = Blueprint('texts', __name__, url_prefix='/basebuilder')
+
+def log_activity(action, description):
+    """簡易アクティビティログ記録"""
+    try:
+        current_app.logger.info(
+            f"BASEBUILDER_ACTIVITY: user_id={current_user.id}, "
+            f"action={action}, description={description}, "
+            f"timestamp={datetime.utcnow()}"
+        )
+    except Exception as e:
+        current_app.logger.error(f"Activity log error: {str(e)}")
 
 
 @texts_bp.route('/my_texts')
 @login_required
-@require_roles('student')
-@handle_db_error("学生テキスト一覧")
 def my_texts():
     """学生向け: 配信されたテキスト一覧表示"""
     try:
+        # 権限チェック
+        if current_user.role != 'student':
+            flash('学生のみアクセス可能です。')
+            return redirect(url_for('index'))
         # 学生の所属クラスを取得
         enrolled_class_ids = [enrollment.class_id for enrollment in 
                             ClassEnrollment.query.filter_by(
@@ -84,11 +98,13 @@ def my_texts():
 
 @texts_bp.route('/text_sets')
 @login_required
-@require_roles('admin', 'teacher')
-@handle_db_error("テキストセット管理")
 def text_sets():
     """教師・管理者向け: テキストセット一覧"""
     try:
+        # 権限チェック
+        if current_user.role not in ['admin', 'teacher']:
+            flash('教師または管理者のみアクセス可能です。')
+            return redirect(url_for('index'))
         # フィルタリングパラメータ
         category_id = request.args.get('category_id', type=int)
         page = request.args.get('page', 1, type=int)
@@ -147,7 +163,6 @@ def text_sets():
 
 @texts_bp.route('/text/<int:text_id>/view')
 @login_required
-@handle_db_error("テキスト詳細表示")
 def view_text_set(text_id):
     """テキストセット詳細表示"""
     try:
@@ -217,11 +232,14 @@ def view_text_set(text_id):
 
 @texts_bp.route('/text/<int:text_id>/deliver', methods=['GET', 'POST'])
 @login_required
-@require_roles('admin', 'teacher')
-@handle_db_error("テキスト配信")
 def deliver_text(text_id):
     """教師・管理者向け: テキスト配信"""
     try:
+        # 権限チェック
+        if current_user.role not in ['admin', 'teacher']:
+            flash('教師または管理者のみアクセス可能です。')
+            return redirect(url_for('index'))
+        
         text_set = TextSet.query.get_or_404(text_id)
         
         # 権限チェック（教師は自分の学校のテキストのみ）
