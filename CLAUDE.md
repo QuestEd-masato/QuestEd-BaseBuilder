@@ -1,6 +1,6 @@
 # QuestEd Development Reference - Master Index
 
-*📅 Last Updated: 2025-07-02 | Status: ✅ Production Operational*
+*📅 Last Updated: 2025-07-03 | Status: ✅ Production Operational - BaseBuilder Restored*
 
 This document serves as the **master index** and quick reference for the QuestEd educational platform. For detailed information, refer to the linked specialized documents.
 
@@ -225,10 +225,38 @@ Required `.env` variables:
    - 実装時間: 10分
 
 **🟢 明日以降 (2025-07-04〜)**
-4. **高度なエラーハンドリング復旧**
-5. **完全なサービス層再構築**
+4. **✅ Blueprint登録404エラー解決** - 完了 (2025-07-03)
+   - 問題: BaseBuilder全エンドポイントが404エラー
+   - 原因: 絵文字文字化けによる`register_all_blueprints`関数認識失敗
+   - 解決: 全絵文字をASCII文字に置換 (✅→[SUCCESS], ❌→[ERROR])
+   - 影響範囲: `basebuilder/routes.py`, `basebuilder/__init__.py`, `app/__init__.py`
+   - 実装時間: 30分
+
+5. **高度なエラーハンドリング復旧**
+6. **完全なサービス層再構築**
 
 ### 🔄 残存する技術的課題
+
+### ⚠️ 重要な開発上の注意点 (2025-07-03追加)
+
+#### 🚫 絵文字使用の禁止
+**本番環境での文字化け問題を防ぐため、コード内で絵文字の使用を禁止**
+
+- **問題**: 本番サーバーで絵文字が文字化けし、Python関数認識に失敗
+- **禁止文字**: 🔄📝✅❌⚠️🎯🚨💡📊🔍🛠️🎉🔥⭐🤖 など
+- **代替案**: `[INFO]`, `[SUCCESS]`, `[ERROR]`, `[WARNING]` 等のASCII文字を使用
+- **対象ファイル**: 全Pythonファイル（特にBlueprint登録、初期化処理）
+
+**例:**
+```python
+# ❌ 禁止
+print("✅ 処理完了")
+print("❌ エラー発生")
+
+# ✅ 推奨
+print("[SUCCESS] 処理完了")
+print("[ERROR] エラー発生")
+```
 
 ### 📋 今後の実装計画 (優先順位順)
 
