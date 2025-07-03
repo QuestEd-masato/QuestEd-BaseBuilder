@@ -10,24 +10,50 @@ from datetime import datetime
 
 categories_bp = Blueprint('categories', __name__, url_prefix='/basebuilder')
 
+def log_activity(action, description, category_id=None):
+    """簡易アクティビティログ記録"""
+    try:
+        current_app.logger.info(
+            f"BASEBUILDER_ACTIVITY: user_id={current_user.id}, "
+            f"action={action}, description={description}, "
+            f"category_id={category_id}, timestamp={datetime.utcnow()}"
+        )
+    except Exception as e:
+        current_app.logger.error(f"Activity log error: {str(e)}")
+
 @categories_bp.route('/categories')
 @login_required
 def categories():
     """カテゴリ一覧表示 - 簡素化版"""
     try:
+        # アクティビティログ記録
+        log_activity("category_list_view", "Categories list accessed")
         from extensions import db
         from basebuilder.models import ProblemCategory
         
         # 基本的なカテゴリ一覧取得
         categories = ProblemCategory.query.order_by(ProblemCategory.name).all()
         
-        # 統計情報は一旦空で
+        # 統計情報を実際のデータから計算
+        from basebuilder.models import BasicKnowledgeItem, TextSet, AnswerRecord
+        
         category_stats = {}
         for category in categories:
+            # 問題数カウント
+            problem_count = BasicKnowledgeItem.query.filter_by(category_id=category.id).count()
+            
+            # テキスト数カウント
+            text_count = TextSet.query.filter_by(category_id=category.id).count()
+            
+            # 使用回数カウント（そのカテゴリの問題への回答数）
+            usage_count = AnswerRecord.query.join(BasicKnowledgeItem).filter(
+                BasicKnowledgeItem.category_id == category.id
+            ).count()
+            
             category_stats[category.id] = {
-                'problem_count': 0,
-                'text_count': 0,
-                'usage_count': 0
+                'problem_count': problem_count,
+                'text_count': text_count,
+                'usage_count': usage_count
             }
         
         return render_template('basebuilder/categories.html', 
@@ -60,6 +86,9 @@ def create_category():
             
             name = request.form.get('name', '').strip()
             description = request.form.get('description', '').strip()
+            subject = request.form.get('subject', '').strip()
+            grade_level = request.form.get('grade_level', type=int)
+            difficulty_level = request.form.get('difficulty_level', type=int)
             
             if not name:
                 flash('カテゴリ名を入力してください。', 'error')
@@ -71,16 +100,22 @@ def create_category():
                 flash('同じ名前のカテゴリが既に存在します。', 'error')
                 return render_template('basebuilder/create_category.html')
             
-            # 新しいカテゴリを作成
+            # 新しいカテゴリを作成（拡張フィールド対応）
             new_category = ProblemCategory(
                 name=name,
                 description=description,
+                subject=subject,
+                grade_level=grade_level,
+                difficulty_level=difficulty_level,
                 created_by=current_user.id,
                 created_at=datetime.utcnow()
             )
             
             db.session.add(new_category)
             db.session.commit()
+            
+            # アクティビティログ記録
+            log_activity("category_created", f"Category '{name}' created", new_category.id)
             
             flash(f'カテゴリ「{name}」を作成しました。', 'success')
             return redirect(url_for('categories.categories'))
@@ -111,6 +146,9 @@ def edit_category(category_id):
         if request.method == 'POST':
             name = request.form.get('name', '').strip()
             description = request.form.get('description', '').strip()
+            subject = request.form.get('subject', '').strip()
+            grade_level = request.form.get('grade_level', type=int)
+            difficulty_level = request.form.get('difficulty_level', type=int)
             
             if not name:
                 flash('カテゴリ名を入力してください。', 'error')
@@ -126,12 +164,18 @@ def edit_category(category_id):
                 flash('同じ名前のカテゴリが既に存在します。', 'error')
                 return render_template('basebuilder/edit_category.html', category=category)
             
-            # 更新
+            # 更新（拡張フィールド対応）
             category.name = name
             category.description = description
+            category.subject = subject
+            category.grade_level = grade_level
+            category.difficulty_level = difficulty_level
             category.updated_at = datetime.utcnow()
             
             db.session.commit()
+            
+            # アクティビティログ記録
+            log_activity("category_updated", f"Category '{name}' updated", category.id)
             
             flash(f'カテゴリ「{name}」を更新しました。', 'success')
             return redirect(url_for('categories.categories'))
@@ -163,6 +207,9 @@ def delete_category(category_id):
         db.session.delete(category)
         db.session.commit()
         
+        # アクティビティログ記録
+        log_activity("category_deleted", f"Category '{category_name}' deleted", category_id)
+        
         flash(f'カテゴリ「{category_name}」を削除しました。', 'success')
         
     except Exception as e:
@@ -170,3 +217,40 @@ def delete_category(category_id):
         flash('カテゴリ削除中にエラーが発生しました。')
     
     return redirect(url_for('categories.categories'))
+
+
+@categories_bp.route('/category/<int:category_id>/texts')
+@login_required
+def category_texts(category_id):
+    """カテゴリ内のテキスト一覧 - 簡素化版"""
+    try:
+        from extensions import db
+        from basebuilder.models import ProblemCategory, TextSet, BasicKnowledgeItem
+        
+        category = ProblemCategory.query.get_or_404(category_id)
+        
+        # カテゴリ内のテキストセットを取得
+        text_sets = TextSet.query.filter_by(
+            category_id=category_id
+        ).order_by(TextSet.created_at.desc()).all()
+        
+        # 各テキストセットの問題数を計算
+        text_stats = {}
+        for text_set in text_sets:
+            problem_count = BasicKnowledgeItem.query.filter_by(
+                text_set_id=text_set.id
+            ).count()
+            
+            text_stats[text_set.id] = {
+                'problem_count': problem_count
+            }
+        
+        return render_template('basebuilder/category_texts.html',
+                             category=category,
+                             text_sets=text_sets,
+                             text_stats=text_stats)
+        
+    except Exception as e:
+        current_app.logger.error(f"Category texts error: {str(e)}")
+        flash('テキスト一覧の取得中にエラーが発生しました。')
+        return redirect(url_for('categories.categories'))
