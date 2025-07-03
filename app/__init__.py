@@ -104,13 +104,20 @@ def create_app(config_object=None):
         from app.special_routes import register_special_routes
         register_special_routes(app)
         
-        # BaseBuilderモジュールを初期化（シンプルに）
+        # BaseBuilderモジュールを初期化（堅牢化）
         try:
             from basebuilder import init_app as init_basebuilder
             init_basebuilder(app)
-            app.logger.info("✅ BaseBuilder module initialized")
+            app.config['BASEBUILDER_AVAILABLE'] = True
+            app.logger.info("✅ BaseBuilder module initialized successfully")
         except ImportError as e:
-            app.logger.error(f"❌ Failed to initialize BaseBuilder: {e}")
+            app.config['BASEBUILDER_AVAILABLE'] = False
+            app.logger.error(f"❌ Failed to initialize BaseBuilder (ImportError): {e}")
+            import traceback
+            app.logger.error(traceback.format_exc())
+        except Exception as e:
+            app.config['BASEBUILDER_AVAILABLE'] = False
+            app.logger.error(f"❌ Failed to initialize BaseBuilder (General Error): {e}")
             import traceback
             app.logger.error(traceback.format_exc())
         
