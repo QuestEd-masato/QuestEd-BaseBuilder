@@ -112,12 +112,12 @@ def index():
 def register_all_blueprints(app):
     """すべてのBlueprintを登録"""
     try:
-        print("🔄 Starting BaseBuilder blueprint registration...")
+        print("[INFO] Starting BaseBuilder blueprint registration...")
         
         # メインBlueprint
-        print("  📝 Registering main basebuilder_bp...")
+        print("  [INFO] Registering main basebuilder_bp...")
         app.register_blueprint(basebuilder_bp)
-        print("  ✅ basebuilder_bp registered")
+        print("  [SUCCESS] basebuilder_bp registered")
         
         # サブBlueprints（url_prefixは各Blueprintで定義済み）
         blueprints = [
@@ -132,17 +132,17 @@ def register_all_blueprints(app):
         
         for name, blueprint in blueprints:
             try:
-                print(f"  📝 Registering {name}...")
+                print(f"  [INFO] Registering {name}...")
                 app.register_blueprint(blueprint)
-                print(f"  ✅ {name} registered")
+                print(f"  [SUCCESS] {name} registered")
             except Exception as e:
-                print(f"  ❌ Failed to register {name}: {str(e)}")
+                print(f"  [ERROR] Failed to register {name}: {str(e)}")
                 raise e
         
-        print("✅ All BaseBuilder blueprints registered successfully")
+        print("[SUCCESS] All BaseBuilder blueprints registered successfully")
         
     except Exception as e:
-        print(f"❌ Blueprint registration failed: {str(e)}")
+        print(f"[ERROR] Blueprint registration failed: {str(e)}")
         import traceback
         traceback.print_exc()
         raise e
