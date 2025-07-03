@@ -109,15 +109,15 @@ def create_app(config_object=None):
             from basebuilder import init_app as init_basebuilder
             init_basebuilder(app)
             app.config['BASEBUILDER_AVAILABLE'] = True
-            app.logger.info("✅ BaseBuilder module initialized successfully")
+            app.logger.info("[SUCCESS] BaseBuilder module initialized successfully")
         except ImportError as e:
             app.config['BASEBUILDER_AVAILABLE'] = False
-            app.logger.error(f"❌ Failed to initialize BaseBuilder (ImportError): {e}")
+            app.logger.error(f"[ERROR] Failed to initialize BaseBuilder (ImportError): {e}")
             import traceback
             app.logger.error(traceback.format_exc())
         except Exception as e:
             app.config['BASEBUILDER_AVAILABLE'] = False
-            app.logger.error(f"❌ Failed to initialize BaseBuilder (General Error): {e}")
+            app.logger.error(f"[ERROR] Failed to initialize BaseBuilder (General Error): {e}")
             import traceback
             app.logger.error(traceback.format_exc())
         

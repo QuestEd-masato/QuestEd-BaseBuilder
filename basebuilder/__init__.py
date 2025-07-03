@@ -9,12 +9,12 @@ def init_app(app):
         import basebuilder.routes as routes_module
         if hasattr(routes_module, 'register_all_blueprints'):
             routes_module.register_all_blueprints(app)
-            print("✅ BaseBuilder initialized from routes.py")
+            print("[SUCCESS] BaseBuilder initialized from routes.py")
             return True
     except Exception as e:
-        print(f"❌ BaseBuilder routes.py import failed: {e}")
+        print(f"[ERROR] BaseBuilder routes.py import failed: {e}")
     
-    print("❌ BaseBuilder initialization failed")
+    print("[ERROR] BaseBuilder initialization failed")
     return False
 
 # エクスポート
