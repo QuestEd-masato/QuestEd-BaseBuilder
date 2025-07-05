@@ -6,13 +6,13 @@ from flask import Blueprint, render_template, redirect, url_for
 from flask_login import login_required, current_user
 
 # 各モジュールからBlueprintをインポート
-from .routes.categories import categories_bp
-from .routes.problems import problems_bp
-from .routes.sessions import sessions_bp
-from .routes.progress import progress_bp
-from .routes.analytics import analytics_bp
-from .routes.admin import admin_bp
-from .routes.texts import texts_bp
+from .routes_modules.categories import categories_bp
+from .routes_modules.problems import problems_bp
+from .routes_modules.sessions import sessions_bp
+from .routes_modules.progress import progress_bp
+from .routes_modules.analytics import analytics_bp
+from .routes_modules.admin import admin_bp
+from .routes_modules.texts import texts_bp
 
 # メインのbasebuilder Blueprint
 basebuilder_bp = Blueprint('basebuilder', __name__, url_prefix='/basebuilder')
