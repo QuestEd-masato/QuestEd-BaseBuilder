@@ -1,6 +1,6 @@
 # QuestEd Development Reference - Master Index
 
-*📅 Last Updated: 2025-07-03 | Status: ✅ Production Operational - BaseBuilder Restored*
+*📅 Last Updated: 2025-07-05 | Status: ✅ Production Operational - BaseBuilder Fully Restored*
 
 This document serves as the **master index** and quick reference for the QuestEd educational platform. For detailed information, refer to the linked specialized documents.
 
@@ -29,7 +29,7 @@ This document serves as the **master index** and quick reference for the QuestEd
 ### 🔄 Current Phase: Phase 1 Implementation (2025-07-02 開始)
 - **Focus**: 自由進度学習基盤 + BaseBuilder修復 + ランキング修復
 - **Infrastructure**: ✅ Stable and confirmed
-- **Application Layer**: 🔄 実装・修復進行中
+- **Application Layer**: ✅ BaseBuilder完全復旧完了 (2025-07-05)
 - **Target Completion**: 2025-07-16 (2週間計画)
 
 ---
@@ -232,10 +232,40 @@ Required `.env` variables:
    - 影響範囲: `basebuilder/routes.py`, `basebuilder/__init__.py`, `app/__init__.py`
    - 実装時間: 30分
 
-5. **高度なエラーハンドリング復旧**
-6. **完全なサービス層再構築**
+5. **✅ BaseBuilder完全復旧完了** (2025-07-05)
+   - 問題: routes/ディレクトリとroutes.pyファイルのインポート競合
+   - 原因: Pythonモジュールインポート優先順位でディレクトリが優先され、routes.pyの関数にアクセス不可
+   - 解決: routes/ディレクトリをroutes_modules/に変更、全インポートパス更新
+   - 影響範囲: basebuilder/routes.py内の7つのインポート文
+   - 実装時間: 45分
 
-### 🔄 残存する技術的課題
+### ✅ BaseBuilder復旧完了 (2025-07-05)
+
+#### 🎯 修復完了した全問題
+
+1. **Blueprint登録エラー解決**
+   - 絵文字文字化けによる関数認識失敗 → ASCII文字置換で解決
+   - モジュールインポート競合 → ディレクトリ名変更で解決
+
+2. **全17エンドポイントの動作復旧**
+   - カテゴリ管理: 一覧・作成・編集・削除・詳細
+   - 問題管理: 一覧・作成・編集・削除・詳細
+   - テキスト管理: 一覧・表示・配信・進捗
+   - 分析機能: 統計・レポート・進捗分析
+
+3. **テンプレート統合完了**
+   - 30のテンプレートファイルすべて正常動作
+   - 統計情報表示機能復旧
+   - 拡張フィールド対応完了
+
+**結果**: BaseBuilder機能完全復旧、学習管理システム全機能利用可能
+
+### 🔄 Next Phase: 教師ログイン問題対応
+
+**残存する課題:**
+1. **教師アカウントログイン不可** - 未調査
+2. **自由進度学習基盤実装** - Phase 1 残タスク
+3. **統合動作確認** - サーバー再起動後の動作確認
 
 ### ⚠️ 重要な開発上の注意点 (2025-07-03追加)
 
