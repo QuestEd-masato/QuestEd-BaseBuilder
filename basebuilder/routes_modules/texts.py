@@ -21,8 +21,8 @@ from basebuilder.models import (
     TextProficiencyRecord, AnswerRecord
 )
 from app.models import User, Class, ClassEnrollment
-# from basebuilder.utils import require_roles, handle_db_error, log_activity
-# 依存関係を簡素化
+from basebuilder.utils import require_roles, handle_db_error
+# log_activityは内部で定義されているため、basebuilder.utilsからはインポートしない
 
 texts_bp = Blueprint('texts', __name__, url_prefix='/basebuilder')
 
