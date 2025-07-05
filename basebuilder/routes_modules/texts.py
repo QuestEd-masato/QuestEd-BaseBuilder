@@ -26,6 +26,52 @@ from basebuilder.utils import require_roles, handle_db_error
 
 texts_bp = Blueprint('texts', __name__, url_prefix='/basebuilder')
 
+@texts_bp.route('/debug/text_data')
+@login_required
+def debug_text_data():
+    """デバッグ: テキストデータの状況を確認"""
+    if current_user.role not in ['admin', 'teacher']:
+        return jsonify({'error': 'Unauthorized'}), 403
+    
+    try:
+        # 全テキストセット数
+        total_texts = TextSet.query.count()
+        
+        # 学校別テキスト数
+        school_texts = {}
+        if hasattr(current_user, 'school_id'):
+            school_texts['user_school_id'] = current_user.school_id
+            school_texts['user_school_texts'] = TextSet.query.filter_by(
+                school_id=current_user.school_id
+            ).count()
+            school_texts['null_school_texts'] = TextSet.query.filter_by(
+                school_id=None
+            ).count()
+        
+        # カテゴリ別テキスト数
+        category_texts = db.session.query(
+            ProblemCategory.name,
+            db.func.count(TextSet.id)
+        ).join(
+            TextSet, TextSet.category_id == ProblemCategory.id
+        ).group_by(ProblemCategory.id).all()
+        
+        return jsonify({
+            'total_texts': total_texts,
+            'school_info': school_texts,
+            'category_breakdown': [
+                {'category': cat, 'count': count} 
+                for cat, count in category_texts
+            ],
+            'user_info': {
+                'id': current_user.id,
+                'role': current_user.role,
+                'school_id': getattr(current_user, 'school_id', None)
+            }
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 def log_activity(action, description):
     """簡易アクティビティログ記録"""
     try:
@@ -114,8 +160,13 @@ def text_sets():
         query = TextSet.query
         
         # 教師の場合は自分の学校のテキストのみ
-        if current_user.role == 'teacher':
-            query = query.filter_by(school_id=current_user.school_id)
+        if current_user.role == 'teacher' and hasattr(current_user, 'school_id'):
+            query = query.filter(
+                db.or_(
+                    TextSet.school_id == current_user.school_id,
+                    TextSet.school_id == None  # 全学校共通のテキストも表示
+                )
+            )
         
         # カテゴリフィルタ
         if category_id:
@@ -132,6 +183,10 @@ def text_sets():
         
         # カテゴリ一覧
         categories = ProblemCategory.query.order_by(ProblemCategory.name).all()
+        
+        # デバッグログ
+        current_app.logger.info(f"Text sets query for user {current_user.id} (role: {current_user.role}, school_id: {getattr(current_user, 'school_id', 'None')})")
+        current_app.logger.info(f"Found {text_sets_pagination.total} text sets")
         
         # 各テキストセットの問題数を計算
         text_stats = {}

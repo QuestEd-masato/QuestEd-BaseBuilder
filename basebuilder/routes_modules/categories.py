@@ -230,9 +230,18 @@ def category_texts(category_id):
         category = ProblemCategory.query.get_or_404(category_id)
         
         # カテゴリ内のテキストセットを取得
-        text_sets = TextSet.query.filter_by(
-            category_id=category_id
-        ).order_by(TextSet.created_at.desc()).all()
+        query = TextSet.query.filter_by(category_id=category_id)
+        
+        # 教師の場合は自分の学校のテキストのみ表示
+        if current_user.role == 'teacher' and hasattr(current_user, 'school_id'):
+            query = query.filter(
+                db.or_(
+                    TextSet.school_id == current_user.school_id,
+                    TextSet.school_id == None  # 全学校共通のテキストも表示
+                )
+            )
+        
+        text_sets = query.order_by(TextSet.created_at.desc()).all()
         
         # 各テキストセットの問題数を計算
         text_stats = {}
