@@ -73,13 +73,37 @@ def class_detail(class_id):
         # クラスの統計情報
         class_stats = _get_class_statistics(class_id)
         
-        return render_template('student/class_detail.html',
+        # Prepare milestones data to match template expectations
+        all_milestones = upcoming_milestones + past_milestones
+        
+        # Calculate progress statistics
+        completed_milestones = len([m for m in all_milestones if hasattr(m, 'is_completed') and m.is_completed])
+        total_milestones = len(all_milestones)
+        progress_percentage = (completed_milestones / total_milestones * 100) if total_milestones > 0 else 0
+        
+        # Next milestone
+        next_milestone = upcoming_milestones[0] if upcoming_milestones else None
+        
+        # Curriculum data structure expected by template
+        curriculum_data = []
+        for subject, units in curriculum_by_subject.items():
+            curriculum_data.append({
+                'curriculum': {
+                    'title': subject,
+                    'description': f'{subject}の学習単元'
+                },
+                'items': units
+            })
+        
+        return render_template('student/class_details.html',
                              class_obj=class_obj,
-                             main_themes=main_themes,
-                             upcoming_milestones=upcoming_milestones,
-                             past_milestones=past_milestones,
-                             curriculum_by_subject=curriculum_by_subject,
-                             class_stats=class_stats)
+                             milestones=all_milestones,
+                             next_milestone=next_milestone,
+                             completed_milestones=completed_milestones,
+                             total_milestones=total_milestones,
+                             progress_percentage=progress_percentage,
+                             curriculum_items=len(curriculum_units),
+                             curriculum_data=curriculum_data)
         
     except Exception as e:
         current_app.logger.error(f"Class detail error: {str(e)}")

@@ -45,11 +45,40 @@ def ranking():
         # 自分の順位を計算
         my_position = _get_my_position(rankings['overall'], current_user.id)
         
+        # Adapt data for existing template
+        ranking_type = request.args.get('type', 'total_points')
+        scope = request.args.get('scope', 'class')
+        
+        # Use overall ranking as primary ranking data
+        primary_ranking = rankings['overall']
+        
+        # Calculate my rank data
+        my_rank = None
+        if my_position and primary_ranking:
+            total_participants = len(primary_ranking)
+            percentile = round((total_participants - my_position + 1) / total_participants * 100)
+            my_score = primary_ranking[my_position - 1]['word_count'] if my_position <= len(primary_ranking) else 0
+            
+            my_rank = {
+                'rank': my_position,
+                'score': my_score,
+                'total_participants': total_participants,
+                'percentile': percentile
+            }
+        
+        # Prepare ranking data structure for template
+        ranking_data = {
+            'rankings': primary_ranking,
+            'type': ranking_type,
+            'scope': scope
+        }
+        
         return render_template('student/ranking.html',
-                             rankings=rankings,
-                             my_position=my_position,
-                             classes=classes,
-                             current_user_id=current_user.id)
+                             ranking_data=ranking_data,
+                             ranking_type=ranking_type,
+                             scope=scope,
+                             my_rank=my_rank,
+                             student_classes=classes)
         
     except Exception as e:
         current_app.logger.error(f"Ranking page error: {str(e)}")

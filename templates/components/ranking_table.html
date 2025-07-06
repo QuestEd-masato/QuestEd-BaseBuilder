@@ -4,95 +4,47 @@
         <tr>
             <th style="width: 80px; text-align: center;">順位</th>
             <th>学習者</th>
-            <th style="width: 150px; text-align: center;">
-                {% if ranking_type == 'total_points' %}総合ポイント
-                {% elif ranking_type == 'weekly_points' %}週間ポイント
-                {% elif ranking_type == 'monthly_points' %}月間ポイント
-                {% elif ranking_type == 'accuracy_rate' %}正答率
-                {% elif ranking_type == 'study_time' %}学習時間
-                {% elif ranking_type == 'consistency' %}継続性
-                {% endif %}
-            </th>
-            {% if ranking_type == 'accuracy_rate' %}
-            <th style="width: 120px; text-align: center;">回答数</th>
-            {% elif ranking_type == 'study_time' %}
-            <th style="width: 120px; text-align: center;">時間</th>
-            {% elif ranking_type == 'consistency' %}
-            <th style="width: 120px; text-align: center;">継続率</th>
-            {% endif %}
-            {% if scope == 'school' %}
-            <th style="width: 150px;">クラス</th>
-            {% endif %}
+            <th style="width: 150px; text-align: center;">習得語数</th>
         </tr>
     </thead>
     <tbody>
-        {% for ranking in ranking_data.rankings %}
-        <tr {% if current_user.id == ranking.student_id %}style="background-color: #fef3c7; font-weight: bold;"{% endif %}>
-            <td class="rank-number rank-{{ ranking.rank if ranking.rank <= 3 else '' }}">
-                {% if ranking.rank == 1 %}
-                    <span class="medal">🥇</span>{{ ranking.rank }}
-                {% elif ranking.rank == 2 %}
-                    <span class="medal">🥈</span>{{ ranking.rank }}
-                {% elif ranking.rank == 3 %}
-                    <span class="medal">🥉</span>{{ ranking.rank }}
+        {% for user in ranking_data.rankings %}
+        {% set rank = loop.index %}
+        <tr {% if current_user.id == user.student_id %}style="background-color: #fef3c7; font-weight: bold;"{% endif %}>
+            <td class="rank-number rank-{{ rank if rank <= 3 else '' }}">
+                {% if rank == 1 %}
+                    <span class="medal">🥇</span>{{ rank }}
+                {% elif rank == 2 %}
+                    <span class="medal">🥈</span>{{ rank }}
+                {% elif rank == 3 %}
+                    <span class="medal">🥉</span>{{ rank }}
                 {% else %}
-                    {{ ranking.rank }}
+                    {{ rank }}
                 {% endif %}
             </td>
             
             <td>
                 <div class="student-info">
                     <div class="student-avatar">
-                        {{ ranking.student_name[0].upper() if ranking.student_name else '?' }}
+                        {{ user.full_name[0].upper() if user.full_name else user.username[0].upper() if user.username else '?' }}
                     </div>
                     <div>
-                        <div style="font-weight: 600;">{{ ranking.student_name or '不明' }}</div>
-                        {% if ranking.school_name and scope != 'class' %}
-                            <div style="font-size: 0.8rem; color: #6b7280;">{{ ranking.school_name }}</div>
-                        {% endif %}
+                        <div style="font-weight: 600;">{{ user.full_name or user.username or '不明' }}</div>
                     </div>
                 </div>
             </td>
             
             <td style="text-align: center;">
                 <div class="score-display">
-                    {% if ranking_type == 'accuracy_rate' %}
-                        {{ "%.1f"|format(ranking.score) }}%
-                    {% elif ranking_type == 'study_time' %}
-                        {{ ranking.score|int }}分
-                    {% elif ranking_type == 'consistency' %}
-                        {{ ranking.score }}日
-                    {% else %}
-                        {{ ranking.score|int }}pt
-                    {% endif %}
+                    {{ user.word_count }}語
                 </div>
             </td>
-            
-            {% if ranking_type == 'accuracy_rate' %}
-            <td style="text-align: center; color: #6b7280;">
-                {{ ranking.total_answers }}問
-            </td>
-            {% elif ranking_type == 'study_time' %}
-            <td style="text-align: center; color: #6b7280;">
-                {{ "%.1f"|format(ranking.hours) }}h
-            </td>
-            {% elif ranking_type == 'consistency' %}
-            <td style="text-align: center; color: #6b7280;">
-                {{ "%.1f"|format(ranking.consistency_rate) }}%
-            </td>
-            {% endif %}
-            
-            {% if scope == 'school' %}
-            <td style="font-size: 0.9rem; color: #6b7280;">
-                {{ ranking.class_name or '-' }}
-            </td>
-            {% endif %}
         </tr>
         {% endfor %}
     </tbody>
 </table>
 
 <div class="last-updated">
-    最終更新: {{ ranking_data.last_updated[:19] if ranking_data.last_updated else '不明' }}
-    (参加者数: {{ ranking_data.total_participants }}人)
+    最終更新: {{ moment().strftime('%Y-%m-%d %H:%M') }}
+    (参加者数: {{ ranking_data.rankings|length }}人)
 </div>
