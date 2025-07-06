@@ -171,13 +171,18 @@ def dashboard():
             }
         
         # 自由進度学習統計
-        unit_stats = {
-            'total_units': 0,                # 総学習単元数
-            'completed_units': 0,            # 完了単元数
-            'in_progress_units': 0,          # 進行中単元数
-            'completion_rate': 0,            # 完了率％
-            'total_study_time': 0            # 総学習時間（分）
-        }
+        try:
+            unit_stats = _generate_unit_stats()
+            current_app.logger.info(f"[DASHBOARD] Unit stats loaded for student {current_user.id}")
+        except Exception as e:
+            current_app.logger.error(f"[DASHBOARD] Unit stats error: {str(e)}")
+            unit_stats = {
+                'total_units': 0,                # 総学習単元数
+                'completed_units': 0,            # 完了単元数
+                'in_progress_units': 0,          # 進行中単元数
+                'completion_rate': 0,            # 完了率％
+                'total_study_time': 0            # 総学習時間（分）
+            }
         
         # アンケート情報を実際に取得
         try:
@@ -562,50 +567,156 @@ def get_class_top_learners(classes):
         return []
 
 def _generate_basebuilder_stats():
-    """BaseBuilder統計を生成"""
+    """BaseBuilder統計を生成 - 実際のデータベース情報から計算"""
     try:
         from datetime import datetime, timedelta
+        from basebuilder.models import BasicKnowledgeItem, AnswerRecord
         
-        # 学生の全単語習熟度を取得
+        current_app.logger.info(f"[DASHBOARD] Generating BaseBuilder stats for student {current_user.id}")
+        
+        # AnswerRecordから学習履歴を取得
+        answer_records = AnswerRecord.query.filter_by(
+            student_id=current_user.id
+        ).all()
+        
+        current_app.logger.info(f"[DASHBOARD] Found {len(answer_records)} answer records")
+        
+        # WordProficiencyから習熟度を取得
         word_proficiencies = WordProficiency.query.filter_by(
             student_id=current_user.id
         ).all()
         
+        current_app.logger.info(f"[DASHBOARD] Found {len(word_proficiencies)} word proficiency records")
+        
         # 基本統計を計算
+        total_problems_attempted = len(set(record.problem_id for record in answer_records))
+        total_correct_answers = sum(1 for record in answer_records if record.is_correct)
+        
+        # WordProficiencyベースの統計
         total_words_attempted = len(word_proficiencies)
-        total_mastered_words = sum(1 for wp in word_proficiencies if wp.level >= 80)  # レベル80以上を習得済みとする
+        total_mastered_words = sum(1 for wp in word_proficiencies if wp.level >= 80)
         
-        # 今週習得した単語数（今週学習した単語のうち、習得レベルに達したもの）
+        # データがない場合の代替計算
+        if total_words_attempted == 0 and total_problems_attempted > 0:
+            # 問題レベルでの習得計算
+            problem_stats = {}
+            for record in answer_records:
+                if record.problem_id not in problem_stats:
+                    problem_stats[record.problem_id] = {'correct': 0, 'total': 0}
+                problem_stats[record.problem_id]['total'] += 1
+                if record.is_correct:
+                    problem_stats[record.problem_id]['correct'] += 1
+            
+            total_words_attempted = len(problem_stats)
+            total_mastered_words = sum(1 for stats in problem_stats.values() 
+                                     if stats['total'] >= 3 and stats['correct'] / stats['total'] >= 0.8)
+        
+        # 今週の学習統計
         week_start = datetime.now() - timedelta(days=7)
-        weekly_words_learned = 0
-        
-        for wp in word_proficiencies:
-            if wp.last_studied_at and wp.last_studied_at >= week_start and wp.level >= 80:
-                weekly_words_learned += 1
+        weekly_answers = [record for record in answer_records if record.created_at >= week_start]
+        weekly_words_learned = len(set(record.problem_id for record in weekly_answers if record.is_correct))
         
         # 習得率を計算
-        mastery_rate = round((total_mastered_words / total_words_attempted) * 100, 1) if total_words_attempted > 0 else 0
+        if total_problems_attempted > 0:
+            mastery_rate = round((total_correct_answers / len(answer_records)) * 100, 1)
+        else:
+            mastery_rate = round((total_mastered_words / total_words_attempted) * 100, 1) if total_words_attempted > 0 else 0
         
-        # 総基礎単語数（データベース内の全単語問題数）
-        from basebuilder.models import BasicKnowledgeItem
+        # 総基礎単語数
         total_basic_words = BasicKnowledgeItem.query.count()
         
-        return {
-            'total_words_attempted': total_words_attempted,
+        stats = {
+            'total_words_attempted': max(total_words_attempted, total_problems_attempted),
             'total_mastered_words': total_mastered_words,
             'weekly_words_learned': weekly_words_learned,
             'mastery_rate': mastery_rate,
-            'weekly_target': 20,  # 週間目標（設定値）
-            'total_basic_words': total_basic_words
+            'weekly_target': 20,
+            'total_basic_words': total_basic_words,
+            'total_answers': len(answer_records),
+            'correct_answers': total_correct_answers
         }
+        
+        current_app.logger.info(f"[DASHBOARD] BaseBuilder stats calculated: {stats}")
+        return stats
         
     except Exception as e:
         current_app.logger.error(f"[DASHBOARD] BaseBuilder stats error: {str(e)}")
+        import traceback
+        current_app.logger.error(f"[DASHBOARD] Traceback: {traceback.format_exc()}")
         return {
             'total_words_attempted': 0,
             'total_mastered_words': 0,
             'weekly_words_learned': 0,
             'mastery_rate': 0,
             'weekly_target': 20,
-            'total_basic_words': 0
+            'total_basic_words': 0,
+            'total_answers': 0,
+            'correct_answers': 0
+        }
+
+def _generate_unit_stats():
+    """自由進度学習統計を生成"""
+    try:
+        from app.models import CurriculumUnit, StudentUnitSelection
+        from datetime import datetime, timedelta
+        
+        current_app.logger.info(f"[DASHBOARD] Generating unit stats for student {current_user.id}")
+        
+        # 学生の単元選択を取得
+        unit_selections = StudentUnitSelection.query.filter_by(
+            student_id=current_user.id
+        ).all()
+        
+        current_app.logger.info(f"[DASHBOARD] Found {len(unit_selections)} unit selections")
+        
+        # 利用可能な総単元数
+        total_available_units = CurriculumUnit.query.filter_by(is_active=True).count()
+        
+        # 統計計算
+        total_units = len(unit_selections)
+        completed_units = sum(1 for selection in unit_selections if selection.completion_rate >= 100)
+        in_progress_units = sum(1 for selection in unit_selections if 0 < selection.completion_rate < 100)
+        
+        # 完了率計算
+        completion_rate = round((completed_units / total_units) * 100, 1) if total_units > 0 else 0
+        
+        # 総学習時間（分）- 単元選択の更新日時から推定
+        total_study_time = 0
+        if unit_selections:
+            # 最初の選択から最新の更新までの期間を基に推定学習時間を計算
+            earliest_selection = min(selection.created_at for selection in unit_selections if selection.created_at)
+            latest_update = max(selection.updated_at for selection in unit_selections if selection.updated_at)
+            
+            if earliest_selection and latest_update:
+                study_period_days = (latest_update - earliest_selection).days
+                # 単元数と完了率から学習時間を推定（1単元平均30分と仮定）
+                estimated_time_per_unit = 30
+                total_study_time = sum(
+                    int(selection.completion_rate / 100 * estimated_time_per_unit) 
+                    for selection in unit_selections
+                )
+        
+        stats = {
+            'total_units': total_units,
+            'completed_units': completed_units,
+            'in_progress_units': in_progress_units,
+            'completion_rate': completion_rate,
+            'total_study_time': total_study_time,
+            'available_units': total_available_units
+        }
+        
+        current_app.logger.info(f"[DASHBOARD] Unit stats calculated: {stats}")
+        return stats
+        
+    except Exception as e:
+        current_app.logger.error(f"[DASHBOARD] Unit stats error: {str(e)}")
+        import traceback
+        current_app.logger.error(f"[DASHBOARD] Traceback: {traceback.format_exc()}")
+        return {
+            'total_units': 0,
+            'completed_units': 0,
+            'in_progress_units': 0,
+            'completion_rate': 0,
+            'total_study_time': 0,
+            'available_units': 0
         }

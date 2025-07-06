@@ -126,7 +126,19 @@ def my_texts():
                 'last_study': record.updated_at
             }
         
-        log_activity("text_list_viewed", f"Student {current_user.id} viewed text list")
+        # アクティビティログ記録
+        try:
+            from app.models import ActivityLog
+            activity = ActivityLog(
+                student_id=current_user.id,
+                action="text_list_viewed",
+                description=f"Student {current_user.id} viewed text list",
+                created_at=datetime.now()
+            )
+            db.session.add(activity)
+            db.session.commit()
+        except Exception as log_e:
+            current_app.logger.warning(f"Activity logging failed: {str(log_e)}")
         
         return render_template('basebuilder/my_texts.html',
                              deliveries=deliveries,

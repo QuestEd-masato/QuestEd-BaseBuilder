@@ -48,7 +48,10 @@
       "Bash(export FLASK_DEBUG='1')",
       "Bash(rm:*)",
       "Bash(./ec2_diagnosis.sh:*)",
-      "Bash(bash:*)"
+      "Bash(bash:*)",
+      "Bash(ss:*)",
+      "Bash(kill:*)",
+      "Bash(./start_local_test.sh:*)"
     ],
     "deny": []
   }

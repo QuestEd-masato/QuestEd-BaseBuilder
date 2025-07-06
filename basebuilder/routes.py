@@ -20,8 +20,13 @@ basebuilder_bp = Blueprint('basebuilder', __name__, url_prefix='/basebuilder')
 @basebuilder_bp.route('/')
 @login_required
 def index():
-    """BaseBuilder メインページ - 統一ホームページ"""
+    """BaseBuilder メインページ - 配信済みテキスト表示"""
     try:
+        # 学生の場合は配信済みテキストページにリダイレクト
+        if current_user.role == 'student':
+            return redirect(url_for('texts.my_texts'))
+        
+        # 教師・管理者の場合は統一ホームページ
         from extensions import db
         from basebuilder.models import (
             ProblemCategory, TextSet, BasicKnowledgeItem, 
