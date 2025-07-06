@@ -399,13 +399,23 @@ def submit_answer(problem_id):
     """問題回答提出処理"""
     try:
         if current_user.role != 'student':
-            return jsonify({'success': False, 'message': 'アクセス権限がありません。'})
+            is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+            if is_ajax:
+                return jsonify({'success': False, 'message': 'アクセス権限がありません。'})
+            else:
+                flash('学習セッションは学生のみアクセス可能です。', 'error')
+                return redirect(url_for('basebuilder.index'))
         
         problem = BasicKnowledgeItem.query.get_or_404(problem_id)
         student_answer = request.form.get('answer', '').strip()
         
         if not student_answer:
-            return jsonify({'success': False, 'message': '回答を入力してください。'})
+            is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+            if is_ajax:
+                return jsonify({'success': False, 'message': '回答を入力してください。'})
+            else:
+                flash('回答を入力してください。', 'error')
+                return redirect(url_for('sessions.solve_problem', problem_id=problem_id))
         
         # 正解判定
         is_correct = _check_answer(problem, student_answer)
@@ -449,17 +459,41 @@ def submit_answer(problem_id):
         else:
             next_url = url_for('sessions.session_summary')
         
-        return jsonify({
-            'success': True,
-            'is_correct': is_correct,
-            'correct_answer': problem.correct_answer,
-            'explanation': problem.explanation,
-            'next_url': next_url
-        })
+        # リクエストがAJAXかどうかを判定
+        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest' or \
+                  request.headers.get('Content-Type') == 'application/json'
+        
+        if is_ajax:
+            # AJAX リクエストの場合はJSONレスポンス
+            return jsonify({
+                'success': True,
+                'is_correct': is_correct,
+                'correct_answer': problem.correct_answer,
+                'explanation': problem.explanation,
+                'next_url': next_url
+            })
+        else:
+            # 通常のフォーム送信の場合は次のページにリダイレクト
+            if is_correct:
+                flash(f'正解！ 答え: {problem.correct_answer}', 'success')
+            else:
+                flash(f'不正解。正解: {problem.correct_answer}', 'info')
+            
+            return redirect(next_url)
         
     except Exception as e:
         current_app.logger.error(f"Submit answer error: {str(e)}")
-        return jsonify({'success': False, 'message': 'サーバーエラーが発生しました。'})
+        db.session.rollback()
+        
+        # リクエストがAJAXかどうかを判定
+        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest' or \
+                  request.headers.get('Content-Type') == 'application/json'
+        
+        if is_ajax:
+            return jsonify({'success': False, 'message': 'サーバーエラーが発生しました。'})
+        else:
+            flash('回答の処理中にエラーが発生しました。', 'error')
+            return redirect(url_for('basebuilder.index'))
 
 
 @sessions_bp.route('/session_summary')
