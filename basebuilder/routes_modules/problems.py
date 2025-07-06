@@ -20,6 +20,7 @@ from basebuilder.models import (
     ProblemCategory, BasicKnowledgeItem, AnswerRecord, 
     ProficiencyRecord, TextSet
 )
+from basebuilder.utils import require_roles
 
 problems_bp = Blueprint('problems', __name__, url_prefix='/basebuilder')
 
