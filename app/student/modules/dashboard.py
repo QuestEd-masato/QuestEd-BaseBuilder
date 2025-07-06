@@ -65,24 +65,36 @@ def dashboard():
         student_info['selected_theme'] = theme_status['selected_theme']
         
         # 最近の活動記録を取得（5件）
-        recent_activities = ActivityLog.query.filter_by(
-            student_id=current_user.id
-        ).order_by(ActivityLog.created_at.desc()).limit(5).all()
-        student_info['recent_activities'] = recent_activities
+        try:
+            recent_activities = ActivityLog.query.filter_by(
+                student_id=current_user.id
+            ).order_by(ActivityLog.created_at.desc()).limit(5).all()
+            student_info['recent_activities'] = recent_activities
+        except Exception as e:
+            current_app.logger.error(f"[DASHBOARD] ActivityLog query error (early): {str(e)}")
+            student_info['recent_activities'] = []
         
         # 未完了のTodoを取得（5件）
-        pending_todos = Todo.query.filter_by(
-            student_id=current_user.id,
-            is_completed=False
-        ).order_by(Todo.created_at.desc()).limit(5).all()
-        student_info['pending_todos'] = pending_todos
+        try:
+            pending_todos = Todo.query.filter_by(
+                student_id=current_user.id,
+                is_completed=False
+            ).order_by(Todo.created_at.desc()).limit(5).all()
+            student_info['pending_todos'] = pending_todos
+        except Exception as e:
+            current_app.logger.error(f"[DASHBOARD] Todo query error (early): {str(e)}")
+            student_info['pending_todos'] = []
         
         # アクティブな目標を取得（5件）
-        active_goals = Goal.query.filter_by(
-            student_id=current_user.id,
-            is_completed=False
-        ).limit(5).all()
-        student_info['active_goals'] = active_goals
+        try:
+            active_goals = Goal.query.filter_by(
+                student_id=current_user.id,
+                is_completed=False
+            ).limit(5).all()
+            student_info['active_goals'] = active_goals
+        except Exception as e:
+            current_app.logger.error(f"[DASHBOARD] Goal query error (early): {str(e)}")
+            student_info['active_goals'] = []
         
         # Phase 2: 自由進度学習の進捗情報を取得
         try:
@@ -186,7 +198,6 @@ def dashboard():
         
         # アンケート情報を実際に取得
         try:
-            from app.models import InterestSurvey, PersonalitySurvey
             interest_survey = InterestSurvey.query.filter_by(student_id=current_user.id).first()
             personality_survey = PersonalitySurvey.query.filter_by(student_id=current_user.id).first()
         except Exception as survey_e:
@@ -219,7 +230,6 @@ def dashboard():
         
         # TODOとゴールを取得
         try:
-            from app.models import Todo, Goal
             class_todos = Todo.query.filter_by(student_id=current_user.id).order_by(Todo.created_at.desc()).limit(5).all()
             class_goals = Goal.query.filter_by(student_id=current_user.id).order_by(Goal.created_at.desc()).limit(5).all()
             pending_todos_count = Todo.query.filter_by(student_id=current_user.id, is_completed=False).count()
@@ -233,7 +243,6 @@ def dashboard():
         
         # 最近の活動を取得
         try:
-            from app.models import ActivityLog
             recent_activities = ActivityLog.query.filter_by(student_id=current_user.id).order_by(
                 ActivityLog.created_at.desc()
             ).limit(10).all()
@@ -884,8 +893,8 @@ def _generate_unit_stats():
         
         # 統計計算
         total_units = len(unit_selections)
-        completed_units = sum(1 for selection in unit_selections if selection.completion_rate >= 100)
-        in_progress_units = sum(1 for selection in unit_selections if 0 < selection.completion_rate < 100)
+        completed_units = sum(1 for selection in unit_selections if hasattr(selection, 'completion_rate') and selection.completion_rate >= 100)
+        in_progress_units = sum(1 for selection in unit_selections if hasattr(selection, 'completion_rate') and 0 < selection.completion_rate < 100)
         
         # 完了率計算
         completion_rate = round((completed_units / total_units) * 100, 1) if total_units > 0 else 0
@@ -902,7 +911,7 @@ def _generate_unit_stats():
                 # 単元数と完了率から学習時間を推定（1単元平均30分と仮定）
                 estimated_time_per_unit = 30
                 total_study_time = sum(
-                    int(selection.completion_rate / 100 * estimated_time_per_unit) 
+                    int((getattr(selection, 'completion_rate', 0) or 0) / 100 * estimated_time_per_unit) 
                     for selection in unit_selections
                 )
         
