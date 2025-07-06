@@ -230,20 +230,6 @@
 {% set btn_primary_style = "display: inline-block; padding: 0.375rem 0.75rem; font-size: 0.875rem; border-radius: 0.25rem; text-decoration: none; background-color: #5DADE2; color: white; border: 1px solid #5DADE2; margin-right: 0.5rem; pointer-events: auto !important; cursor: pointer !important; z-index: 1; position: relative;" %}
 {% set btn_outline_style = "display: inline-block; padding: 0.375rem 0.75rem; font-size: 0.875rem; border-radius: 0.25rem; text-decoration: none; background-color: transparent; color: #5DADE2; border: 1px solid #5DADE2; margin-right: 0.5rem; pointer-events: auto !important; cursor: pointer !important; z-index: 1; position: relative;" %}
 
-<!-- クイックナビゲーション -->
-<div style="background: #f8f9fa; padding: 1rem; margin-bottom: 1rem; border-radius: 8px; text-align: center;">
-    <div style="display: flex; gap: 0.5rem; justify-content: center; flex-wrap: wrap;">
-        <a href="#themes" style="{{ btn_outline_style }}">
-            <i class="fas fa-search"></i> テーマ
-        </a>
-        <a href="#ai-chat" style="{{ btn_outline_style }}">
-            <i class="fas fa-robot"></i> AIチャット
-        </a>
-        <a href="#free-pace" style="{{ btn_outline_style }}">
-            <i class="fas fa-graduation-cap"></i> 自由進度学習
-        </a>
-    </div>
-</div>
 
 <div class="dashboard-container">
     <!-- ウェルカムカード -->
@@ -267,39 +253,26 @@
             <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; text-align: center;">
                 <div>
                     <div style="font-size: 1.5rem; font-weight: bold; color: #0056b3;">
-                        {{ proficiency_breakdown.level_5 if proficiency_breakdown else total_mastered_words }}
+                        {{ total_mastered_words }}
                     </div>
-                    <div style="font-size: 0.75rem; color: #666;">熟練度5<br>完全マスター</div>
+                    <div style="font-size: 0.75rem; color: #666;">定着度5の<br>単語数</div>
                 </div>
                 
                 <div>
                     <div style="font-size: 1.5rem; font-weight: bold; color: #28a745;">
-                        {{ intermediate_mastered or 0 }}
+                        {{ weekly_words_learned }}
                     </div>
-                    <div style="font-size: 0.75rem; color: #666;">熟練度4以上<br>上級レベル</div>
+                    <div style="font-size: 0.75rem; color: #666;">今週の新規<br>マスター</div>
                 </div>
                 
                 <div>
                     <div style="font-size: 1.5rem; font-weight: bold; color: #ff9800;">
                         {{ mastery_rate }}%
                     </div>
-                    <div style="font-size: 0.75rem; color: #666;">正解率</div>
+                    <div style="font-size: 0.75rem; color: #666;">達成率</div>
                 </div>
             </div>
             
-            <!-- 熟練度詳細表示 -->
-            {% if proficiency_breakdown %}
-            <div style="margin-top: 15px; padding: 10px; background: white; border-radius: 6px; border: 1px solid #ddd;">
-                <div style="font-size: 0.8rem; color: #666; margin-bottom: 8px;">熟練度別単語数:</div>
-                <div style="display: flex; justify-content: space-between; font-size: 0.75rem;">
-                    <span>Lv5: <strong>{{ proficiency_breakdown.level_5 }}</strong></span>
-                    <span>Lv4: <strong>{{ proficiency_breakdown.level_4 }}</strong></span>
-                    <span>Lv3: <strong>{{ proficiency_breakdown.level_3 }}</strong></span>
-                    <span>Lv2: <strong>{{ proficiency_breakdown.level_2 }}</strong></span>
-                    <span>Lv1: <strong>{{ proficiency_breakdown.level_1 }}</strong></span>
-                </div>
-            </div>
-            {% endif %}
             
             <!-- プログレスバー -->
             <div style="margin-top: 12px;">
@@ -356,104 +329,6 @@
         </div>
     </div>
     
-    <!-- 自由進度学習 -->
-    <div class="dashboard-card" id="free-pace">
-        <h3>📚 自由進度学習</h3>
-        
-        <p style="font-size: 0.9rem; margin-bottom: 15px; color: #666;">
-            自分のペースで学習単元を選択し、進捗を管理できます。AIがあなたに最適な学習内容を推薦します。
-        </p>
-        
-        <!-- 学習統計 -->
-        {% if total_units is defined and total_units > 0 %}
-        <div style="background: #f0f8ff; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
-            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; text-align: center;">
-                <div>
-                    <div style="font-size: 1.5rem; font-weight: bold; color: #28a745;">
-                        {{ completed_units or 0 }}
-                    </div>
-                    <div style="font-size: 0.75rem; color: #666;">完了単元</div>
-                </div>
-                
-                <div>
-                    <div style="font-size: 1.5rem; font-weight: bold; color: #007bff;">
-                        {{ in_progress_units or 0 }}
-                    </div>
-                    <div style="font-size: 0.75rem; color: #666;">学習中</div>
-                </div>
-                
-                <div>
-                    <div style="font-size: 1.5rem; font-weight: bold; color: #ff9800;">
-                        {{ completion_rate or 0 }}%
-                    </div>
-                    <div style="font-size: 0.75rem; color: #666;">完了率</div>
-                </div>
-            </div>
-            
-            <!-- プログレスバー -->
-            <div style="margin-top: 12px;">
-                <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: #666;">
-                    <span>全体の進捗</span>
-                    <span>{{ completed_units or 0 }} / {{ total_units or 0 }} 単元</span>
-                </div>
-                <div style="background: #e0e0e0; height: 6px; border-radius: 3px; overflow: hidden; margin-top: 4px;">
-                    <div style="width: {{ completion_rate or 0 }}%; background: linear-gradient(90deg, #007bff, #0056b3); height: 100%;"></div>
-                </div>
-            </div>
-            
-            {% if total_study_time is defined and total_study_time > 0 %}
-            <div style="margin-top: 8px; text-align: center; font-size: 0.8rem; color: #666;">
-                総学習時間: {{ total_study_time }}分
-            </div>
-            {% endif %}
-        </div>
-        {% else %}
-        <div style="text-align: center; padding: 20px 0; background: #f8f9fa; border-radius: 8px; margin-bottom: 15px;">
-            <div style="font-size: 2.5rem; margin-bottom: 10px;">🎯</div>
-            <p style="color: #666; margin: 0; font-size: 0.9rem;">
-                自分のペースで学習を始めましょう！<br>
-                AIがあなたに最適な単元を推薦します。
-            </p>
-        </div>
-        {% endif %}
-        
-        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-            <a href="{{ url_for('student_learning.learning_portal') }}" 
-               style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1rem; 
-                      background: linear-gradient(135deg, #007bff, #0056b3); color: white; 
-                      border-radius: 8px; text-decoration: none; font-size: 0.9rem; font-weight: 500;
-                      transition: all 0.2s; pointer-events: auto !important; z-index: 1000; position: relative;"
-               onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 12px rgba(0,123,255,0.3)';"
-               onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
-                <i class="fas fa-graduation-cap"></i>
-                学習ポータル
-            </a>
-            
-            {% if in_progress_units is defined and in_progress_units > 0 %}
-            <a href="{{ url_for('student_learning.my_units') }}" 
-               style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1rem; 
-                      background: transparent; color: #28a745; border: 1px solid #28a745;
-                      border-radius: 8px; text-decoration: none; font-size: 0.9rem;
-                      transition: all 0.2s; pointer-events: auto !important; z-index: 1000; position: relative;"
-               onmouseover="this.style.background='#28a745'; this.style.color='white';"
-               onmouseout="this.style.background='transparent'; this.style.color='#28a745';">
-                <i class="fas fa-play"></i>
-                続きから
-            </a>
-            {% else %}
-            <a href="{{ url_for('student_learning.learning_portal') }}" 
-               style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1rem; 
-                      background: transparent; color: #007bff; border: 1px solid #007bff;
-                      border-radius: 8px; text-decoration: none; font-size: 0.9rem;
-                      transition: all 0.2s; pointer-events: auto !important; z-index: 1000; position: relative;"
-               onmouseover="this.style.background='#007bff'; this.style.color='white';"
-               onmouseout="this.style.background='transparent'; this.style.color='#007bff';">
-                <i class="fas fa-plus"></i>
-                単元を選択
-            </a>
-            {% endif %}
-        </div>
-    </div>
     
     <!-- アンケート状況 -->
     <div class="dashboard-card">
@@ -525,10 +400,6 @@
                 </div>
             </div>
             <div style="margin-top: 0.5rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                <a href="{{ url_for('student_class_management.class_detail', class_id=class_theme.class_id) }}" 
-                   style="{{ btn_primary_style }}">
-                   <i class="fas fa-info-circle"></i> 詳細
-                </a>
                 <a href="{{ url_for('student_themes.themes') }}" 
                    style="{{ btn_outline_style }}">
                    <i class="fas fa-book"></i> テーマ
@@ -665,7 +536,7 @@
     </div>
     
     <!-- AIチャット -->
-    <div class="dashboard-card" id="ai-chat">
+    <div class="dashboard-card">
         <h3>🤖 AIサポート</h3>
         <p>学習の質問や探究活動について、AIと相談できます。</p>
         
@@ -675,7 +546,7 @@
         </div>
         
         <div style="margin-top: 1rem;">
-            <a href="{{ url_for('chat') }}" 
+            <a href="{{ url_for('index') }}" 
                style="display: inline-block; padding: 0.375rem 0.75rem; font-size: 0.875rem; border-radius: 0.25rem; text-decoration: none; background-color: #5DADE2; color: white; border: 1px solid #5DADE2;">
                AIチャットを開く
             </a>
@@ -687,14 +558,7 @@
 <div class="ranking-section">
     <!-- クラス学習ランキング -->
     <div class="ranking-card">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
             <h3>🏆 基礎学力マスターランキング（5/5達成単語数）</h3>
-            <a href="{{ url_for('student_ranking.ranking') }}" 
-               style="padding: 0.5rem 1rem; background: #0056b3; color: white; 
-                      text-decoration: none; border-radius: 6px; font-size: 0.9rem;">
-                詳細を見る
-            </a>
-        </div>
         <p style="color: #666; font-size: 0.9rem; margin-top: -0.5rem; margin-bottom: 1rem;">※ランキングは毎日深夜に更新されます</p>
         <ol class="ranking-list">
             {% if class_top_learners %}
