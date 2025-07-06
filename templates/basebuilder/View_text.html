@@ -5,10 +5,10 @@
   <h1 class="section-title">テキスト詳細</h1>
   {% if current_user.role == 'teacher' %}
     <div>
-      <a href="{{ url_for('admin.deliver_text', text_id=text_set.id) }}" class="btn btn-primary">
+      <a href="{{ url_for('texts.deliver_text', text_id=text_set.id) }}" class="btn btn-primary">
         <i class="fas fa-paper-plane"></i> 配信
       </a>
-      <a href="{{ url_for('admin.text_sets') }}" class="btn btn-outline">
+      <a href="{{ url_for('texts.text_sets') }}" class="btn btn-outline">
         <i class="fas fa-arrow-left"></i> テキスト一覧に戻る
       </a>
     </div>

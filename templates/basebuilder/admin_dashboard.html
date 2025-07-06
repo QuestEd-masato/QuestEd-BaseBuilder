@@ -39,7 +39,7 @@
           <div class="card-body">
             <h5 class="card-title">システム</h5>
             <p class="display-4"><i class="fas fa-cogs"></i></p>
-            <a href="{{ url_for('admin.analytics') }}" class="btn btn-sm btn-outline">分析画面</a>
+            <a href="{{ url_for('analytics.analysis') }}" class="btn btn-sm btn-outline">分析画面</a>
           </div>
         </div>
       </div>
@@ -122,7 +122,7 @@
           <a href="{{ url_for('categories.categories') }}" class="btn btn-primary">カテゴリ管理</a>
           <a href="{{ url_for('problems.problems') }}" class="btn btn-outline">問題管理</a>
           <a href="{{ url_for('texts.text_sets') }}" class="btn btn-outline">テキスト管理</a>
-          <a href="{{ url_for('admin.analytics') }}" class="btn btn-outline">分析・レポート</a>
+          <a href="{{ url_for('analytics.analysis') }}" class="btn btn-outline">分析・レポート</a>
         </div>
       </div>
     </div>
@@ -146,8 +146,8 @@
       </div>
       <div class="card-body">
         <div class="d-grid gap-2">
-          <a href="{{ url_for('admin.import_problems') }}" class="btn btn-outline">問題インポート</a>
-          <a href="{{ url_for('admin.import_text_set') }}" class="btn btn-outline">テキストインポート</a>
+          <a href="{{ url_for('problems.import_problems') }}" class="btn btn-outline">問題インポート</a>
+          <a href="{{ url_for('texts.text_sets') }}" class="btn btn-outline">テキスト管理</a>
           <small class="text-muted mt-2">データのバックアップとインポート機能</small>
         </div>
       </div>

@@ -92,7 +92,8 @@
       <div class="card-body">
         {% if current_user.role == 'student' %}
           <div class="d-grid gap-2">
-            <a href="{{ url_for('sessions.start_session') }}" class="btn btn-primary">学習開始</a>
+            <a href="{{ url_for('categories.categories') }}" class="btn btn-primary">カテゴリから学習</a>
+            <a href="{{ url_for('sessions.start_session') }}" class="btn btn-success">ランダム学習</a>
             <a href="{{ url_for('progress.proficiency') }}" class="btn btn-outline">進捗確認</a>
             <a href="{{ url_for('texts.my_texts') }}" class="btn btn-outline">配信テキスト</a>
           </div>
@@ -100,7 +101,7 @@
           <div class="d-grid gap-2">
             <a href="{{ url_for('problems.create_problem') }}" class="btn btn-primary">問題作成</a>
             <a href="{{ url_for('categories.create_category') }}" class="btn btn-outline">カテゴリ作成</a>
-            <a href="{{ url_for('admin.import_text_set') }}" class="btn btn-outline">テキスト作成</a>
+            <a href="{{ url_for('texts.text_sets') }}" class="btn btn-outline">テキスト管理</a>
             <a href="{{ url_for('analytics.analysis') }}" class="btn btn-outline">分析画面</a>
           </div>
         {% else %}

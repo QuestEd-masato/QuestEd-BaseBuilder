@@ -156,14 +156,19 @@ def dashboard():
         
         # Phase 2: 不足している必須変数を追加
         # BaseBuilder統計変数 (最優先修正)
-        basebuilder_stats = {
-            'total_words_attempted': 0,      # エラー発生源
-            'total_mastered_words': 0,       # 定着度5の単語数  
-            'weekly_words_learned': 0,       # 今週習得単語数
-            'mastery_rate': 0,               # 達成率％
-            'weekly_target': 20,             # 週間目標（設定値）
-            'total_basic_words': 0           # 総基礎単語数
-        }
+        try:
+            basebuilder_stats = _generate_basebuilder_stats()
+            current_app.logger.info(f"[DASHBOARD] BaseBuilder stats loaded for student {current_user.id}")
+        except Exception as e:
+            current_app.logger.error(f"[DASHBOARD] BaseBuilder stats error: {str(e)}")
+            basebuilder_stats = {
+                'total_words_attempted': 0,      # エラー発生源
+                'total_mastered_words': 0,       # 定着度5の単語数  
+                'weekly_words_learned': 0,       # 今週習得単語数
+                'mastery_rate': 0,               # 達成率％
+                'weekly_target': 20,             # 週間目標（設定値）
+                'total_basic_words': 0           # 総基礎単語数
+            }
         
         # 自由進度学習統計
         unit_stats = {
@@ -555,3 +560,52 @@ def get_class_top_learners(classes):
     except Exception as e:
         current_app.logger.error(f"[DASHBOARD] get_class_top_learners error: {str(e)}")
         return []
+
+def _generate_basebuilder_stats():
+    """BaseBuilder統計を生成"""
+    try:
+        from datetime import datetime, timedelta
+        
+        # 学生の全単語習熟度を取得
+        word_proficiencies = WordProficiency.query.filter_by(
+            student_id=current_user.id
+        ).all()
+        
+        # 基本統計を計算
+        total_words_attempted = len(word_proficiencies)
+        total_mastered_words = sum(1 for wp in word_proficiencies if wp.level >= 80)  # レベル80以上を習得済みとする
+        
+        # 今週習得した単語数（今週学習した単語のうち、習得レベルに達したもの）
+        week_start = datetime.now() - timedelta(days=7)
+        weekly_words_learned = 0
+        
+        for wp in word_proficiencies:
+            if wp.last_studied_at and wp.last_studied_at >= week_start and wp.level >= 80:
+                weekly_words_learned += 1
+        
+        # 習得率を計算
+        mastery_rate = round((total_mastered_words / total_words_attempted) * 100, 1) if total_words_attempted > 0 else 0
+        
+        # 総基礎単語数（データベース内の全単語問題数）
+        from basebuilder.models import BasicKnowledgeItem
+        total_basic_words = BasicKnowledgeItem.query.count()
+        
+        return {
+            'total_words_attempted': total_words_attempted,
+            'total_mastered_words': total_mastered_words,
+            'weekly_words_learned': weekly_words_learned,
+            'mastery_rate': mastery_rate,
+            'weekly_target': 20,  # 週間目標（設定値）
+            'total_basic_words': total_basic_words
+        }
+        
+    except Exception as e:
+        current_app.logger.error(f"[DASHBOARD] BaseBuilder stats error: {str(e)}")
+        return {
+            'total_words_attempted': 0,
+            'total_mastered_words': 0,
+            'weekly_words_learned': 0,
+            'mastery_rate': 0,
+            'weekly_target': 20,
+            'total_basic_words': 0
+        }

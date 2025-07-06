@@ -17,10 +17,10 @@
       <div class="card-body">
         <p>問題データをインポートするには、以下のCSVテンプレートをダウンロードし、必要事項を入力してください。</p>
         <div class="d-grid gap-2 d-md-flex">
-          <a href="{{ url_for('admin.download_problem_template', template_type='example') }}" class="btn btn-primary">
+          <a href="{{ url_for('problems.download_problem_template', template_type='example') }}" class="btn btn-primary">
             <i class="fas fa-download"></i> サンプル入り テンプレート
           </a>
-          <a href="{{ url_for('admin.download_problem_template', template_type='empty') }}" class="btn btn-outline">
+          <a href="{{ url_for('problems.download_problem_template', template_type='empty') }}" class="btn btn-outline">
             <i class="fas fa-download"></i> 空のテンプレート
           </a>
         </div>
@@ -32,7 +32,7 @@
         <h5 class="card-title">CSVファイルのインポート</h5>
       </div>
       <div class="card-body">
-        <form method="POST" action="{{ url_for('admin.import_problems') }}" enctype="multipart/form-data">
+        <form method="POST" action="{{ url_for('problems.import_problems') }}" enctype="multipart/form-data">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           
           <div class="form-group mb-3">

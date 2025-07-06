@@ -351,3 +351,179 @@ def text_problems(text_id):
         current_app.logger.error(f"Text problems error: {str(e)}")
         flash('問題一覧の取得中にエラーが発生しました。', 'error')
         return redirect(url_for('texts.text_sets'))
+
+
+@texts_bp.route('/import_text_set', methods=['GET', 'POST'])
+@login_required
+@require_roles(['admin', 'teacher'])
+def import_text_set():
+    """テキストセットのインポート（CSV）"""
+    try:
+        if request.method == 'GET':
+            # カテゴリ一覧を取得
+            categories = ProblemCategory.query.order_by(ProblemCategory.name).all()
+            return render_template('basebuilder/import_text.html',
+                                 categories=categories)
+        
+        # POST処理
+        title = request.form.get('title', '').strip()
+        description = request.form.get('description', '').strip()
+        category_id = request.form.get('category_id', type=int)
+        
+        if not category_id:
+            flash('カテゴリを選択してください。', 'error')
+            return redirect(url_for('texts.import_text_set'))
+        
+        # ファイルチェック
+        if 'csv_file' not in request.files:
+            flash('CSVファイルを選択してください。', 'error')
+            return redirect(url_for('texts.import_text_set'))
+        
+        csv_file = request.files['csv_file']
+        if csv_file.filename == '':
+            flash('CSVファイルを選択してください。', 'error')
+            return redirect(url_for('texts.import_text_set'))
+        
+        # CSVファイルの読み込み
+        try:
+            csv_content = csv_file.read().decode('utf-8')
+        except UnicodeDecodeError:
+            flash('CSVファイルのエンコーディングエラー。UTF-8形式で保存してください。', 'error')
+            return redirect(url_for('texts.import_text_set'))
+        
+        # import_text_from_csv関数を使用してインポート
+        from basebuilder.importers import import_text_from_csv
+        
+        success, result, errors = import_text_from_csv(
+            csv_content=csv_content,
+            title=title,
+            description=description,
+            category_id=category_id,
+            db=db,
+            TextSet=TextSet,
+            BasicKnowledgeItem=BasicKnowledgeItem,
+            current_user_id=current_user.id,
+            school_id=getattr(current_user, 'school_id', None)
+        )
+        
+        if success:
+            log_activity("text_imported", f"Imported text set: {result.title}")
+            flash(f'テキスト「{result.title}」を作成しました。', 'success')
+            return redirect(url_for('texts.text_sets'))
+        else:
+            for error in errors:
+                flash(error, 'error')
+            return redirect(url_for('texts.import_text_set'))
+        
+    except Exception as e:
+        current_app.logger.error(f"Import text set error: {str(e)}")
+        flash('テキストのインポート中にエラーが発生しました。', 'error')
+        return redirect(url_for('texts.text_sets'))
+
+
+@texts_bp.route('/delete_text_sets', methods=['POST'])
+@login_required
+@require_roles(['admin', 'teacher'])
+def delete_text_sets():
+    """テキストセットの一括削除"""
+    try:
+        text_ids = request.form.getlist('text_ids')
+        if not text_ids:
+            flash('削除するテキストを選択してください。', 'error')
+            return redirect(url_for('texts.text_sets'))
+        
+        deleted_count = 0
+        for text_id in text_ids:
+            try:
+                text_set = TextSet.query.get(int(text_id))
+                if text_set:
+                    # 権限チェック
+                    if current_user.role == 'teacher' and text_set.school_id != current_user.school_id:
+                        continue
+                    
+                    # 関連する配信記録を削除
+                    TextDelivery.query.filter_by(text_set_id=text_id).delete()
+                    
+                    # テキストセットを削除（関連する問題もカスケード削除される想定）
+                    db.session.delete(text_set)
+                    deleted_count += 1
+                    
+            except Exception:
+                continue
+        
+        if deleted_count > 0:
+            db.session.commit()
+            log_activity("texts_deleted", f"Deleted {deleted_count} text sets")
+            flash(f'{deleted_count}件のテキストを削除しました。', 'success')
+        else:
+            flash('削除できるテキストがありませんでした。', 'warning')
+        
+        return redirect(url_for('texts.text_sets'))
+        
+    except Exception as e:
+        current_app.logger.error(f"Delete text sets error: {str(e)}")
+        db.session.rollback()
+        flash('テキストの削除中にエラーが発生しました。', 'error')
+        return redirect(url_for('texts.text_sets'))
+
+
+@texts_bp.route('/text/<int:text_id>/delete', methods=['POST'])
+@login_required
+@require_roles(['admin', 'teacher'])
+def delete_single_text(text_id):
+    """単一テキストセットの削除"""
+    try:
+        text_set = TextSet.query.get_or_404(text_id)
+        
+        # 権限チェック
+        if current_user.role == 'teacher' and text_set.school_id != current_user.school_id:
+            flash('このテキストを削除する権限がありません。', 'error')
+            return redirect(url_for('texts.text_sets'))
+        
+        # 関連する配信記録を削除
+        TextDelivery.query.filter_by(text_set_id=text_id).delete()
+        
+        # テキストセットを削除
+        db.session.delete(text_set)
+        db.session.commit()
+        
+        log_activity("text_deleted", f"Deleted text set: {text_set.title}")
+        flash(f'テキスト「{text_set.title}」を削除しました。', 'success')
+        
+        return redirect(url_for('texts.text_sets'))
+        
+    except Exception as e:
+        current_app.logger.error(f"Delete single text error: {str(e)}")
+        db.session.rollback()
+        flash('テキストの削除中にエラーが発生しました。', 'error')
+        return redirect(url_for('texts.text_sets'))
+
+
+@texts_bp.route('/delivery/<int:delivery_id>/cancel', methods=['POST'])
+@login_required
+@require_roles(['admin', 'teacher'])
+def cancel_text_delivery(delivery_id):
+    """テキスト配信のキャンセル"""
+    try:
+        delivery = TextDelivery.query.get_or_404(delivery_id)
+        text_set = delivery.text_set
+        
+        # 権限チェック
+        if current_user.role == 'teacher' and text_set.school_id != current_user.school_id:
+            flash('この配信をキャンセルする権限がありません。', 'error')
+            return redirect(url_for('texts.text_sets'))
+        
+        # 配信記録を削除
+        db.session.delete(delivery)
+        db.session.commit()
+        
+        log_activity("text_delivery_cancelled", f"Cancelled delivery {delivery_id}")
+        flash('テキスト配信をキャンセルしました。', 'success')
+        
+        return redirect(url_for('texts.text_sets'))
+        
+    except Exception as e:
+        current_app.logger.error(f"Cancel text delivery error: {str(e)}")
+        db.session.rollback()
+        flash('配信のキャンセル中にエラーが発生しました。', 'error')
+        return redirect(url_for('texts.text_sets'))

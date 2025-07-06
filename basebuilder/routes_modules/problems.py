@@ -364,3 +364,177 @@ def get_problem_details(problem_id):
             'success': False,
             'error': '問題詳細の取得に失敗しました'
         }), 500
+
+
+@problems_bp.route('/download_problem_template/<template_type>')
+@login_required
+def download_problem_template(template_type):
+    """問題テンプレートCSVのダウンロード"""
+    try:
+        import csv
+        from io import StringIO
+        from flask import Response
+        
+        # CSVデータを作成
+        output = StringIO()
+        writer = csv.writer(output)
+        
+        # ヘッダー行
+        headers = ['問題文', '選択肢1', '選択肢2', '選択肢3', '選択肢4', '正解番号', '難易度']
+        writer.writerow(headers)
+        
+        # サンプルデータ（template_type == 'example'の場合）
+        if template_type == 'example':
+            sample_rows = [
+                ['次のうち、日本の首都はどれですか？', '大阪', '京都', '東京', '名古屋', '3', '1'],
+                ['2 + 2 = ?', '3', '4', '5', '6', '2', '1'],
+                ['英語で「こんにちは」は？', 'Goodbye', 'Hello', 'Thank you', 'Sorry', '2', '1'],
+            ]
+            writer.writerows(sample_rows)
+        
+        # レスポンスの作成
+        output.seek(0)
+        response = Response(
+            output.getvalue(),
+            mimetype='text/csv',
+            headers={
+                'Content-Disposition': f'attachment; filename=problem_template_{template_type}.csv',
+                'Content-Type': 'text/csv; charset=utf-8-sig'  # Excel対応のBOM付きUTF-8
+            }
+        )
+        
+        # BOMを追加（Excelでの文字化け対策）
+        response.data = '\ufeff' + response.data
+        
+        return response
+        
+    except Exception as e:
+        current_app.logger.error(f"Download template error: {str(e)}")
+        flash('テンプレートのダウンロードに失敗しました。', 'error')
+        return redirect(url_for('problems.problems'))
+
+
+@problems_bp.route('/import_problems', methods=['GET', 'POST'])
+@login_required
+@require_roles(['admin', 'teacher'])
+def import_problems():
+    """問題のCSVインポート"""
+    try:
+        if request.method == 'GET':
+            # カテゴリ一覧を取得
+            categories = ProblemCategory.query.order_by(ProblemCategory.name).all()
+            return render_template('basebuilder/import_problems.html',
+                                 categories=categories)
+        
+        # POST処理
+        category_id = request.form.get('category_id', type=int)
+        if not category_id:
+            flash('カテゴリを選択してください。', 'error')
+            return redirect(url_for('problems.import_problems'))
+        
+        # ファイルチェック
+        if 'csv_file' not in request.files:
+            flash('CSVファイルを選択してください。', 'error')
+            return redirect(url_for('problems.import_problems'))
+        
+        csv_file = request.files['csv_file']
+        if csv_file.filename == '':
+            flash('CSVファイルを選択してください。', 'error')
+            return redirect(url_for('problems.import_problems'))
+        
+        # CSVファイルの読み込み
+        try:
+            csv_content = csv_file.read().decode('utf-8')
+        except UnicodeDecodeError:
+            flash('CSVファイルのエンコーディングエラー。UTF-8形式で保存してください。', 'error')
+            return redirect(url_for('problems.import_problems'))
+        
+        # 既存のインポート関数の代わりに直接処理
+        import csv
+        from io import StringIO
+        
+        # CSVパース
+        csv_reader = csv.reader(StringIO(csv_content))
+        headers = next(csv_reader, None)
+        
+        if not headers:
+            flash('CSVファイルが空です。', 'error')
+            return redirect(url_for('problems.import_problems'))
+        
+        # 期待するヘッダー
+        expected_headers = ['問題文', '選択肢1', '選択肢2', '選択肢3', '選択肢4', '正解番号', '難易度']
+        if headers != expected_headers:
+            flash(f'CSVファイルのヘッダーが正しくありません。期待: {expected_headers}', 'error')
+            return redirect(url_for('problems.import_problems'))
+        
+        imported_count = 0
+        errors = []
+        
+        for row_num, row in enumerate(csv_reader, start=2):
+            if len(row) != 7:
+                errors.append(f'行{row_num}: 列数が正しくありません（期待: 7, 実際: {len(row)}）')
+                continue
+            
+            try:
+                question, choice1, choice2, choice3, choice4, correct_answer, difficulty = row
+                
+                # 正解番号の検証
+                correct_answer_num = int(correct_answer)
+                if correct_answer_num not in [1, 2, 3, 4]:
+                    errors.append(f'行{row_num}: 正解番号は1-4の値である必要があります')
+                    continue
+                
+                # 難易度の検証
+                difficulty_num = int(difficulty)
+                if difficulty_num not in [1, 2, 3, 4, 5]:
+                    errors.append(f'行{row_num}: 難易度は1-5の値である必要があります')
+                    continue
+                
+                # 問題を作成
+                problem = BasicKnowledgeItem(
+                    question=question,
+                    choice1=choice1,
+                    choice2=choice2,
+                    choice3=choice3,
+                    choice4=choice4,
+                    correct_answer=correct_answer_num,
+                    difficulty=difficulty_num,
+                    category_id=category_id,
+                    created_by=current_user.id,
+                    school_id=getattr(current_user, 'school_id', None),
+                    is_active=True
+                )
+                
+                db.session.add(problem)
+                imported_count += 1
+                
+            except (ValueError, TypeError) as e:
+                errors.append(f'行{row_num}: データ形式エラー - {str(e)}')
+                continue
+            except Exception as e:
+                errors.append(f'行{row_num}: 予期しないエラー - {str(e)}')
+                continue
+        
+        success = imported_count > 0
+        
+        if success:
+            db.session.commit()
+            log_activity("problems_imported", f"Imported {imported_count} problems to category {category_id}")
+            if errors:
+                flash(f'{imported_count}件の問題をインポートしました（{len(errors)}件のエラーをスキップ）。', 'warning')
+                for error in errors[:5]:  # 最初の5つのエラーのみ表示
+                    flash(error, 'error')
+            else:
+                flash(f'{imported_count}件の問題をインポートしました。', 'success')
+            return redirect(url_for('categories.category_problems', category_id=category_id))
+        else:
+            db.session.rollback()
+            flash('問題をインポートできませんでした。', 'error')
+            for error in errors[:5]:  # 最初の5つのエラーのみ表示
+                flash(error, 'error')
+            return redirect(url_for('problems.import_problems'))
+        
+    except Exception as e:
+        current_app.logger.error(f"Import problems error: {str(e)}")
+        flash('問題のインポート中にエラーが発生しました。', 'error')
+        return redirect(url_for('problems.problems'))

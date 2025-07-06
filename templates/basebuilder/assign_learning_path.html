@@ -5,7 +5,7 @@
   <div class="col-md-10">
     <div class="d-flex justify-content-between align-items-center mb-4">
       <h1 class="section-title">学習パスの割り当て</h1>
-      <a href="{{ url_for('admin.learning_paths') }}" class="btn btn-outline">
+      <a href="{{ url_for('basebuilder_admin.learning_paths') }}" class="btn btn-outline">
         <i class="fas fa-arrow-left"></i> 学習パス一覧に戻る
       </a>
     </div>
@@ -60,7 +60,7 @@
         <h5 class="card-title">学生への割り当て</h5>
       </div>
       <div class="card-body">
-        <form method="POST" action="{{ url_for('admin.assign_learning_path', path_id=path.id) }}">
+        <form method="POST" action="{{ url_for('basebuilder_admin.assign_learning_path', path_id=path.id) }}">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           
           <div class="mb-3">
@@ -110,7 +110,7 @@
             <button type="submit" class="btn btn-primary" id="assign-button" disabled>
               学習パスを割り当てる
             </button>
-            <a href="{{ url_for('admin.learning_paths') }}" class="btn btn-outline">キャンセル</a>
+            <a href="{{ url_for('basebuilder_admin.learning_paths') }}" class="btn btn-outline">キャンセル</a>
           </div>
         </form>
       </div>
