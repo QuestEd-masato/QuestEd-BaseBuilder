@@ -41,14 +41,23 @@ def class_detail(class_id):
             return redirect(url_for('student_dashboard.dashboard'))
         
         # メインテーマを取得
-        main_themes = MainTheme.query.filter_by(class_id=class_id).order_by(
-            MainTheme.created_at.desc()
-        ).all()
+        try:
+            from app.models import MainTheme, Milestone
+            main_themes = MainTheme.query.filter_by(class_id=class_id).order_by(
+                MainTheme.created_at.desc()
+            ).all()
+        except:
+            main_themes = []
+            current_app.logger.warning("MainTheme model not available")
         
         # マイルストーンを取得
-        milestones = Milestone.query.filter_by(class_id=class_id).order_by(
-            Milestone.due_date.asc()
-        ).all()
+        try:
+            milestones = Milestone.query.filter_by(class_id=class_id).order_by(
+                Milestone.due_date.asc()
+            ).all()
+        except:
+            milestones = []
+            current_app.logger.warning("Milestone model not available")
         
         # 今後のマイルストーンと過去のマイルストーンに分類
         today = datetime.now().date()
@@ -56,11 +65,15 @@ def class_detail(class_id):
         past_milestones = [m for m in milestones if m.due_date and m.due_date < today]
         
         # カリキュラム単元を取得（このクラス用）
-        curriculum_units = CurriculumUnit.query.filter_by(
-            is_active=True
-        ).order_by(
-            CurriculumUnit.subject, CurriculumUnit.order
-        ).all()
+        try:
+            curriculum_units = CurriculumUnit.query.filter_by(
+                is_active=True
+            ).order_by(
+                CurriculumUnit.subject, CurriculumUnit.order
+            ).all()
+        except:
+            curriculum_units = []
+            current_app.logger.warning("CurriculumUnit model query failed")
         
         # 科目別にカリキュラムを整理
         curriculum_by_subject = {}

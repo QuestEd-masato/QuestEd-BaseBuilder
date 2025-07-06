@@ -12,6 +12,7 @@ from .modules.themes import themes_bp
 from .modules.ranking import ranking_bp
 from .modules.learning import learning_bp
 from .modules.class_management import class_management_bp
+from .modules.chat import chat_bp
 
 # 共通機能をインポート
 from .utils import student_required
@@ -31,6 +32,7 @@ def register_student_blueprints(app):
     app.register_blueprint(ranking_bp, url_prefix='/student')
     app.register_blueprint(learning_bp, url_prefix='/student')
     app.register_blueprint(class_management_bp, url_prefix='/student')
+    app.register_blueprint(chat_bp, url_prefix='/student')
 
 # 後方互換性のため、主要な関数をこのモジュールレベルで公開
 from .modules.dashboard import dashboard
