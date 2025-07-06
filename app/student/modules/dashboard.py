@@ -592,9 +592,12 @@ def _generate_basebuilder_stats():
         total_problems_attempted = len(set(record.problem_id for record in answer_records))
         total_correct_answers = sum(1 for record in answer_records if record.is_correct)
         
-        # WordProficiencyベースの統計
+        # WordProficiencyベースの統計（熟練度5 = 完全マスター）
         total_words_attempted = len(word_proficiencies)
-        total_mastered_words = sum(1 for wp in word_proficiencies if wp.level >= 80)
+        # 熟練度5（最高レベル）の単語数をカウント
+        total_mastered_words = sum(1 for wp in word_proficiencies if wp.level == 5)
+        # 熟練度4以上も中級レベルとしてカウント
+        intermediate_mastered = sum(1 for wp in word_proficiencies if wp.level >= 4)
         
         # データがない場合の代替計算
         if total_words_attempted == 0 and total_problems_attempted > 0:
@@ -627,13 +630,21 @@ def _generate_basebuilder_stats():
         
         stats = {
             'total_words_attempted': max(total_words_attempted, total_problems_attempted),
-            'total_mastered_words': total_mastered_words,
+            'total_mastered_words': total_mastered_words,  # 熟練度5の単語数
+            'intermediate_mastered': intermediate_mastered,  # 熟練度4以上
             'weekly_words_learned': weekly_words_learned,
             'mastery_rate': mastery_rate,
             'weekly_target': 20,
             'total_basic_words': total_basic_words,
             'total_answers': len(answer_records),
-            'correct_answers': total_correct_answers
+            'correct_answers': total_correct_answers,
+            'proficiency_breakdown': {
+                'level_5': sum(1 for wp in word_proficiencies if wp.level == 5),
+                'level_4': sum(1 for wp in word_proficiencies if wp.level == 4),
+                'level_3': sum(1 for wp in word_proficiencies if wp.level == 3),
+                'level_2': sum(1 for wp in word_proficiencies if wp.level == 2),
+                'level_1': sum(1 for wp in word_proficiencies if wp.level == 1)
+            }
         }
         
         current_app.logger.info(f"[DASHBOARD] BaseBuilder stats calculated: {stats}")

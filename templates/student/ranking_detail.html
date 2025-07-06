@@ -1,0 +1,337 @@
+{% extends 'base.html' %}
+
+{% block title %}ランキング詳細 | QuestEd{% endblock %}
+
+{% block extra_css %}
+<style>
+.ranking-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 1rem;
+}
+
+.ranking-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    border: 1px solid #e9ecef;
+}
+
+.ranking-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.ranking-tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.ranking-tab {
+    padding: 0.75rem 1.5rem;
+    border: 1px solid #0056b3;
+    border-radius: 8px;
+    background: transparent;
+    color: #0056b3;
+    text-decoration: none;
+    transition: all 0.2s;
+    cursor: pointer;
+}
+
+.ranking-tab.active {
+    background: #0056b3;
+    color: white;
+}
+
+.ranking-tab:hover {
+    background: #0056b3;
+    color: white;
+}
+
+.ranking-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.ranking-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    margin-bottom: 0.5rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+    transition: background 0.2s;
+}
+
+.ranking-item.my-rank {
+    background: #e3f2fd;
+    border: 2px solid #0056b3;
+}
+
+.ranking-item:hover {
+    background: #e9ecef;
+}
+
+.rank-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.rank-number {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #0056b3;
+    min-width: 40px;
+    text-align: center;
+}
+
+.rank-number.first {
+    color: #ffd700;
+}
+
+.rank-number.second {
+    color: #c0c0c0;
+}
+
+.rank-number.third {
+    color: #cd7f32;
+}
+
+.rank-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #0056b3, #004494);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+}
+
+.rank-details {
+    flex: 1;
+}
+
+.rank-name {
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.rank-username {
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.rank-score {
+    text-align: right;
+}
+
+.rank-count {
+    font-size: 1.25rem;
+    font-weight: bold;
+    color: #0056b3;
+}
+
+.rank-label {
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.my-position-card {
+    background: linear-gradient(135deg, #0056b3, #004494);
+    color: white;
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+
+@media (max-width: 768px) {
+    .ranking-header {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .ranking-tabs {
+        flex-wrap: wrap;
+    }
+    
+    .ranking-item {
+        flex-direction: column;
+        gap: 0.5rem;
+        text-align: center;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="ranking-container">
+    <!-- 自分の順位カード -->
+    {% if my_position %}
+    <div class="ranking-card my-position-card">
+        <h3>🏆 あなたの順位</h3>
+        <div style="font-size: 3rem; font-weight: bold; margin: 1rem 0;">
+            {{ my_position }}位
+        </div>
+        <p>基礎学力マスターランキング（総合）</p>
+    </div>
+    {% endif %}
+
+    <!-- ランキングタブ -->
+    <div class="ranking-card">
+        <div class="ranking-header">
+            <h2>🏆 基礎学力マスターランキング</h2>
+            <div class="ranking-tabs">
+                <button class="ranking-tab active" onclick="showRanking('overall')">
+                    総合ランキング
+                </button>
+                <button class="ranking-tab" onclick="showRanking('this_month')">
+                    今月
+                </button>
+                <button class="ranking-tab" onclick="showRanking('this_week')">
+                    今週
+                </button>
+            </div>
+        </div>
+
+        <!-- 総合ランキング -->
+        <div id="ranking-overall" class="ranking-content">
+            <h4>🎯 熟練度5達成単語数ランキング</h4>
+            <ol class="ranking-list">
+                {% for user in rankings.overall[:20] %}
+                <li class="ranking-item {% if user.student_id == current_user_id %}my-rank{% endif %}">
+                    <div class="rank-info">
+                        <div class="rank-number {% if loop.index == 1 %}first{% elif loop.index == 2 %}second{% elif loop.index == 3 %}third{% endif %}">
+                            {{ loop.index }}
+                        </div>
+                        <div class="rank-avatar">
+                            {{ user.full_name[0] if user.full_name else user.username[0] }}
+                        </div>
+                        <div class="rank-details">
+                            <div class="rank-name">{{ user.full_name or user.username }}</div>
+                            <div class="rank-username">@{{ user.username }}</div>
+                        </div>
+                    </div>
+                    <div class="rank-score">
+                        <div class="rank-count">{{ user.word_count }}</div>
+                        <div class="rank-label">単語</div>
+                    </div>
+                </li>
+                {% else %}
+                <li class="ranking-item">
+                    <div style="text-align: center; padding: 2rem; color: #666;">
+                        <i class="fas fa-info-circle"></i> 
+                        まだランキングデータがありません。問題を解いて記録を作りましょう！
+                    </div>
+                </li>
+                {% endfor %}
+            </ol>
+        </div>
+
+        <!-- 今月のランキング -->
+        <div id="ranking-this_month" class="ranking-content" style="display: none;">
+            <h4>📅 今月の新規マスター単語数</h4>
+            <ol class="ranking-list">
+                {% for user in rankings.this_month[:20] %}
+                <li class="ranking-item {% if user.student_id == current_user_id %}my-rank{% endif %}">
+                    <div class="rank-info">
+                        <div class="rank-number {% if loop.index == 1 %}first{% elif loop.index == 2 %}second{% elif loop.index == 3 %}third{% endif %}">
+                            {{ loop.index }}
+                        </div>
+                        <div class="rank-avatar">
+                            {{ user.full_name[0] if user.full_name else user.username[0] }}
+                        </div>
+                        <div class="rank-details">
+                            <div class="rank-name">{{ user.full_name or user.username }}</div>
+                            <div class="rank-username">@{{ user.username }}</div>
+                        </div>
+                    </div>
+                    <div class="rank-score">
+                        <div class="rank-count">{{ user.word_count }}</div>
+                        <div class="rank-label">単語</div>
+                    </div>
+                </li>
+                {% else %}
+                <li class="ranking-item">
+                    <div style="text-align: center; padding: 2rem; color: #666;">
+                        <i class="fas fa-info-circle"></i> 
+                        今月はまだデータがありません。
+                    </div>
+                </li>
+                {% endfor %}
+            </ol>
+        </div>
+
+        <!-- 今週のランキング -->
+        <div id="ranking-this_week" class="ranking-content" style="display: none;">
+            <h4>⚡ 今週の学習活動ランキング</h4>
+            <ol class="ranking-list">
+                {% for user in rankings.this_week[:20] %}
+                <li class="ranking-item {% if user.student_id == current_user_id %}my-rank{% endif %}">
+                    <div class="rank-info">
+                        <div class="rank-number {% if loop.index == 1 %}first{% elif loop.index == 2 %}second{% elif loop.index == 3 %}third{% endif %}">
+                            {{ loop.index }}
+                        </div>
+                        <div class="rank-avatar">
+                            {{ user.full_name[0] if user.full_name else user.username[0] }}
+                        </div>
+                        <div class="rank-details">
+                            <div class="rank-name">{{ user.full_name or user.username }}</div>
+                            <div class="rank-username">@{{ user.username }}</div>
+                        </div>
+                    </div>
+                    <div class="rank-score">
+                        <div class="rank-count">{{ user.word_count }}</div>
+                        <div class="rank-label">正解</div>
+                    </div>
+                </li>
+                {% else %}
+                <li class="ranking-item">
+                    <div style="text-align: center; padding: 2rem; color: #666;">
+                        <i class="fas fa-info-circle"></i> 
+                        今週はまだデータがありません。
+                    </div>
+                </li>
+                {% endfor %}
+            </ol>
+        </div>
+    </div>
+
+    <!-- 戻るボタン -->
+    <div style="text-align: center; margin-top: 2rem;">
+        <a href="{{ url_for('student_dashboard.dashboard') }}" 
+           style="display: inline-block; padding: 0.75rem 1.5rem; background: #0056b3; color: white; 
+                  text-decoration: none; border-radius: 8px; transition: all 0.2s;">
+            <i class="fas fa-arrow-left"></i> ダッシュボードに戻る
+        </a>
+    </div>
+</div>
+
+<script>
+function showRanking(type) {
+    // すべてのランキングコンテンツを隠す
+    document.querySelectorAll('.ranking-content').forEach(content => {
+        content.style.display = 'none';
+    });
+    
+    // すべてのタブの active クラスを削除
+    document.querySelectorAll('.ranking-tab').forEach(tab => {
+        tab.classList.remove('active');
+    });
+    
+    // 選択されたランキングを表示
+    document.getElementById('ranking-' + type).style.display = 'block';
+    
+    // 選択されたタブに active クラスを追加
+    event.target.classList.add('active');
+}
+</script>
+{% endblock %}

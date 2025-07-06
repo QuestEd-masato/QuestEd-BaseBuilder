@@ -267,25 +267,39 @@
             <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; text-align: center;">
                 <div>
                     <div style="font-size: 1.5rem; font-weight: bold; color: #0056b3;">
-                        {{ total_mastered_words }}
+                        {{ proficiency_breakdown.level_5 if proficiency_breakdown else total_mastered_words }}
                     </div>
-                    <div style="font-size: 0.75rem; color: #666;">定着度5の<br>単語数</div>
+                    <div style="font-size: 0.75rem; color: #666;">熟練度5<br>完全マスター</div>
                 </div>
                 
                 <div>
                     <div style="font-size: 1.5rem; font-weight: bold; color: #28a745;">
-                        {{ weekly_words_learned }}
+                        {{ intermediate_mastered or 0 }}
                     </div>
-                    <div style="font-size: 0.75rem; color: #666;">今週の新規<br>マスター</div>
+                    <div style="font-size: 0.75rem; color: #666;">熟練度4以上<br>上級レベル</div>
                 </div>
                 
                 <div>
                     <div style="font-size: 1.5rem; font-weight: bold; color: #ff9800;">
                         {{ mastery_rate }}%
                     </div>
-                    <div style="font-size: 0.75rem; color: #666;">達成率</div>
+                    <div style="font-size: 0.75rem; color: #666;">正解率</div>
                 </div>
             </div>
+            
+            <!-- 熟練度詳細表示 -->
+            {% if proficiency_breakdown %}
+            <div style="margin-top: 15px; padding: 10px; background: white; border-radius: 6px; border: 1px solid #ddd;">
+                <div style="font-size: 0.8rem; color: #666; margin-bottom: 8px;">熟練度別単語数:</div>
+                <div style="display: flex; justify-content: space-between; font-size: 0.75rem;">
+                    <span>Lv5: <strong>{{ proficiency_breakdown.level_5 }}</strong></span>
+                    <span>Lv4: <strong>{{ proficiency_breakdown.level_4 }}</strong></span>
+                    <span>Lv3: <strong>{{ proficiency_breakdown.level_3 }}</strong></span>
+                    <span>Lv2: <strong>{{ proficiency_breakdown.level_2 }}</strong></span>
+                    <span>Lv1: <strong>{{ proficiency_breakdown.level_1 }}</strong></span>
+                </div>
+            </div>
+            {% endif %}
             
             <!-- プログレスバー -->
             <div style="margin-top: 12px;">
@@ -404,7 +418,7 @@
         {% endif %}
         
         <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-            <a href="{{ url_for('student_dashboard.dashboard') }}" 
+            <a href="{{ url_for('student_learning.learning_portal') }}" 
                style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1rem; 
                       background: linear-gradient(135deg, #007bff, #0056b3); color: white; 
                       border-radius: 8px; text-decoration: none; font-size: 0.9rem; font-weight: 500;
@@ -416,7 +430,7 @@
             </a>
             
             {% if in_progress_units is defined and in_progress_units > 0 %}
-            <a href="{{ url_for('student_dashboard.dashboard') }}#continue-learning" 
+            <a href="{{ url_for('student_learning.my_units') }}" 
                style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1rem; 
                       background: transparent; color: #28a745; border: 1px solid #28a745;
                       border-radius: 8px; text-decoration: none; font-size: 0.9rem;
@@ -425,6 +439,17 @@
                onmouseout="this.style.background='transparent'; this.style.color='#28a745';">
                 <i class="fas fa-play"></i>
                 続きから
+            </a>
+            {% else %}
+            <a href="{{ url_for('student_learning.learning_portal') }}" 
+               style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1rem; 
+                      background: transparent; color: #007bff; border: 1px solid #007bff;
+                      border-radius: 8px; text-decoration: none; font-size: 0.9rem;
+                      transition: all 0.2s; pointer-events: auto !important; z-index: 1000; position: relative;"
+               onmouseover="this.style.background='#007bff'; this.style.color='white';"
+               onmouseout="this.style.background='transparent'; this.style.color='#007bff';">
+                <i class="fas fa-plus"></i>
+                単元を選択
             </a>
             {% endif %}
         </div>
@@ -500,7 +525,7 @@
                 </div>
             </div>
             <div style="margin-top: 0.5rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                <a href="{{ url_for('student_dashboard.dashboard') }}" 
+                <a href="{{ url_for('student_class_management.class_detail', class_id=class_theme.class_id) }}" 
                    style="{{ btn_primary_style }}">
                    <i class="fas fa-info-circle"></i> 詳細
                 </a>
@@ -650,7 +675,7 @@
         </div>
         
         <div style="margin-top: 1rem;">
-            <a href="{{ url_for('index') }}" 
+            <a href="{{ url_for('chat') }}" 
                style="display: inline-block; padding: 0.375rem 0.75rem; font-size: 0.875rem; border-radius: 0.25rem; text-decoration: none; background-color: #5DADE2; color: white; border: 1px solid #5DADE2;">
                AIチャットを開く
             </a>
@@ -662,7 +687,14 @@
 <div class="ranking-section">
     <!-- クラス学習ランキング -->
     <div class="ranking-card">
-        <h3>🏆 基礎学力マスターランキング（5/5達成単語数）</h3>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <h3>🏆 基礎学力マスターランキング（5/5達成単語数）</h3>
+            <a href="{{ url_for('student_ranking.ranking') }}" 
+               style="padding: 0.5rem 1rem; background: #0056b3; color: white; 
+                      text-decoration: none; border-radius: 6px; font-size: 0.9rem;">
+                詳細を見る
+            </a>
+        </div>
         <p style="color: #666; font-size: 0.9rem; margin-top: -0.5rem; margin-bottom: 1rem;">※ランキングは毎日深夜に更新されます</p>
         <ol class="ranking-list">
             {% if class_top_learners %}
