@@ -51,8 +51,13 @@ def start_session():
             flash('学習セッションは学生のみアクセス可能です。')
             return redirect(url_for('basebuilder.index'))
         
-        # セッション初期化
-        session.clear()
+        # セッション初期化（認証情報は保持）
+        learning_keys = ['session_type', 'category_id', 'text_id', 'start_time', 
+                        'problems_answered', 'correct_answers', 'current_problem_index',
+                        'problem_ids', 'total_problems']
+        for key in learning_keys:
+            session.pop(key, None)
+            
         session['session_type'] = 'general'
         session['start_time'] = datetime.now().isoformat()
         session['problems_answered'] = 0
@@ -100,8 +105,14 @@ def start_category_session(category_id):
         
         category = ProblemCategory.query.get_or_404(category_id)
         
-        # セッション初期化
-        session.clear()
+        # セッション初期化（認証情報は保持）
+        # Flask-Loginの認証情報を保持するため、学習関連キーのみクリア
+        learning_keys = ['session_type', 'category_id', 'text_id', 'start_time', 
+                        'problems_answered', 'correct_answers', 'current_problem_index',
+                        'problem_ids', 'total_problems']
+        for key in learning_keys:
+            session.pop(key, None)
+            
         session['session_type'] = 'category'
         session['category_id'] = category_id
         session['start_time'] = datetime.now().isoformat()
@@ -150,8 +161,13 @@ def start_text_session(text_id):
         
         text_set = TextSet.query.get_or_404(text_id)
         
-        # セッション初期化
-        session.clear()
+        # セッション初期化（認証情報は保持）
+        learning_keys = ['session_type', 'category_id', 'text_id', 'start_time', 
+                        'problems_answered', 'correct_answers', 'current_problem_index',
+                        'problem_ids', 'total_problems']
+        for key in learning_keys:
+            session.pop(key, None)
+            
         session['session_type'] = 'text'
         session['text_id'] = text_id
         session['start_time'] = datetime.now().isoformat()
@@ -300,8 +316,12 @@ def solve_text(text_id):
             flash('このテキストには問題が登録されていません。', 'warning')
             return redirect(url_for('texts.my_texts'))
         
-        # セッション初期化
-        session.clear()
+        # セッション初期化（認証情報は保持）
+        learning_keys = ['session_type', 'category_id', 'text_id', 'start_time', 
+                        'problems_answered', 'correct_answers', 'current_problem_index',
+                        'problem_ids', 'total_problems']
+        for key in learning_keys:
+            session.pop(key, None)
         session['session_type'] = 'text'
         session['text_id'] = text_id
         session['start_time'] = datetime.now().isoformat()
@@ -489,8 +509,12 @@ def session_summary():
         
         current_app.logger.info(f"Session completed by user {current_user.id}: {problems_answered} problems, {accuracy}% accuracy")
         
-        # セッションクリア
-        session.clear()
+        # セッションクリア（認証情報は保持）
+        learning_keys = ['session_type', 'category_id', 'text_id', 'start_time', 
+                        'problems_answered', 'correct_answers', 'current_problem_index',
+                        'problem_ids', 'total_problems']
+        for key in learning_keys:
+            session.pop(key, None)
         
         return render_template('basebuilder/session_summary.html',
                              summary=summary)

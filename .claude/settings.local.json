@@ -46,7 +46,9 @@
       "Bash(export DB_NAME='quested')",
       "Bash(export FLASK_ENV='development')",
       "Bash(export FLASK_DEBUG='1')",
-      "Bash(rm:*)"
+      "Bash(rm:*)",
+      "Bash(./ec2_diagnosis.sh:*)",
+      "Bash(bash:*)"
     ],
     "deny": []
   }
