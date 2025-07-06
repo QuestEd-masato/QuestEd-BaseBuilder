@@ -446,6 +446,25 @@ def api_quick_stats():
 def _get_learning_progress_summary():
     """学習進捗サマリーを取得（Phase 2）"""
     try:
+        from flask_login import current_user
+        
+        # ログイン状態チェック
+        if not current_user or not current_user.is_authenticated:
+            current_app.logger.warning("[DASHBOARD] User not authenticated, returning empty learning progress")
+            return {
+                'selected_units': [],
+                'stats': {
+                    'total_selected': 0,
+                    'completed': 0,
+                    'in_progress': 0,
+                    'pending_approval': 0,
+                    'approved': 0,
+                    'rejected': 0,
+                    'completion_rate': 0,
+                    'approval_rate': 0
+                }
+            }
+        
         # 選択中の単元
         selected_units = StudentUnitSelection.query.filter_by(
             student_id=current_user.id
@@ -497,6 +516,13 @@ def _get_learning_progress_summary():
 def _generate_weekly_activity_stats():
     """週間活動統計を生成"""
     try:
+        from flask_login import current_user
+        
+        # ログイン状態チェック
+        if not current_user or not current_user.is_authenticated:
+            current_app.logger.warning("[DASHBOARD] User not authenticated, returning empty weekly stats")
+            return []
+        
         # 過去7日間の活動統計
         end_date = datetime.now()
         start_date = end_date - timedelta(days=7)
@@ -537,6 +563,20 @@ def _generate_weekly_activity_stats():
 def _generate_progress_stats():
     """進捗統計を生成"""
     try:
+        from flask_login import current_user
+        
+        # ログイン状態チェック
+        if not current_user or not current_user.is_authenticated:
+            current_app.logger.warning("[DASHBOARD] User not authenticated, returning empty progress stats")
+            return {
+                'todo_completion_rate': 0,
+                'goal_completion_rate': 0,
+                'total_todos': 0,
+                'completed_todos': 0,
+                'total_goals': 0,
+                'completed_goals': 0
+            }
+        
         # Todo統計
         total_todos = Todo.query.filter_by(student_id=current_user.id).count()
         completed_todos = Todo.query.filter_by(student_id=current_user.id, is_completed=True).count()
@@ -677,6 +717,26 @@ def _generate_basebuilder_stats():
     """BaseBuilder統計を生成 - 実際のデータベース情報から計算"""
     try:
         from datetime import datetime, timedelta
+        from flask_login import current_user
+        
+        # ログイン状態チェック
+        if not current_user or not current_user.is_authenticated:
+            current_app.logger.warning("[DASHBOARD] User not authenticated, returning empty stats")
+            return {
+                'total_words_attempted': 0,
+                'total_mastered_words': 0,
+                'intermediate_mastered': 0,
+                'weekly_words_learned': 0,
+                'mastery_rate': 0,
+                'weekly_target': 20,
+                'total_basic_words': 0,
+                'total_answers': 0,
+                'correct_answers': 0,
+                'proficiency_breakdown': {
+                    'level_5': 0, 'level_4': 0, 'level_3': 0, 'level_2': 0, 'level_1': 0
+                }
+            }
+        
         try:
             from basebuilder.models import AnswerRecord
         except ImportError:
@@ -796,6 +856,19 @@ def _generate_unit_stats():
     try:
         from app.models import CurriculumUnit, StudentUnitSelection
         from datetime import datetime, timedelta
+        from flask_login import current_user
+        
+        # ログイン状態チェック
+        if not current_user or not current_user.is_authenticated:
+            current_app.logger.warning("[DASHBOARD] User not authenticated, returning empty unit stats")
+            return {
+                'total_units': 0,
+                'completed_units': 0,
+                'in_progress_units': 0,
+                'completion_rate': 0,
+                'total_study_time': 0,
+                'available_units': 0
+            }
         
         current_app.logger.info(f"[DASHBOARD] Generating unit stats for student {current_user.id}")
         
