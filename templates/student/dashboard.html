@@ -229,6 +229,22 @@
 {% block content %}
 {% set btn_primary_style = "display: inline-block; padding: 0.375rem 0.75rem; font-size: 0.875rem; border-radius: 0.25rem; text-decoration: none; background-color: #5DADE2; color: white; border: 1px solid #5DADE2; margin-right: 0.5rem; pointer-events: auto !important; cursor: pointer !important; z-index: 1; position: relative;" %}
 {% set btn_outline_style = "display: inline-block; padding: 0.375rem 0.75rem; font-size: 0.875rem; border-radius: 0.25rem; text-decoration: none; background-color: transparent; color: #5DADE2; border: 1px solid #5DADE2; margin-right: 0.5rem; pointer-events: auto !important; cursor: pointer !important; z-index: 1; position: relative;" %}
+
+<!-- クイックナビゲーション -->
+<div style="background: #f8f9fa; padding: 1rem; margin-bottom: 1rem; border-radius: 8px; text-align: center;">
+    <div style="display: flex; gap: 0.5rem; justify-content: center; flex-wrap: wrap;">
+        <a href="#themes" style="{{ btn_outline_style }}">
+            <i class="fas fa-search"></i> テーマ
+        </a>
+        <a href="#ai-chat" style="{{ btn_outline_style }}">
+            <i class="fas fa-robot"></i> AIチャット
+        </a>
+        <a href="#free-pace" style="{{ btn_outline_style }}">
+            <i class="fas fa-graduation-cap"></i> 自由進度学習
+        </a>
+    </div>
+</div>
+
 <div class="dashboard-container">
     <!-- ウェルカムカード -->
     <div class="dashboard-card welcome-card">
@@ -316,7 +332,7 @@
                 📚 テキスト一覧
             </a>
             -->
-            <a href="/basebuilder/categories" 
+            <a href="{{ url_for('texts.my_texts') }}" 
                style="flex: 1; display: inline-block; padding: 10px 12px; text-align: center; 
                       background-color: #0056b3; color: white; border: 1px solid #0056b3; 
                       border-radius: 6px; text-decoration: none; font-size: 0.9rem;
@@ -327,7 +343,7 @@
     </div>
     
     <!-- 自由進度学習 -->
-    <div class="dashboard-card">
+    <div class="dashboard-card" id="free-pace">
         <h3>📚 自由進度学習</h3>
         
         <p style="font-size: 0.9rem; margin-bottom: 15px; color: #666;">
@@ -469,7 +485,7 @@
     
     <!-- クラス情報 -->
     {% if all_class_themes %}
-    <div class="dashboard-card">
+    <div class="dashboard-card" id="themes">
         <h3>🏫 所属クラス</h3>
         {% for class_theme in all_class_themes %}
         <div style="margin-bottom: 1rem; padding: 1rem; background-color: #f8f9fa; border-radius: 8px;">
@@ -624,7 +640,7 @@
     </div>
     
     <!-- AIチャット -->
-    <div class="dashboard-card">
+    <div class="dashboard-card" id="ai-chat">
         <h3>🤖 AIサポート</h3>
         <p>学習の質問や探究活動について、AIと相談できます。</p>
         
@@ -695,6 +711,32 @@
 <!-- ページロード時のアニメーション -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // セクションナビゲーションのためのスムーススクロール
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            const target = document.querySelector(this.getAttribute('href'));
+            if (target) {
+                target.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }
+        });
+    });
+    
+    // ページロード時にURLハッシュに基づいてスクロール
+    if (window.location.hash) {
+        setTimeout(() => {
+            const target = document.querySelector(window.location.hash);
+            if (target) {
+                target.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }
+        }, 100);
+    }
     // 数値のカウントアップアニメーション
     function animateValue(element, start, end, duration) {
         if (!element) return;

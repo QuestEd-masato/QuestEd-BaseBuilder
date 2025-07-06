@@ -51,7 +51,8 @@
       "Bash(bash:*)",
       "Bash(ss:*)",
       "Bash(kill:*)",
-      "Bash(./start_local_test.sh:*)"
+      "Bash(./start_local_test.sh:*)",
+      "Bash(echo:*)"
     ],
     "deny": []
   }
