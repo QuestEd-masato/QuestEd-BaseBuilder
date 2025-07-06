@@ -400,6 +400,10 @@
                 </div>
             </div>
             <div style="margin-top: 0.5rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                <a href="{{ url_for('student_class_management.class_detail', class_id=class_theme.class_id) }}" 
+                   style="{{ btn_primary_style }}">
+                   <i class="fas fa-info-circle"></i> 詳細
+                </a>
                 <a href="{{ url_for('student_themes.themes') }}" 
                    style="{{ btn_outline_style }}">
                    <i class="fas fa-book"></i> テーマ
@@ -408,7 +412,7 @@
                    style="{{ btn_outline_style }}">
                    <i class="fas fa-clipboard-list"></i> 記録
                 </a>
-                <a href="{{ url_for('index') }}?class_id={{ class_theme.class_id }}" 
+                <a href="{{ url_for('chat_ai.chat') }}?class_id={{ class_theme.class_id }}" 
                    style="{{ btn_outline_style }}">
                    <i class="fas fa-robot"></i> AI
                 </a>
@@ -546,7 +550,7 @@
         </div>
         
         <div style="margin-top: 1rem;">
-            <a href="{{ url_for('index') }}" 
+            <a href="{{ url_for('chat_ai.chat') }}" 
                style="display: inline-block; padding: 0.375rem 0.75rem; font-size: 0.875rem; border-radius: 0.25rem; text-decoration: none; background-color: #5DADE2; color: white; border: 1px solid #5DADE2;">
                AIチャットを開く
             </a>
