@@ -217,18 +217,66 @@ def dashboard():
             }
             all_class_themes.append(class_theme)
         
+        # TODOとゴールを取得
+        try:
+            from app.models import Todo, Goal
+            class_todos = Todo.query.filter_by(student_id=current_user.id).order_by(Todo.created_at.desc()).limit(5).all()
+            class_goals = Goal.query.filter_by(student_id=current_user.id).order_by(Goal.created_at.desc()).limit(5).all()
+            pending_todos_count = Todo.query.filter_by(student_id=current_user.id, is_completed=False).count()
+            active_goals_count = Goal.query.filter_by(student_id=current_user.id, is_completed=False).count()
+        except Exception as e:
+            current_app.logger.error(f"[DASHBOARD] Todo/Goal query error: {str(e)}")
+            class_todos = []
+            class_goals = []
+            pending_todos_count = 0
+            active_goals_count = 0
+        
+        # 最近の活動を取得
+        try:
+            from app.models import ActivityLog
+            recent_activities = ActivityLog.query.filter_by(student_id=current_user.id).order_by(
+                ActivityLog.created_at.desc()
+            ).limit(10).all()
+            
+            # 今週の活動数を計算
+            week_start = datetime.now() - timedelta(days=7)
+            weekly_activities_count = ActivityLog.query.filter_by(student_id=current_user.id).filter(
+                ActivityLog.created_at >= week_start
+            ).count()
+        except Exception as e:
+            current_app.logger.error(f"[DASHBOARD] ActivityLog query error: {str(e)}")
+            recent_activities = []
+            weekly_activities_count = 0
+        
+        # 月間チャット数を取得
+        try:
+            month_start = datetime.now() - timedelta(days=30)
+            monthly_chat_count = ChatHistory.query.filter_by(user_id=current_user.id).filter(
+                ChatHistory.created_at >= month_start
+            ).count()
+        except Exception as e:
+            current_app.logger.error(f"[DASHBOARD] ChatHistory query error: {str(e)}")
+            monthly_chat_count = 0
+        
+        # 週間ランキングも取得
+        try:
+            weekly_top_learners = _get_weekly_top_learners(classes)
+        except Exception as e:
+            current_app.logger.error(f"[DASHBOARD] Weekly ranking error: {str(e)}")
+            weekly_top_learners = []
+        
         activity_info = {
             'all_class_themes': all_class_themes,   # 構築されたクラステーマ
             'class_info': {'class_count': len(classes)} if classes else {},  # クラス情報
-            'class_todos': [],               # クラスTODO
-            'class_goals': [],               # クラス目標
-            'pending_todos_count': 0,        # 未完了TODO数
-            'active_goals_count': 0,         # アクティブ目標数
-            'recent_activities': [],         # 最近の活動
-            'weekly_activities_count': 0,    # 週間活動数
-            'monthly_chat_count': 0,         # 月間チャット数
+            'class_todos': class_todos,               # クラスTODO
+            'class_goals': class_goals,               # クラス目標
+            'pending_todos_count': pending_todos_count,        # 未完了TODO数
+            'active_goals_count': active_goals_count,         # アクティブ目標数
+            'recent_activities': recent_activities,         # 最近の活動
+            'weekly_activities_count': weekly_activities_count,    # 週間活動数
+            'monthly_chat_count': monthly_chat_count,         # 月間チャット数
             'class_top_learners': get_class_top_learners(classes),        # クラスランキング
-            'weekly_top_learners': []        # 週間ランキング
+            'weekly_top_learners': weekly_top_learners        # 週間ランキング
         }
         
         # テンプレート用のスタイル変数を追加
@@ -516,6 +564,65 @@ def _generate_progress_stats():
             'total_goals': 0,
             'completed_goals': 0
         }
+
+def _get_weekly_top_learners(classes):
+    """週間の上位学習者を取得"""
+    try:
+        if not classes:
+            return []
+        
+        # 全クラスのstudent_idを取得
+        class_ids = [cls.id for cls in classes]
+        
+        # ClassEnrollmentから学生IDを取得
+        student_ids = db.session.query(ClassEnrollment.student_id).filter(
+            ClassEnrollment.class_id.in_(class_ids)
+        ).distinct().all()
+        
+        if not student_ids:
+            return []
+        
+        student_ids = [sid[0] for sid in student_ids]
+        
+        # 今週の学習記録を取得
+        week_start = datetime.now() - timedelta(days=7)
+        
+        # AnswerRecordが利用可能な場合
+        try:
+            from basebuilder.models import AnswerRecord
+            
+            weekly_stats = db.session.query(
+                AnswerRecord.student_id,
+                func.count(AnswerRecord.id).label('weekly_count')
+            ).filter(
+                AnswerRecord.student_id.in_(student_ids),
+                AnswerRecord.created_at >= week_start,
+                AnswerRecord.is_correct == True
+            ).group_by(AnswerRecord.student_id).all()
+            
+            # 学生情報と結合
+            weekly_learners = []
+            for student_id, weekly_count in weekly_stats:
+                user = User.query.get(student_id)
+                if user:
+                    weekly_learners.append({
+                        'id': student_id,
+                        'full_name': user.full_name or user.username,
+                        'username': user.username,
+                        'word_count': weekly_count
+                    })
+            
+            # 週間学習数で降順ソート、上位5名を取得
+            weekly_learners.sort(key=lambda x: x['word_count'], reverse=True)
+            return weekly_learners[:5]
+            
+        except ImportError:
+            # AnswerRecordが利用できない場合は空のリストを返す
+            return []
+        
+    except Exception as e:
+        current_app.logger.error(f"[DASHBOARD] _get_weekly_top_learners error: {str(e)}")
+        return []
 
 def get_class_top_learners(classes):
     """クラスの上位学習者を取得（基礎学力マスターランキング）"""
