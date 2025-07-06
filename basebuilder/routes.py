@@ -20,7 +20,36 @@ basebuilder_bp = Blueprint('basebuilder', __name__, url_prefix='/basebuilder')
 @basebuilder_bp.route('/')
 @login_required
 def index():
-    """BaseBuilder メインページ - ダッシュボード機能"""
+    """BaseBuilder メインページ - 統一ホームページ"""
+    try:
+        from extensions import db
+        from basebuilder.models import (
+            ProblemCategory, TextSet, BasicKnowledgeItem, 
+            AnswerRecord
+        )
+        
+        # 統計情報を取得
+        stats = {
+            'total_categories': ProblemCategory.query.count(),
+            'total_problems': BasicKnowledgeItem.query.count(),
+            'total_texts': TextSet.query.count(),
+            'total_sessions': AnswerRecord.query.with_entities(
+                AnswerRecord.student_id
+            ).distinct().count()
+        }
+        
+        return render_template('basebuilder/index.html', stats=stats)
+        
+    except Exception as e:
+        print(f"BaseBuilder index error: {str(e)}")
+        # フォールバック: カテゴリページにリダイレクト
+        return redirect(url_for('categories.categories'))
+
+
+@basebuilder_bp.route('/dashboard')
+@login_required
+def dashboard():
+    """BaseBuilder ダッシュボード - 役割別ダッシュボード機能"""
     try:
         from extensions import db
         from basebuilder.models import (
@@ -102,7 +131,7 @@ def index():
                                  recent_deliveries=recent_deliveries)
         
     except Exception as e:
-        print(f"BaseBuilder index error: {str(e)}")
+        print(f"BaseBuilder dashboard error: {str(e)}")
         # フォールバック: シンプルなリダイレクト
         if current_user.role == 'student':
             return redirect(url_for('problems.problems'))

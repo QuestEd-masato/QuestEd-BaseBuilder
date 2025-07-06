@@ -1,0 +1,154 @@
+{% extends 'basebuilder/layout.html' %}
+
+{% block basebuilder_content %}
+<div class="hero-section text-center py-5 mb-4">
+  <h1 class="display-4">基礎学力トレーニングシステム</h1>
+  <p class="lead">BaseBuilder - 学習管理プラットフォーム</p>
+</div>
+
+<div class="row">
+  <div class="col-md-8">
+    <!-- 学習機能カード -->
+    <div class="row">
+      <div class="col-md-6 mb-4">
+        <div class="card h-100">
+          <div class="card-body">
+            <i class="fas fa-book fa-3x text-primary mb-3"></i>
+            <h5 class="card-title">カテゴリ学習</h5>
+            <p class="card-text">科目・レベル別に整理された問題でトレーニング</p>
+            <a href="{{ url_for('categories.categories') }}" class="btn btn-primary">学習開始</a>
+          </div>
+        </div>
+      </div>
+      
+      <div class="col-md-6 mb-4">
+        <div class="card h-100">
+          <div class="card-body">
+            <i class="fas fa-list-alt fa-3x text-success mb-3"></i>
+            <h5 class="card-title">問題管理</h5>
+            <p class="card-text">問題の作成・編集・管理機能</p>
+            <a href="{{ url_for('problems.problems') }}" class="btn btn-success">問題管理</a>
+          </div>
+        </div>
+      </div>
+      
+      <div class="col-md-6 mb-4">
+        <div class="card h-100">
+          <div class="card-body">
+            <i class="fas fa-file-text fa-3x text-info mb-3"></i>
+            <h5 class="card-title">テキスト管理</h5>
+            <p class="card-text">学習テキストの作成・配信管理</p>
+            <a href="{{ url_for('texts.text_sets') }}" class="btn btn-info">テキスト管理</a>
+          </div>
+        </div>
+      </div>
+      
+      <div class="col-md-6 mb-4">
+        <div class="card h-100">
+          <div class="card-body">
+            <i class="fas fa-chart-bar fa-3x text-warning mb-3"></i>
+            <h5 class="card-title">学習分析</h5>
+            <p class="card-text">進捗状況と習熟度の詳細分析</p>
+            <a href="{{ url_for('analytics.analysis') }}" class="btn btn-warning">分析画面</a>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- システム情報 -->
+    <div class="card mt-4">
+      <div class="card-header">
+        <h5 class="card-title">システム概要</h5>
+      </div>
+      <div class="card-body">
+        <div class="row text-center">
+          <div class="col-md-3">
+            <h6>カテゴリ数</h6>
+            <span class="badge bg-primary fs-6">{{ stats.total_categories or 0 }}</span>
+          </div>
+          <div class="col-md-3">
+            <h6>問題数</h6>
+            <span class="badge bg-success fs-6">{{ stats.total_problems or 0 }}</span>
+          </div>
+          <div class="col-md-3">
+            <h6>テキスト数</h6>
+            <span class="badge bg-info fs-6">{{ stats.total_texts or 0 }}</span>
+          </div>
+          <div class="col-md-3">
+            <h6>学習セッション</h6>
+            <span class="badge bg-warning fs-6">{{ stats.total_sessions or 0 }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- サイドバー -->
+  <div class="col-md-4">
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5 class="card-title">クイックアクション</h5>
+      </div>
+      <div class="card-body">
+        {% if current_user.role == 'student' %}
+          <div class="d-grid gap-2">
+            <a href="{{ url_for('sessions.start_session') }}" class="btn btn-primary">学習開始</a>
+            <a href="{{ url_for('progress.proficiency') }}" class="btn btn-outline">進捗確認</a>
+            <a href="{{ url_for('texts.my_texts') }}" class="btn btn-outline">配信テキスト</a>
+          </div>
+        {% elif current_user.role == 'teacher' %}
+          <div class="d-grid gap-2">
+            <a href="{{ url_for('problems.create_problem') }}" class="btn btn-primary">問題作成</a>
+            <a href="{{ url_for('categories.create_category') }}" class="btn btn-outline">カテゴリ作成</a>
+            <a href="{{ url_for('admin.import_text_set') }}" class="btn btn-outline">テキスト作成</a>
+            <a href="{{ url_for('analytics.analysis') }}" class="btn btn-outline">分析画面</a>
+          </div>
+        {% else %}
+          <div class="d-grid gap-2">
+            <a href="{{ url_for('admin_panel.dashboard') }}" class="btn btn-primary">管理画面</a>
+            <a href="{{ url_for('categories.categories') }}" class="btn btn-outline">カテゴリ管理</a>
+            <a href="{{ url_for('problems.problems') }}" class="btn btn-outline">問題管理</a>
+            <a href="{{ url_for('analytics.analysis') }}" class="btn btn-outline">システム分析</a>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+    
+    {% if current_user.role == 'student' %}
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5 class="card-title">学習状況</h5>
+      </div>
+      <div class="card-body">
+        <p class="text-muted">あなたの学習進捗と習熟度を確認できます。</p>
+        <div class="d-grid">
+          <a href="{{ url_for('progress.proficiency') }}" class="btn btn-outline">詳細を見る</a>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+    
+    <div class="card">
+      <div class="card-header">
+        <h5 class="card-title">ヘルプ</h5>
+      </div>
+      <div class="card-body">
+        <ul class="list-group list-group-flush">
+          <li class="list-group-item border-0 px-0">
+            <i class="fas fa-question-circle text-primary"></i> 
+            <small>使い方ガイド</small>
+          </li>
+          <li class="list-group-item border-0 px-0">
+            <i class="fas fa-book text-success"></i> 
+            <small>学習の進め方</small>
+          </li>
+          <li class="list-group-item border-0 px-0">
+            <i class="fas fa-chart-line text-info"></i> 
+            <small>進捗の見方</small>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,171 @@
+{% extends 'basebuilder/layout.html' %}
+
+{% block basebuilder_content %}
+<h1 class="section-title">システム管理ダッシュボード</h1>
+
+<div class="row">
+  <!-- 左側 - システム統計 -->
+  <div class="col-md-8">
+    <div class="row">
+      <div class="col-md-3">
+        <div class="card mb-3 text-center">
+          <div class="card-body">
+            <h5 class="card-title">カテゴリ数</h5>
+            <p class="display-4">{{ total_categories }}</p>
+            <a href="{{ url_for('categories.categories') }}" class="btn btn-sm btn-outline">管理する</a>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card mb-3 text-center">
+          <div class="card-body">
+            <h5 class="card-title">テキスト数</h5>
+            <p class="display-4">{{ total_text_sets }}</p>
+            <a href="{{ url_for('texts.text_sets') }}" class="btn btn-sm btn-outline">管理する</a>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card mb-3 text-center">
+          <div class="card-body">
+            <h5 class="card-title">アクティブ学生</h5>
+            <p class="display-4">{{ total_students }}</p>
+            <a href="{{ url_for('admin_panel.dashboard') }}" class="btn btn-sm btn-outline">管理する</a>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card mb-3 text-center">
+          <div class="card-body">
+            <h5 class="card-title">システム</h5>
+            <p class="display-4"><i class="fas fa-cogs"></i></p>
+            <a href="{{ url_for('admin.analytics') }}" class="btn btn-sm btn-outline">分析画面</a>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="card mb-3">
+      <div class="card-header">
+        <h5 class="card-title">最近の配信テキスト</h5>
+      </div>
+      <div class="card-body">
+        {% if recent_deliveries %}
+          <div class="table-responsive">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>テキスト名</th>
+                  <th>配信先クラス</th>
+                  <th>配信日時</th>
+                  <th>ステータス</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for delivery in recent_deliveries %}
+                  <tr>
+                    <td>{{ delivery.text_set.title }}</td>
+                    <td>{{ delivery.class_name }}</td>
+                    <td>{{ delivery.delivered_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                    <td>
+                      <span class="badge bg-success">配信済み</span>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <p class="text-muted">最近の配信はありません。</p>
+        {% endif %}
+      </div>
+    </div>
+    
+    <div class="card mb-3">
+      <div class="card-header">
+        <h5 class="card-title">システム状態</h5>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6">
+            <h6>データベース接続</h6>
+            <span class="badge bg-success">正常</span>
+          </div>
+          <div class="col-md-6">
+            <h6>アプリケーション状態</h6>
+            <span class="badge bg-success">稼働中</span>
+          </div>
+        </div>
+        <hr>
+        <div class="row">
+          <div class="col-md-6">
+            <h6>最終バックアップ</h6>
+            <small class="text-muted">定期バックアップ機能未実装</small>
+          </div>
+          <div class="col-md-6">
+            <h6>システムログ</h6>
+            <small class="text-muted">ログ監視機能未実装</small>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- 右側 - 管理アクション -->
+  <div class="col-md-4">
+    <div class="card mb-3">
+      <div class="card-header">
+        <h5 class="card-title">システム管理</h5>
+      </div>
+      <div class="card-body">
+        <div class="d-grid gap-2">
+          <a href="{{ url_for('categories.categories') }}" class="btn btn-primary">カテゴリ管理</a>
+          <a href="{{ url_for('problems.problems') }}" class="btn btn-outline">問題管理</a>
+          <a href="{{ url_for('texts.text_sets') }}" class="btn btn-outline">テキスト管理</a>
+          <a href="{{ url_for('admin.analytics') }}" class="btn btn-outline">分析・レポート</a>
+        </div>
+      </div>
+    </div>
+    
+    <div class="card mb-3">
+      <div class="card-header">
+        <h5 class="card-title">ユーザー管理</h5>
+      </div>
+      <div class="card-body">
+        <div class="d-grid gap-2">
+          <a href="{{ url_for('admin_panel.dashboard') }}" class="btn btn-outline">学生・教師管理</a>
+          <a href="{{ url_for('admin_panel.users') }}" class="btn btn-outline">ユーザー一覧</a>
+          <a href="{{ url_for('admin_panel.schools') }}" class="btn btn-outline">学校管理</a>
+        </div>
+      </div>
+    </div>
+    
+    <div class="card mb-3">
+      <div class="card-header">
+        <h5 class="card-title">インポート・エクスポート</h5>
+      </div>
+      <div class="card-body">
+        <div class="d-grid gap-2">
+          <a href="{{ url_for('admin.import_problems') }}" class="btn btn-outline">問題インポート</a>
+          <a href="{{ url_for('admin.import_text_set') }}" class="btn btn-outline">テキストインポート</a>
+          <small class="text-muted mt-2">データのバックアップとインポート機能</small>
+        </div>
+      </div>
+    </div>
+    
+    <div class="card">
+      <div class="card-header">
+        <h5 class="card-title">システム情報</h5>
+      </div>
+      <div class="card-body">
+        <small class="text-muted">
+          <strong>QuestEd Learning Management System</strong><br>
+          Version: 1.3.0<br>
+          基礎学力トレーニングシステム<br>
+          管理者向けダッシュボード
+        </small>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
