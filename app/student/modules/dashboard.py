@@ -570,16 +570,23 @@ def _generate_basebuilder_stats():
     """BaseBuilder統計を生成 - 実際のデータベース情報から計算"""
     try:
         from datetime import datetime, timedelta
-        from basebuilder.models import BasicKnowledgeItem, AnswerRecord
+        try:
+            from basebuilder.models import AnswerRecord
+        except ImportError:
+            AnswerRecord = None
+            current_app.logger.warning("[DASHBOARD] AnswerRecord model not available")
         
         current_app.logger.info(f"[DASHBOARD] Generating BaseBuilder stats for student {current_user.id}")
         
         # AnswerRecordから学習履歴を取得
-        answer_records = AnswerRecord.query.filter_by(
-            student_id=current_user.id
-        ).all()
-        
-        current_app.logger.info(f"[DASHBOARD] Found {len(answer_records)} answer records")
+        if AnswerRecord:
+            answer_records = AnswerRecord.query.filter_by(
+                student_id=current_user.id
+            ).all()
+            current_app.logger.info(f"[DASHBOARD] Found {len(answer_records)} answer records")
+        else:
+            answer_records = []
+            current_app.logger.warning("[DASHBOARD] Using empty answer records due to import error")
         
         # WordProficiencyから習熟度を取得
         word_proficiencies = WordProficiency.query.filter_by(
@@ -626,7 +633,11 @@ def _generate_basebuilder_stats():
             mastery_rate = round((total_mastered_words / total_words_attempted) * 100, 1) if total_words_attempted > 0 else 0
         
         # 総基礎単語数
-        total_basic_words = BasicKnowledgeItem.query.count()
+        try:
+            from basebuilder.models import BasicKnowledgeItem
+            total_basic_words = BasicKnowledgeItem.query.count()
+        except:
+            total_basic_words = 0
         
         stats = {
             'total_words_attempted': max(total_words_attempted, total_problems_attempted),
@@ -657,12 +668,20 @@ def _generate_basebuilder_stats():
         return {
             'total_words_attempted': 0,
             'total_mastered_words': 0,
+            'intermediate_mastered': 0,
             'weekly_words_learned': 0,
             'mastery_rate': 0,
             'weekly_target': 20,
             'total_basic_words': 0,
             'total_answers': 0,
-            'correct_answers': 0
+            'correct_answers': 0,
+            'proficiency_breakdown': {
+                'level_5': 0,
+                'level_4': 0,
+                'level_3': 0,
+                'level_2': 0,
+                'level_1': 0
+            }
         }
 
 def _generate_unit_stats():
