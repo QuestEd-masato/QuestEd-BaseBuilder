@@ -15,9 +15,16 @@
                 <div class="card-body">
                     <div class="alert alert-warning" role="alert">
                         <i class="fas fa-exclamation-triangle"></i>
-                        <strong>システム準備中</strong><br>
-                        基礎学力トレーニング機能は現在準備中です。しばらくお待ちください。
+                        <strong>一時的なエラー</strong><br>
+                        基礎学力トレーニング機能でエラーが発生しました。しばらくしてから再度お試しください。
                     </div>
+                    
+                    {% if current_user and current_user.is_authenticated %}
+                    <div class="alert alert-info" role="alert">
+                        <i class="fas fa-info-circle"></i>
+                        ログインユーザー: {{ current_user.username or current_user.email }}
+                    </div>
+                    {% endif %}
                     
                     <div class="text-center mt-4">
                         <a href="{{ url_for('index') }}" class="btn btn-primary">

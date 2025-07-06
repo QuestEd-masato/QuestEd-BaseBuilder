@@ -20,10 +20,12 @@
             <div class="d-flex justify-content-between align-items-center">
               <h5>{{ category.name }}</h5>
               <div style="display: inline-flex; gap: 5px; white-space: nowrap;">
+                {% if current_user.role in ['admin', 'teacher'] %}
                 <a href="{{ url_for('categories.edit_category', category_id=category.id) }}" class="btn btn-sm btn-warning">
                   <i class="fas fa-edit"></i>
                   <span class="d-none d-md-inline">編集</span>
                 </a>
+                {% endif %}
                 <a href="{{ url_for('problems.problems', category_id=category.id) }}" class="btn btn-sm btn-info">
                   <i class="fas fa-list"></i>
                   <span class="d-none d-md-inline">問題一覧</span>
@@ -35,8 +37,8 @@
                   <span class="d-none d-md-inline">セッション開始</span>
                 </a>
                 {% endif %}
-                <!-- 削除ボタン（教師用） -->
-                {% if current_user.role == 'teacher' %}
+                <!-- 削除ボタン（教師・管理者用） -->
+                {% if current_user.role in ['admin', 'teacher'] %}
                 <form method="POST" action="{{ url_for('categories.delete_category', category_id=category.id) }}" class="d-inline">
                   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                   <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('このカテゴリとそれに含まれる全問題を削除してもよろしいですか？')">
@@ -50,6 +52,27 @@
             
             {% if category.description %}
               <p class="text-muted">{{ category.description }}</p>
+            {% endif %}
+            
+            <!-- 統計情報表示（管理者・教師用のみ） -->
+            {% if current_user.role in ['admin', 'teacher'] and category_stats and category_stats[category.id] %}
+              <div class="row mb-3">
+                <div class="col-md-4">
+                  <div class="small text-muted">
+                    <i class="fas fa-tasks"></i> 問題数: <strong>{{ category_stats[category.id].problem_count }}</strong>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="small text-muted">
+                    <i class="fas fa-file-alt"></i> テキスト数: <strong>{{ category_stats[category.id].text_count }}</strong>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="small text-muted">
+                    <i class="fas fa-chart-line"></i> 使用回数: <strong>{{ category_stats[category.id].usage_count }}</strong>
+                  </div>
+                </div>
+              </div>
             {% endif %}
             
             <!-- 追加: カテゴリの熟練度表示 -->

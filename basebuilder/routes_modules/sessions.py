@@ -26,6 +26,21 @@ from basebuilder.models import (
 
 sessions_bp = Blueprint('sessions', __name__, url_prefix='/basebuilder')
 
+@sessions_bp.route('/debug/auth')
+def debug_auth():
+    """認証状態のデバッグ表示"""
+    if not current_app.debug:
+        return "Debug mode only", 404
+    
+    debug_info = {
+        'is_authenticated': current_user.is_authenticated if current_user else False,
+        'user_id': current_user.id if current_user and current_user.is_authenticated else None,
+        'role': current_user.role if current_user and current_user.is_authenticated else None,
+        'session_keys': list(session.keys()) if session else []
+    }
+    
+    return f"<pre>{json.dumps(debug_info, indent=2)}</pre>"
+
 
 @sessions_bp.route('/start_session')
 @login_required
@@ -71,7 +86,15 @@ def start_session():
 def start_category_session(category_id):
     """カテゴリ別学習セッション開始"""
     try:
+        current_app.logger.info(f"Session start attempt: user={current_user.id if current_user.is_authenticated else 'anonymous'}, category={category_id}")
+        
+        if not current_user.is_authenticated:
+            current_app.logger.warning(f"Unauthenticated access to session start: category={category_id}")
+            flash('ログインが必要です。')
+            return redirect(url_for('auth.login'))
+            
         if current_user.role != 'student':
+            current_app.logger.warning(f"Non-student access to session: user={current_user.id}, role={current_user.role}")
             flash('学習セッションは学生のみアクセス可能です。')
             return redirect(url_for('basebuilder.index'))
         
@@ -108,8 +131,11 @@ def start_category_session(category_id):
         return redirect(url_for('sessions.next_problem'))
         
     except Exception as e:
+        import traceback
+        error_details = traceback.format_exc()
         current_app.logger.error(f"Start category session error: {str(e)}")
-        flash('カテゴリ学習セッションの開始中にエラーが発生しました。')
+        current_app.logger.error(f"Full traceback: {error_details}")
+        flash(f'カテゴリ学習セッションの開始中にエラーが発生しました: {str(e)}')
         return redirect(url_for('categories.categories'))
 
 
@@ -162,12 +188,22 @@ def start_text_session(text_id):
 def next_problem():
     """次の問題表示・回答処理"""
     try:
+        current_app.logger.info(f"Next problem request: user={current_user.id if current_user.is_authenticated else 'anonymous'}, method={request.method}")
+        
+        if not current_user.is_authenticated:
+            current_app.logger.warning("Unauthenticated access to next_problem")
+            flash('ログインが必要です。')
+            return redirect(url_for('auth.login'))
+            
         if current_user.role != 'student':
+            current_app.logger.warning(f"Non-student access to next_problem: user={current_user.id}, role={current_user.role}")
             flash('学習セッションは学生のみアクセス可能です。')
             return redirect(url_for('basebuilder.index'))
         
         # セッション情報の確認
+        current_app.logger.info(f"Session data keys: {list(session.keys())}")
         if 'problem_ids' not in session:
+            current_app.logger.warning("No problem_ids in session, redirecting to start new session")
             flash('学習セッションが見つかりません。新しいセッションを開始してください。')
             return redirect(url_for('basebuilder.index'))
         
@@ -216,8 +252,11 @@ def next_problem():
                              session_info=session)
         
     except Exception as e:
+        import traceback
+        error_details = traceback.format_exc()
         current_app.logger.error(f"Next problem error: {str(e)}")
-        flash('問題表示中にエラーが発生しました。')
+        current_app.logger.error(f"Full traceback: {error_details}")
+        flash(f'問題表示中にエラーが発生しました: {str(e)}')
         return redirect(url_for('basebuilder.index'))
 
 
@@ -617,7 +656,7 @@ def _update_word_proficiency(student_id, problem, is_correct):
                 word=word,
                 correct_count=1 if is_correct else 0,
                 total_count=1,
-                proficiency_level=80 if is_correct else 20,
+                level=80 if is_correct else 20,
                 last_studied_at=datetime.utcnow()
             )
             db.session.add(proficiency)
@@ -630,11 +669,11 @@ def _update_word_proficiency(student_id, problem, is_correct):
             # 習熟度レベル再計算
             accuracy = proficiency.correct_count / proficiency.total_count
             if accuracy >= 0.9:
-                proficiency.proficiency_level = min(100, proficiency.proficiency_level + 10)
+                proficiency.level = min(100, proficiency.level + 10)
             elif accuracy >= 0.7:
-                proficiency.proficiency_level = min(100, proficiency.proficiency_level + 5)
+                proficiency.level = min(100, proficiency.level + 5)
             elif accuracy < 0.5:
-                proficiency.proficiency_level = max(0, proficiency.proficiency_level - 5)
+                proficiency.level = max(0, proficiency.level - 5)
             
             proficiency.last_studied_at = datetime.utcnow()
         

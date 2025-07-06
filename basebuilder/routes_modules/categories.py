@@ -13,8 +13,12 @@ categories_bp = Blueprint('categories', __name__, url_prefix='/basebuilder')
 def log_activity(action, description, category_id=None):
     """簡易アクティビティログ記録"""
     try:
+        user_id = 'anonymous'
+        if current_user and current_user.is_authenticated:
+            user_id = current_user.id
+            
         current_app.logger.info(
-            f"BASEBUILDER_ACTIVITY: user_id={current_user.id}, "
+            f"BASEBUILDER_ACTIVITY: user_id={user_id}, "
             f"action={action}, description={description}, "
             f"category_id={category_id}, timestamp={datetime.utcnow()}"
         )
@@ -56,13 +60,23 @@ def categories():
                 'usage_count': usage_count
             }
         
-        return render_template('basebuilder/categories.html', 
+        # 一旦すべてのユーザーにシンプルなテンプレートを使用
+        return render_template('basebuilder/categories_simple.html', 
                              categories=categories,
+                             top_categories=categories,
                              category_stats=category_stats)
     
     except Exception as e:
+        import traceback
+        error_details = traceback.format_exc()
         current_app.logger.error(f"Categories error: {str(e)}")
-        flash('カテゴリ一覧の取得中にエラーが発生しました。')
+        current_app.logger.error(f"Full traceback: {error_details}")
+        
+        # 認証済みユーザーの場合は詳細なエラーメッセージを表示
+        if current_user and current_user.is_authenticated:
+            flash(f'カテゴリ一覧の取得中にエラーが発生しました: {str(e)}', 'error')
+        else:
+            flash('カテゴリ一覧の取得中にエラーが発生しました。', 'error')
         
         # フォールバック: 基本的なページを表示
         return render_template('basebuilder/categories_fallback.html',

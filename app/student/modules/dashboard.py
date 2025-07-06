@@ -15,6 +15,7 @@ from app.models import (
 )
 from app.utils.model_helpers import mysql_nulls_last
 from ..utils import student_required, get_current_student_classes, get_student_theme_status, get_student_survey_status
+from basebuilder.models import WordProficiency
 
 dashboard_bp = Blueprint('student_dashboard', __name__)
 
@@ -216,7 +217,7 @@ def dashboard():
             'recent_activities': [],         # 最近の活動
             'weekly_activities_count': 0,    # 週間活動数
             'monthly_chat_count': 0,         # 月間チャット数
-            'class_top_learners': [],        # クラスランキング
+            'class_top_learners': get_class_top_learners(classes),        # クラスランキング
             'weekly_top_learners': []        # 週間ランキング
         }
         
@@ -505,3 +506,52 @@ def _generate_progress_stats():
             'total_goals': 0,
             'completed_goals': 0
         }
+
+def get_class_top_learners(classes):
+    """クラスの上位学習者を取得（基礎学力マスターランキング）"""
+    try:
+        if not classes:
+            return []
+        
+        # 全クラスのstudent_idを取得
+        class_ids = [cls.id for cls in classes]
+        
+        # ClassEnrollmentから学生IDを取得
+        student_ids = db.session.query(ClassEnrollment.student_id).filter(
+            ClassEnrollment.class_id.in_(class_ids)
+        ).distinct().all()
+        
+        if not student_ids:
+            return []
+        
+        student_ids = [sid[0] for sid in student_ids]
+        
+        # 各学生の5/5レベル達成単語数を計算
+        mastered_words_query = db.session.query(
+            WordProficiency.student_id,
+            func.count(WordProficiency.id).label('mastered_count')
+        ).filter(
+            WordProficiency.student_id.in_(student_ids),
+            WordProficiency.level == 5
+        ).group_by(WordProficiency.student_id).all()
+        
+        # 学生情報と結合して上位5名を取得
+        top_learners = []
+        for student_id, mastered_count in mastered_words_query:
+            user = User.query.get(student_id)
+            if user:
+                top_learners.append({
+                    'student_id': student_id,
+                    'full_name': user.full_name or user.username,
+                    'username': user.username,
+                    'word_count': mastered_count
+                })
+        
+        # 習得単語数で降順ソート、上位5名を取得
+        top_learners.sort(key=lambda x: x['word_count'], reverse=True)
+        
+        return top_learners[:5]
+        
+    except Exception as e:
+        current_app.logger.error(f"[DASHBOARD] get_class_top_learners error: {str(e)}")
+        return []

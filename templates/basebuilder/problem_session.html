@@ -1,0 +1,124 @@
+{% extends 'base.html' %}
+
+{% block title %}学習セッション | QuestEd{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- 進捗表示 -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h5 class="mb-0">学習セッション進行中</h5>
+                        <span class="badge bg-primary">問題 {{ progress.current }}/{{ progress.total }}</span>
+                    </div>
+                    <div class="progress">
+                        <div class="progress-bar" style="width: {{ progress.percentage }}%"></div>
+                    </div>
+                    <small class="text-muted">進捗: {{ progress.percentage }}%</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 問題表示 -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            {% if problem.category %}
+                            <span class="badge bg-secondary me-2">{{ problem.category.name }}</span>
+                            {% endif %}
+                            {% if problem.difficulty %}
+                            <span class="badge bg-{% if problem.difficulty <= 2 %}success{% elif problem.difficulty <= 4 %}warning{% else %}danger{% endif %}">
+                                難易度: {{ problem.difficulty }}
+                            </span>
+                            {% endif %}
+                        </div>
+                        <div id="timer" class="font-monospace fw-bold">00:00</div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <h4 class="card-title">{{ problem.question }}</h4>
+                    
+                    {% if problem.explanation %}
+                    <p class="text-muted">{{ problem.explanation }}</p>
+                    {% endif %}
+                    
+                    <!-- 回答フォーム -->
+                    <form method="POST" action="{{ url_for('sessions.next_problem') }}" class="mt-4">
+                        <input type="hidden" name="problem_id" value="{{ problem.id }}">
+                        <input type="hidden" name="start_time" id="start_time" value="">
+                        
+                        {% if options and options|length > 0 %}
+                            <!-- 選択肢問題 -->
+                            <div class="mb-3">
+                                <label class="form-label">回答を選択してください:</label>
+                                {% for option in options %}
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="answer" 
+                                           id="option{{ loop.index }}" value="{{ option }}" required>
+                                    <label class="form-check-label" for="option{{ loop.index }}">
+                                        {{ option }}
+                                    </label>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <!-- 記述問題 -->
+                            <div class="mb-3">
+                                <label for="answer" class="form-label">回答を入力してください:</label>
+                                <input type="text" class="form-control" name="answer" id="answer" 
+                                       placeholder="回答を入力..." required autofocus>
+                            </div>
+                        {% endif %}
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('categories.categories') }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-times"></i> セッション終了
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-arrow-right"></i> 回答して次へ
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // タイマー開始
+    const startTime = Date.now();
+    const timerElement = document.getElementById('timer');
+    const startTimeInput = document.getElementById('start_time');
+    
+    if (startTimeInput) {
+        startTimeInput.value = startTime;
+    }
+    
+    function updateTimer() {
+        const elapsed = Math.floor((Date.now() - startTime) / 1000);
+        const minutes = Math.floor(elapsed / 60);
+        const seconds = elapsed % 60;
+        timerElement.textContent = 
+            String(minutes).padStart(2, '0') + ':' + 
+            String(seconds).padStart(2, '0');
+    }
+    
+    setInterval(updateTimer, 1000);
+    updateTimer();
+    
+    // フォーカス設定
+    const answerInput = document.getElementById('answer');
+    if (answerInput) {
+        answerInput.focus();
+    }
+});
+</script>
+{% endblock %}

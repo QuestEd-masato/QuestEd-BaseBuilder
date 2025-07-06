@@ -84,7 +84,7 @@ def problems():
             ).all()
             
             for record in proficiency_records:
-                word_proficiencies[record.word_id] = record
+                word_proficiencies[record.problem_id] = record
         
         return render_template('basebuilder/problems.html',
                              problems=problems_pagination.items,

@@ -32,7 +32,21 @@
       "Bash(pip install:*)",
       "Bash(/usr/bin/python3 -m pip install:*)",
       "Bash(apt:*)",
-      "Bash(apt install:*)"
+      "Bash(apt install:*)",
+      "Bash(export SECRET_KEY=\"dev-secret-key-for-testing\")",
+      "Bash(export FLASK_ENV=development)",
+      "Bash(export FLASK_DEBUG=1)",
+      "Bash(true)",
+      "Bash(curl:*)",
+      "Bash(export TEMPLATES_AUTO_RELOAD='True')",
+      "Bash(export SECRET_KEY='dev-secret-key-123')",
+      "Bash(export DB_USERNAME='QuestEd')",
+      "Bash(export DB_PASSWORD='QuestEd-03012025MySQL')",
+      "Bash(export DB_HOST='localhost')",
+      "Bash(export DB_NAME='quested')",
+      "Bash(export FLASK_ENV='development')",
+      "Bash(export FLASK_DEBUG='1')",
+      "Bash(rm:*)"
     ],
     "deny": []
   }

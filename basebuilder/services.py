@@ -30,7 +30,7 @@ class ProficiencyService:
         return round((correct_count / total_count) * 100, 1)
     
     @staticmethod
-    def update_proficiency_record(student_id, category_id, proficiency_level):
+    def update_proficiency_record(student_id, category_id, level):
         """習熟度記録の更新"""
         record = ProficiencyRecord.query.filter_by(
             student_id=student_id,
@@ -38,13 +38,13 @@ class ProficiencyService:
         ).first()
         
         if record:
-            record.proficiency_level = proficiency_level
+            record.level = level
             record.updated_at = datetime.now()
         else:
             record = ProficiencyRecord(
                 student_id=student_id,
                 category_id=category_id,
-                proficiency_level=proficiency_level,
+                level=level,
                 created_at=datetime.now(),
                 updated_at=datetime.now()
             )

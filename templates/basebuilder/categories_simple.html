@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+
+{% block title %}カテゴリ一覧 | QuestEd{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>学習カテゴリ一覧</h1>
+    
+    {% if categories %}
+        <div class="row">
+            {% for category in categories %}
+                <div class="col-md-6 mb-3">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ category.name }}</h5>
+                            {% if category.description %}
+                                <p class="card-text">{{ category.description }}</p>
+                            {% endif %}
+                            
+                            <div class="d-flex gap-2">
+                                <a href="{{ url_for('problems.problems', category_id=category.id) }}" 
+                                   class="btn btn-primary">
+                                    <i class="fas fa-list"></i> 問題一覧
+                                </a>
+                                
+                                {% if current_user and current_user.role == 'student' %}
+                                <a href="{{ url_for('sessions.start_category_session', category_id=category.id) }}" 
+                                   class="btn btn-success">
+                                    <i class="fas fa-play"></i> 学習開始
+                                </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle"></i>
+            現在利用可能なカテゴリがありません。
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

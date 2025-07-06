@@ -29,7 +29,7 @@ from basebuilder.models import (
     TextSet, TextDelivery
 )
 
-admin_bp = Blueprint('admin', __name__, url_prefix='/basebuilder')
+admin_bp = Blueprint('basebuilder_admin', __name__, url_prefix='/basebuilder')
 
 
 @admin_bp.route('/theme_relations')
@@ -556,41 +556,86 @@ def import_problems():
 @admin_bp.route('/text/<int:text_id>/view')
 @login_required
 def view_text_set(text_id):
-    """管理者向けテキストセット詳細表示"""
+    """テキストセット詳細表示（全ロール対応）"""
     try:
         text_set = TextSet.query.get_or_404(text_id)
         
         # 権限チェック
-        if current_user.role == 'teacher' and text_set.school_id != current_user.school_id:
-            flash('このテキストにアクセスする権限がありません。', 'error')
-            return redirect(url_for('texts.text_sets'))
+        if current_user.role == 'student':
+            # 学生の場合、配信されたテキストかチェック
+            enrolled_class_ids = [enrollment.class_id for enrollment in 
+                                ClassEnrollment.query.filter_by(
+                                    student_id=current_user.id,
+                                    is_active=True
+                                ).all()]
+            
+            delivery_exists = TextDelivery.query.filter(
+                TextDelivery.text_set_id == text_id,
+                TextDelivery.class_id.in_(enrolled_class_ids)
+            ).first()
+            
+            if not delivery_exists:
+                flash('このテキストにアクセスする権限がありません。', 'error')
+                return redirect(url_for('texts.my_texts'))
+        
+        elif current_user.role == 'teacher':
+            # 教師の場合、同じ学校のテキストかチェック
+            if text_set.school_id != current_user.school_id:
+                flash('このテキストにアクセスする権限がありません。', 'error')
+                return redirect(url_for('texts.text_sets'))
         
         # テキストの問題を取得
         problems = BasicKnowledgeItem.query.filter_by(
             text_set_id=text_id
         ).order_by(BasicKnowledgeItem.order_in_text).all()
         
-        # 配信情報を取得
-        deliveries = TextDelivery.query.filter_by(
-            text_set_id=text_id
-        ).join(TextDelivery.class_).all()
+        # 学生の場合、習熟度と回答履歴を取得
+        user_progress = {}
+        text_proficiency = None
+        if current_user.role == 'student':
+            # 各問題の回答状況
+            for problem in problems:
+                answer_record = AnswerRecord.query.filter_by(
+                    student_id=current_user.id,
+                    problem_id=problem.id
+                ).order_by(AnswerRecord.created_at.desc()).first()
+                
+                user_progress[problem.id] = answer_record
+            
+            # テキスト全体の習熟度
+            text_proficiency = TextProficiencyRecord.query.filter_by(
+                student_id=current_user.id,
+                text_set_id=text_id
+            ).first()
         
-        # 統計情報を計算
-        stats = {
-            'total_problems': len(problems),
-            'total_deliveries': len(deliveries),
-            'total_students': sum(len(delivery.class_.enrolled_students) for delivery in deliveries)
-        }
+        # 配信情報を取得（管理者・教師向け）
+        deliveries = []
+        stats = {}
+        if current_user.role in ['admin', 'teacher']:
+            deliveries = TextDelivery.query.filter_by(
+                text_set_id=text_id
+            ).join(TextDelivery.class_).all()
+            
+            # 統計情報を計算
+            stats = {
+                'total_problems': len(problems),
+                'total_deliveries': len(deliveries),
+                'total_students': sum(len(delivery.class_.enrolled_students) for delivery in deliveries)
+            }
+        
+        # アクティビティログ記録
+        from .texts import log_activity
+        log_activity("text_viewed", f"Text {text_id} viewed by user {current_user.id}")
         
         return render_template('basebuilder/View_text.html',
                              text_set=text_set,
                              problems=problems,
                              deliveries=deliveries,
                              stats=stats,
-                             user_progress={},  # 管理者なので空
-                             text_proficiency=None)  # 管理者なので None
+                             user_progress=user_progress,
+                             text_proficiency=text_proficiency)
         
     except Exception as e:
-        current_app.logger.error(f"Admin view text set error: {str(e)}")
+        current_app.logger.error(f"View text set error: {str(e)}")
         flash('テキストの表示中にエラーが発生しました。', 'error')
-        return redirect(url_for('texts.text_sets'))
+        return redirect(url_for('texts.my_texts' if current_user.role == 'student' else 'texts.text_sets'))

@@ -114,7 +114,7 @@
                   <span class="text-primary">中級: {{ data.levels.get(3, 0) + data.levels.get(4, 0) }}</span> |
                   <span class="text-success">習得: {{ data.levels.get(5, 0) }}</span>
                 </small>
-                <a href="{{ url_for('admin.view_text_set', text_id=data.text_set_id) }}" class="btn btn-sm btn-outline-primary">
+                <a href="{{ url_for('basebuilder_admin.view_text_set', text_id=data.text_set_id) }}" class="btn btn-sm btn-outline-primary">
                   詳細
                 </a>
               </div>
