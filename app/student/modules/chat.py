@@ -11,6 +11,31 @@ from ..utils import student_required
 
 chat_bp = Blueprint('student_chat', __name__)
 
+@chat_bp.route('/chat/select')
+@login_required
+@student_required
+def select_class():
+    """AIチャット用のクラス選択画面"""
+    try:
+        # 学生が履修しているクラスを取得
+        enrollments = ClassEnrollment.query.filter_by(student_id=current_user.id).all()
+        classes = [enrollment.class_obj for enrollment in enrollments]
+        
+        # ClassEnrollmentが空の場合、User.class_idから取得を試行
+        if not classes and current_user.class_id:
+            direct_class = Class.query.get(current_user.class_id)
+            if direct_class:
+                classes = [direct_class]
+        
+        current_app.logger.info(f"[CHAT] Student {current_user.id} selecting class for chat, found {len(classes)} classes")
+        
+        return render_template('select_class_for_chat.html', classes=classes)
+        
+    except Exception as e:
+        current_app.logger.error(f"Chat class selection error: {str(e)}")
+        flash('クラス選択画面の読み込み中にエラーが発生しました。', 'error')
+        return redirect(url_for('student_dashboard.dashboard'))
+
 @chat_bp.route('/chat')
 @login_required
 @student_required
@@ -39,10 +64,15 @@ def chat():
                 flash(f'クラスID {class_id} にアクセスする権限がありません。', 'error')
                 class_id = None
         
-        # クラスが指定されていない場合、最初のクラスを選択
+        # クラスが指定されていない場合、クラス選択画面にリダイレクト
         if not selected_class and classes:
-            selected_class = classes[0]
-            class_id = selected_class.id
+            if len(classes) > 1:
+                # 複数クラスがある場合はクラス選択画面に遷移
+                return redirect(url_for('student_chat.select_class'))
+            else:
+                # 1つのクラスしかない場合はそのクラスを選択
+                selected_class = classes[0]
+                class_id = selected_class.id
         
         # 最近のチャット履歴を取得（クラス指定がある場合はそのクラスのみ）
         chat_query = ChatHistory.query.filter_by(user_id=current_user.id)
