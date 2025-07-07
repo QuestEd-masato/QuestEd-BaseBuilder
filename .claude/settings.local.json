@@ -52,7 +52,8 @@
       "Bash(ss:*)",
       "Bash(kill:*)",
       "Bash(./start_local_test.sh:*)",
-      "Bash(echo:*)"
+      "Bash(echo:*)",
+      "Bash(export DB_USERNAME=QuestEd DB_PASSWORD=QuestEd-03012025MySQL DB_HOST=localhost DB_NAME=quested)"
     ],
     "deny": []
   }

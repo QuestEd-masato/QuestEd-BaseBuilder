@@ -26,8 +26,8 @@ class Config:
             raise ValueError("本番環境でSECRET_KEYが設定されていません。セキュリティ上の理由により起動を停止します。")
     
     # データベース設定（デフォルト値付き）
-    DB_USERNAME = os.getenv('DB_USERNAME', 'quested_user')
-    DB_PASSWORD = os.getenv('DB_PASSWORD', 'quested_password')
+    DB_USERNAME = os.getenv('DB_USERNAME', 'QuestEd')
+    DB_PASSWORD = os.getenv('DB_PASSWORD', 'QuestEd-03012025MySQL')
     DB_HOST = os.getenv('DB_HOST', 'localhost')
     DB_NAME = os.getenv('DB_NAME', 'quested')
     
