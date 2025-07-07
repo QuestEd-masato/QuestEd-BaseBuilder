@@ -118,7 +118,7 @@
                                         </button>
                                     </form>
                                     <!-- 削除ボタン -->
-                                    <form method="POST" action="{{ url_for('teacher.remove_student', class_id=class_obj.id, student_id=info.student.id) }}" 
+                                    <form method="POST" action="{{ url_for('teacher_class_management.remove_student', class_id=class_obj.id, student_id=info.student.id) }}" 
                                           onsubmit="return confirm('{{ info.student.display_name }}さんをクラスから削除してもよろしいですか？');" 
                                           class="d-inline ml-1">
                                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">

@@ -252,8 +252,24 @@ def integrated_management():
             
             integrated_data['classes'].append(class_data)
         
+        # テンプレートが期待するoverall_stats変数を作成
+        overall_stats = {
+            'total_curriculums': integrated_data['summary']['total_curriculums'],
+            'converted_count': integrated_data['summary']['converted_curriculums'],
+            'total_units': integrated_data['summary']['total_units'],
+            'active_units': integrated_data['summary']['total_units']  # アクティブ単元数として使用
+        }
+        
+        # curriculum_detailsを作成（テンプレートとの互換性）
+        curriculum_details = []
+        for class_data in integrated_data['classes']:
+            for curriculum_data in class_data['curriculums']:
+                curriculum_details.append(curriculum_data)
+        
         return render_template('teacher/integrated_management.html', 
-                             integrated_data=integrated_data)
+                             integrated_data=integrated_data,
+                             overall_stats=overall_stats,
+                             curriculum_details=curriculum_details)
         
     except Exception as e:
         current_app.logger.error(f"Integrated management error: {str(e)}")
