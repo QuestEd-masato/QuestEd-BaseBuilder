@@ -53,7 +53,7 @@ def learning_portal():
             'in_progress_count': len([s for s in my_selections if 0 < s.completion_rate < 100])
         }
         
-        return render_template('learning_portal.html',
+        return render_template('student/learning_portal.html',
                              units_by_subject=units_by_subject,
                              stats=stats,
                              my_selections=my_selections)
