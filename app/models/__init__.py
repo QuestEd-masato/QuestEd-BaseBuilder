@@ -2,6 +2,7 @@
 from flask_login import UserMixin
 from datetime import datetime
 from extensions import db
+from werkzeug.security import generate_password_hash, check_password_hash
 import json
 
 # モデル定義
@@ -61,6 +62,19 @@ class User(UserMixin, db.Model):
     def display_name(self):
         """表示名のプロパティ（テンプレートで使いやすくするため）"""
         return self.get_display_name()
+    
+    def set_password(self, password):
+        """パスワードを暗号化して設定"""
+        self.password = generate_password_hash(password)
+    
+    def check_password(self, password):
+        """パスワードを確認"""
+        # 現在のパスワードがハッシュ化されているかチェック
+        if self.password and not self.password.startswith('pbkdf2:'):
+            # プレーンテキストの場合は直接比較（一時的な対応）
+            return self.password == password
+        # ハッシュ化されている場合は通常の確認
+        return check_password_hash(self.password, password)
 
 # 学校管理のモデル定義
 class School(db.Model):
