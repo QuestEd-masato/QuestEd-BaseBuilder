@@ -7,9 +7,15 @@
     <div class="learning-records-header">
         <div class="d-flex justify-content-between align-items-center mb-3">
             <h2>学習記録</h2>
-            <a href="{{ url_for('student_activities.activities') }}" class="btn btn-outline-secondary btn-sm">
-                <i class="fas fa-arrow-left"></i> クラス選択に戻る
+            {% if selected_class %}
+            <a href="{{ url_for('student_class_management.class_detail', class_id=selected_class.id) }}" class="btn btn-outline-secondary btn-sm">
+                <i class="fas fa-arrow-left"></i> {{ selected_class.name }}に戻る
             </a>
+            {% else %}
+            <a href="{{ url_for('student_dashboard.dashboard') }}" class="btn btn-outline-secondary btn-sm">
+                <i class="fas fa-arrow-left"></i> ダッシュボードに戻る
+            </a>
+            {% endif %}
         </div>
         
         {% if selected_class %}
@@ -29,7 +35,7 @@
             {% else %}
                 <h3>テーマが選択されていません</h3>
                 <p>学習記録を作成する前に、探究テーマを選択してください。</p>
-                <a href="{{ url_for('student_activities.activities') }}" class="btn btn-outline-primary">テーマを選択する</a>
+                <a href="{{ url_for('student_themes.themes') }}" class="btn btn-outline-primary">テーマを選択する</a>
             {% endif %}
         </div>
         {% if theme or class_id == 0 %}

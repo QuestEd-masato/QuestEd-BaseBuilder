@@ -68,17 +68,31 @@ def activities():
         
         activities = activities_query.order_by(ActivityLog.created_at.desc()).all()
         
-        # 選択中のテーマを取得
-        selected_theme = InquiryTheme.query.filter_by(
-            student_id=current_user.id,
-            is_selected=True
-        ).first()
+        # 選択中のテーマを取得（MainThemeとInquiryThemeの両方をチェック）
+        selected_theme = None
+        if selected_class:
+            # まずMainThemeをチェック
+            from app.models import MainTheme
+            main_theme = MainTheme.query.filter_by(
+                class_id=selected_class.id,
+                is_active=True
+            ).first()
+            
+            # InquiryThemeもチェック（後方互換性のため）
+            inquiry_theme = InquiryTheme.query.filter_by(
+                student_id=current_user.id,
+                is_selected=True
+            ).first()
+            
+            # MainThemeを優先、なければInquiryThemeを使用
+            selected_theme = main_theme or inquiry_theme
         
         return render_template('activities.html',
                              classes=classes,
                              selected_class=selected_class,
-                             activities=activities,
-                             selected_theme=selected_theme)
+                             activity_logs=activities,  # テンプレートが期待する変数名に変更
+                             theme=selected_theme,      # テンプレートが期待する変数名に変更
+                             class_id=selected_class_id or 0)  # class_idも渡す
         
     except Exception as e:
         current_app.logger.error(f"Activities list error: {str(e)}")
@@ -148,7 +162,8 @@ def new_activity():
                             file_path = os.path.join(upload_path, filename)
                             image_file.save(file_path)
                             
-                            new_activity.image_path = filename
+                            # データベースのフィールド名に合わせてimage_urlを使用
+                            new_activity.image_url = url_for('static', filename=f'uploads/{filename}', _external=True)
                     else:
                         flash('無効な画像ファイルです。', 'warning')
                 else:
@@ -249,12 +264,15 @@ def delete_activity(activity_id):
         class_id = activity.class_id
         
         # 関連ファイルも削除
-        if activity.image_path:
+        if activity.image_url:
             try:
-                upload_path = get_upload_path()
-                file_path = os.path.join(upload_path, activity.image_path)
-                if os.path.exists(file_path):
-                    os.remove(file_path)
+                # URLからファイル名を抽出
+                filename = activity.image_url.split('/')[-1]
+                if filename:
+                    upload_path = get_upload_path()
+                    file_path = os.path.join(upload_path, filename)
+                    if os.path.exists(file_path):
+                        os.remove(file_path)
             except Exception as e:
                 current_app.logger.warning(f"Failed to delete activity image: {str(e)}")
         
