@@ -262,7 +262,7 @@
                     <div style="font-size: 1.5rem; font-weight: bold; color: #28a745;">
                         {{ weekly_words_learned }}
                     </div>
-                    <div style="font-size: 0.75rem; color: #666;">今週の新規<br>マスター</div>
+                    <div style="font-size: 0.75rem; color: #666;">今週<br>完全習得</div>
                 </div>
                 
                 <div>
@@ -616,7 +616,8 @@
     
     <!-- 週間ランキング -->
     <div class="ranking-card">
-        <h3>📅 今週の活動ランキング</h3>
+        <h3>📅 今週の新規マスターランキング</h3>
+        <p style="color: #666; font-size: 0.9rem; margin-top: -0.5rem; margin-bottom: 1rem;">※今週新たに熟練度5（完全習得）に到達した単語数</p>
         <ol class="ranking-list">
             {% if weekly_top_learners %}
                 {% for learner in weekly_top_learners[:5] %}

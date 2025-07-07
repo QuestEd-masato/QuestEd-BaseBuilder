@@ -615,7 +615,7 @@ def _generate_progress_stats():
         }
 
 def _get_weekly_top_learners(classes):
-    """週間の上位学習者を取得"""
+    """週間の上位学習者を取得（今週新たに熟練度5になった単語数）"""
     try:
         if not classes:
             return []
@@ -633,41 +633,34 @@ def _get_weekly_top_learners(classes):
         
         student_ids = [sid[0] for sid in student_ids]
         
-        # 今週の学習記録を取得
+        # 今週の開始日を取得
         week_start = datetime.now() - timedelta(days=7)
         
-        # AnswerRecordが利用可能な場合
-        try:
-            from basebuilder.models import AnswerRecord
-            
-            weekly_stats = db.session.query(
-                AnswerRecord.student_id,
-                func.count(AnswerRecord.id).label('weekly_count')
-            ).filter(
-                AnswerRecord.student_id.in_(student_ids),
-                AnswerRecord.created_at >= week_start,
-                AnswerRecord.is_correct == True
-            ).group_by(AnswerRecord.student_id).all()
-            
-            # 学生情報と結合
-            weekly_learners = []
-            for student_id, weekly_count in weekly_stats:
-                user = User.query.get(student_id)
-                if user:
-                    weekly_learners.append({
-                        'id': student_id,
-                        'full_name': user.full_name or user.username,
-                        'username': user.username,
-                        'word_count': weekly_count
-                    })
-            
-            # 週間学習数で降順ソート、上位5名を取得
-            weekly_learners.sort(key=lambda x: x['word_count'], reverse=True)
-            return weekly_learners[:5]
-            
-        except ImportError:
-            # AnswerRecordが利用できない場合は空のリストを返す
-            return []
+        # WordProficiencyから今週熟練度5になった単語数を取得
+        weekly_mastered_stats = db.session.query(
+            WordProficiency.student_id,
+            func.count(WordProficiency.id).label('weekly_mastered_count')
+        ).filter(
+            WordProficiency.student_id.in_(student_ids),
+            WordProficiency.level == 5,
+            WordProficiency.updated_at >= week_start
+        ).group_by(WordProficiency.student_id).all()
+        
+        # 学生情報と結合
+        weekly_learners = []
+        for student_id, weekly_mastered_count in weekly_mastered_stats:
+            user = User.query.get(student_id)
+            if user:
+                weekly_learners.append({
+                    'id': student_id,
+                    'full_name': user.full_name or user.username,
+                    'username': user.username,
+                    'word_count': weekly_mastered_count
+                })
+        
+        # 週間マスター数で降順ソート、上位5名を取得
+        weekly_learners.sort(key=lambda x: x['word_count'], reverse=True)
+        return weekly_learners[:5]
         
     except Exception as e:
         current_app.logger.error(f"[DASHBOARD] _get_weekly_top_learners error: {str(e)}")
@@ -797,10 +790,12 @@ def _generate_basebuilder_stats():
             total_mastered_words = sum(1 for stats in problem_stats.values() 
                                      if stats['total'] >= 3 and stats['correct'] / stats['total'] >= 0.8)
         
-        # 今週の学習統計
+        # 今週新たに熟練度5になった単語数を計算
         week_start = datetime.now() - timedelta(days=7)
-        weekly_answers = [record for record in answer_records if record.created_at >= week_start]
-        weekly_words_learned = len(set(record.problem_id for record in weekly_answers if record.is_correct))
+        
+        # 今週熟練度5になった単語をカウント
+        weekly_words_learned = sum(1 for wp in word_proficiencies 
+                                 if wp.level == 5 and wp.updated_at >= week_start)
         
         # 習得率を計算
         if total_problems_attempted > 0:
