@@ -1,6 +1,6 @@
 # QuestEd Development Reference - Master Index
 
-*📅 Last Updated: 2025-07-05 | Status: ✅ Production Operational - BaseBuilder Fully Restored*
+*📅 Last Updated: 2025-07-07 | Status: ✅ Production Operational - Dashboard & Navigation Fully Operational*
 
 This document serves as the **master index** and quick reference for the QuestEd educational platform. For detailed information, refer to the linked specialized documents.
 
@@ -335,7 +335,144 @@ Required `.env` variables:
 
 **結果**: 学生ダッシュボードの全要求機能が既存システムと完全統合され、運用準備完了
 
-### 🔄 Next Phase: 教師ログイン問題対応
+### ✅ 2025-07-07: ダッシュボード＆ナビゲーション完全修復
+
+#### 🎯 実施した主要修正 (2025-07-07)
+
+##### 1. **ダッシュボードのデータベース取得問題解決**
+**問題**: アンケート、学習記録、Todo、AIチャット履歴が空のダミー値で表示
+**根本原因**: 
+- `activity_info`辞書が空値で初期化
+- データベースクエリが実行されていない
+- 認証コンテキスト外での`current_user`参照エラー
+
+**実施した修正**:
+```python
+# 修正前: 空の初期化
+activity_info = {'class_todos': [], 'monthly_chat_count': 0}
+
+# 修正後: 実際のデータベースクエリ
+class_todos = Todo.query.filter_by(student_id=current_user.id).order_by(Todo.created_at.desc()).limit(5).all()
+monthly_chat_count = ChatHistory.query.filter_by(user_id=current_user.id).filter(
+    ChatHistory.created_at >= month_start
+).count()
+```
+
+**追加した認証チェック**:
+```python
+# 全ヘルパー関数に追加
+if not current_user or not current_user.is_authenticated:
+    return empty_default_values
+```
+
+##### 2. **週間ランキング算出方法の根本的変更**
+**問題**: 「8単語」が正答問題数をカウントしており、実際の単語習得と乖離
+**要求**: 今週新たに熟練度5（完全習得）に到達した単語数の表示
+
+**実装変更**:
+```python
+# 修正前: 正解した回答記録数
+weekly_stats = db.session.query(
+    AnswerRecord.student_id,
+    func.count(AnswerRecord.id).label('weekly_count')
+).filter(
+    AnswerRecord.is_correct == True
+).group_by(AnswerRecord.student_id).all()
+
+# 修正後: 今週熟練度5に到達した単語数
+weekly_mastered_stats = db.session.query(
+    WordProficiency.student_id,
+    func.count(WordProficiency.id).label('weekly_mastered_count')
+).filter(
+    WordProficiency.level == 5,
+    WordProficiency.updated_at >= week_start
+).group_by(WordProficiency.student_id).all()
+```
+
+**UI変更**:
+- ランキングタイトル: 「今週の活動ランキング」→「今週の新規マスターランキング」
+- 基礎学力カード: 「今週の新規マスター」→「今週完全習得」
+- 説明追加: 「※今週新たに熟練度5（完全習得）に到達した単語数」
+
+##### 3. **システム設定とナビゲーション問題の解決**
+**3.1 データベース認証問題**
+- **問題**: `config.py`のデフォルト認証情報が間違っていた
+- **修正**: `'quested_user'` → `'QuestEd'`, パスワードも正しく設定
+- **影響**: 学習ポータル、クラス詳細、AIチャット機能が全て正常動作
+
+**3.2 AIチャットのクラス選択機能実装**
+- **新ルート追加**: `/student/chat/select`
+- **既存テンプレート活用**: `select_class_for_chat.html`
+- **クラスパラメータ処理**: `?class_id=xx`の適切な受け渡し
+- **ダッシュボードリンク修正**: 全AIチャットボタンをクラス選択画面に統一
+
+**3.3 学生活動記録ページの整合性修復**
+**問題**: 
+- 「クラスに戻る」ボタンが機能しない
+- テーマが表示されない
+- 変数名の不一致によるテンプレートエラー
+
+**修正内容**:
+```python
+# 変数名の統一
+return render_template('activities.html',
+    activity_logs=activities,  # テンプレートが期待する変数名
+    theme=selected_theme,      # テンプレートが期待する変数名
+    class_id=selected_class_id or 0
+)
+```
+
+- MainThemeとInquiryThemeの両方をサポート
+- `image_path` vs `image_url`のデータベースフィールド不整合を修正
+- クラス詳細ページへの正しいナビゲーション実装
+
+**3.4 ダッシュボードボタンのテンプレート整合性確保**
+- **学習ポータル**: テンプレートを正しい場所に移動、パス修正
+- **ランキング詳細**: リンク先をランキングページに修正
+- **クラス詳細**: 既に正しく実装済みを確認
+
+#### 📊 修復完了した機能一覧
+
+| 機能カテゴリ | 修復内容 | ステータス |
+|-------------|---------|-----------|
+| **ダッシュボード表示** | データベース実データ取得 | ✅ 完了 |
+| **週間ランキング** | 熟練度5達成単語数表示 | ✅ 完了 |
+| **基礎学力統計** | 正確な習得データ表示 | ✅ 完了 |
+| **AIチャット** | クラス選択→個別チャット | ✅ 完了 |
+| **学習ポータル** | テンプレート整合性確保 | ✅ 完了 |
+| **クラス詳細** | ナビゲーション修復 | ✅ 完了 |
+| **活動記録** | クラス連携・テーマ表示 | ✅ 完了 |
+| **ランキング詳細** | 適切なページ遷移 | ✅ 完了 |
+
+#### 🛠️ 技術的改善点
+
+1. **エラーハンドリング強化**: 全データベースクエリに適切なtry-catch処理
+2. **認証チェック**: ヘルパー関数での`current_user`存在確認
+3. **テンプレート統一**: 既存テンプレートの積極活用、重複作成の回避
+4. **データ整合性**: データベースフィールド名とモデル属性の一致確保
+5. **ナビゲーション統一**: 一貫したURL構造とパラメータ受け渡し
+
+#### 📝 実装コミット履歴 (2025-07-07)
+
+```bash
+# 主要修正コミット一覧
+6ba0822 - Complete dashboard database query implementation
+766424b - Fix dashboard authentication errors causing fallback to minimal version  
+aaa79e4 - Fix dashboard UnboundLocalError and AttributeError issues
+43d271a - Fix three major dashboard navigation issues
+2c29ae3 - Change weekly ranking to count newly mastered words (level 5)
+a693a5e - Implement AI chat class selection and improve class details navigation
+14861d2 - Fix student activities page issues with class navigation and theme display
+2a43a08 - Fix dashboard button navigation issues for existing templates
+```
+
+**実装期間**: 2025-07-07 (1日)
+**修正ファイル数**: 8ファイル
+**追加行数**: 200+ 行
+**削除行数**: 100+ 行
+**総修正コミット**: 8件
+
+### 🔄 Next Phase: 高度機能拡張準備
 
 **残存する課題:**
 1. **教師アカウントログイン不可** - 未調査
