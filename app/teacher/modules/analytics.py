@@ -1,11 +1,11 @@
 # app/teacher/modules/analytics.py
 """分析・統計機能"""
 
-from flask import Blueprint, render_template, request, jsonify
+from flask import Blueprint, render_template, request, jsonify, flash, redirect, url_for
 from flask_login import login_required, current_user
 from datetime import datetime, timedelta
 
-from app.models import Class, ClassEnrollment, User, ActivityLog, Goal
+from app.models import Class, ClassEnrollment, User, ActivityLog, Goal, db
 from app.services.ranking_service import RankingService
 from ..common import teacher_required
 
@@ -48,15 +48,18 @@ def ranking_analysis():
     for class_obj in teacher_classes:
         try:
             # RankingServiceを使用してランキングを取得
-            ranking_data = RankingService.get_class_ranking(
-                class_id=class_obj.id,
+            ranking_data = RankingService.get_ranking(
+                ranking_type='total_points',
+                scope='class',
+                scope_id=class_obj.id,
                 limit=10
             )
             
             class_rankings[class_obj.id] = {
                 'class': class_obj,
-                'ranking': ranking_data.get('ranking', []),
+                'ranking': ranking_data.get('rankings', []),
                 'stats': ranking_data.get('stats', {}),
+                'total_participants': ranking_data.get('total_participants', 0),
                 'error': None
             }
             
@@ -68,7 +71,7 @@ def ranking_analysis():
                 'error': str(e)
             }
     
-    return render_template('ranking_analysis.html', 
+    return render_template('teacher/ranking_analysis.html', 
                          class_rankings=class_rankings)
 
 @analytics_bp.route('/api/class/<int:class_id>/ranking')
@@ -84,16 +87,19 @@ def api_class_ranking(class_id):
     
     try:
         # RankingServiceを使用
-        ranking_data = RankingService.get_class_ranking(
-            class_id=class_id,
+        ranking_data = RankingService.get_ranking(
+            ranking_type='total_points',
+            scope='class',
+            scope_id=class_id,
             limit=request.args.get('limit', 20, type=int)
         )
         
         return jsonify({
             'success': True,
             'class_name': class_obj.name,
-            'ranking': ranking_data.get('ranking', []),
+            'ranking': ranking_data.get('rankings', []),
             'stats': ranking_data.get('stats', {}),
+            'total_participants': ranking_data.get('total_participants', 0),
             'updated_at': datetime.utcnow().isoformat()
         })
         

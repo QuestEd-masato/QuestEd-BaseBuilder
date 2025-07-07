@@ -199,6 +199,14 @@ def _get_weekly_ranking(class_ids):
     ranking.sort(key=lambda x: x['word_count'], reverse=True)
     return ranking
 
+@ranking_bp.route('/ranking_analysis')
+@login_required
+@student_required
+def ranking_analysis():
+    """ランキング分析ページ（学生用）- rankingページにリダイレクト"""
+    flash('学生用のランキング詳細ページにアクセスしています。', 'info')
+    return redirect(url_for('student_ranking.ranking'))
+
 def _get_my_position(ranking, user_id):
     """自分の順位を取得"""
     for index, user_data in enumerate(ranking):
