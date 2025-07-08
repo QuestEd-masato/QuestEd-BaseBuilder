@@ -235,7 +235,7 @@ def generate_student_report(class_id, student_id):
         flash('レポート生成中にエラーが発生しました。')
         return redirect(url_for('teacher_class_management.class_details', class_id=class_id))
 
-@student_evaluation_bp.route('/teacher/themes')
+@student_evaluation_bp.route('/themes')
 @login_required
 @teacher_required
 def teacher_themes():

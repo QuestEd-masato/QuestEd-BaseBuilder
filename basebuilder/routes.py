@@ -47,8 +47,8 @@ def index():
         
     except Exception as e:
         print(f"BaseBuilder index error: {str(e)}")
-        # フォールバック: カテゴリページにリダイレクト
-        return redirect(url_for('categories.categories'))
+        # フォールバック: 問題ページにリダイレクト
+        return redirect(url_for('problems.problems'))
 
 
 @basebuilder_bp.route('/dashboard')
@@ -96,7 +96,7 @@ def dashboard():
         
         elif current_user.role == 'teacher':
             # 教師向けダッシュボード
-            teacher_classes = current_user.classes
+            teacher_classes = current_user.classes_teaching
             
             class_stats = {}
             for class_obj in teacher_classes:

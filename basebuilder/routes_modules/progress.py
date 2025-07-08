@@ -19,6 +19,72 @@ from basebuilder.models import (
 
 progress_bp = Blueprint('progress', __name__, url_prefix='/basebuilder')
 
+@progress_bp.route('/progress')
+@login_required
+def progress():
+    """進捗管理のメイン画面"""
+    if current_user.role == 'student':
+        return redirect(url_for('progress.view_proficiency'))
+    else:
+        return redirect(url_for('progress.student_progress'))
+
+@progress_bp.route('/student_progress')
+@login_required
+def student_progress():
+    """学生進捗管理（教師・管理者向け）"""
+    try:
+        if current_user.role not in ['admin', 'teacher']:
+            flash('学生進捗管理は教師・管理者のみアクセス可能です。')
+            return redirect(url_for('basebuilder.index'))
+        
+        # 全学生の進捗データを取得
+        from app.models import User
+        students = User.query.filter_by(role='student').all()
+        
+        # 各学生の進捗統計を計算
+        student_progress_data = []
+        for student in students:
+            # 総回答数
+            total_answers = AnswerRecord.query.filter_by(student_id=student.id).count()
+            
+            # 正解数
+            correct_answers = AnswerRecord.query.filter_by(
+                student_id=student.id, is_correct=True
+            ).count()
+            
+            # 正解率
+            accuracy = (correct_answers / total_answers * 100) if total_answers > 0 else 0
+            
+            # 最新の学習日
+            latest_activity = AnswerRecord.query.filter_by(
+                student_id=student.id
+            ).order_by(AnswerRecord.created_at.desc()).first()
+            
+            # 習熟度記録数
+            proficiency_count = ProficiencyRecord.query.filter_by(
+                student_id=student.id
+            ).count()
+            
+            student_progress_data.append({
+                'student': student,
+                'total_answers': total_answers,
+                'correct_answers': correct_answers,
+                'accuracy': round(accuracy, 1),
+                'latest_activity': latest_activity.created_at if latest_activity else None,
+                'proficiency_count': proficiency_count
+            })
+        
+        # 正解率でソート
+        student_progress_data.sort(key=lambda x: x['accuracy'], reverse=True)
+        
+        return render_template('basebuilder/student_progress.html',
+                             student_progress_data=student_progress_data)
+        
+    except Exception as e:
+        current_app.logger.error(f"Student progress error: {str(e)}")
+        flash('学生進捗データの取得中にエラーが発生しました。', 'error')
+        return redirect(url_for('basebuilder.index'))
+
 
 @progress_bp.route('/proficiency')
 @login_required

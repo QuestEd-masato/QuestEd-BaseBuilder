@@ -25,6 +25,47 @@
                         <i class="fas fa-info-circle me-2"></i>
                         CSVファイルから生徒を一括でクラスに登録できます。テンプレートをダウンロードして必要な情報を入力してください。
                     </div>
+                    
+                    <!-- 学年・学級検索フィルター -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0"><i class="fas fa-filter me-2"></i>生徒検索フィルター</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <label for="grade_filter" class="form-label">学年</label>
+                                    <select id="grade_filter" class="form-select">
+                                        <option value="">すべて</option>
+                                        {% for grade in range(1, 13) %}
+                                        <option value="{{ grade }}">{{ grade }}年</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label for="classroom_filter" class="form-label">学級</label>
+                                    <select id="classroom_filter" class="form-select">
+                                        <option value="">すべて</option>
+                                        {% for i in range(1, 7) %}
+                                        <option value="{{ i }}組">{{ i }}組</option>
+                                        {% endfor %}
+                                        <option value="A組">A組</option>
+                                        <option value="B組">B組</option>
+                                        <option value="C組">C組</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label for="name_filter" class="form-label">名前・ユーザー名</label>
+                                    <input type="text" id="name_filter" class="form-control" placeholder="名前で検索">
+                                </div>
+                                <div class="col-md-3 d-flex align-items-end">
+                                    <button type="button" id="clear_filters" class="btn btn-outline-secondary">
+                                        <i class="fas fa-times me-1"></i>クリア
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
                     <form method="post" enctype="multipart/form-data">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -70,24 +111,58 @@
                     
                     {% if available_students %}
                     <hr class="my-4">
-                    <h4>追加可能な生徒</h4>
-                    <div class="list-group">
-                        {% for student in available_students[:10] %}
-                        <div class="list-group-item">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <strong>{{ student.username }}</strong>
-                                    <small class="text-muted">{{ student.email }}</small>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h4>追加可能な生徒 <span id="student-count" class="badge bg-primary">{{ available_students|length }}</span></h4>
+                        <div>
+                            <button type="button" id="select-all" class="btn btn-sm btn-outline-primary me-2">全選択</button>
+                            <button type="button" id="deselect-all" class="btn btn-sm btn-outline-secondary">全解除</button>
+                        </div>
+                    </div>
+                    
+                    <form method="post">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <div id="students-list">
+                            {% for student in available_students %}
+                            <div class="student-item list-group-item" 
+                                 data-grade="{{ student.grade or '' }}" 
+                                 data-classroom="{{ student.classroom or '' }}"
+                                 data-name="{{ student.username.lower() }}{{ (student.full_name or '').lower() }}">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="student_ids" value="{{ student.id }}" id="student_{{ student.id }}">
+                                    <label class="form-check-label w-100" for="student_{{ student.id }}">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <strong>{{ student.username }}</strong>
+                                                {% if student.full_name %}
+                                                <span class="text-muted">({{ student.full_name }})</span>
+                                                {% endif %}
+                                                <br>
+                                                <small class="text-muted">{{ student.email }}</small>
+                                            </div>
+                                            <div class="text-end">
+                                                {% if student.grade %}
+                                                <span class="badge bg-info">{{ student.grade }}年</span>
+                                                {% endif %}
+                                                {% if student.classroom %}
+                                                <span class="badge bg-success">{{ student.classroom }}</span>
+                                                {% endif %}
+                                                {% if student.student_number %}
+                                                <br><small class="text-muted">{{ student.student_number }}</small>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </label>
                                 </div>
                             </div>
+                            {% endfor %}
                         </div>
-                        {% endfor %}
-                        {% if available_students|length > 10 %}
-                        <div class="list-group-item text-center text-muted">
-                            他 {{ available_students|length - 10 }} 名
+                        
+                        <div class="mt-3">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-user-plus me-2"></i>選択した生徒を追加
+                            </button>
                         </div>
-                        {% endif %}
-                    </div>
+                    </form>
                     {% endif %}
                 </div>
                 
@@ -98,4 +173,77 @@
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const gradeFilter = document.getElementById('grade_filter');
+    const classroomFilter = document.getElementById('classroom_filter');
+    const nameFilter = document.getElementById('name_filter');
+    const clearFilters = document.getElementById('clear_filters');
+    const selectAll = document.getElementById('select-all');
+    const deselectAll = document.getElementById('deselect-all');
+    const studentItems = document.querySelectorAll('.student-item');
+    const studentCount = document.getElementById('student-count');
+    
+    // フィルター機能
+    function filterStudents() {
+        const gradeValue = gradeFilter.value;
+        const classroomValue = classroomFilter.value;
+        const nameValue = nameFilter.value.toLowerCase();
+        
+        let visibleCount = 0;
+        
+        studentItems.forEach(item => {
+            const studentGrade = item.dataset.grade;
+            const studentClassroom = item.dataset.classroom;
+            const studentName = item.dataset.name;
+            
+            const matchesGrade = !gradeValue || studentGrade === gradeValue;
+            const matchesClassroom = !classroomValue || studentClassroom === classroomValue;
+            const matchesName = !nameValue || studentName.includes(nameValue);
+            
+            if (matchesGrade && matchesClassroom && matchesName) {
+                item.style.display = 'block';
+                visibleCount++;
+            } else {
+                item.style.display = 'none';
+            }
+        });
+        
+        // 表示件数更新
+        studentCount.textContent = visibleCount;
+    }
+    
+    // イベントリスナー設定
+    gradeFilter.addEventListener('change', filterStudents);
+    classroomFilter.addEventListener('change', filterStudents);
+    nameFilter.addEventListener('input', filterStudents);
+    
+    // フィルタークリア
+    clearFilters.addEventListener('click', function() {
+        gradeFilter.value = '';
+        classroomFilter.value = '';
+        nameFilter.value = '';
+        filterStudents();
+    });
+    
+    // 全選択・全解除
+    selectAll.addEventListener('click', function() {
+        const visibleCheckboxes = Array.from(studentItems)
+            .filter(item => item.style.display !== 'none')
+            .map(item => item.querySelector('input[type="checkbox"]'));
+        
+        visibleCheckboxes.forEach(checkbox => {
+            checkbox.checked = true;
+        });
+    });
+    
+    deselectAll.addEventListener('click', function() {
+        const allCheckboxes = document.querySelectorAll('.student-item input[type="checkbox"]');
+        allCheckboxes.forEach(checkbox => {
+            checkbox.checked = false;
+        });
+    });
+});
+</script>
 {% endblock %}

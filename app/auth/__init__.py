@@ -71,6 +71,12 @@ def register():
             role = request.form.get('role', 'student')
             school_code = request.form.get('school_code')
             
+            # 生徒の場合は学年・学級・番号も取得
+            if role == 'student':
+                grade = request.form.get('grade')
+                classroom = request.form.get('classroom')
+                student_number = request.form.get('student_number')
+            
             # 入力検証
             if password != confirm_password:
                 flash('パスワードが一致しません。')
@@ -123,6 +129,13 @@ def register():
                 token_created_at=None,
                 is_approved=(role != 'student')  # 教師/管理者は自動承認
             )
+            
+            # 生徒の場合は学年・学級・番号も設定
+            if role == 'student':
+                if grade:
+                    new_user.grade = int(grade)
+                new_user.classroom = classroom if classroom else None
+                new_user.student_number = student_number if student_number else None
             
             db.session.add(new_user)
             db.session.commit()
@@ -363,6 +376,12 @@ def profile():
         full_name = request.form.get('full_name')
         email = request.form.get('email')
         
+        # 生徒の場合は学年・学級・番号も取得
+        if current_user.role == 'student':
+            grade = request.form.get('grade')
+            classroom = request.form.get('classroom')
+            student_number = request.form.get('student_number')
+        
         # 入力検証
         if not username or not email:
             flash('ユーザー名とメールアドレスは必須です。')
@@ -390,6 +409,17 @@ def profile():
             current_user.username = username
             current_user.full_name = full_name
             current_user.email = email
+            
+            # 生徒の場合は学年・学級・番号も更新
+            if current_user.role == 'student':
+                if grade:
+                    current_user.grade = int(grade) if grade else None
+                else:
+                    current_user.grade = None
+                    
+                current_user.classroom = classroom if classroom else None
+                current_user.student_number = student_number if student_number else None
+            
             db.session.commit()
             
             flash('プロフィールが更新されました。')

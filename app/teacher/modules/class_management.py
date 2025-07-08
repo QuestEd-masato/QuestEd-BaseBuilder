@@ -87,6 +87,10 @@ def create_class():
         else:
             full_name = name
         
+        # 学年・学級フィールド
+        grade = request.form.get('grade')
+        classroom = request.form.get('classroom')
+        
         # 新しいクラスを作成
         new_class = Class(
             teacher_id=current_user.id,
@@ -95,7 +99,9 @@ def create_class():
             name=full_name,
             description=description,
             schedule=schedule,
-            location=location
+            location=location,
+            grade=int(grade) if grade else None,
+            classroom=classroom if classroom else None
         )
         
         try:
@@ -205,6 +211,19 @@ def edit_class(class_id):
         else:
             class_obj.subject_id = None
         
+        # 学年・学級フィールドを保存
+        grade = request.form.get('grade')
+        if grade:
+            class_obj.grade = int(grade)
+        else:
+            class_obj.grade = None
+            
+        classroom = request.form.get('classroom')
+        if classroom:
+            class_obj.classroom = classroom
+        else:
+            class_obj.classroom = None
+        
         db.session.commit()
         flash('クラス情報が更新されました。')
         return redirect(url_for('teacher_class_management.class_details', class_id=class_id))
@@ -263,14 +282,35 @@ def add_students(class_id):
         flash('生徒が追加されました。')
         return redirect(url_for('teacher_class_management.class_details', class_id=class_id))
     
+    # フィルターパラメータを取得
+    grade_filter = request.args.get('grade')
+    classroom_filter = request.args.get('classroom')
+    name_filter = request.args.get('name')
+    
     # まだクラスに追加されていない生徒を取得
     enrolled_student_ids = [e.student_id for e in ClassEnrollment.query.filter_by(class_id=class_id).all()]
-    available_students = User.query.filter(
+    
+    query = User.query.filter(
         User.role == 'student',
         User.school_id == current_user.school_id,
         User.is_approved == True,
         ~User.id.in_(enrolled_student_ids)
-    ).all()
+    )
+    
+    # フィルターを適用
+    if grade_filter:
+        query = query.filter(User.grade == int(grade_filter))
+    if classroom_filter:
+        query = query.filter(User.classroom == classroom_filter)
+    if name_filter:
+        query = query.filter(
+            db.or_(
+                User.username.contains(name_filter),
+                User.full_name.contains(name_filter)
+            )
+        )
+    
+    available_students = query.order_by(User.grade, User.classroom, User.username).all()
     
     return render_template('add_students.html', 
                          class_obj=class_obj, 

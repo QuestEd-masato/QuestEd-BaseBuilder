@@ -36,6 +36,39 @@
                 <input type="text" value="{{ user.school.name if user.school else '未設定' }}" readonly>
             </div>
             
+            {% if user.role == 'student' %}
+            <!-- 生徒用の追加フィールド -->
+            <div class="form-group">
+                <label for="grade">学年</label>
+                <select id="grade" name="grade" class="form-control">
+                    <option value="">選択してください</option>
+                    {% for g in range(1, 13) %}
+                    <option value="{{ g }}" {% if user.grade == g %}selected{% endif %}>{{ g }}年</option>
+                    {% endfor %}
+                </select>
+                <small class="form-text text-muted">1-6年：小学校、7-9年：中学校、10-12年：高校</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="classroom">学級</label>
+                <select id="classroom" name="classroom" class="form-control">
+                    <option value="">選択してください</option>
+                    {% for i in range(1, 7) %}
+                    <option value="{{ i }}組" {% if user.classroom == i~'組' %}selected{% endif %}>{{ i }}組</option>
+                    {% endfor %}
+                    <option value="A組" {% if user.classroom == 'A組' %}selected{% endif %}>A組</option>
+                    <option value="B組" {% if user.classroom == 'B組' %}selected{% endif %}>B組</option>
+                    <option value="C組" {% if user.classroom == 'C組' %}selected{% endif %}>C組</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="student_number">生徒番号</label>
+                <input type="text" id="student_number" name="student_number" value="{{ user.student_number or '' }}" placeholder="例: 2025-02-1-001">
+                <small class="form-text text-muted">学校で指定された番号がある場合は入力してください（任意）</small>
+            </div>
+            {% endif %}
+            
             <div class="form-group">
                 <label>登録日</label>
                 <input type="text" value="{{ user.created_at.strftime('%Y年%m月%d日') if user.created_at else '不明' }}" readonly>

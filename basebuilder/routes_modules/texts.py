@@ -26,6 +26,15 @@ from basebuilder.utils import require_roles, handle_db_error
 
 texts_bp = Blueprint('texts', __name__, url_prefix='/basebuilder')
 
+@texts_bp.route('/texts')
+@login_required
+def texts():
+    """テキスト管理のメイン画面"""
+    if current_user.role == 'student':
+        return redirect(url_for('texts.my_texts'))
+    else:
+        return redirect(url_for('texts.text_sets'))
+
 @texts_bp.route('/debug/text_data')
 @login_required
 def debug_text_data():

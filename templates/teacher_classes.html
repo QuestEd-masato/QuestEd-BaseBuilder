@@ -27,12 +27,30 @@
                             <h5 class="card-title mb-0">{{ class.name }}</h5>
                         </div>
                         <div class="card-body">
+                            <div class="mb-2">
+                                {% if class.grade %}
+                                <span class="badge bg-info me-1">{{ class.grade }}年</span>
+                                {% endif %}
+                                {% if class.classroom %}
+                                <span class="badge bg-success me-1">{{ class.classroom }}</span>
+                                {% endif %}
+                                {% if class.subject %}
+                                <span class="badge bg-secondary me-1">{{ class.subject.name }}</span>
+                                {% endif %}
+                            </div>
                             {% if class.description %}
                                 <p class="card-text">{{ class.description }}</p>
                             {% endif %}
-                            <p class="card-text">
-                                <small class="text-muted">生徒数: {{ class.students.count() }}名</small>
-                            </p>
+                            <div class="row text-center">
+                                <div class="col-6">
+                                    <strong>{{ class.students.count() }}</strong>
+                                    <br><small class="text-muted">生徒数</small>
+                                </div>
+                                <div class="col-6">
+                                    <strong>{{ class.created_at.strftime('%m/%d') if class.created_at }}</strong>
+                                    <br><small class="text-muted">作成日</small>
+                                </div>
+                            </div>
                         </div>
                         <div class="card-footer d-flex justify-content-between">
                             <a href="{{ url_for('teacher_class_management.view_class', class_id=class.id) }}" class="btn btn-outline-primary">

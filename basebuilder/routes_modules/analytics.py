@@ -21,6 +21,127 @@ from basebuilder.models import (
 
 analytics_bp = Blueprint('analytics', __name__, url_prefix='/basebuilder')
 
+@analytics_bp.route('/analytics')
+@login_required
+def analytics():
+    """分析機能のメイン画面"""
+    if current_user.role == 'student':
+        return redirect(url_for('analytics.student_analytics'))
+    else:
+        return redirect(url_for('analytics.teacher_analytics'))
+
+@analytics_bp.route('/teacher_analytics')
+@login_required
+def teacher_analytics():
+    """教師向け分析ダッシュボード"""
+    try:
+        if current_user.role not in ['admin', 'teacher']:
+            flash('分析機能は教師・管理者のみアクセス可能です。')
+            return redirect(url_for('basebuilder.index'))
+        
+        # 全体統計の取得
+        total_students = User.query.filter_by(role='student').count()
+        total_problems = BasicKnowledgeItem.query.filter_by(is_active=True).count()
+        total_categories = ProblemCategory.query.count()
+        total_texts = TextSet.query.count()
+        
+        # 最近の活動統計
+        from datetime import datetime, timedelta
+        last_week = datetime.now() - timedelta(days=7)
+        
+        recent_answers = AnswerRecord.query.filter(
+            AnswerRecord.created_at >= last_week
+        ).count()
+        
+        active_students = db.session.query(AnswerRecord.student_id).filter(
+            AnswerRecord.created_at >= last_week
+        ).distinct().count()
+        
+        # カテゴリ別の問題数統計
+        category_stats = db.session.query(
+            ProblemCategory.name,
+            db.func.count(BasicKnowledgeItem.id).label('problem_count')
+        ).join(
+            BasicKnowledgeItem, BasicKnowledgeItem.category_id == ProblemCategory.id
+        ).group_by(ProblemCategory.id).all()
+        
+        # 最近の学習活動
+        recent_activities = AnswerRecord.query.join(
+            BasicKnowledgeItem
+        ).join(
+            User, AnswerRecord.student_id == User.id
+        ).order_by(
+            AnswerRecord.created_at.desc()
+        ).limit(10).all()
+        
+        return render_template('basebuilder/teacher_analytics.html',
+                             total_students=total_students,
+                             total_problems=total_problems,
+                             total_categories=total_categories,
+                             total_texts=total_texts,
+                             recent_answers=recent_answers,
+                             active_students=active_students,
+                             category_stats=category_stats,
+                             recent_activities=recent_activities)
+        
+    except Exception as e:
+        current_app.logger.error(f"Teacher analytics error: {str(e)}")
+        flash('分析データの取得中にエラーが発生しました。', 'error')
+        return redirect(url_for('basebuilder.index'))
+
+@analytics_bp.route('/student_analytics')
+@login_required
+def student_analytics():
+    """学生向け分析ダッシュボード"""
+    try:
+        if current_user.role != 'student':
+            flash('学生分析機能は学生のみアクセス可能です。')
+            return redirect(url_for('basebuilder.index'))
+        
+        # 学生の学習統計
+        total_answers = AnswerRecord.query.filter_by(student_id=current_user.id).count()
+        correct_answers = AnswerRecord.query.filter_by(
+            student_id=current_user.id, is_correct=True
+        ).count()
+        
+        accuracy = (correct_answers / total_answers * 100) if total_answers > 0 else 0
+        
+        # カテゴリ別の成績
+        category_performance = db.session.query(
+            ProblemCategory.name,
+            db.func.count(AnswerRecord.id).label('total'),
+            db.func.sum(db.case([(AnswerRecord.is_correct == True, 1)], else_=0)).label('correct')
+        ).join(
+            BasicKnowledgeItem, BasicKnowledgeItem.category_id == ProblemCategory.id
+        ).join(
+            AnswerRecord, AnswerRecord.problem_id == BasicKnowledgeItem.id
+        ).filter(
+            AnswerRecord.student_id == current_user.id
+        ).group_by(ProblemCategory.id).all()
+        
+        # 習熟度記録
+        proficiency_records = ProficiencyRecord.query.filter_by(
+            student_id=current_user.id
+        ).all()
+        
+        # 最近の学習履歴
+        recent_answers = AnswerRecord.query.filter_by(
+            student_id=current_user.id
+        ).order_by(AnswerRecord.created_at.desc()).limit(20).all()
+        
+        return render_template('basebuilder/student_analytics.html',
+                             total_answers=total_answers,
+                             correct_answers=correct_answers,
+                             accuracy=round(accuracy, 1),
+                             category_performance=category_performance,
+                             proficiency_records=proficiency_records,
+                             recent_answers=recent_answers)
+        
+    except Exception as e:
+        current_app.logger.error(f"Student analytics error: {str(e)}")
+        flash('学習分析データの取得中にエラーが発生しました。', 'error')
+        return redirect(url_for('basebuilder.index'))
+
 
 @analytics_bp.route('/analysis')
 @analytics_bp.route('/analysis/<int:class_id>')

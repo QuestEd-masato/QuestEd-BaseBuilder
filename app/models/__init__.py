@@ -28,6 +28,11 @@ class User(UserMixin, db.Model):
     # パスワードリセット関連フィールド
     reset_token = db.Column(db.String(100), nullable=True)
     reset_token_created_at = db.Column(db.DateTime, nullable=True)
+    
+    # 学年・学級関連フィールド
+    grade = db.Column(db.Integer, nullable=True, comment='学年(1-12)')
+    classroom = db.Column(db.String(10), nullable=True, comment='学級(1組、A組等)')
+    student_number = db.Column(db.String(20), nullable=True, comment='生徒番号')
 
     # リレーションシップの定義（カスケード削除を設定）
     classes_teaching = db.relationship('Class', foreign_keys='Class.teacher_id', backref='teacher', lazy=True, cascade='all, delete-orphan')
@@ -150,6 +155,10 @@ class Class(db.Model):
     schedule = db.Column(db.String(200))
     location = db.Column(db.String(200))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # 学年・学級関連フィールド
+    grade = db.Column(db.Integer, nullable=True, comment='対象学年')
+    classroom = db.Column(db.String(10), nullable=True, comment='学級名')
     
     # クラスと学生の関連付け（多対多の関係）
     students = db.relationship('User', 

@@ -26,6 +26,51 @@ from basebuilder.models import (
 
 sessions_bp = Blueprint('sessions', __name__, url_prefix='/basebuilder')
 
+@sessions_bp.route('/sessions')
+@login_required
+def sessions():
+    """セッション管理のメイン画面"""
+    if current_user.role == 'student':
+        return redirect(url_for('sessions.start_session'))
+    else:
+        return redirect(url_for('sessions.session_list'))
+
+@sessions_bp.route('/session_list')
+@login_required
+def session_list():
+    """セッション一覧管理（教師・管理者向け）"""
+    try:
+        if current_user.role not in ['admin', 'teacher']:
+            flash('セッション管理は教師・管理者のみアクセス可能です。')
+            return redirect(url_for('basebuilder.index'))
+        
+        # 最近のセッション履歴を取得
+        recent_sessions = db.session.query(
+            AnswerRecord.student_id,
+            db.func.count(AnswerRecord.id).label('total_answers'),
+            db.func.sum(db.case([(AnswerRecord.is_correct == True, 1)], else_=0)).label('correct_answers'),
+            db.func.max(AnswerRecord.created_at).label('last_activity')
+        ).group_by(AnswerRecord.student_id).order_by(
+            db.func.max(AnswerRecord.created_at).desc()
+        ).limit(20).all()
+        
+        # 学生情報を取得
+        from app.models import User
+        student_info = {}
+        for session in recent_sessions:
+            student = User.query.get(session.student_id)
+            if student:
+                student_info[session.student_id] = student
+        
+        return render_template('basebuilder/session_list.html',
+                             recent_sessions=recent_sessions,
+                             student_info=student_info)
+        
+    except Exception as e:
+        current_app.logger.error(f"Session list error: {str(e)}")
+        flash('セッション一覧の取得中にエラーが発生しました。', 'error')
+        return redirect(url_for('basebuilder.index'))
+
 @sessions_bp.route('/debug/auth')
 def debug_auth():
     """認証状態のデバッグ表示"""

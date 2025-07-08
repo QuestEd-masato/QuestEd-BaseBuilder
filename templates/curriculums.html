@@ -40,21 +40,21 @@
                                 {{ curriculum.title }}
                             </a>
                         </td>
-                        <td>{{ curriculum.total_hours }}時間</td>
-                        <td>{{ curriculum.created_at.strftime('%Y-%m-%d') }}</td>
-                        <td>{{ curriculum.updated_at.strftime('%Y-%m-%d') }}</td>
+                        <td>{{ curriculum.total_hours if curriculum.total_hours else '-' }}時間</td>
+                        <td>{{ curriculum.created_at.strftime('%Y-%m-%d') if curriculum.created_at else '-' }}</td>
+                        <td>{{ curriculum.updated_at.strftime('%Y-%m-%d') if curriculum.updated_at else '-' }}</td>
                         <td>
                             <div class="btn-group" role="group">
-                                <a href="{{ url_for('teacher.view_curriculum', curriculum_id=curriculum.id) }}" class="btn btn-sm btn-info">
+                                <a href="{{ url_for('teacher_curriculum_management.view_curriculum', curriculum_id=curriculum.id) }}" class="btn btn-sm btn-info">
                                     <i class="fas fa-eye"></i> 表示
                                 </a>
-                                <a href="{{ url_for('teacher.edit_curriculum', curriculum_id=curriculum.id) }}" class="btn btn-sm btn-warning">
+                                <a href="{{ url_for('teacher_curriculum_management.edit_curriculum', curriculum_id=curriculum.id) }}" class="btn btn-sm btn-warning">
                                     <i class="fas fa-edit"></i> 編集
                                 </a>
-                                <a href="{{ url_for('teacher.export_curriculum', curriculum_id=curriculum.id) }}" class="btn btn-sm btn-success">
+                                <a href="{{ url_for('teacher_curriculum_management.export_curriculum', curriculum_id=curriculum.id) }}" class="btn btn-sm btn-success">
                                     <i class="fas fa-file-csv"></i> CSV
                                 </a>
-                                <form method="POST" action="{{ url_for('teacher.delete_curriculum', curriculum_id=curriculum.id) }}" style="display: inline;">
+                                <form method="POST" action="{{ url_for('teacher_curriculum_management.delete_curriculum', curriculum_id=curriculum.id) }}" style="display: inline;">
                                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                                     <button type="submit" class="btn btn-sm btn-danger"
                                             onclick="return confirm('このカリキュラムを削除してもよろしいですか？')">

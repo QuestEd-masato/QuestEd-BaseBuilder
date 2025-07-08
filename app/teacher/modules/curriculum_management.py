@@ -49,6 +49,7 @@ def view_curriculums(class_id):
     
     return render_template('curriculums.html', 
                          class_obj=class_obj, 
+                         curriculums=curriculums,
                          curriculum_stats=curriculum_stats)
 
 @curriculum_management_bp.route('/class/<int:class_id>/curriculum/create')

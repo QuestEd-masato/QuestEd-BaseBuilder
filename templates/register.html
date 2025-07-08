@@ -52,6 +52,39 @@
                 <small class="form-text text-muted">学校から提供された学校コードを入力してください。</small>
             </div>
             
+            <!-- 生徒用の追加フィールド -->
+            <div id="student-fields" style="display: none;">
+                <div class="form-group">
+                    <label for="grade">学年</label>
+                    <select id="grade" name="grade" class="form-control">
+                        <option value="">選択してください（任意）</option>
+                        {% for g in range(1, 13) %}
+                        <option value="{{ g }}">{{ g }}年</option>
+                        {% endfor %}
+                    </select>
+                    <small class="form-text text-muted">1-6年：小学校、7-9年：中学校、10-12年：高校</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="classroom">学級</label>
+                    <select id="classroom" name="classroom" class="form-control">
+                        <option value="">選択してください（任意）</option>
+                        {% for i in range(1, 7) %}
+                        <option value="{{ i }}組">{{ i }}組</option>
+                        {% endfor %}
+                        <option value="A組">A組</option>
+                        <option value="B組">B組</option>
+                        <option value="C組">C組</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="student_number">生徒番号</label>
+                    <input type="text" id="student_number" name="student_number" placeholder="例: 2025-02-1-001（任意）">
+                    <small class="form-text text-muted">学校で指定された番号がある場合は入力してください</small>
+                </div>
+            </div>
+            
             <div class="form-actions">
                 <button type="submit" class="btn btn-primary">登録</button>
             </div>
@@ -150,6 +183,24 @@
 {% block extra_js %}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        // 役割選択時の表示切替
+        const roleSelect = document.getElementById('role');
+        const studentFields = document.getElementById('student-fields');
+        
+        roleSelect.addEventListener('change', function() {
+            if (this.value === 'student') {
+                studentFields.style.display = 'block';
+            } else {
+                studentFields.style.display = 'none';
+            }
+        });
+        
+        // 初期状態を設定
+        if (roleSelect.value === 'student') {
+            studentFields.style.display = 'block';
+        }
+        
+        // フォームバリデーション
         const form = document.querySelector('form[data-validate="true"]');
         if (form) {
             form.addEventListener('submit', function(e) {

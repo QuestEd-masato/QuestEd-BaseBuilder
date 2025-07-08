@@ -295,6 +295,37 @@ def edit_problem(problem_id):
         return redirect(url_for('problems.problems'))
 
 
+@problems_bp.route('/problem/<int:problem_id>/delete', methods=['POST'])
+@login_required
+def delete_problem(problem_id):
+    """問題削除"""
+    try:
+        if current_user.role not in ['admin', 'teacher']:
+            flash('問題の削除権限がありません。')
+            return redirect(url_for('problems.problems'))
+        
+        problem = BasicKnowledgeItem.query.get_or_404(problem_id)
+        
+        # 作成者または管理者のみ削除可能
+        if current_user.role != 'admin' and problem.created_by != current_user.id:
+            flash('この問題を削除する権限がありません。')
+            return redirect(url_for('problems.problems'))
+        
+        # 問題を削除
+        db.session.delete(problem)
+        db.session.commit()
+        
+        current_app.logger.info(f"Problem {problem_id} deleted by user {current_user.id}")
+        flash('問題を削除しました。', 'success')
+        return redirect(url_for('problems.problems'))
+        
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Problem deletion error: {str(e)}")
+        flash('問題の削除に失敗しました。', 'error')
+        return redirect(url_for('problems.problems'))
+
+
 @problems_bp.route('/start_search_session')
 @login_required
 def start_search_session():

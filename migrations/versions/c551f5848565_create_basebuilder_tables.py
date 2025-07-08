@@ -1,7 +1,7 @@
 """Create BaseBuilder tables
 
 Revision ID: c551f5848565
-Revises: c0587991c5a6
+Revises: c6847f391ffe
 Create Date: 2025-03-23 13:48:42.494156
 
 """
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = 'c551f5848565'
-down_revision = 'c0587991c5a6'
+down_revision = 'c6847f391ffe'
 branch_labels = None
 depends_on = None
 

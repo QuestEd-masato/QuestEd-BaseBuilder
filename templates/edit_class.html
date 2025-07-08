@@ -26,6 +26,34 @@
                 {% endfor %}
             </select>
         </div>
+        <!-- 学年・学級フィールド -->
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <label for="grade" class="form-label">対象学年</label>
+                <select class="form-control" id="grade" name="grade">
+                    <option value="">選択してください</option>
+                    {% for grade in range(1, 13) %}
+                    <option value="{{ grade }}" {% if class_obj.grade == grade %}selected{% endif %}>
+                        {{ grade }}年
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-6">
+                <label for="classroom" class="form-label">学級</label>
+                <select class="form-control" id="classroom" name="classroom">
+                    <option value="">選択してください</option>
+                    {% for i in range(1, 7) %}
+                    <option value="{{ i }}組" {% if class_obj.classroom == i~'組' %}selected{% endif %}>
+                        {{ i }}組
+                    </option>
+                    {% endfor %}
+                    <option value="A組" {% if class_obj.classroom == 'A組' %}selected{% endif %}>A組</option>
+                    <option value="B組" {% if class_obj.classroom == 'B組' %}selected{% endif %}>B組</option>
+                    <option value="C組" {% if class_obj.classroom == 'C組' %}selected{% endif %}>C組</option>
+                </select>
+            </div>
+        </div>
         <div class="form-group mb-3">
             <label for="schedule">スケジュール</label>
             <input type="text" class="form-control" id="schedule" name="schedule" value="{{ class_obj.schedule or '' }}">
