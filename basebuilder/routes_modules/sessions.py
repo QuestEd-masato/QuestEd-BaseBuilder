@@ -48,7 +48,7 @@ def session_list():
         recent_sessions = db.session.query(
             AnswerRecord.student_id,
             db.func.count(AnswerRecord.id).label('total_answers'),
-            db.func.sum(db.case([(AnswerRecord.is_correct == True, 1)], else_=0)).label('correct_answers'),
+            db.func.sum(db.case((AnswerRecord.is_correct == True, 1), else_=0)).label('correct_answers'),
             db.func.max(AnswerRecord.created_at).label('last_activity')
         ).group_by(AnswerRecord.student_id).order_by(
             db.func.max(AnswerRecord.created_at).desc()

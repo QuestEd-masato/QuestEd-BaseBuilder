@@ -343,15 +343,15 @@ class TextSetService:
         """クラスで利用可能なテキストセット取得"""
         from app.models import Class
         
-        class_obj = Class.query.get(class_id)
-        if not class_obj:
+        class_instance = Class.query.get(class_id)
+        if not class_instance:
             return []
         
         # 学校フィルタ適用
         query = TextSet.query
-        if class_obj.school_id:
+        if class_instance.school_id:
             query = query.filter(
-                (TextSet.school_id == class_obj.school_id) | 
+                (TextSet.school_id == class_instance.school_id) | 
                 (TextSet.school_id == None)
             )
         

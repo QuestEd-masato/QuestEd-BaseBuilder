@@ -101,7 +101,7 @@ def problems():
     except Exception as e:
         current_app.logger.error(f"Problems list error: {str(e)}")
         flash('問題一覧の取得中にエラーが発生しました。')
-        return redirect(url_for('problems.problems'))
+        return redirect(url_for('basebuilder.index'))
 
 
 @problems_bp.route('/problem/create', methods=['GET', 'POST'])
@@ -111,7 +111,7 @@ def create_problem():
     try:
         if current_user.role not in ['admin', 'teacher']:
             flash('問題の作成権限がありません。')
-            return redirect(url_for('problems.problems'))
+            return redirect(url_for('basebuilder.problems'))
         
         if request.method == 'POST':
             content = request.form.get('content', '').strip()
@@ -173,7 +173,7 @@ def create_problem():
                 
                 current_app.logger.info(f"Problem created by user {current_user.id}")
                 flash('問題を作成しました。', 'success')
-                return redirect(url_for('problems.problems'))
+                return redirect(url_for('basebuilder.problems'))
                 
             except Exception as e:
                 db.session.rollback()
@@ -191,7 +191,7 @@ def create_problem():
     except Exception as e:
         current_app.logger.error(f"Create problem error: {str(e)}")
         flash('問題作成画面の読み込み中にエラーが発生しました。')
-        return redirect(url_for('problems.problems'))
+        return redirect(url_for('basebuilder.problems'))
 
 
 @problems_bp.route('/problem/<int:problem_id>/edit', methods=['GET', 'POST'])
@@ -201,14 +201,14 @@ def edit_problem(problem_id):
     try:
         if current_user.role not in ['admin', 'teacher']:
             flash('問題の編集権限がありません。')
-            return redirect(url_for('problems.problems'))
+            return redirect(url_for('basebuilder.problems'))
         
         problem = BasicKnowledgeItem.query.get_or_404(problem_id)
         
         # 作成者または管理者のみ編集可能
         if current_user.role != 'admin' and problem.created_by != current_user.id:
             flash('この問題を編集する権限がありません。')
-            return redirect(url_for('problems.problems'))
+            return redirect(url_for('basebuilder.problems'))
         
         if request.method == 'POST':
             content = request.form.get('content', '').strip()
@@ -263,7 +263,7 @@ def edit_problem(problem_id):
                 
                 current_app.logger.info(f"Problem {problem_id} updated by user {current_user.id}")
                 flash('問題を更新しました。', 'success')
-                return redirect(url_for('problems.problems'))
+                return redirect(url_for('basebuilder.problems'))
                 
             except Exception as e:
                 db.session.rollback()
@@ -292,7 +292,7 @@ def edit_problem(problem_id):
     except Exception as e:
         current_app.logger.error(f"Edit problem error: {str(e)}")
         flash('問題編集画面の読み込み中にエラーが発生しました。')
-        return redirect(url_for('problems.problems'))
+        return redirect(url_for('basebuilder.problems'))
 
 
 @problems_bp.route('/problem/<int:problem_id>/delete', methods=['POST'])
@@ -302,14 +302,14 @@ def delete_problem(problem_id):
     try:
         if current_user.role not in ['admin', 'teacher']:
             flash('問題の削除権限がありません。')
-            return redirect(url_for('problems.problems'))
+            return redirect(url_for('basebuilder.problems'))
         
         problem = BasicKnowledgeItem.query.get_or_404(problem_id)
         
         # 作成者または管理者のみ削除可能
         if current_user.role != 'admin' and problem.created_by != current_user.id:
             flash('この問題を削除する権限がありません。')
-            return redirect(url_for('problems.problems'))
+            return redirect(url_for('basebuilder.problems'))
         
         # 問題を削除
         db.session.delete(problem)
@@ -317,13 +317,13 @@ def delete_problem(problem_id):
         
         current_app.logger.info(f"Problem {problem_id} deleted by user {current_user.id}")
         flash('問題を削除しました。', 'success')
-        return redirect(url_for('problems.problems'))
+        return redirect(url_for('basebuilder.problems'))
         
     except Exception as e:
         db.session.rollback()
         current_app.logger.error(f"Problem deletion error: {str(e)}")
         flash('問題の削除に失敗しました。', 'error')
-        return redirect(url_for('problems.problems'))
+        return redirect(url_for('basebuilder.problems'))
 
 
 @problems_bp.route('/start_search_session')
@@ -333,19 +333,19 @@ def start_search_session():
     try:
         if current_user.role != 'student':
             flash('学生のみアクセス可能です。')
-            return redirect(url_for('problems.problems'))
+            return redirect(url_for('basebuilder.problems'))
         
         # セッションに問題検索モードを設定
         session['search_mode'] = True
         session['search_start_time'] = datetime.now().isoformat()
         
         flash('問題検索モードを開始しました。問題を選択して学習を始めてください。', 'info')
-        return redirect(url_for('problems.problems'))
+        return redirect(url_for('basebuilder.problems'))
         
     except Exception as e:
         current_app.logger.error(f"Start search session error: {str(e)}")
         flash('検索セッションの開始中にエラーが発生しました。')
-        return redirect(url_for('problems.problems'))
+        return redirect(url_for('basebuilder.problems'))
 
 
 @problems_bp.route('/api/problem/<int:problem_id>/details')
@@ -443,7 +443,7 @@ def download_problem_template(template_type):
     except Exception as e:
         current_app.logger.error(f"Download template error: {str(e)}")
         flash('テンプレートのダウンロードに失敗しました。', 'error')
-        return redirect(url_for('problems.problems'))
+        return redirect(url_for('basebuilder.problems'))
 
 
 @problems_bp.route('/import_problems', methods=['GET', 'POST'])
@@ -462,24 +462,24 @@ def import_problems():
         category_id = request.form.get('category_id', type=int)
         if not category_id:
             flash('カテゴリを選択してください。', 'error')
-            return redirect(url_for('problems.import_problems'))
+            return redirect(url_for('basebuilder.import_problems'))
         
         # ファイルチェック
         if 'csv_file' not in request.files:
             flash('CSVファイルを選択してください。', 'error')
-            return redirect(url_for('problems.import_problems'))
+            return redirect(url_for('basebuilder.import_problems'))
         
         csv_file = request.files['csv_file']
         if csv_file.filename == '':
             flash('CSVファイルを選択してください。', 'error')
-            return redirect(url_for('problems.import_problems'))
+            return redirect(url_for('basebuilder.import_problems'))
         
         # CSVファイルの読み込み
         try:
             csv_content = csv_file.read().decode('utf-8')
         except UnicodeDecodeError:
             flash('CSVファイルのエンコーディングエラー。UTF-8形式で保存してください。', 'error')
-            return redirect(url_for('problems.import_problems'))
+            return redirect(url_for('basebuilder.import_problems'))
         
         # 既存のインポート関数の代わりに直接処理
         import csv
@@ -491,13 +491,13 @@ def import_problems():
         
         if not headers:
             flash('CSVファイルが空です。', 'error')
-            return redirect(url_for('problems.import_problems'))
+            return redirect(url_for('basebuilder.import_problems'))
         
         # 期待するヘッダー
         expected_headers = ['問題文', '選択肢1', '選択肢2', '選択肢3', '選択肢4', '正解番号', '難易度']
         if headers != expected_headers:
             flash(f'CSVファイルのヘッダーが正しくありません。期待: {expected_headers}', 'error')
-            return redirect(url_for('problems.import_problems'))
+            return redirect(url_for('basebuilder.import_problems'))
         
         imported_count = 0
         errors = []
@@ -564,9 +564,9 @@ def import_problems():
             flash('問題をインポートできませんでした。', 'error')
             for error in errors[:5]:  # 最初の5つのエラーのみ表示
                 flash(error, 'error')
-            return redirect(url_for('problems.import_problems'))
+            return redirect(url_for('basebuilder.import_problems'))
         
     except Exception as e:
         current_app.logger.error(f"Import problems error: {str(e)}")
         flash('問題のインポート中にエラーが発生しました。', 'error')
-        return redirect(url_for('problems.problems'))
+        return redirect(url_for('basebuilder.problems'))

@@ -110,7 +110,7 @@ def student_analytics():
         category_performance = db.session.query(
             ProblemCategory.name,
             db.func.count(AnswerRecord.id).label('total'),
-            db.func.sum(db.case([(AnswerRecord.is_correct == True, 1)], else_=0)).label('correct')
+            db.func.sum(db.case((AnswerRecord.is_correct == True, 1), else_=0)).label('correct')
         ).join(
             BasicKnowledgeItem, BasicKnowledgeItem.category_id == ProblemCategory.id
         ).join(

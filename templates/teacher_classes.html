@@ -41,30 +41,32 @@
                             {% if class.description %}
                                 <p class="card-text">{{ class.description }}</p>
                             {% endif %}
-                            <div class="row text-center">
+                            <div class="row text-center mb-3">
                                 <div class="col-6">
-                                    <strong>{{ class.students.count() }}</strong>
-                                    <br><small class="text-muted">生徒数</small>
+                                    <h6 class="mb-1">{{ class.students.count() }}</h6>
+                                    <small class="text-muted">生徒数</small>
                                 </div>
                                 <div class="col-6">
-                                    <strong>{{ class.created_at.strftime('%m/%d') if class.created_at }}</strong>
-                                    <br><small class="text-muted">作成日</small>
+                                    <h6 class="mb-1">{{ class.created_at.strftime('%m/%d') if class.created_at }}</h6>
+                                    <small class="text-muted">作成日</small>
                                 </div>
                             </div>
                         </div>
-                        <div class="card-footer d-flex justify-content-between">
-                            <a href="{{ url_for('teacher_class_management.view_class', class_id=class.id) }}" class="btn btn-outline-primary">
-                                <i class="fas fa-eye"></i> 詳細
-                            </a>
-                            <div>
-                                <a href="{{ url_for('teacher_class_management.edit_class', class_id=class.id) }}" class="btn btn-outline-secondary">
-                                    <i class="fas fa-edit"></i>
+                        <div class="card-footer">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <a href="{{ url_for('teacher_class_management.view_class', class_id=class.id) }}" class="btn btn-outline-primary btn-sm">
+                                    <i class="fas fa-eye"></i> 詳細
                                 </a>
-                                <a href="{{ url_for('teacher_class_management.delete_class', class_id=class.id) }}" 
-                                   class="btn btn-outline-danger" 
-                                   onclick="return confirm('このクラス' + {{ class.name|tojson }} + 'を削除してもよろしいですか？この操作は元に戻せません。');">
-                                    <i class="fas fa-trash"></i>
-                                </a>
+                                <div class="btn-group" role="group">
+                                    <a href="{{ url_for('teacher_class_management.edit_class', class_id=class.id) }}" class="btn btn-outline-secondary btn-sm">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="{{ url_for('teacher_class_management.delete_class', class_id=class.id) }}" 
+                                       class="btn btn-outline-danger btn-sm" 
+                                       onclick="return confirm('このクラス「{{ class.name }}」を削除してもよろしいですか？この操作は元に戻せません。');">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                </div>
                             </div>
                         </div>
                     </div>

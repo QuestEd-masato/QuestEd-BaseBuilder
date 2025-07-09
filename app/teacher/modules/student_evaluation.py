@@ -8,7 +8,8 @@ import logging
 
 from app.models import (
     db, User, Class, ClassEnrollment, InquiryTheme, 
-    StudentEvaluation, RubricTemplate, ActivityLog, Goal, Todo
+    StudentEvaluation, RubricTemplate, ActivityLog, Goal, Todo,
+    MainTheme
 )
 from app.ai import generate_student_evaluation
 from ..common import teacher_required
@@ -263,8 +264,17 @@ def teacher_themes():
             'inquiry_themes': inquiry_themes
         }
     
+    # テンプレートで使用するデータ構造に変換
+    classes_with_themes = []
+    for class_obj, themes in themes_by_class.items():
+        classes_with_themes.append({
+            'class': class_obj,
+            'main_themes': themes['main_themes'],
+            'inquiry_themes': themes['inquiry_themes']
+        })
+    
     return render_template('teacher_themes.html', 
-                         themes_by_class=themes_by_class)
+                         classes_with_themes=classes_with_themes)
 
 @student_evaluation_bp.route('/api/student/<int:student_id>/evaluation_history')
 @login_required
