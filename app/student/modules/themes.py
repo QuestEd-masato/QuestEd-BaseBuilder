@@ -55,12 +55,37 @@ def themes():
             student_id=current_user.id
         ).order_by(InquiryTheme.created_at.desc()).all()
         
+        # テンプレートが期待する形式でテーマデータを構築
+        themes_with_main = []
+        for theme in personal_themes:
+            # メインテーマ情報を取得
+            main_theme = None
+            if theme.main_theme_id:
+                main_theme = MainTheme.query.get(theme.main_theme_id)
+            
+            themes_with_main.append({
+                'theme': theme,
+                'main_theme': main_theme
+            })
+        
+        # 利用可能なメインテーマ（選択されたクラスのもの）
+        available_main_themes = main_themes if selected_class else []
+        
+        # 選択されたクラスの情報
+        class_obj = selected_class
+        main_theme = main_themes[0] if main_themes else None
+        
         return render_template('view_themes.html',
                              classes=classes,
                              selected_class=selected_class,
+                             class_obj=class_obj,
+                             main_theme=main_theme,
                              main_themes=main_themes,
+                             available_main_themes=available_main_themes,
                              personal_themes=personal_themes,
-                             selected_theme=selected_theme)
+                             themes_with_main=themes_with_main,
+                             selected_theme=selected_theme,
+                             class_id=selected_class_id if selected_class else None)
         
     except Exception as e:
         current_app.logger.error(f"Themes list error: {str(e)}")

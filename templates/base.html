@@ -797,7 +797,7 @@
                                     <i class="fas fa-search"></i> 探究活動
                                 </a>
                                 <ul class="dropdown-menu">
-                                    <li><a href="{{ url_for('student_dashboard.dashboard') }}#themes">探究テーマ</a></li>
+                                    <li><a href="{{ url_for('student_themes.themes') }}">探究テーマ</a></li>
                                     <li><a href="{{ url_for('student_activities.activities') }}">活動記録</a></li>
                                 </ul>
                             </li>
@@ -819,7 +819,7 @@
                                     <i class="fas fa-tools"></i> ツール
                                 </a>
                                 <ul class="dropdown-menu">
-                                    <li><a href="{{ url_for('index') }}">AIチャット</a></li>
+                                    <li><a href="{{ url_for('student_chat.select_class') }}">AIチャット</a></li>
                                     <li><a href="{{ url_for('student_surveys.surveys') }}">アンケート</a></li>
                                     <li><a href="{{ url_for('student_goals_todos.todos') }}">To Doリスト</a></li>
                                     <li><a href="{{ url_for('student_goals_todos.goals') }}">目標管理</a></li>
@@ -842,7 +842,7 @@
                                     <i class="fas fa-search"></i> 探究活動
                                 </div>
                                 <div id="mobile-menu-inquiry" class="mobile-submenu">
-                                    <a href="{{ url_for('student_dashboard.dashboard') }}#themes" class="mobile-submenu-item">探究テーマ</a>
+                                    <a href="{{ url_for('student_themes.themes') }}" class="mobile-submenu-item">探究テーマ</a>
                                     <a href="{{ url_for('student_activities.activities') }}" class="mobile-submenu-item">活動記録</a>
                                 </div>
                                 
@@ -860,7 +860,7 @@
                                     <i class="fas fa-tools"></i> ツール
                                 </div>
                                 <div id="mobile-menu-tools" class="mobile-submenu">
-                                    <a href="{{ url_for('index') }}" class="mobile-submenu-item">AIチャット</a>
+                                    <a href="{{ url_for('student_chat.select_class') }}" class="mobile-submenu-item">AIチャット</a>
                                     <a href="{{ url_for('student_surveys.surveys') }}" class="mobile-submenu-item">アンケート</a>
                                     <a href="{{ url_for('student_goals_todos.todos') }}" class="mobile-submenu-item">To Doリスト</a>
                                     <a href="{{ url_for('student_goals_todos.goals') }}" class="mobile-submenu-item">目標管理</a>

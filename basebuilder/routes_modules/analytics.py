@@ -149,9 +149,12 @@ def student_analytics():
 def analysis(class_id=None):
     """教師向け分析ダッシュボード"""
     try:
-        if current_user.role != 'teacher':
-            flash('この機能は教師のみ利用可能です。')
-            return redirect(url_for('analytics.analysis'))
+        if current_user.role == 'student':
+            flash('学生は学生向け分析ページをご利用ください。')
+            return redirect(url_for('basebuilder.student_analytics'))
+        elif current_user.role not in ['teacher', 'admin']:
+            flash('この機能は教師または管理者のみ利用可能です。')
+            return redirect(url_for('basebuilder.index'))
         
         current_app.logger.info(f"Analysis dashboard accessed by teacher {current_user.id}")
         
