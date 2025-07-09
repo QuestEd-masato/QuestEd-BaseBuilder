@@ -40,18 +40,18 @@
         </a>
         <div class="d-flex gap-2 flex-wrap">
             {% if current_user.role == 'teacher' and curriculum.teacher_id == current_user.id %}
-            <a href="{{ url_for('teacher.edit_curriculum', curriculum_id=curriculum.id) }}" class="btn-modern" style="background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);">
+            <a href="{{ url_for('teacher_curriculum_management.edit_curriculum', curriculum_id=curriculum.id) }}" class="btn-modern" style="background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);">
                 <i class="fas fa-edit"></i> 編集
             </a>
             {% endif %}
-            <a href="{{ url_for('teacher.export_curriculum', curriculum_id=curriculum.id) }}" class="btn-modern btn-success">
+            <a href="{{ url_for('teacher_curriculum_management.export_curriculum', curriculum_id=curriculum.id) }}" class="btn-modern btn-success">
                 <i class="fas fa-file-csv"></i> CSVでエクスポート
             </a>
             {% if current_user.role == 'teacher' and curriculum.teacher_id == current_user.id %}
-            <a href="{{ url_for('teacher.view_converted_units', curriculum_id=curriculum.id) }}" class="btn-modern" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
+            <a href="{{ url_for('teacher_curriculum_management.view_converted_units', curriculum_id=curriculum.id) }}" class="btn-modern" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
                 <i class="fas fa-exchange-alt"></i> 単元変換
             </a>
-            <a href="{{ url_for('teacher.auto_sync_settings', curriculum_id=curriculum.id) }}" class="btn-modern" style="background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);">
+            <a href="{{ url_for('teacher_curriculum_management.auto_sync_settings', curriculum_id=curriculum.id) }}" class="btn-modern" style="background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);">
                 <i class="fas fa-sync-alt"></i> 自動同期
             </a>
             {% endif %}
@@ -169,7 +169,7 @@
                 <h4 class="text-muted">カリキュラム内容</h4>
                 <p class="text-muted">カリキュラムの詳細な内容がまだ設定されていません。</p>
                 {% if current_user.role == 'teacher' and curriculum.teacher_id == current_user.id %}
-                <a href="{{ url_for('teacher.edit_curriculum', curriculum_id=curriculum.id) }}" class="btn-modern">
+                <a href="{{ url_for('teacher_curriculum_management.edit_curriculum', curriculum_id=curriculum.id) }}" class="btn-modern">
                     <i class="fas fa-edit"></i> 内容を追加
                 </a>
                 {% endif %}

@@ -54,10 +54,10 @@
                   </td>
                   <td>{{ text.title }}</td>
                   <td>{{ text.category.name }}</td>
-                  <td>{{ text.problems|length }}</td>
+                  <td>{{ text_stats[text.id].problem_count }}</td>
                   <td>
-                    {% if text.deliveries|length > 0 %}
-                      <span class="badge bg-success">配信中 ({{ text.deliveries|length }}クラス)</span>
+                    {% if text_stats[text.id].delivery_count > 0 %}
+                      <span class="badge bg-success">配信中 ({{ text_stats[text.id].delivery_count }}クラス)</span>
                     {% else %}
                       <span class="badge bg-secondary">未配信</span>
                     {% endif %}
@@ -69,7 +69,7 @@
                         <span class="d-none d-md-inline">詳細</span>
                       </a>
                       
-                      {% if text.deliveries|length > 0 %}
+                      {% if text_stats[text.id].delivery_count > 0 %}
                         <a href="#" class="btn btn-sm btn-warning" data-bs-toggle="collapse" data-bs-target="#delivery-list-{{ text.id }}">
                           <i class="fas fa-paper-plane"></i>
                           <span class="d-none d-md-inline">配信</span>
@@ -93,7 +93,7 @@
                 </tr>
                 
                 <!-- 配信詳細（折りたたみ可能） -->
-                {% if text.deliveries|length > 0 %}
+                {% if text_stats[text.id].delivery_count > 0 %}
                 <tr class="collapse" id="delivery-list-{{ text.id }}">
                   <td colspan="6" class="p-0">
                     <div class="card card-body border-0 bg-light m-2">

@@ -178,8 +178,12 @@ def view_curriculum(curriculum_id):
             is_active=True
         ).all()
     
+    # クラス情報を取得
+    class_obj = Class.query.get_or_404(curriculum.class_id)
+    
     return render_template('view_curriculum.html', 
                          curriculum=curriculum,
+                         class_obj=class_obj,
                          conversion_status=conversion_status,
                          converted_units=converted_units)
 
@@ -209,7 +213,8 @@ def edit_curriculum(curriculum_id):
                     curriculum.format = 'json'
                 except json.JSONDecodeError:
                     flash('無効なJSON形式です。', 'error')
-                    return render_template('edit_curriculum.html', curriculum=curriculum)
+                    class_obj = Class.query.get_or_404(curriculum.class_id)
+                    return render_template('edit_curriculum.html', curriculum=curriculum, class_obj=class_obj)
             else:
                 curriculum.format = 'text'
             
@@ -224,7 +229,10 @@ def edit_curriculum(curriculum_id):
             current_app.logger.error(f"Curriculum update error: {str(e)}")
             flash('カリキュラムの更新に失敗しました。', 'error')
     
-    return render_template('edit_curriculum.html', curriculum=curriculum)
+    # クラス情報を取得
+    class_obj = Class.query.get_or_404(curriculum.class_id)
+    
+    return render_template('edit_curriculum.html', curriculum=curriculum, class_obj=class_obj)
 
 @curriculum_management_bp.route('/curriculum/<int:curriculum_id>/delete')
 @login_required

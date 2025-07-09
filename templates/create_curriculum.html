@@ -17,7 +17,7 @@
             <h2 class="h5 mb-0">カリキュラム設定</h2>
         </div>
         <div class="card-body">
-            <form method="post" action="{{ url_for('teacher.generate_curriculum', class_id=class_obj.id) }}">
+            <form method="post" action="{{ url_for('teacher_curriculum_management.generate_curriculum', class_id=class_obj.id) }}">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 
                 <div class="row mb-3">

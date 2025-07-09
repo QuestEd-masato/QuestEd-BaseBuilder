@@ -42,11 +42,11 @@
                 <label for="grade">学年</label>
                 <select id="grade" name="grade" class="form-control">
                     <option value="">選択してください</option>
-                    {% for g in range(1, 13) %}
+                    {% for g in range(1, 7) %}
                     <option value="{{ g }}" {% if user.grade == g %}selected{% endif %}>{{ g }}年</option>
                     {% endfor %}
                 </select>
-                <small class="form-text text-muted">1-6年：小学校、7-9年：中学校、10-12年：高校</small>
+                <small class="form-text text-muted">小学校：1-6年、中学校：1-3年、高校：1-3年、中高一貫校：1-6年</small>
             </div>
             
             <div class="form-group">

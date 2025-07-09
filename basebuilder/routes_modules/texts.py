@@ -35,6 +35,79 @@ def texts():
     else:
         return redirect(url_for('texts.text_sets'))
 
+@texts_bp.route('/dashboard')
+@login_required
+def dashboard():
+    """BaseBuilderダッシュボード"""
+    if current_user.role == 'student':
+        return redirect(url_for('texts.my_texts'))
+    else:
+        return redirect(url_for('texts.teacher_dashboard'))
+
+@texts_bp.route('/teacher_dashboard')
+@login_required
+def teacher_dashboard():
+    """教師用BaseBuilderダッシュボード"""
+    try:
+        # 権限チェック
+        if current_user.role not in ['admin', 'teacher']:
+            flash('教師または管理者のみアクセス可能です。')
+            return redirect(url_for('index'))
+        
+        # 基本統計情報
+        total_text_sets = TextSet.query.count()
+        total_problems = BasicKnowledgeItem.query.count()
+        total_deliveries = TextDelivery.query.count()
+        total_categories = ProblemCategory.query.count()
+        
+        # 教師の場合は自分の学校のデータのみ
+        if current_user.role == 'teacher' and hasattr(current_user, 'school_id'):
+            teacher_text_sets = TextSet.query.filter(
+                db.or_(
+                    TextSet.school_id == current_user.school_id,
+                    TextSet.school_id == None
+                )
+            ).count()
+            
+            teacher_problems = BasicKnowledgeItem.query.filter(
+                db.or_(
+                    BasicKnowledgeItem.school_id == current_user.school_id,
+                    BasicKnowledgeItem.school_id == None
+                )
+            ).count()
+        else:
+            teacher_text_sets = total_text_sets
+            teacher_problems = total_problems
+        
+        # 最近の配信記録
+        recent_deliveries = TextDelivery.query.order_by(
+            TextDelivery.delivered_at.desc()
+        ).limit(10).all()
+        
+        # 最近の問題作成
+        recent_problems = BasicKnowledgeItem.query.order_by(
+            BasicKnowledgeItem.created_at.desc()
+        ).limit(10).all()
+        
+        # 教師が担当するクラスを取得
+        if current_user.role == 'teacher':
+            classes = getattr(current_user, 'classes_teaching', [])
+        else:
+            from app.models import Class
+            classes = Class.query.all()
+        
+        return render_template('basebuilder/teacher_dashboard.html',
+                             problem_count=teacher_problems,
+                             category_count=total_categories,
+                             path_count=0,  # 学習パス数（未実装）
+                             classes=classes,
+                             recent_problems=recent_problems)
+        
+    except Exception as e:
+        current_app.logger.error(f"Teacher dashboard error: {str(e)}")
+        flash('ダッシュボードの読み込み中にエラーが発生しました。')
+        return redirect(url_for('index'))
+
 @texts_bp.route('/debug/text_data')
 @login_required
 def debug_text_data():
@@ -101,7 +174,7 @@ def my_texts():
         # 権限チェック
         if current_user.role != 'student':
             flash('学生のみアクセス可能です。')
-            return redirect(url_for('index'))
+            return redirect(url_for('texts.text_sets'))
         # 学生の所属クラスを取得
         enrolled_class_ids = [enrollment.class_id for enrollment in 
                             ClassEnrollment.query.filter_by(
@@ -209,20 +282,29 @@ def text_sets():
         current_app.logger.info(f"Text sets query for user {current_user.id} (role: {current_user.role}, school_id: {getattr(current_user, 'school_id', 'None')})")
         current_app.logger.info(f"Found {text_sets_pagination.total} text sets")
         
-        # 各テキストセットの問題数を計算
+        # 各テキストセットの統計情報を計算
         text_stats = {}
         for text_set in text_sets_pagination.items:
+            # 問題数を計算
             problem_count = BasicKnowledgeItem.query.filter_by(
                 text_set_id=text_set.id
             ).count()
-            delivery_count = TextDelivery.query.filter_by(
+            
+            # 配信データを取得
+            deliveries = TextDelivery.query.filter_by(
                 text_set_id=text_set.id
-            ).count()
+            ).all()
             
             text_stats[text_set.id] = {
                 'problem_count': problem_count,
-                'delivery_count': delivery_count
+                'delivery_count': len(deliveries)
             }
+            
+            # テキストセットオブジェクトに動的に属性を追加
+            # テンプレートで text.problems|length などが使用できるように
+            setattr(text_set, '_problem_count', problem_count)
+            setattr(text_set, '_delivery_count', len(deliveries))
+            setattr(text_set, 'deliveries', deliveries)
         
         return render_template('basebuilder/text_sets.html',
                              text_sets=text_sets_pagination.items,
