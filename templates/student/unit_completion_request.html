@@ -1,0 +1,626 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ unit.title }} - 完了申請 | QuestEd{% endblock %}
+
+{% block extra_css %}
+<style>
+/* 単元完了申請フォーム専用スタイル */
+.completion-request-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 1rem;
+}
+
+.request-header {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+    color: white;
+    border-radius: 12px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.request-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 150px;
+    height: 150px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    transform: translate(30px, -30px);
+}
+
+.request-header h1 {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+    position: relative;
+    z-index: 1;
+}
+
+.request-header p {
+    font-size: 1.1rem;
+    opacity: 0.9;
+    position: relative;
+    z-index: 1;
+}
+
+.progress-summary {
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+}
+
+.progress-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 0;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.progress-item:last-child {
+    border-bottom: none;
+}
+
+.progress-label {
+    font-weight: 600;
+    color: #495057;
+}
+
+.progress-value {
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.progress-value.good {
+    color: #28a745;
+}
+
+.progress-value.warning {
+    color: #ffc107;
+}
+
+.progress-value.danger {
+    color: #dc3545;
+}
+
+.progress-bar-container {
+    background: #e9ecef;
+    border-radius: 10px;
+    height: 12px;
+    overflow: hidden;
+    margin-top: 0.5rem;
+}
+
+.progress-bar {
+    background: linear-gradient(90deg, #28a745, #20c997);
+    height: 100%;
+    border-radius: 10px;
+    transition: width 0.3s ease;
+}
+
+.progress-bar.warning {
+    background: linear-gradient(90deg, #ffc107, #ffca2c);
+}
+
+.progress-bar.danger {
+    background: linear-gradient(90deg, #dc3545, #e74c3c);
+}
+
+.requirements-section {
+    background: white;
+    border-radius: 12px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.requirement-item {
+    display: flex;
+    align-items: center;
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    border: 2px solid #e9ecef;
+}
+
+.requirement-item.met {
+    border-color: #28a745;
+    background: #d4edda;
+}
+
+.requirement-item.not-met {
+    border-color: #dc3545;
+    background: #f8d7da;
+}
+
+.requirement-icon {
+    font-size: 1.5rem;
+    margin-right: 1rem;
+    width: 2rem;
+    text-align: center;
+}
+
+.requirement-icon.met {
+    color: #28a745;
+}
+
+.requirement-icon.not-met {
+    color: #dc3545;
+}
+
+.requirement-text {
+    font-weight: 500;
+}
+
+.form-section {
+    background: white;
+    border-radius: 12px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-label {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+.form-control {
+    width: 100%;
+    padding: 0.75rem;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: border-color 0.3s ease;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+.form-textarea {
+    min-height: 120px;
+    resize: vertical;
+}
+
+.evaluation-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.evaluation-item {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 1rem;
+    text-align: center;
+}
+
+.evaluation-label {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: #495057;
+}
+
+.rating-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.rating-button {
+    width: 2.5rem;
+    height: 2.5rem;
+    border: 2px solid #e9ecef;
+    background: white;
+    border-radius: 50%;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.rating-button:hover {
+    border-color: #007bff;
+    background: #e3f2fd;
+}
+
+.rating-button.selected {
+    border-color: #007bff;
+    background: #007bff;
+    color: white;
+}
+
+.alert-section {
+    background: #fff3cd;
+    border: 1px solid #ffeaa7;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 2rem;
+}
+
+.alert-section.danger {
+    background: #f8d7da;
+    border-color: #f5c6cb;
+}
+
+.alert-section.success {
+    background: #d4edda;
+    border-color: #c3e6cb;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin-top: 2rem;
+    flex-wrap: wrap;
+}
+
+.btn {
+    padding: 0.75rem 2rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.btn-primary {
+    background: #007bff;
+    color: white;
+}
+
+.btn-secondary {
+    background: #6c757d;
+    color: white;
+}
+
+.btn-success {
+    background: #28a745;
+    color: white;
+}
+
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+@media (max-width: 768px) {
+    .completion-request-container {
+        padding: 0.5rem;
+    }
+    
+    .request-header {
+        padding: 1.5rem;
+    }
+    
+    .request-header h1 {
+        font-size: 1.6rem;
+    }
+    
+    .evaluation-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .action-buttons {
+        flex-direction: column;
+    }
+    
+    .btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="completion-request-container">
+    <!-- パンくずナビ -->
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('student_dashboard.dashboard') }}">ダッシュボード</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('student_learning.learning_portal') }}">学習ポータル</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ unit.title }} - 完了申請</li>
+        </ol>
+    </nav>
+
+    <!-- 申請ヘッダー -->
+    <div class="request-header">
+        <h1>
+            <i class="fas fa-trophy"></i>
+            単元完了申請
+        </h1>
+        <p>{{ unit.title }}</p>
+    </div>
+
+    <!-- 進捗サマリー -->
+    <div class="progress-summary">
+        <h3 class="mb-3">
+            <i class="fas fa-chart-line"></i>
+            学習進捗サマリー
+        </h3>
+        
+        <div class="progress-item">
+            <span class="progress-label">全体進捗率</span>
+            <span class="progress-value {{ 'good' if unit_progress.progress_percentage >= 80 else 'warning' if unit_progress.progress_percentage >= 60 else 'danger' }}">
+                {{ unit_progress.progress_percentage }}%
+            </span>
+        </div>
+        <div class="progress-bar-container">
+            <div class="progress-bar {{ 'warning' if unit_progress.progress_percentage < 80 else '' }}" 
+                 style="width: {{ unit_progress.progress_percentage }}%"></div>
+        </div>
+
+        <div class="progress-item">
+            <span class="progress-label">学習時間</span>
+            <span class="progress-value good">{{ unit_progress.total_time_minutes or 0 }}分</span>
+        </div>
+
+        <div class="progress-item">
+            <span class="progress-label">完了タスク数</span>
+            <span class="progress-value good">{{ unit_progress.completed_tasks or 0 }}個</span>
+        </div>
+
+        {% if basebuilder_progress %}
+        <div class="progress-item">
+            <span class="progress-label">BaseBuilder語彙習得</span>
+            <span class="progress-value {{ 'good' if basebuilder_progress.mastery_rate >= 70 else 'warning' }}">
+                {{ basebuilder_progress.mastery_rate }}%
+            </span>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- 完了要件チェック -->
+    <div class="requirements-section">
+        <h3 class="mb-3">
+            <i class="fas fa-check-circle"></i>
+            完了要件チェック
+        </h3>
+
+        <div class="requirement-item {{ 'met' if unit_progress.progress_percentage >= 80 else 'not-met' }}">
+            <i class="requirement-icon {{ 'met' if unit_progress.progress_percentage >= 80 else 'not-met' }} fas 
+               {{ 'fa-check-circle' if unit_progress.progress_percentage >= 80 else 'fa-times-circle' }}"></i>
+            <span class="requirement-text">
+                学習進捗率が80%以上であること
+                (現在: {{ unit_progress.progress_percentage }}%)
+            </span>
+        </div>
+
+        <div class="requirement-item {{ 'met' if unit_progress.total_time_minutes >= 60 else 'not-met' }}">
+            <i class="requirement-icon {{ 'met' if unit_progress.total_time_minutes >= 60 else 'not-met' }} fas 
+               {{ 'fa-check-circle' if unit_progress.total_time_minutes >= 60 else 'fa-times-circle' }}"></i>
+            <span class="requirement-text">
+                最低学習時間60分以上
+                (現在: {{ unit_progress.total_time_minutes or 0 }}分)
+            </span>
+        </div>
+
+        {% if basebuilder_progress %}
+        <div class="requirement-item {{ 'met' if basebuilder_progress.mastery_rate >= 70 else 'not-met' }}">
+            <i class="requirement-icon {{ 'met' if basebuilder_progress.mastery_rate >= 70 else 'not-met' }} fas 
+               {{ 'fa-check-circle' if basebuilder_progress.mastery_rate >= 70 else 'fa-times-circle' }}"></i>
+            <span class="requirement-text">
+                BaseBuilder語彙習得率70%以上
+                (現在: {{ basebuilder_progress.mastery_rate }}%)
+            </span>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- 状態別メッセージ -->
+    {% if can_submit %}
+        <div class="alert-section success">
+            <h4><i class="fas fa-check-circle"></i> 申請可能です</h4>
+            <p>全ての完了要件を満たしています。下記のフォームに自己評価を入力して申請を提出してください。</p>
+        </div>
+    {% else %}
+        <div class="alert-section danger">
+            <h4><i class="fas fa-exclamation-triangle"></i> 申請要件が不足しています</h4>
+            <p>申請を提出するには、上記の完了要件をすべて満たす必要があります。学習を続けて要件を満たしてから再度お試しください。</p>
+        </div>
+    {% endif %}
+
+    <!-- 自己評価フォーム -->
+    {% if can_submit %}
+    <form id="completion-request-form" class="form-section">
+        <h3 class="mb-3">
+            <i class="fas fa-user-check"></i>
+            自己評価
+        </h3>
+
+        <div class="form-group">
+            <label class="form-label">学習の感想・振り返り</label>
+            <textarea name="reflection" class="form-control form-textarea" 
+                      placeholder="この単元で学んだことや感じたことを記入してください..."></textarea>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">困難だった点・改善提案</label>
+            <textarea name="difficulties" class="form-control form-textarea" 
+                      placeholder="学習中に困難だった点や、改善してほしい点があれば記入してください..."></textarea>
+        </div>
+
+        <div class="evaluation-grid">
+            <div class="evaluation-item">
+                <div class="evaluation-label">理解度</div>
+                <p class="small text-muted">内容をどの程度理解できましたか？</p>
+                <div class="rating-buttons" data-rating="understanding">
+                    {% for i in range(1, 6) %}
+                    <button type="button" class="rating-button" data-value="{{ i }}">{{ i }}</button>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="evaluation-item">
+                <div class="evaluation-label">難易度</div>
+                <p class="small text-muted">この単元の難易度はいかがでしたか？</p>
+                <div class="rating-buttons" data-rating="difficulty">
+                    {% for i in range(1, 6) %}
+                    <button type="button" class="rating-button" data-value="{{ i }}">{{ i }}</button>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="evaluation-item">
+                <div class="evaluation-label">興味度</div>
+                <p class="small text-muted">この単元に興味を持てましたか？</p>
+                <div class="rating-buttons" data-rating="interest">
+                    {% for i in range(1, 6) %}
+                    <button type="button" class="rating-button" data-value="{{ i }}">{{ i }}</button>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="evaluation-item">
+                <div class="evaluation-label">満足度</div>
+                <p class="small text-muted">学習内容に満足していますか？</p>
+                <div class="rating-buttons" data-rating="satisfaction">
+                    {% for i in range(1, 6) %}
+                    <button type="button" class="rating-button" data-value="{{ i }}">{{ i }}</button>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <input type="hidden" name="unit_id" value="{{ unit.id }}">
+        <input type="hidden" name="understanding_rating" id="understanding_rating">
+        <input type="hidden" name="difficulty_rating" id="difficulty_rating">
+        <input type="hidden" name="interest_rating" id="interest_rating">
+        <input type="hidden" name="satisfaction_rating" id="satisfaction_rating">
+    </form>
+    {% endif %}
+
+    <!-- アクションボタン -->
+    <div class="action-buttons">
+        <a href="{{ url_for('student_learning.learning_portal') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i>
+            学習ポータルに戻る
+        </a>
+
+        {% if can_submit %}
+        <button type="button" class="btn btn-success" onclick="submitCompletionRequest()" id="submit-btn">
+            <i class="fas fa-paper-plane"></i>
+            完了申請を提出
+        </button>
+        {% else %}
+        <a href="{{ url_for('student_learning.unit_detail', unit_id=unit.id) }}" class="btn btn-primary">
+            <i class="fas fa-book-open"></i>
+            学習を続ける
+        </a>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+// 評価ボタンの処理
+document.querySelectorAll('.rating-buttons').forEach(group => {
+    const ratingType = group.dataset.rating;
+    const buttons = group.querySelectorAll('.rating-button');
+    
+    buttons.forEach(button => {
+        button.addEventListener('click', () => {
+            // 同じグループの他のボタンの選択を解除
+            buttons.forEach(b => b.classList.remove('selected'));
+            // クリックされたボタンを選択状態にする
+            button.classList.add('selected');
+            // 隠し入力欄に値を設定
+            document.getElementById(ratingType + '_rating').value = button.dataset.value;
+        });
+    });
+});
+
+// 申請提出処理
+function submitCompletionRequest() {
+    const form = document.getElementById('completion-request-form');
+    const formData = new FormData(form);
+    
+    // 評価が全て入力されているかチェック
+    const requiredRatings = ['understanding', 'difficulty', 'interest', 'satisfaction'];
+    const missingRatings = requiredRatings.filter(rating => !formData.get(rating + '_rating'));
+    
+    if (missingRatings.length > 0) {
+        alert('すべての評価項目を入力してください。');
+        return;
+    }
+    
+    if (!confirm('完了申請を提出しますか？提出後は修正できません。')) {
+        return;
+    }
+    
+    // 送信ボタンを無効化
+    const submitBtn = document.getElementById('submit-btn');
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 送信中...';
+    
+    // JSONデータとして送信
+    const requestData = {
+        unit_id: parseInt(formData.get('unit_id')),
+        reflection: formData.get('reflection'),
+        difficulties: formData.get('difficulties'),
+        self_evaluation: {
+            understanding: parseInt(formData.get('understanding_rating')),
+            difficulty: parseInt(formData.get('difficulty_rating')),
+            interest: parseInt(formData.get('interest_rating')),
+            satisfaction: parseInt(formData.get('satisfaction_rating'))
+        }
+    };
+    
+    fetch('/api/unit/request-completion', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('meta[name=csrf-token]').getAttribute('content')
+        },
+        body: JSON.stringify(requestData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            alert('完了申請を提出しました。教師による確認をお待ちください。');
+            window.location.href = '{{ url_for("student_learning.learning_portal") }}';
+        } else {
+            alert('申請に失敗しました: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('申請中にエラーが発生しました。');
+    })
+    .finally(() => {
+        // 送信ボタンを再有効化
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> 完了申請を提出';
+    });
+}
+</script>
+{% endblock %}

@@ -59,7 +59,12 @@
       "Bash(export FLASK_RUN_PORT=5001)",
       "Bash(FLASK_ENV=development python -c \"\nfrom app import app\nfrom models.user import User\nfrom database import db\nimport sys\n\n# Flask アプリケーションコンテキストで実行\nwith app.app_context():\n    print(''📊 データベーステスト開始'')\n    try:\n        # 既存のユーザーデータ確認\n        users = User.query.all()\n        print(f''✅ ユーザー数: {len(users)}'')\n        \n        # 新しいフィールドが追加されているか確認\n        sample_user = users[0] if users else None\n        if sample_user:\n            print(f''🔍 サンプルユーザー: {sample_user.full_name}'')\n            print(f''   - grade: {getattr(sample_user, \"\"grade\"\", \"\"N/A\"\")}'')\n            print(f''   - classroom: {getattr(sample_user, \"\"classroom\"\", \"\"N/A\"\")}'')\n            print(f''   - student_number: {getattr(sample_user, \"\"student_number\"\", \"\"N/A\"\")}'')\n        \n        # 新しいテーブル確認\n        from sqlalchemy import text\n        result = db.session.execute(text(''SELECT COUNT(*) FROM grades''))\n        grade_count = result.scalar()\n        print(f''✅ grades テーブル: {grade_count} レコード'')\n        \n        result = db.session.execute(text(''SELECT name FROM grades ORDER BY display_order''))\n        grades = result.fetchall()\n        print(f''📋 学年リスト: {[grade[0] for grade in grades]}'')\n        \n        result = db.session.execute(text(''SELECT COUNT(*) FROM school_classes''))\n        class_count = result.scalar()\n        print(f''✅ school_classes テーブル: {class_count} レコード'')\n        \n        print(''✅ データベーステスト完了 - 全機能正常'')\n        \n    except Exception as e:\n        print(f''❌ データベーステストエラー: {e}'')\n        sys.exit(1)\n\")",
       "Bash(FLASK_ENV=development python:*)",
-      "Bash(touch:*)"
+      "Bash(touch:*)",
+      "Bash(diff:*)",
+      "Bash(flake8:*)",
+      "Bash(mypy:*)",
+      "Bash(isort:*)",
+      "Bash(black:*)"
     ],
     "deny": []
   }

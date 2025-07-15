@@ -1,0 +1,336 @@
+{% extends 'base.html' %}
+
+{% block title %}学習システム移行案内 | QuestEd{% endblock %}
+
+{% block extra_css %}
+<style>
+.migration-container {
+    max-width: 900px;
+    margin: 2rem auto;
+    padding: 2rem;
+}
+
+.migration-header {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    color: white;
+    border-radius: 12px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+.migration-header h1 {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+}
+
+.system-comparison {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    margin: 2rem 0;
+}
+
+.system-card {
+    border: 2px solid #e9ecef;
+    border-radius: 12px;
+    padding: 1.5rem;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.system-card.recommended {
+    border-color: #28a745;
+    background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+}
+
+.system-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.system-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+.feature-list {
+    text-align: left;
+    margin: 1rem 0;
+}
+
+.feature-list li {
+    margin: 0.5rem 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.access-buttons {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin: 2rem 0;
+}
+
+.btn-access {
+    padding: 1rem 2rem;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-lessons {
+    background: #007bff;
+    color: white;
+}
+
+.btn-lessons:hover {
+    background: #0056b3;
+    color: white;
+    transform: translateY(-2px);
+}
+
+.btn-tasks {
+    background: #28a745;
+    color: white;
+}
+
+.btn-tasks:hover {
+    background: #1e7e34;
+    color: white;
+    transform: translateY(-2px);
+}
+
+.migration-benefits {
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 2rem;
+    margin: 2rem 0;
+}
+
+.benefits-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1rem;
+}
+
+.benefit-item {
+    text-align: center;
+    padding: 1rem;
+}
+
+.benefit-icon {
+    font-size: 2rem;
+    color: #28a745;
+    margin-bottom: 0.5rem;
+}
+
+@media (max-width: 768px) {
+    .system-comparison {
+        grid-template-columns: 1fr;
+    }
+    
+    .access-buttons {
+        flex-direction: column;
+    }
+    
+    .benefits-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.timeline {
+    position: relative;
+    margin: 2rem 0;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 2px;
+    height: 100%;
+    background: #dee2e6;
+}
+
+.timeline-item {
+    display: flex;
+    align-items: center;
+    margin: 2rem 0;
+    position: relative;
+}
+
+.timeline-item:nth-child(odd) {
+    flex-direction: row-reverse;
+}
+
+.timeline-content {
+    background: white;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 1rem;
+    width: 45%;
+    position: relative;
+}
+
+.timeline-marker {
+    width: 20px;
+    height: 20px;
+    background: #007bff;
+    border-radius: 50%;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1;
+}
+
+.timeline-marker.completed {
+    background: #28a745;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="migration-container">
+    <!-- ヘッダー -->
+    <div class="migration-header">
+        <h1><i class="fas fa-rocket"></i> 新しい学習システムへようこそ</h1>
+        <p>QuestEdは、より効果的な学習体験を提供するため、レッスン形式とタスク形式の学習システムに進化しました。</p>
+    </div>
+
+    <!-- システム比較 -->
+    <div class="system-comparison">
+        <div class="system-card recommended">
+            <div class="system-icon">
+                <i class="fas fa-list-ul text-info"></i>
+            </div>
+            <h3>レッスン形式学習</h3>
+            <p class="text-muted">1時間=1ページの構造化された学習</p>
+            
+            <ul class="feature-list">
+                <li><i class="fas fa-check text-success"></i> 時間管理された学習</li>
+                <li><i class="fas fa-check text-success"></i> タスクチェック機能</li>
+                <li><i class="fas fa-check text-success"></i> 理解度自己評価</li>
+                <li><i class="fas fa-check text-success"></i> 振り返り記録</li>
+                <li><i class="fas fa-check text-success"></i> 進捗の可視化</li>
+            </ul>
+        </div>
+
+        <div class="system-card recommended">
+            <div class="system-icon">
+                <i class="fas fa-tasks text-success"></i>
+            </div>
+            <h3>タスク形式学習</h3>
+            <p class="text-muted">週次課題による段階的な学習</p>
+            
+            <ul class="feature-list">
+                <li><i class="fas fa-check text-success"></i> 週別学習計画</li>
+                <li><i class="fas fa-check text-success"></i> 課題提出システム</li>
+                <li><i class="fas fa-check text-success"></i> 教師承認フロー</li>
+                <li><i class="fas fa-check text-success"></i> 自己評価機能</li>
+                <li><i class="fas fa-check text-success"></i> 学習時間記録</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- アクセスボタン -->
+    {% if unit and unit.legacy_curriculum_id %}
+    <div class="access-buttons">
+        <a href="{{ url_for('student_learning.curriculum_lessons', curriculum_id=unit.legacy_curriculum_id) }}" 
+           class="btn-access btn-lessons">
+            <i class="fas fa-list-ul"></i> レッスン学習を開始
+        </a>
+        <a href="{{ url_for('student_learning.curriculum_tasks', curriculum_id=unit.legacy_curriculum_id) }}" 
+           class="btn-access btn-tasks">
+            <i class="fas fa-tasks"></i> タスク学習を開始
+        </a>
+    </div>
+    {% endif %}
+
+    <!-- 移行のメリット -->
+    <div class="migration-benefits">
+        <h3><i class="fas fa-star"></i> 新システムのメリット</h3>
+        <div class="benefits-grid">
+            <div class="benefit-item">
+                <div class="benefit-icon">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <h5>進捗の見える化</h5>
+                <p class="text-muted">学習の進み具合をリアルタイムで確認</p>
+            </div>
+            <div class="benefit-item">
+                <div class="benefit-icon">
+                    <i class="fas fa-target"></i>
+                </div>
+                <h5>目標設定</h5>
+                <p class="text-muted">明確な学習目標と評価基準</p>
+            </div>
+            <div class="benefit-item">
+                <div class="benefit-icon">
+                    <i class="fas fa-comments"></i>
+                </div>
+                <h5>振り返り機能</h5>
+                <p class="text-muted">学習の振り返りと気づきの記録</p>
+            </div>
+            <div class="benefit-item">
+                <div class="benefit-icon">
+                    <i class="fas fa-mobile-alt"></i>
+                </div>
+                <h5>モバイル対応</h5>
+                <p class="text-muted">スマートフォンでも快適に学習</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 移行タイムライン -->
+    <div class="timeline">
+        <h3 class="text-center mb-4"><i class="fas fa-history"></i> システム移行の流れ</h3>
+        
+        <div class="timeline-item">
+            <div class="timeline-content">
+                <h5>Phase 1: 準備完了</h5>
+                <p>新しいレッスン・タスクシステムの開発完了</p>
+            </div>
+            <div class="timeline-marker completed"></div>
+        </div>
+        
+        <div class="timeline-item">
+            <div class="timeline-content">
+                <h5>Phase 2: 移行開始</h5>
+                <p>既存の学習内容を新システムに移行中</p>
+            </div>
+            <div class="timeline-marker completed"></div>
+        </div>
+        
+        <div class="timeline-item">
+            <div class="timeline-content">
+                <h5>Phase 3: 並行運用</h5>
+                <p>旧システムと新システムの並行利用期間</p>
+            </div>
+            <div class="timeline-marker"></div>
+        </div>
+        
+        <div class="timeline-item">
+            <div class="timeline-content">
+                <h5>Phase 4: 完全移行</h5>
+                <p>新システムへの完全移行予定</p>
+            </div>
+            <div class="timeline-marker"></div>
+        </div>
+    </div>
+
+    <!-- ナビゲーション -->
+    <div class="text-center mt-4">
+        <a href="{{ url_for('student_learning.learning_portal') }}" class="btn btn-outline-primary btn-lg">
+            <i class="fas fa-home"></i> 学習ポータルに戻る
+        </a>
+    </div>
+</div>
+{% endblock %}

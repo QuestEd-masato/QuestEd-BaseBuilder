@@ -656,8 +656,15 @@
                     <tr>
                         <td>{{ unit.title }}</td>
                         <td>
-                            <span class="difficulty-badge difficulty-{{ unit.difficulty_level }}">
-                                {% if unit.difficulty_level == 1 %}基礎{% elif unit.difficulty_level == 2 %}標準{% else %}応用{% endif %}
+                            {% set difficulty = unit.difficulty_level|default(2) %}
+                            <span class="difficulty-badge difficulty-{{ difficulty }}">
+                                {% if difficulty == 1 %}基礎
+                                {% elif difficulty == 2 %}標準
+                                {% elif difficulty == 3 %}応用
+                                {% elif difficulty == 4 %}発展
+                                {% elif difficulty == 5 %}最難関
+                                {% else %}標準
+                                {% endif %}
                             </span>
                         </td>
                         <td>{{ unit.estimated_minutes }}分</td>

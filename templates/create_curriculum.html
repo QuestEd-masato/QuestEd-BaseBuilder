@@ -45,10 +45,37 @@
                     
                     <div class="col-md-6">
                         <div class="form-group mb-3">
-                            <label for="total_hours" class="form-label">総時間数</label>
+                            <label for="total_classes" class="form-label">総授業コマ数 <span class="text-muted">(50分/コマ)</span></label>
                             <div class="input-group">
-                                <input type="number" class="form-control" id="total_hours" name="total_hours" min="1" value="35">
-                                <span class="input-group-text">時間</span>
+                                <input type="number" class="form-control" id="total_classes" name="total_classes" min="1" value="35" onchange="updateTotalHours()">
+                                <span class="input-group-text">コマ</span>
+                            </div>
+                            <div class="form-text">総時間数: <span id="total_hours_display">29.2</span>時間</div>
+                            <input type="hidden" id="total_hours" name="total_hours" value="29.2">
+                        </div>
+                        
+                        <div class="form-group mb-3">
+                            <label for="difficulty_level" class="form-label">難易度レベル</label>
+                            <select class="form-select" id="difficulty_level" name="difficulty_level">
+                                <option value="1">1 - 基礎</option>
+                                <option value="2" selected>2 - 標準</option>
+                                <option value="3">3 - 応用</option>
+                                <option value="4">4 - 発展</option>
+                                <option value="5">5 - 最難関</option>
+                            </select>
+                            <div class="form-text text-info">
+                                <i class="fas fa-info-circle"></i> 生徒の自由進度学習で難易度フィルタリングに使用されます
+                            </div>
+                        </div>
+                        
+                        <div class="form-group mb-3">
+                            <label for="mastery_threshold" class="form-label">習熟度判定基準</label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="mastery_threshold" name="mastery_threshold" min="60" max="100" value="80">
+                                <span class="input-group-text">%</span>
+                            </div>
+                            <div class="form-text text-info">
+                                <i class="fas fa-info-circle"></i> 生徒がこの単元を「習得済み」と判定する最低正解率
                             </div>
                         </div>
                         
@@ -96,11 +123,174 @@
                                 外部連携（地域・企業など）
                             </label>
                         </div>
+                        
+                        <div class="form-group mb-3">
+                            <label for="self_paced_mode" class="form-label">自由進度学習設定</label>
+                            <select class="form-select" id="self_paced_mode" name="self_paced_mode">
+                                <option value="disabled">無効（従来通り）</option>
+                                <option value="flexible" selected>柔軟進度（推奨期限あり）</option>
+                                <option value="completely_free">完全自由進度</option>
+                            </select>
+                            <div class="form-text text-info">
+                                <i class="fas fa-info-circle"></i> 生徒の学習進度の自由度を設定
+                            </div>
+                        </div>
+                        
+                        <div class="form-group mb-3">
+                            <label for="prerequisite_skills" class="form-label">前提スキル・知識</label>
+                            <textarea class="form-control" id="prerequisite_skills" name="prerequisite_skills" rows="2" placeholder="この単元を学習するために必要な前提知識やスキルを記入"></textarea>
+                            <div class="form-text text-info">
+                                <i class="fas fa-info-circle"></i> 生徒の学習選択時に参考情報として表示されます
+                            </div>
+                        </div>
                     </div>
                 </div>
                 
+                <!-- 課題設計セクション（新機能） -->
+                {% if config.TASK_SYSTEM_ENABLED %}
+                <div class="card mb-3" id="task-design-section">
+                    <div class="card-header bg-light">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="include_detailed_tasks" name="include_detailed_tasks" onchange="toggleTaskDesign()">
+                            <label class="form-check-label" for="include_detailed_tasks">
+                                <strong>📝 詳細な週次課題を設計する</strong>
+                                <small class="text-muted d-block">AIが各週の具体的な課題（ワークシート、レポート等）も生成します</small>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="card-body" id="task-design-options" style="display: none;">
+                        <!-- デフォルト設定 -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h6 class="text-primary">デフォルト設定</h6>
+                                <p class="text-muted small">以下の設定は全ての週に適用される基本設定です。後で個別調整も可能です。</p>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label for="default_task_types" class="form-label">主要課題タイプ</label>
+                                <select name="default_task_types" id="default_task_types" class="form-select" multiple size="6">
+                                    <option value="worksheet" selected>ワークシート</option>
+                                    <option value="report" selected>レポート</option>
+                                    <option value="presentation">プレゼンテーション</option>
+                                    <option value="discussion">ディスカッション</option>
+                                    <option value="project">プロジェクト</option>
+                                    <option value="test">テスト</option>
+                                </select>
+                                <div class="form-text">Ctrlキーで複数選択可能</div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <label for="submission_formats" class="form-label">提出形式</label>
+                                <select name="submission_formats" id="submission_formats" class="form-select" multiple size="4">
+                                    <option value="document" selected>文書ファイル</option>
+                                    <option value="handwritten">手書き</option>
+                                    <option value="video">動画</option>
+                                    <option value="presentation">プレゼンテーション</option>
+                                </select>
+                                <div class="form-text">主な提出形式を選択</div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <label for="tasks_per_week" class="form-label">1週間あたりの課題数</label>
+                                <select name="tasks_per_week" id="tasks_per_week" class="form-select">
+                                    <option value="2">2個</option>
+                                    <option value="3" selected>3個</option>
+                                    <option value="4">4個</option>
+                                    <option value="5">5個以上</option>
+                                </select>
+                                
+                                <div class="mt-3">
+                                    <label for="task_difficulty_distribution" class="form-label">課題難易度配分</label>
+                                    <select name="task_difficulty_distribution" id="task_difficulty_distribution" class="form-select">
+                                        <option value="mixed" selected>易・中・難をバランス良く</option>
+                                        <option value="gradual">週を追うごとに難易度上昇</option>
+                                        <option value="consistent">一定の難易度を維持</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="auto_generate_rubrics" id="auto_generate_rubrics" checked>
+                                    <label class="form-check-label" for="auto_generate_rubrics">
+                                        評価ルーブリックを自動生成
+                                    </label>
+                                </div>
+                                <div class="form-text">各課題の評価基準を自動作成</div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="enable_auto_approval" id="enable_auto_approval">
+                                    <label class="form-check-label" for="enable_auto_approval">
+                                        条件付き自動承認を有効化
+                                    </label>
+                                </div>
+                                <div class="form-text">一定条件で自動承認する課題を含める</div>
+                            </div>
+                        </div>
+                        
+                        <!-- AI生成オプション -->
+                        <div class="border-top pt-3">
+                            <h6 class="text-primary">AI生成設定</h6>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" name="ai_generate_tasks" id="ai_generate_tasks" checked>
+                                <label class="form-check-label" for="ai_generate_tasks">
+                                    週次課題もAIに自動生成させる
+                                </label>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="task_generation_prompt" class="form-label">課題生成の特別な要求</label>
+                                <textarea name="task_generation_prompt" id="task_generation_prompt" class="form-control" rows="3" 
+                                          placeholder="例：実験を多く含める、論述問題中心にする、グループワークを重視する等"></textarea>
+                                <div class="form-text">空欄の場合は標準的な課題構成で生成されます</div>
+                            </div>
+                        </div>
+                        
+                        <!-- 推定情報 -->
+                        <div class="alert alert-light border mt-3">
+                            <h6 class="text-success"><i class="fas fa-calculator"></i> 推定情報</h6>
+                            <div class="row text-center">
+                                <div class="col-md-3">
+                                    <div class="fw-bold text-primary" id="estimated_total_tasks">105</div>
+                                    <small class="text-muted">総課題数</small>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="fw-bold text-success" id="estimated_task_time">1750</div>
+                                    <small class="text-muted">課題作業時間(分)</small>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="fw-bold text-warning" id="estimated_approval_load">35</div>
+                                    <small class="text-muted">週次承認件数</small>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="fw-bold text-info" id="estimated_completion_rate">80</div>
+                                    <small class="text-muted">予想完了率(%)</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
                 <div class="alert alert-info">
                     <i class="fas fa-info-circle"></i> カリキュラムはAIが自動生成します。生成後に編集することもできます。
+                </div>
+                
+                <div class="alert alert-success">
+                    <h6><i class="fas fa-graduation-cap"></i> 自由進度学習での活用について</h6>
+                    <ul class="mb-0">
+                        <li><strong>難易度レベル</strong>: 生徒が自分に適したレベルの単元を選択できます</li>
+                        <li><strong>習熟度判定基準</strong>: 生徒の理解度を客観的に評価し、次の学習へ進むかを判断します</li>
+                        <li><strong>前提スキル</strong>: 生徒が学習の順序を理解し、効果的な学習計画を立てられます</li>
+                        <li><strong>50分コマ設定</strong>: 生徒の学習時間管理と進捗把握に活用されます</li>
+                    </ul>
                 </div>
                 
                 <div class="text-center">
@@ -125,5 +315,52 @@
         const formatContainer = document.getElementById('presentation_format_container');
         formatContainer.style.display = hasPresentation ? 'block' : 'none';
     }
+    
+    function updateTotalHours() {
+        const totalClasses = parseInt(document.getElementById('total_classes').value) || 0;
+        const totalHours = (totalClasses * 50 / 60).toFixed(1); // 50分/コマ → 時間に変換
+        document.getElementById('total_hours_display').textContent = totalHours;
+        document.getElementById('total_hours').value = totalHours;
+    }
+    
+    function toggleTaskDesign() {
+        const includeTask = document.getElementById('include_detailed_tasks').checked;
+        const taskOptions = document.getElementById('task-design-options');
+        taskOptions.style.display = includeTask ? 'block' : 'none';
+        
+        if (includeTask) {
+            updateTaskEstimation();
+        }
+    }
+    
+    function updateTaskEstimation() {
+        const totalClasses = parseInt(document.getElementById('total_classes').value) || 35;
+        const tasksPerWeek = parseInt(document.getElementById('tasks_per_week').value) || 3;
+        
+        // 概算週数 (総コマ数から推定)
+        const estimatedWeeks = Math.ceil(totalClasses / 2);
+        
+        const totalTasks = estimatedWeeks * tasksPerWeek;
+        const totalTaskTime = totalTasks * 30; // 1課題30分想定
+        const approvalLoad = totalTasks; // 教師の承認作業件数
+        const completionRate = 80; // 予想完了率
+        
+        document.getElementById('estimated_total_tasks').textContent = totalTasks;
+        document.getElementById('estimated_task_time').textContent = totalTaskTime;
+        document.getElementById('estimated_approval_load').textContent = approvalLoad;
+        document.getElementById('estimated_completion_rate').textContent = completionRate;
+    }
+    
+    // 初期化時に総時間を計算
+    document.addEventListener('DOMContentLoaded', function() {
+        updateTotalHours();
+        
+        // 課題数変更時の推定更新
+        document.getElementById('total_classes').addEventListener('input', updateTaskEstimation);
+        document.getElementById('tasks_per_week').addEventListener('change', updateTaskEstimation);
+        
+        // 初期推定値計算
+        updateTaskEstimation();
+    });
 </script>
 {% endblock %}

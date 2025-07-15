@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+
+{% block title %}大テーマ一覧 - {{ class_obj.name }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <h1>大テーマ一覧 - {{ class_obj.name }}</h1>
+  
+  <div class="mb-4">
+    <a href="{{ url_for('teacher_class_management.view_class', class_id=class_obj.id) }}" class="btn btn-secondary">
+      <i class="fas fa-arrow-left"></i> クラス詳細に戻る
+    </a>
+    <a href="{{ url_for('teacher_curriculum_management.create_main_theme', class_id=class_obj.id) }}" class="btn btn-primary">
+      <i class="fas fa-plus"></i> 新しい大テーマを作成
+    </a>
+  </div>
+  
+  {% with messages = get_flashed_messages() %}
+    {% if messages %}
+      {% for message in messages %}
+        <div class="alert alert-info">{{ message }}</div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+  
+  <div class="card">
+    <div class="card-header bg-primary text-white">
+      <h5 class="mb-0">大テーマ一覧</h5>
+    </div>
+    <div class="card-body">
+      {% if main_themes %}
+        <div class="table-responsive">
+          <table class="table table-striped">
+            <thead>
+              <tr>
+                <th>タイトル</th>
+                <th>説明</th>
+                <th>作成日</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for theme in main_themes %}
+                <tr>
+                  <td><strong>{{ theme.title }}</strong></td>
+                  <td>{{ theme.description|truncate(100) if theme.description else '説明なし' }}</td>
+                  <td>{{ theme.created_at.strftime('%Y-%m-%d') }}</td>
+                  <td>
+                    <a href="{{ url_for('teacher_curriculum_management.edit_main_theme', theme_id=theme.id) }}" class="btn btn-sm btn-outline-primary">
+                      <i class="fas fa-edit"></i> 編集
+                    </a>
+                    <a href="{{ url_for('teacher_curriculum_management.delete_main_theme', theme_id=theme.id) }}" class="btn btn-sm btn-outline-danger" 
+                       onclick="return confirm('本当に削除しますか？関連する個人テーマへの影響があります。');">
+                      <i class="fas fa-trash"></i> 削除
+                    </a>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="alert alert-info">
+          <h5>大テーマがありません</h5>
+          <p>このクラスにはまだ大テーマがありません。「新しい大テーマを作成」ボタンから作成してください。</p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+  
+  <div class="alert alert-info mt-4">
+    <h5>大テーマについて</h5>
+    <p>大テーマは、カリキュラム全体の方向性を決める重要な要素です。生徒はこの大テーマに基づいて個人テーマを設定し、探究活動を行います。</p>
+    <p>効果的な大テーマの特徴：</p>
+    <ul>
+      <li>幅広いアプローチが可能</li>
+      <li>生徒の興味関心に合わせて個別化できる</li>
+      <li>現実的な問題解決につながる</li>
+      <li>複数の教科領域にまたがる</li>
+    </ul>
+  </div>
+</div>
+{% endblock %}

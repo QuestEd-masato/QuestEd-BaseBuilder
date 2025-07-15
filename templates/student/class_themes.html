@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% block title %}{{ class_obj.name }} - 探究テーマ{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>{{ class_obj.name }} - 探究テーマ</h1>
+        <a href="{{ url_for('student_dashboard.dashboard') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> ダッシュボードに戻る
+        </a>
+    </div>
+
+    <!-- 選択中のテーマ表示 -->
+    {% if selected_theme %}
+    <div class="alert alert-success">
+        <i class="fas fa-check-circle"></i>
+        <strong>現在の選択テーマ:</strong> {{ selected_theme.title }}
+    </div>
+    {% endif %}
+
+    <!-- メインテーマ一覧 -->
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">
+                <i class="fas fa-star"></i> クラスのメインテーマ
+            </h5>
+        </div>
+        <div class="card-body">
+            {% if main_themes %}
+                <div class="row">
+                    {% for theme in main_themes %}
+                    <div class="col-md-6 mb-3">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h6 class="card-title">{{ theme.title }}</h6>
+                                <p class="card-text">{{ theme.description|truncate(100) }}</p>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <small class="text-muted">
+                                        作成: {{ theme.created_at.strftime('%Y/%m/%d') }}
+                                    </small>
+                                    <a href="{{ url_for('student_themes.create_from_main_theme', main_theme_id=theme.id) }}" 
+                                       class="btn btn-sm btn-primary">
+                                        <i class="fas fa-plus"></i> 個人テーマとして作成
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-star fa-3x text-muted mb-3"></i>
+                    <p class="text-muted">このクラスにはまだメインテーマが設定されていません。</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- 個人テーマ一覧 -->
+    <div class="card">
+        <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">
+                <i class="fas fa-user"></i> あなたの個人テーマ
+            </h5>
+            <a href="{{ url_for('student_themes.create_personal_theme') }}?class_id={{ class_obj.id }}" 
+               class="btn btn-light btn-sm">
+                <i class="fas fa-plus"></i> 新しいテーマを作成
+            </a>
+        </div>
+        <div class="card-body">
+            {% if personal_themes %}
+                <div class="list-group">
+                    {% for theme in personal_themes %}
+                    <div class="list-group-item">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">
+                                {{ theme.title }}
+                                {% if theme.is_selected %}
+                                <span class="badge bg-success ms-2">選択中</span>
+                                {% endif %}
+                            </h6>
+                            <small>{{ theme.created_at.strftime('%Y/%m/%d') }}</small>
+                        </div>
+                        {% if theme.description %}
+                        <p class="mb-1">{{ theme.description }}</p>
+                        {% endif %}
+                        <div class="btn-group mt-2" role="group">
+                            {% if not theme.is_selected %}
+                            <a href="{{ url_for('student_themes.select_theme', theme_id=theme.id) }}" 
+                               class="btn btn-sm btn-success">
+                                <i class="fas fa-check"></i> 選択
+                            </a>
+                            {% endif %}
+                            <a href="{{ url_for('student_themes.edit_theme', theme_id=theme.id) }}" 
+                               class="btn btn-sm btn-warning">
+                                <i class="fas fa-edit"></i> 編集
+                            </a>
+                            <a href="{{ url_for('student_themes.delete_theme', theme_id=theme.id) }}" 
+                               class="btn btn-sm btn-danger"
+                               onclick="return confirm('このテーマを削除してもよろしいですか？');">
+                                <i class="fas fa-trash"></i> 削除
+                            </a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-user-edit fa-3x text-muted mb-3"></i>
+                    <p class="text-muted">まだ個人テーマを作成していません。</p>
+                    <a href="{{ url_for('student_themes.create_personal_theme') }}?class_id={{ class_obj.id }}" 
+                       class="btn btn-primary">
+                        <i class="fas fa-plus"></i> 最初のテーマを作成
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

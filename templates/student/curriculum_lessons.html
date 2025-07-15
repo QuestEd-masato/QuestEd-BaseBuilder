@@ -1,0 +1,566 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ curriculum.title }} - レッスン一覧 | QuestEd{% endblock %}
+
+{% block extra_css %}
+<style>
+/* カリキュラムレッスン一覧専用スタイル */
+.curriculum-lessons-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 1rem;
+}
+
+.curriculum-header {
+    background: linear-gradient(135deg, #0056b3 0%, #004494 100%);
+    color: white;
+    border-radius: 12px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.curriculum-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 200px;
+    height: 200px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    transform: translate(50px, -50px);
+}
+
+.curriculum-header h1 {
+    margin-bottom: 0.5rem;
+    font-size: 2.2rem;
+    position: relative;
+    z-index: 1;
+}
+
+.curriculum-meta {
+    display: flex;
+    gap: 2rem;
+    margin-top: 1rem;
+    flex-wrap: wrap;
+    position: relative;
+    z-index: 1;
+}
+
+.curriculum-meta-item {
+    background: rgba(255, 255, 255, 0.2);
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    backdrop-filter: blur(10px);
+}
+
+.lessons-section {
+    background: white;
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.lessons-grid {
+    display: grid;
+    gap: 1.5rem;
+    margin-top: 2rem;
+}
+
+.lesson-card {
+    border: 2px solid #e9ecef;
+    border-radius: 12px;
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    position: relative;
+    background: white;
+}
+
+.lesson-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    border-color: #007bff;
+}
+
+.lesson-card.completed {
+    border-color: #28a745;
+    background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+}
+
+.lesson-card.in-progress {
+    border-color: #007bff;
+    background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%);
+}
+
+.lesson-card.not-started {
+    border-color: #6c757d;
+    background: #f8f9fa;
+}
+
+.lesson-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+}
+
+.lesson-number {
+    background: #007bff;
+    color: white;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 1.3rem;
+    margin-right: 1rem;
+}
+
+.lesson-card.completed .lesson-number {
+    background: #28a745;
+}
+
+.lesson-card.in-progress .lesson-number {
+    background: #007bff;
+}
+
+.lesson-card.not-started .lesson-number {
+    background: #6c757d;
+}
+
+.lesson-title {
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: #343a40;
+    margin: 0 0 0.5rem 0;
+    flex: 1;
+}
+
+.lesson-type-badge {
+    background: #6c757d;
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    white-space: nowrap;
+}
+
+.lesson-type-badge.lecture { background: #007bff; }
+.lesson-type-badge.exercise { background: #28a745; }
+.lesson-type-badge.discussion { background: #ffc107; color: #000; }
+.lesson-type-badge.lab { background: #dc3545; }
+
+.lesson-description {
+    color: #6c757d;
+    line-height: 1.6;
+    margin-bottom: 1rem;
+    font-size: 0.95rem;
+}
+
+.lesson-meta-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.lesson-stats {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.85rem;
+    color: #6c757d;
+}
+
+.lesson-stats span {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.progress-section {
+    margin-top: 1rem;
+}
+
+.progress-bar {
+    background: #e9ecef;
+    border-radius: 10px;
+    height: 8px;
+    overflow: hidden;
+    margin-bottom: 0.5rem;
+}
+
+.progress-fill {
+    background: #007bff;
+    height: 100%;
+    border-radius: 10px;
+    transition: width 0.3s ease;
+}
+
+.progress-fill.completed {
+    background: #28a745;
+}
+
+.progress-text {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8rem;
+    color: #6c757d;
+}
+
+.lesson-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+.btn-lesson {
+    flex: 1;
+    padding: 0.75rem 1rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.btn-start {
+    background: #007bff;
+    color: white;
+}
+
+.btn-start:hover {
+    background: #0056b3;
+    color: white;
+    text-decoration: none;
+}
+
+.btn-continue {
+    background: #28a745;
+    color: white;
+}
+
+.btn-continue:hover {
+    background: #1e7e34;
+    color: white;
+    text-decoration: none;
+}
+
+.btn-review {
+    background: #6c757d;
+    color: white;
+}
+
+.btn-review:hover {
+    background: #545b62;
+    color: white;
+    text-decoration: none;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: #6c757d;
+}
+
+.empty-state i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+.overall-progress {
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.overall-progress h3 {
+    margin-bottom: 1rem;
+    color: #495057;
+}
+
+.overall-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+}
+
+.stat-item {
+    text-align: center;
+    padding: 1rem;
+    background: white;
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+}
+
+.stat-value {
+    font-size: 2rem;
+    font-weight: 600;
+    color: #007bff;
+    margin-bottom: 0.5rem;
+}
+
+.stat-label {
+    color: #6c757d;
+    font-size: 0.9rem;
+}
+
+/* レスポンシブ対応 */
+@media (max-width: 768px) {
+    .curriculum-lessons-container {
+        padding: 0.5rem;
+    }
+    
+    .curriculum-header {
+        padding: 1.5rem;
+    }
+    
+    .curriculum-header h1 {
+        font-size: 1.8rem;
+    }
+    
+    .curriculum-meta {
+        gap: 1rem;
+    }
+    
+    .curriculum-meta-item {
+        font-size: 0.8rem;
+        padding: 0.4rem 0.8rem;
+    }
+    
+    .lesson-card {
+        padding: 1rem;
+    }
+    
+    .lesson-header {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .lesson-title {
+        font-size: 1.2rem;
+    }
+    
+    .lesson-meta-info {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .overall-stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* アニメーション */
+.fade-in {
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="curriculum-lessons-container">
+    <!-- カリキュラムヘッダー -->
+    <div class="curriculum-header fade-in">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1>{{ curriculum.title }}</h1>
+                <p class="mb-0">レッスン形式学習</p>
+            </div>
+            <div class="col-md-4 text-md-end">
+                <a href="{{ url_for('student_learning.learning_portal') }}" 
+                   class="btn btn-outline-light">
+                    <i class="fas fa-arrow-left"></i> 学習ポータルに戻る
+                </a>
+            </div>
+        </div>
+        
+        <div class="curriculum-meta">
+            <div class="curriculum-meta-item">
+                <i class="fas fa-book"></i> {{ lessons_with_progress|length }}レッスン
+            </div>
+            <div class="curriculum-meta-item">
+                <i class="fas fa-clock"></i> 合計 {{ lessons_with_progress|sum(attribute='lesson.duration_minutes') }}分
+            </div>
+            <div class="curriculum-meta-item">
+                <i class="fas fa-tasks"></i> 
+                {% set total_tasks = lessons_with_progress|sum(attribute='total_tasks') %}
+                {% set completed_tasks = lessons_with_progress|sum(attribute='completed_tasks') %}
+                {{ completed_tasks }}/{{ total_tasks }} タスク完了
+            </div>
+        </div>
+    </div>
+
+    <!-- 全体進捗 -->
+    {% if lessons_with_progress %}
+    <div class="overall-progress fade-in">
+        <h3><i class="fas fa-chart-pie"></i> 全体進捗</h3>
+        <div class="overall-stats">
+            <div class="stat-item">
+                <div class="stat-value">{{ lessons_with_progress|length }}</div>
+                <div class="stat-label">総レッスン数</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">
+                    {% set completed_lessons = lessons_with_progress|selectattr('completion_percentage', 'equalto', 100)|list|length %}
+                    {{ completed_lessons }}
+                </div>
+                <div class="stat-label">完了レッスン</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">
+                    {% set total_tasks = lessons_with_progress|sum(attribute='total_tasks') %}
+                    {% set completed_tasks = lessons_with_progress|sum(attribute='completed_tasks') %}
+                    {% if total_tasks > 0 %}
+                        {{ ((completed_tasks / total_tasks) * 100)|round(1) }}%
+                    {% else %}
+                        0%
+                    {% endif %}
+                </div>
+                <div class="stat-label">全体完了率</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">{{ lessons_with_progress|sum(attribute='lesson.duration_minutes') }}</div>
+                <div class="stat-label">総学習時間(分)</div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- レッスン一覧 -->
+    <div class="lessons-section fade-in">
+        <h2><i class="fas fa-list"></i> レッスン一覧</h2>
+        
+        {% if lessons_with_progress %}
+        <div class="lessons-grid">
+            {% for item in lessons_with_progress %}
+            {% set lesson = item.lesson %}
+            {% set progress = item.progress %}
+            {% set total_tasks = item.total_tasks %}
+            {% set completed_tasks = item.completed_tasks %}
+            {% set completion_percentage = item.completion_percentage %}
+            
+            <div class="lesson-card 
+                {% if completion_percentage >= 100 %}completed
+                {% elif completion_percentage > 0 %}in-progress
+                {% else %}not-started{% endif %}"
+                onclick="location.href='{{ url_for('student_learning.lesson_learning', lesson_id=lesson.id) }}'">
+                
+                <div class="lesson-header">
+                    <div class="d-flex align-items-center flex-1">
+                        <div class="lesson-number">{{ lesson.lesson_number }}</div>
+                        <div class="flex-1">
+                            <h3 class="lesson-title">{{ lesson.title }}</h3>
+                            <div class="lesson-type-badge {{ lesson.lesson_type.value if lesson.lesson_type else 'lecture' }}">
+                                {{ lesson.lesson_type.value|title if lesson.lesson_type else '講義' }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                {% if lesson.description %}
+                <div class="lesson-description">
+                    {{ lesson.description[:120] }}{% if lesson.description|length > 120 %}...{% endif %}
+                </div>
+                {% endif %}
+                
+                <div class="lesson-meta-info">
+                    <div class="lesson-stats">
+                        <span>
+                            <i class="fas fa-clock"></i>
+                            {{ lesson.duration_minutes }}分
+                        </span>
+                        <span>
+                            <i class="fas fa-tasks"></i>
+                            {{ total_tasks }}タスク
+                        </span>
+                        {% if progress and progress.time_spent_minutes %}
+                        <span>
+                            <i class="fas fa-stopwatch"></i>
+                            {{ progress.time_spent_minutes }}分学習済み
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="progress-section">
+                    <div class="progress-bar">
+                        <div class="progress-fill {% if completion_percentage >= 100 %}completed{% endif %}" 
+                             style="width: {{ completion_percentage }}%"></div>
+                    </div>
+                    <div class="progress-text">
+                        <span>{{ completed_tasks }}/{{ total_tasks }} タスク完了</span>
+                        <span>{{ completion_percentage }}%</span>
+                    </div>
+                </div>
+                
+                <div class="lesson-actions">
+                    {% if completion_percentage >= 100 %}
+                        <a href="{{ url_for('student_learning.lesson_learning', lesson_id=lesson.id) }}" 
+                           class="btn-lesson btn-review">
+                            <i class="fas fa-eye"></i> 復習する
+                        </a>
+                    {% elif completion_percentage > 0 %}
+                        <a href="{{ url_for('student_learning.lesson_learning', lesson_id=lesson.id) }}" 
+                           class="btn-lesson btn-continue">
+                            <i class="fas fa-play"></i> 続きから
+                        </a>
+                    {% else %}
+                        <a href="{{ url_for('student_learning.lesson_learning', lesson_id=lesson.id) }}" 
+                           class="btn-lesson btn-start">
+                            <i class="fas fa-play"></i> 開始する
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-book"></i>
+            <h3>レッスンがありません</h3>
+            <p>このカリキュラムにはまだレッスンが登録されていません。</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+// ページ読み込み時のアニメーション
+document.addEventListener('DOMContentLoaded', function() {
+    // カードにホバー効果を追加
+    document.querySelectorAll('.lesson-card').forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-2px)';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+        });
+    });
+});
+</script>
+{% endblock %}

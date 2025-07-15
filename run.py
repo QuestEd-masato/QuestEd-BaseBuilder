@@ -22,8 +22,9 @@ app = create_app()
 
 if __name__ == '__main__':
     # デバッグモードは設定から取得
+    port = int(os.environ.get('FLASK_RUN_PORT', 5000))
     app.run(
         host='0.0.0.0',
-        port=5000,
+        port=port,
         debug=app.config['DEBUG']
     )

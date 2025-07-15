@@ -268,6 +268,89 @@
     background: #545b62;
 }
 
+.btn-outline-secondary {
+    background: transparent;
+    color: #6c757d;
+    border: 1px solid #6c757d;
+}
+
+.btn-outline-secondary:hover {
+    background: #6c757d;
+    color: white;
+}
+
+.btn-outline-danger {
+    background: transparent;
+    color: #dc3545;
+    border: 1px solid #dc3545;
+    font-size: 0.8rem;
+}
+
+.btn-outline-danger:hover {
+    background: #dc3545;
+    color: white;
+    transform: translateY(-1px);
+}
+
+/* 3状態レッスン管理システム用スタイル */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    text-align: center;
+    width: 100%;
+    justify-content: center;
+}
+
+.status-badge.completed {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.status-badge.rejected {
+    background: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+.status-badge.pending {
+    background: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeaa7;
+}
+
+.btn-warning {
+    background: #ffc107;
+    color: #212529;
+    border: 1px solid #ffc107;
+}
+
+.btn-warning:hover {
+    background: #e0a800;
+    color: #212529;
+    transform: translateY(-1px);
+}
+
+.rejection-reason {
+    font-size: 0.8rem;
+    color: #dc3545;
+    padding: 0.5rem;
+    background: #f8d7da;
+    border-radius: 4px;
+    border-left: 3px solid #dc3545;
+    margin-bottom: 0.5rem;
+}
+
+.rejection-reason strong {
+    display: block;
+    margin-bottom: 0.25rem;
+}
+
 /* ローディング状態 */
 .loading {
     text-align: center;
@@ -436,6 +519,13 @@
         <div class="units-section">
             <h2><i class="fas fa-book"></i> 学習単元一覧</h2>
             
+            <!-- デバッグ情報セクション (開発時のみ表示) -->
+            <div id="debug-info" style="display: none; background: #f8f9fa; padding: 1rem; margin-bottom: 1rem; border-radius: 4px; border-left: 4px solid #007bff;">
+                <h5>デバッグ情報</h5>
+                <p id="debug-text"></p>
+                <button onclick="document.getElementById('debug-info').style.display='none'" class="btn btn-sm btn-secondary">閉じる</button>
+            </div>
+            
             <div class="units-grid" id="units-grid">
                 <!-- 単元カードがJavaScriptで動的に挿入される -->
                 <div class="loading">
@@ -478,6 +568,9 @@
 <script src="{{ url_for('static', filename='js/speech_input.js') }}"></script>
 <script src="{{ url_for('static', filename='js/learning_portal.js') }}"></script>
 <script>
+// CSRFトークンをグローバルに設定
+window.csrfToken = '{{ csrf_token() }}';
+
 // 音声入力機能の初期化
 document.addEventListener('DOMContentLoaded', function() {
     // 検索フィールド用音声入力を初期化
@@ -491,6 +584,12 @@ document.addEventListener('DOMContentLoaded', function() {
     // 音声入力が利用できない場合は非表示
     if (!searchSpeechButton) {
         document.body.classList.add('speech-not-supported');
+    }
+    
+    // learning_portal.js の初期化を確認
+    console.log('Learning portal object:', typeof learningPortal);
+    if (typeof learningPortal === 'undefined') {
+        console.error('learningPortal object not initialized');
     }
 });
 </script>

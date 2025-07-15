@@ -1144,6 +1144,21 @@ textarea {
     color: inherit;
 }
 
+/* メニューアイコンの統一スタイル */
+.menu-icon {
+    font-family: Arial, sans-serif;
+    font-size: 1.2em;
+    font-weight: bold;
+    line-height: 1;
+    display: inline-block;
+    color: inherit;
+}
+
+/* ドロップダウン矢印の統一 */
+.dropdown-toggle::before {
+    font-family: Arial, sans-serif;
+}
+
 /* ヘッダーのホバー効果 */
 .navbar .dropdown-toggle:hover {
     background-color: rgba(255, 255, 255, 0.1) !important;

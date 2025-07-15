@@ -159,6 +159,7 @@
                                 <a href="{{ url_for('teacher_class_management.view_class', class_id=class_data.class.id) }}" class="btn btn-sm btn-primary">クラス詳細</a>    
                                 <a href="{{ url_for('teacher_class_management.view_class', class_id=class_data.class.id) }}#milestones" class="btn btn-sm btn-info">マイルストーン</a>
                                 <a href="{{ url_for('teacher_curriculum_management.view_curriculums', class_id=class_data.class.id) }}" class="btn btn-sm btn-info">カリキュラム管理</a>
+                                <a href="{{ url_for('teacher_task_management.task_management') }}?class_id={{ class_data.class.id }}" class="btn btn-sm btn-success">課題管理</a>
                             </div>
                         </div>
                     {% endfor %}
@@ -216,6 +217,64 @@
            </div>
         </div>
         
+        <!-- 課題管理概要セクション -->
+        <div class="dashboard-section task-overview">
+            <div class="section-header">
+                <h3><i class="fas fa-clipboard-check"></i> 課題管理概要</h3>
+                <a href="{{ url_for('teacher_task_management.task_management') }}" class="btn btn-sm btn-success">課題管理画面へ</a>
+            </div>
+            
+            <div class="stats-grid">
+                <div class="stat-card urgent">
+                    <div class="stat-icon">
+                        <i class="fas fa-hourglass-half"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h4>{{ task_stats.pending_submissions if task_stats else 0 }}</h4>
+                        <p>承認待ち課題</p>
+                    </div>
+                </div>
+                
+                <div class="stat-card success">
+                    <div class="stat-icon">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h4>{{ task_stats.completion_rate if task_stats else 0 }}%</h4>
+                        <p>全体完了率</p>
+                    </div>
+                </div>
+                
+                <div class="stat-card info">
+                    <div class="stat-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h4>{{ task_stats.active_students if task_stats else 0 }}</h4>
+                        <p>アクティブ学生</p>
+                    </div>
+                </div>
+                
+                <div class="stat-card warning">
+                    <div class="stat-icon">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h4>{{ task_stats.overdue_tasks if task_stats else 0 }}</h4>
+                        <p>期限超過課題</p>
+                    </div>
+                </div>
+            </div>
+            
+            {% if task_stats and task_stats.pending_submissions > 0 %}
+            <div class="quick-actions">
+                <a href="{{ url_for('teacher_task_management.task_management') }}?status=submitted" class="btn btn-outline-danger">
+                    <i class="fas fa-exclamation-circle"></i> 承認待ち課題を確認
+                </a>
+            </div>
+            {% endif %}
+        </div>
+
         <!-- ランキング分析セクション -->
         <div class="dashboard-section ranking-analysis">
             <div class="section-header">

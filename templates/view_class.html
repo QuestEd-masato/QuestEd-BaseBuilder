@@ -146,10 +146,10 @@
                             <span class="days-left">(あと{{ (milestone.due_date - now.date()).days }}日)</span>
                         </td>
                         <td class="actions">
-                            <a href="{{ url_for('teacher.view_milestone', milestone_id=milestone.id) }}" class="btn btn-sm">詳細</a>
+                            <a href="{{ url_for('teacher_class_management.view_milestone', milestone_id=milestone.id) }}" class="btn btn-sm">詳細</a>
                             {% if is_teacher %}
-                            <a href="{{ url_for('teacher.edit_milestone', milestone_id=milestone.id) }}" class="btn btn-sm">編集</a>
-                            <a href="{{ url_for('delete_milestone', milestone_id=milestone.id) }}" class="btn btn-sm btn-danger" onclick="return confirm('このマイルストーンを削除してもよろしいですか？');">削除</a>
+                            <a href="{{ url_for('teacher_class_management.edit_milestone', milestone_id=milestone.id) }}" class="btn btn-sm">編集</a>
+                            <a href="{{ url_for('teacher_class_management.delete_milestone', milestone_id=milestone.id) }}" class="btn btn-sm btn-danger" onclick="return confirm('このマイルストーンを削除してもよろしいですか？');">削除</a>
                             {% endif %}
                         </td>
                     </tr>

@@ -15,31 +15,33 @@ Phase 4.2: UnifiedProgressService (1,260行) の分解実装
 各モジュールは単一責任の原則に従い、テスト可能な設計を実現。
 """
 
-from .self_paced_service import SelfPacedProgressService
+from .activity_tracker import ActivityTrackingService
+from .aggregator import ProgressAggregator
+from .analytics_service import LearningAnalyticsService
 from .basebuilder_service import BaseBuilderProgressService
 from .inquiry_service import InquiryProgressService
-from .activity_tracker import ActivityTrackingService
-from .analytics_service import LearningAnalyticsService
 from .metrics_calculator import StudyMetricsCalculator
-from .aggregator import ProgressAggregator
+from .self_paced_service import SelfPacedProgressService
+
 
 # 統合ファサードクラス（後方互換性）
 class UnifiedProgressService:
     """
     統合進捗サービスのファサード
-    
+
     各専門サービスを統合し、元のインターフェースとの互換性を維持
     """
+
     def __init__(self):
         self.aggregator = ProgressAggregator()
-    
+
     def get_comprehensive_progress(self, student_id: int) -> dict:
         """
         包括的な進捗情報を取得
-        
+
         Args:
             student_id: 学生ID
-            
+
         Returns:
             dict: 統合された進捗情報
         """
@@ -47,12 +49,12 @@ class UnifiedProgressService:
 
 
 __all__ = [
-    'SelfPacedProgressService',
-    'BaseBuilderProgressService',
-    'InquiryProgressService', 
-    'ActivityTrackingService',
-    'LearningAnalyticsService',
-    'StudyMetricsCalculator',
-    'ProgressAggregator',
-    'UnifiedProgressService'  # 後方互換性
+    "SelfPacedProgressService",
+    "BaseBuilderProgressService",
+    "InquiryProgressService",
+    "ActivityTrackingService",
+    "LearningAnalyticsService",
+    "StudyMetricsCalculator",
+    "ProgressAggregator",
+    "UnifiedProgressService",  # 後方互換性
 ]

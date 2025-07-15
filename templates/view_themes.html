@@ -4,12 +4,49 @@
 
 {% block content %}
 <div class="themes-container">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2>あなたの探究テーマ</h2>
-        <a href="{{ url_for('student_activities.activities') }}" class="btn btn-outline-secondary btn-sm">
-            <i class="fas fa-arrow-left"></i> クラス選択に戻る
-        </a>
+    <!-- クラス選択セクション -->
+    {% if not selected_class %}
+    <div class="mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2>探究テーマ - クラスを選択してください</h2>
+            <a href="{{ url_for('student_dashboard.dashboard') }}" class="btn btn-outline-secondary btn-sm">
+                <i class="fas fa-arrow-left"></i> ダッシュボードに戻る
+            </a>
+        </div>
+        
+        <div class="row">
+            {% for class_obj in classes %}
+            <div class="col-md-6 mb-3">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ class_obj.name }}</h5>
+                        {% if class_obj.description %}
+                        <p class="card-text">{{ class_obj.description }}</p>
+                        {% endif %}
+                        <a href="{{ url_for('student_themes.themes', class_id=class_obj.id) }}" 
+                           class="btn btn-primary">
+                            <i class="fas fa-eye"></i> このクラスのテーマを見る
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
     </div>
+    {% else %}
+    <!-- 選択されたクラスのテーマ表示 -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>{{ selected_class.name }} - 探究テーマ</h2>
+        <div>
+            <a href="{{ url_for('student_themes.themes') }}" class="btn btn-outline-secondary btn-sm me-2">
+                <i class="fas fa-arrow-left"></i> クラス選択に戻る
+            </a>
+            <a href="{{ url_for('student_dashboard.dashboard') }}" class="btn btn-outline-secondary btn-sm">
+                <i class="fas fa-home"></i> ダッシュボード
+            </a>
+        </div>
+    </div>
+    {% endif %}
     
     {% if class_obj %}
         <div class="alert alert-info">

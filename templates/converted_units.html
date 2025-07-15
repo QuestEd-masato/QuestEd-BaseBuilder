@@ -1,0 +1,113 @@
+{% extends 'base.html' %}
+
+{% block title %}変換済み単元 - {{ curriculum.title }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>変換済み単元 - {{ curriculum.title }}</h1>
+        <a href="{{ url_for('teacher_curriculum_management.view_curriculum', curriculum_id=curriculum.id) }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> カリキュラムに戻る
+        </a>
+    </div>
+
+    <!-- 変換済み単元一覧 -->
+    <div class="card">
+        <div class="card-header bg-success text-white">
+            <h5 class="mb-0">
+                <i class="fas fa-list"></i> 変換済み単元一覧 ({{ converted_units|length }}件)
+            </h5>
+        </div>
+        <div class="card-body">
+            {% if converted_units %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>順序</th>
+                                <th>単元名</th>
+                                <th>説明</th>
+                                <th>難易度</th>
+                                <th>推定時間</th>
+                                <th>作成日</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for unit in converted_units %}
+                            <tr>
+                                <td>{{ unit.order_index or loop.index }}</td>
+                                <td>
+                                    <strong>{{ unit.title }}</strong>
+                                    {% if unit.tags %}
+                                        <br>
+                                        {% set tags = unit.tags|from_json if unit.tags else [] %}
+                                        {% for tag in tags %}
+                                            <span class="badge bg-secondary me-1">{{ tag }}</span>
+                                        {% endfor %}
+                                    {% endif %}
+                                </td>
+                                <td>{{ unit.description|truncate(100) if unit.description else '-' }}</td>
+                                <td>
+                                    {% if unit.difficulty_level %}
+                                        <span class="badge bg-{% if unit.difficulty_level <= 2 %}success{% elif unit.difficulty_level <= 4 %}warning{% else %}danger{% endif %}">
+                                            レベル {{ unit.difficulty_level }}
+                                        </span>
+                                    {% else %}
+                                        <span class="text-muted">未設定</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ unit.estimated_minutes or 0 }}分</td>
+                                <td>{{ unit.created_at.strftime('%Y/%m/%d') }}</td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <a href="{{ url_for('teacher_curriculum_management.edit_unit', unit_id=unit.id) }}" 
+                                           class="btn btn-sm btn-warning">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <a href="{{ url_for('teacher_curriculum_management.delete_unit', unit_id=unit.id) }}" 
+                                           class="btn btn-sm btn-danger"
+                                           onclick="return confirm('この単元を削除してもよろしいですか？');">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-list fa-3x text-muted mb-3"></i>
+                    <h4 class="text-muted">変換済み単元がありません</h4>
+                    <p class="text-muted">このカリキュラムはまだ単元に変換されていません。</p>
+                    <a href="{{ url_for('teacher_curriculum_management.convert_curriculum_to_units', curriculum_id=curriculum.id) }}" 
+                       class="btn btn-primary">
+                        <i class="fas fa-magic"></i> カリキュラムを単元に変換
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- 変換について -->
+    <div class="card mt-4">
+        <div class="card-header bg-info text-white">
+            <h5 class="mb-0">単元変換について</h5>
+        </div>
+        <div class="card-body">
+            <p class="mb-2">
+                <i class="fas fa-info-circle text-info"></i>
+                カリキュラムを単元に変換すると、自由進度学習システムで使用できるようになります。
+            </p>
+            <ul class="mb-0">
+                <li>各単元は個別に管理され、学生が自分のペースで学習できます</li>
+                <li>変換後も元のカリキュラムは保持されます</li>
+                <li>単元は個別に編集・削除できます</li>
+                <li>学習進捗や承認ワークフローと連携します</li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}

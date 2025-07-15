@@ -1,0 +1,327 @@
+{% extends 'base.html' %}
+
+{% block title %}レッスン配信BaseBuilderテキスト | QuestEd{% endblock %}
+
+{% block extra_css %}
+<style>
+.lesson-texts-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+}
+
+.texts-header {
+    background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%);
+    color: white;
+    padding: 2rem;
+    border-radius: 12px;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 12px rgba(33, 150, 243, 0.2);
+}
+
+.texts-header h1 {
+    margin: 0 0 0.5rem 0;
+    font-size: 2rem;
+}
+
+.texts-header p {
+    margin: 0;
+    opacity: 0.9;
+}
+
+.texts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.text-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    border: 2px solid #e0e0e0;
+}
+
+.text-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    border-color: #2196f3;
+}
+
+.text-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+    margin-bottom: 1rem;
+}
+
+.text-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #333;
+    margin: 0 0 0.5rem 0;
+}
+
+.text-meta {
+    font-size: 0.875rem;
+    color: #666;
+    margin-bottom: 0.5rem;
+}
+
+.curriculum-info {
+    background: #f5f5f5;
+    padding: 0.75rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    border-left: 4px solid #2196f3;
+}
+
+.curriculum-info h6 {
+    margin: 0 0 0.25rem 0;
+    color: #1976d2;
+    font-size: 0.9rem;
+}
+
+.curriculum-info p {
+    margin: 0;
+    font-size: 0.85rem;
+    color: #666;
+}
+
+.progress-section {
+    margin-bottom: 1rem;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 8px;
+    background: #e0e0e0;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 0.5rem;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #4caf50 0%, #8bc34a 100%);
+    border-radius: 4px;
+    transition: width 0.3s ease;
+}
+
+.progress-text {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.875rem;
+    color: #666;
+}
+
+.text-stats {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.stat-item {
+    background: #f8f9fa;
+    padding: 0.75rem;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.stat-value {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #333;
+}
+
+.stat-label {
+    font-size: 0.75rem;
+    color: #666;
+}
+
+.text-actions {
+    display: grid;
+    gap: 0.5rem;
+}
+
+.btn-study {
+    background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%);
+    color: white;
+    border: none;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    font-weight: 500;
+    text-align: center;
+    text-decoration: none;
+    display: block;
+    transition: all 0.3s ease;
+}
+
+.btn-study:hover {
+    background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
+    color: white;
+    text-decoration: none;
+}
+
+.btn-review {
+    background: #f5f5f5;
+    color: #666;
+    border: 1px solid #e0e0e0;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    text-align: center;
+    text-decoration: none;
+    display: block;
+    transition: all 0.3s ease;
+}
+
+.btn-review:hover {
+    background: #e0e0e0;
+    color: #333;
+    text-decoration: none;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    background: #f8f9fa;
+    border-radius: 12px;
+    margin: 2rem 0;
+}
+
+.empty-state i {
+    font-size: 4rem;
+    color: #ccc;
+    margin-bottom: 1rem;
+}
+
+.empty-state h3 {
+    color: #666;
+    margin-bottom: 0.5rem;
+}
+
+.empty-state p {
+    color: #999;
+    margin-bottom: 2rem;
+}
+
+.back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #2196f3;
+    text-decoration: none;
+    font-weight: 500;
+    margin-bottom: 1rem;
+}
+
+.back-link:hover {
+    color: #1976d2;
+    text-decoration: none;
+}
+
+/* レスポンシブ対応 */
+@media (max-width: 768px) {
+    .texts-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .text-stats {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="lesson-texts-container">
+    <a href="{{ url_for('student_dashboard.dashboard') }}" class="back-link">
+        <i class="fas fa-arrow-left"></i> ダッシュボードに戻る
+    </a>
+    
+    <div class="texts-header">
+        <h1><i class="fas fa-book-open"></i> レッスン配信BaseBuilderテキスト</h1>
+        <p>授業で配信されたBaseBuilderテキストを学習できます</p>
+    </div>
+    
+    {% if basebuilder_texts %}
+    <div class="texts-grid">
+        {% for text_info in basebuilder_texts %}
+        {% set text_set = text_info.text_set %}
+        {% set proficiency = text_proficiency.get(text_set.id, {}) %}
+        <div class="text-card">
+            <div class="text-header">
+                <div>
+                    <h3 class="text-title">{{ text_set.title }}</h3>
+                    <div class="text-meta">
+                        <i class="fas fa-folder"></i> {{ text_set.category.name if text_set.category else 'カテゴリなし' }}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="curriculum-info">
+                <h6><i class="fas fa-graduation-cap"></i> {{ text_info.curriculum_title }}</h6>
+                <p><i class="fas fa-chalkboard"></i> 第{{ text_info.lesson_number }}時間目: {{ text_info.lesson_title }}</p>
+                <p><i class="fas fa-tasks"></i> {{ text_info.task_title }}</p>
+            </div>
+            
+            {% if proficiency %}
+            <div class="progress-section">
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: {{ (proficiency.level / 5 * 100)|round(1) }}%"></div>
+                </div>
+                <div class="progress-text">
+                    <span>熟練度: レベル {{ proficiency.level }}/5</span>
+                    <span>{{ (proficiency.level / 5 * 100)|round(1) }}%</span>
+                </div>
+            </div>
+            {% endif %}
+            
+            <div class="text-stats">
+                <div class="stat-item">
+                    <div class="stat-value">{{ text_set.problems.count() if text_set.problems else 0 }}</div>
+                    <div class="stat-label">問題数</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">
+                        {% if proficiency and proficiency.last_study %}
+                            {{ (now - proficiency.last_study).days }}日前
+                        {% else %}
+                            未学習
+                        {% endif %}
+                    </div>
+                    <div class="stat-label">最終学習</div>
+                </div>
+            </div>
+            
+            <div class="text-actions">
+                <a href="{{ url_for('sessions.start_session', text_id=text_set.id) }}" class="btn-study">
+                    <i class="fas fa-play-circle"></i> 学習を開始
+                </a>
+                {% if proficiency %}
+                <a href="{{ url_for('progress.text_progress', text_id=text_set.id) }}" class="btn-review">
+                    <i class="fas fa-chart-line"></i> 進捗を確認
+                </a>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <i class="fas fa-inbox"></i>
+        <h3>配信されたテキストがありません</h3>
+        <p>授業でBaseBuilderテキストが配信されるとここに表示されます</p>
+        <a href="{{ url_for('student_dashboard.dashboard') }}" class="btn btn-primary">
+            <i class="fas fa-home"></i> ダッシュボードに戻る
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,872 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ task.title }} - 課題実行 | QuestEd{% endblock %}
+
+{% block extra_css %}
+<style>
+/* 課題実行画面専用スタイル */
+.task-work-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 1rem;
+}
+
+/* ヘッダーセクション */
+.task-header-section {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 2rem;
+    border-radius: 12px;
+    margin-bottom: 2rem;
+}
+
+.task-header-section h1 {
+    margin: 0 0 0.5rem 0;
+    font-size: 2rem;
+}
+
+.task-meta-info {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2rem;
+    margin-top: 1rem;
+    opacity: 0.9;
+}
+
+.task-meta-info span {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* プログレス表示 */
+.progress-section {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    margin-bottom: 2rem;
+}
+
+.progress-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.progress-bar-container {
+    background: #e9ecef;
+    height: 12px;
+    border-radius: 6px;
+    overflow: hidden;
+    margin-bottom: 1rem;
+}
+
+.progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #17a2b8 0%, #20c997 100%);
+    transition: width 0.3s ease;
+    border-radius: 6px;
+}
+
+.time-tracking {
+    display: flex;
+    gap: 2rem;
+    font-size: 0.9rem;
+    color: #6c757d;
+}
+
+/* 課題内容セクション */
+.task-content-section {
+    background: white;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    margin-bottom: 2rem;
+}
+
+.task-description {
+    font-size: 1.1rem;
+    line-height: 1.7;
+    color: #495057;
+    margin-bottom: 2rem;
+}
+
+.submission-requirements {
+    background: #f8f9fa;
+    padding: 1.5rem;
+    border-radius: 8px;
+    border-left: 4px solid #17a2b8;
+    margin-bottom: 2rem;
+}
+
+.submission-requirements h5 {
+    color: #17a2b8;
+    margin-bottom: 1rem;
+}
+
+.requirements-list {
+    margin: 0;
+    padding-left: 1.5rem;
+}
+
+.requirements-list li {
+    margin-bottom: 0.5rem;
+    color: #495057;
+}
+
+/* 作業エリア */
+.work-area-section {
+    background: white;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    margin-bottom: 2rem;
+}
+
+.work-tabs {
+    border-bottom: 2px solid #e9ecef;
+    margin-bottom: 2rem;
+}
+
+.work-tabs .nav-link {
+    border: none;
+    border-bottom: 3px solid transparent;
+    color: #6c757d;
+    padding: 1rem 1.5rem;
+    font-weight: 600;
+}
+
+.work-tabs .nav-link.active {
+    border-bottom-color: #17a2b8;
+    color: #17a2b8;
+    background: none;
+}
+
+.work-area {
+    min-height: 400px;
+}
+
+.text-editor {
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    min-height: 300px;
+    padding: 1rem;
+    font-family: 'Inter', sans-serif;
+    font-size: 1rem;
+    line-height: 1.6;
+    resize: vertical;
+}
+
+.text-editor:focus {
+    border-color: #17a2b8;
+    outline: none;
+    box-shadow: 0 0 0 0.2rem rgba(23, 162, 184, 0.25);
+}
+
+.file-upload-area {
+    border: 3px dashed #dee2e6;
+    border-radius: 12px;
+    padding: 3rem;
+    text-align: center;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.file-upload-area:hover {
+    border-color: #17a2b8;
+    background: #f8fdff;
+}
+
+.file-upload-area.dragover {
+    border-color: #20c997;
+    background: #f0fff4;
+}
+
+.upload-icon {
+    font-size: 3rem;
+    color: #6c757d;
+    margin-bottom: 1rem;
+}
+
+.uploaded-files {
+    margin-top: 2rem;
+}
+
+.file-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+}
+
+.file-item .file-info {
+    flex-grow: 1;
+}
+
+.file-item .file-name {
+    font-weight: 600;
+    color: #495057;
+}
+
+.file-item .file-size {
+    font-size: 0.8rem;
+    color: #6c757d;
+}
+
+/* 自己評価セクション */
+.self-evaluation-section {
+    background: white;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    margin-bottom: 2rem;
+}
+
+.evaluation-criteria {
+    margin-bottom: 2rem;
+}
+
+.criterion-item {
+    background: #f8f9fa;
+    padding: 1.5rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    border-left: 4px solid #28a745;
+}
+
+.criterion-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.criterion-name {
+    font-weight: 600;
+    color: #495057;
+}
+
+.rating-scale {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.rating-button {
+    width: 40px;
+    height: 40px;
+    border: 2px solid #dee2e6;
+    border-radius: 50%;
+    background: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 600;
+}
+
+.rating-button:hover {
+    border-color: #17a2b8;
+    color: #17a2b8;
+}
+
+.rating-button.selected {
+    background: #17a2b8;
+    border-color: #17a2b8;
+    color: white;
+}
+
+.criterion-description {
+    font-size: 0.9rem;
+    color: #6c757d;
+    margin-top: 0.5rem;
+}
+
+/* アクションセクション */
+.action-section {
+    background: white;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    text-align: center;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.action-buttons .btn {
+    min-width: 150px;
+    padding: 0.75rem 2rem;
+    font-weight: 600;
+    border-radius: 8px;
+}
+
+/* リソースサイドバー */
+.resources-sidebar {
+    position: sticky;
+    top: 2rem;
+}
+
+.resources-card {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    margin-bottom: 2rem;
+}
+
+.resources-card h6 {
+    color: #495057;
+    margin-bottom: 1rem;
+    font-weight: 600;
+}
+
+.resource-link {
+    display: block;
+    padding: 0.75rem;
+    color: #17a2b8;
+    text-decoration: none;
+    border-radius: 6px;
+    margin-bottom: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.resource-link:hover {
+    background: #f8fdff;
+    color: #138496;
+}
+
+.resource-link i {
+    margin-right: 0.5rem;
+}
+
+/* レスポンシブ対応 */
+@media (max-width: 768px) {
+    .task-meta-info {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .time-tracking {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .action-buttons {
+        flex-direction: column;
+    }
+    
+    .action-buttons .btn {
+        min-width: auto;
+        width: 100%;
+    }
+    
+    .rating-scale {
+        justify-content: center;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="task-work-container">
+    <!-- ナビゲーション -->
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{{ url_for('student_dashboard.dashboard') }}">
+                    <i class="fas fa-home"></i> ダッシュボード
+                </a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="{{ url_for('student_learning.curriculum_tasks', curriculum_id=task.curriculum_id) }}">
+                    <i class="fas fa-tasks"></i> 週次課題
+                </a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">
+                <i class="fas fa-edit"></i> 課題実行
+            </li>
+        </ol>
+    </nav>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- 課題ヘッダー -->
+            <div class="task-header-section">
+                <h1>{{ task.title }}</h1>
+                <p>{{ task.description or '課題に取り組みましょう' }}</p>
+                <div class="task-meta-info">
+                    <span><i class="fas fa-clock"></i> 推定時間: {{ task.estimated_minutes }}分</span>
+                    <span><i class="fas fa-signal"></i> 難易度: {{ task.difficulty_level }}/5</span>
+                    <span><i class="fas fa-tag"></i> {{ task.task_type_display }}</span>
+                    {% if task.is_required %}
+                    <span><i class="fas fa-exclamation-circle"></i> 必須課題</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- プログレス表示 -->
+            <div class="progress-section">
+                <div class="progress-header">
+                    <h5 class="mb-0">進捗状況</h5>
+                    <span class="badge bg-info">{{ progress.progress_percentage or 0 }}%</span>
+                </div>
+                <div class="progress-bar-container">
+                    <div class="progress-bar-fill" style="width: {{ progress.progress_percentage or 0 }}%"></div>
+                </div>
+                <div class="time-tracking">
+                    <span><i class="fas fa-play-circle"></i> 開始時刻: {{ progress.started_at.strftime('%H:%M') if progress.started_at else '未開始' }}</span>
+                    <span><i class="fas fa-clock"></i> 経過時間: <span id="elapsed-time">{{ progress.time_spent_minutes or 0 }}分</span></span>
+                    <span><i class="fas fa-save"></i> 最終保存: <span id="last-saved">{{ progress.last_activity_at.strftime('%H:%M') if progress.last_activity_at else '未保存' }}</span></span>
+                </div>
+            </div>
+
+            <!-- 課題内容 -->
+            <div class="task-content-section">
+                <div class="task-description">
+                    {{ task.description|nl2br if task.description else '課題の詳細説明はありません。提出要件を確認して取り組んでください。' }}
+                </div>
+
+                {% if task.submission_requirements %}
+                <div class="submission-requirements">
+                    <h5><i class="fas fa-clipboard-list"></i> 提出要件</h5>
+                    <ul class="requirements-list">
+                        {% if task.submission_requirements.format %}
+                        <li><strong>提出形式:</strong> {{ task.submission_requirements.format }}</li>
+                        {% endif %}
+                        {% if task.submission_requirements.min_word_count %}
+                        <li><strong>最小文字数:</strong> {{ task.submission_requirements.min_word_count }}文字</li>
+                        {% endif %}
+                        {% if task.submission_requirements.required_elements %}
+                        <li><strong>必須要素:</strong> {{ task.submission_requirements.required_elements|join(', ') }}</li>
+                        {% endif %}
+                        {% if task.submission_requirements.file_types %}
+                        <li><strong>許可ファイル形式:</strong> {{ task.submission_requirements.file_types|join(', ') }}</li>
+                        {% endif %}
+                    </ul>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- 作業エリア -->
+            <div class="work-area-section">
+                <h5 class="mb-3"><i class="fas fa-edit"></i> 作業エリア</h5>
+                
+                <!-- タブナビゲーション -->
+                <ul class="nav nav-tabs work-tabs" id="workTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="text-tab" data-bs-toggle="tab" data-bs-target="#text-work" type="button" role="tab">
+                            <i class="fas fa-file-text"></i> テキスト入力
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="file-tab" data-bs-toggle="tab" data-bs-target="#file-work" type="button" role="tab">
+                            <i class="fas fa-upload"></i> ファイル添付
+                        </button>
+                    </li>
+                </ul>
+
+                <!-- タブコンテンツ -->
+                <div class="tab-content" id="workTabsContent">
+                    <!-- テキスト入力タブ -->
+                    <div class="tab-pane fade show active" id="text-work" role="tabpanel">
+                        <div class="work-area">
+                            <textarea 
+                                class="form-control text-editor" 
+                                id="text-content" 
+                                placeholder="ここに課題の内容を入力してください..."
+                            >{{ progress.submission_data.text_content if progress.submission_data and progress.submission_data.text_content else '' }}</textarea>
+                            <div class="mt-2 text-end">
+                                <small class="text-muted">文字数: <span id="char-count">0</span></small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ファイル添付タブ -->
+                    <div class="tab-pane fade" id="file-work" role="tabpanel">
+                        <div class="work-area">
+                            <div class="file-upload-area" id="file-upload-area">
+                                <div class="upload-icon">
+                                    <i class="fas fa-cloud-upload-alt"></i>
+                                </div>
+                                <h5>ファイルをアップロード</h5>
+                                <p class="text-muted">ファイルをドラッグ&ドロップするか、クリックして選択してください</p>
+                                <input type="file" id="file-input" multiple style="display: none;">
+                                <button type="button" class="btn btn-outline-primary" onclick="document.getElementById('file-input').click()">
+                                    <i class="fas fa-folder-open"></i> ファイルを選択
+                                </button>
+                            </div>
+                            
+                            <div class="uploaded-files" id="uploaded-files">
+                                <!-- アップロードされたファイルがここに表示されます -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 自己評価セクション -->
+            {% if task.evaluation_criteria %}
+            <div class="self-evaluation-section">
+                <h5 class="mb-3"><i class="fas fa-star"></i> 自己評価</h5>
+                <div class="evaluation-criteria">
+                    {% for criterion_name, criterion_data in task.evaluation_criteria.items() %}
+                    <div class="criterion-item">
+                        <div class="criterion-header">
+                            <span class="criterion-name">{{ criterion_name }}</span>
+                            <div class="rating-scale" data-criterion="{{ criterion_name }}">
+                                {% for i in range(1, 6) %}
+                                <button type="button" class="rating-button" data-rating="{{ i }}">{{ i }}</button>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% if criterion_data.description %}
+                        <div class="criterion-description">{{ criterion_data.description }}</div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- アクションセクション -->
+            <div class="action-section">
+                <div class="action-buttons">
+                    <button type="button" class="btn btn-outline-secondary" onclick="saveProgress()">
+                        <i class="fas fa-save"></i> 進捗を保存
+                    </button>
+                    <button type="button" class="btn btn-warning" onclick="saveAndExit()">
+                        <i class="fas fa-pause"></i> 保存して中断
+                    </button>
+                    <button type="button" class="btn btn-success" onclick="submitTask()">
+                        <i class="fas fa-paper-plane"></i> 課題を提出
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- サイドバー -->
+        <div class="col-lg-4">
+            <!-- リソース -->
+            {% if task.resources %}
+            <div class="resources-card">
+                <h6><i class="fas fa-book"></i> 参考資料</h6>
+                {% for resource in task.resources %}
+                <a href="#" class="resource-link">
+                    <i class="fas fa-external-link-alt"></i> {{ resource }}
+                </a>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- 教師からのヒント -->
+            {% if task.teacher_notes %}
+            <div class="resources-card">
+                <h6><i class="fas fa-lightbulb"></i> 教師からのヒント</h6>
+                <div class="text-muted">{{ task.teacher_notes|nl2br }}</div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// 課題作業JavaScript
+let startTime = new Date();
+let autoSaveInterval;
+let currentProgress = {{ progress.progress_percentage or 0 }};
+
+// 初期化
+document.addEventListener('DOMContentLoaded', function() {
+    initializeWorkArea();
+    startAutoSave();
+    updateCharCount();
+    loadSelfEvaluation();
+});
+
+function initializeWorkArea() {
+    // ファイルアップロード初期化
+    const fileInput = document.getElementById('file-input');
+    const uploadArea = document.getElementById('file-upload-area');
+    
+    fileInput.addEventListener('change', handleFileSelect);
+    
+    // ドラッグ&ドロップ
+    uploadArea.addEventListener('dragover', handleDragOver);
+    uploadArea.addEventListener('drop', handleDrop);
+    uploadArea.addEventListener('dragleave', handleDragLeave);
+    
+    // テキストエリアの文字数カウント
+    document.getElementById('text-content').addEventListener('input', updateCharCount);
+    
+    // 自己評価ボタン
+    document.querySelectorAll('.rating-button').forEach(button => {
+        button.addEventListener('click', function() {
+            const rating = this.dataset.rating;
+            const criterion = this.parentElement.dataset.criterion;
+            selectRating(criterion, rating);
+        });
+    });
+}
+
+function startAutoSave() {
+    // 5分ごとに自動保存
+    autoSaveInterval = setInterval(saveProgress, 300000);
+}
+
+function updateCharCount() {
+    const textContent = document.getElementById('text-content').value;
+    const charCount = textContent.length;
+    document.getElementById('char-count').textContent = charCount;
+    
+    // 進捗率を更新
+    const minChars = {{ task.submission_requirements.min_word_count if task.submission_requirements and task.submission_requirements.min_word_count else 200 }};
+    const progressPercent = Math.min(100, Math.round((charCount / minChars) * 100));
+    updateProgress(progressPercent);
+}
+
+function updateProgress(percentage) {
+    currentProgress = percentage;
+    document.querySelector('.progress-bar-fill').style.width = percentage + '%';
+    document.querySelector('.badge.bg-info').textContent = percentage + '%';
+}
+
+function selectRating(criterion, rating) {
+    const ratingScale = document.querySelector(`[data-criterion="${criterion}"]`);
+    ratingScale.querySelectorAll('.rating-button').forEach(btn => {
+        btn.classList.remove('selected');
+    });
+    ratingScale.querySelector(`[data-rating="${rating}"]`).classList.add('selected');
+}
+
+function loadSelfEvaluation() {
+    {% if progress.self_evaluation %}
+    const evaluation = {{ progress.self_evaluation|tojson }};
+    Object.keys(evaluation).forEach(criterion => {
+        const rating = evaluation[criterion];
+        selectRating(criterion, rating);
+    });
+    {% endif %}
+}
+
+function collectSelfEvaluation() {
+    const evaluation = {};
+    document.querySelectorAll('.rating-scale').forEach(scale => {
+        const criterion = scale.dataset.criterion;
+        const selectedButton = scale.querySelector('.rating-button.selected');
+        if (selectedButton) {
+            evaluation[criterion] = parseInt(selectedButton.dataset.rating);
+        }
+    });
+    return evaluation;
+}
+
+function saveProgress() {
+    const textContent = document.getElementById('text-content').value;
+    const selfEvaluation = collectSelfEvaluation();
+    
+    const submissionData = {
+        text_content: textContent,
+        files: [], // TODO: アップロードされたファイル情報
+        progress_percentage: currentProgress
+    };
+    
+    fetch(`/api/task-management/student/task/{{ task.id }}/progress`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCsrfToken()
+        },
+        body: JSON.stringify({
+            progress_percentage: currentProgress,
+            submission_data: submissionData,
+            self_evaluation: selfEvaluation,
+            time_spent_minutes: Math.round((new Date() - startTime) / 60000)
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            document.getElementById('last-saved').textContent = new Date().toLocaleTimeString();
+            showToast('進捗が保存されました', 'success');
+        } else {
+            showToast(data.message || '保存に失敗しました', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('ネットワークエラーが発生しました', 'error');
+    });
+}
+
+function saveAndExit() {
+    saveProgress();
+    setTimeout(() => {
+        window.location.href = '/student/learning/curriculum/{{ task.curriculum_id }}/tasks';
+    }, 1000);
+}
+
+function submitTask() {
+    if (!validateSubmission()) {
+        return;
+    }
+    
+    if (!confirm('本当に提出しますか？提出後は内容を変更できません。')) {
+        return;
+    }
+    
+    const textContent = document.getElementById('text-content').value;
+    const selfEvaluation = collectSelfEvaluation();
+    
+    const submissionData = {
+        text_content: textContent,
+        files: [], // TODO: アップロードされたファイル情報
+        submitted_at: new Date().toISOString()
+    };
+    
+    fetch(`/api/task-management/student/task/{{ task.id }}/submit`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCsrfToken()
+        },
+        body: JSON.stringify({
+            submission_data: submissionData,
+            self_evaluation: selfEvaluation
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            showToast('課題を提出しました', 'success');
+            setTimeout(() => {
+                window.location.href = '/student/learning/curriculum/{{ task.curriculum_id }}/tasks';
+            }, 2000);
+        } else {
+            showToast(data.message || '提出に失敗しました', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('ネットワークエラーが発生しました', 'error');
+    });
+}
+
+function validateSubmission() {
+    const textContent = document.getElementById('text-content').value;
+    
+    {% if task.submission_requirements and task.submission_requirements.min_word_count %}
+    if (textContent.length < {{ task.submission_requirements.min_word_count }}) {
+        showToast('文字数が不足しています（最小{{ task.submission_requirements.min_word_count }}文字）', 'error');
+        return false;
+    }
+    {% endif %}
+    
+    // 必須要素チェック
+    {% if task.submission_requirements and task.submission_requirements.required_elements %}
+    const requiredElements = {{ task.submission_requirements.required_elements|tojson }};
+    for (const element of requiredElements) {
+        if (!textContent.toLowerCase().includes(element.toLowerCase())) {
+            showToast(`必須要素「${element}」が含まれていません`, 'error');
+            return false;
+        }
+    }
+    {% endif %}
+    
+    return true;
+}
+
+// ファイルアップロード関連
+function handleFileSelect(event) {
+    const files = event.target.files;
+    handleFiles(files);
+}
+
+function handleDragOver(event) {
+    event.preventDefault();
+    event.currentTarget.classList.add('dragover');
+}
+
+function handleDrop(event) {
+    event.preventDefault();
+    event.currentTarget.classList.remove('dragover');
+    const files = event.dataTransfer.files;
+    handleFiles(files);
+}
+
+function handleDragLeave(event) {
+    event.currentTarget.classList.remove('dragover');
+}
+
+function handleFiles(files) {
+    // TODO: ファイルアップロード処理
+    const uploadedFiles = document.getElementById('uploaded-files');
+    
+    Array.from(files).forEach(file => {
+        const fileItem = document.createElement('div');
+        fileItem.className = 'file-item';
+        fileItem.innerHTML = `
+            <i class="fas fa-file"></i>
+            <div class="file-info">
+                <div class="file-name">${file.name}</div>
+                <div class="file-size">${formatFileSize(file.size)}</div>
+            </div>
+            <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeFile(this)">
+                <i class="fas fa-trash"></i>
+            </button>
+        `;
+        uploadedFiles.appendChild(fileItem);
+    });
+}
+
+function removeFile(button) {
+    button.parentElement.remove();
+}
+
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+function showToast(message, type = 'info') {
+    // 簡易トースト表示
+    const toast = document.createElement('div');
+    toast.className = `alert alert-${type === 'error' ? 'danger' : 'success'} position-fixed`;
+    toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    toast.textContent = message;
+    
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.remove();
+    }, 3000);
+}
+
+function getCsrfToken() {
+    const tokenElement = document.querySelector('meta[name=csrf-token]');
+    return tokenElement ? tokenElement.getAttribute('content') : '';
+}
+
+// ページ離脱時の確認
+window.addEventListener('beforeunload', function(event) {
+    if (document.getElementById('text-content').value.trim()) {
+        event.preventDefault();
+        event.returnValue = '';
+    }
+});
+</script>
+{% endblock %}

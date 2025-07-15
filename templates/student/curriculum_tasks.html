@@ -1,0 +1,395 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ curriculum.title }} - 課題一覧 | QuestEd{% endblock %}
+
+{% block extra_css %}
+<style>
+/* カリキュラム課題一覧専用スタイル */
+.curriculum-tasks-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 1rem;
+}
+
+.curriculum-header {
+    background: linear-gradient(135deg, #6f42c1 0%, #007bff 100%);
+    color: white;
+    padding: 2rem;
+    border-radius: 12px;
+    margin-bottom: 2rem;
+}
+
+.curriculum-header h1 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.8rem;
+}
+
+.curriculum-meta {
+    opacity: 0.9;
+    font-size: 0.95rem;
+}
+
+.week-section {
+    background: white;
+    border-radius: 12px;
+    margin-bottom: 2rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    overflow: hidden;
+}
+
+.week-header {
+    background: #f8f9fa;
+    padding: 1.5rem;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.week-title {
+    margin: 0;
+    color: #495057;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.week-progress {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.progress-bar {
+    width: 200px;
+    height: 8px;
+    background: #e9ecef;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #28a745, #20c997);
+    transition: width 0.3s ease;
+}
+
+.task-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    padding: 2rem;
+}
+
+.task-card {
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+}
+
+.task-card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    transform: translateY(-2px);
+}
+
+.task-card.not_started {
+    border-left: 4px solid #6c757d;
+}
+
+.task-card.in_progress {
+    border-left: 4px solid #007bff;
+}
+
+.task-card.submitted {
+    border-left: 4px solid #ffc107;
+}
+
+.task-card.completed {
+    border-left: 4px solid #28a745;
+}
+
+.task-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+}
+
+.task-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #495057;
+    margin: 0;
+}
+
+.task-type {
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: white;
+}
+
+.task-type.worksheet { background: #6f42c1; }
+.task-type.report { background: #dc3545; }
+.task-type.test { background: #fd7e14; }
+.task-type.presentation { background: #20c997; }
+.task-type.project { background: #e83e8c; }
+
+.task-description {
+    color: #6c757d;
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+    line-height: 1.5;
+}
+
+.task-meta {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    font-size: 0.8rem;
+    color: #6c757d;
+}
+
+.task-status {
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-weight: 500;
+    text-align: center;
+    margin-bottom: 1rem;
+}
+
+.task-status.not_started {
+    background: #f8f9fa;
+    color: #6c757d;
+}
+
+.task-status.in_progress {
+    background: #cce7ff;
+    color: #0056b3;
+}
+
+.task-status.submitted {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.task-status.completed {
+    background: #d4edda;
+    color: #155724;
+}
+
+.task-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.btn {
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    border: none;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-block;
+    text-align: center;
+}
+
+.btn-primary {
+    background: #007bff;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #0056b3;
+}
+
+.btn-success {
+    background: #28a745;
+    color: white;
+}
+
+.btn-warning {
+    background: #ffc107;
+    color: #212529;
+}
+
+.btn-outline-secondary {
+    background: transparent;
+    border: 1px solid #6c757d;
+    color: #6c757d;
+}
+
+@media (max-width: 768px) {
+    .curriculum-tasks-container {
+        padding: 0.5rem;
+    }
+    
+    .task-grid {
+        grid-template-columns: 1fr;
+        padding: 1rem;
+    }
+    
+    .week-title {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .week-progress {
+        width: 100%;
+    }
+    
+    .progress-bar {
+        width: 100%;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="curriculum-tasks-container">
+    <!-- ナビゲーション -->
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{{ url_for('student_dashboard.dashboard') }}">
+                    <i class="fas fa-home"></i> ダッシュボード
+                </a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="{{ url_for('student_learning.learning_portal') }}">
+                    <i class="fas fa-graduation-cap"></i> 学習ポータル
+                </a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">
+                <i class="fas fa-tasks"></i> {{ curriculum.title }}
+            </li>
+        </ol>
+    </nav>
+
+    <!-- カリキュラムヘッダー -->
+    <div class="curriculum-header">
+        <h1>{{ curriculum.title }}</h1>
+        <div class="curriculum-meta">
+            {% if curriculum.description %}
+            <p>{{ curriculum.description }}</p>
+            {% endif %}
+            <p><i class="fas fa-tasks"></i> 
+                全 {{ tasks_by_week.values() | sum(attribute='__len__') or 0 }} 課題 / 
+                {{ tasks_by_week.keys() | length }} 週構成
+            </p>
+        </div>
+    </div>
+
+    <!-- 週別課題表示 -->
+    {% for week in tasks_by_week.keys() | sort %}
+    <div class="week-section">
+        <div class="week-header">
+            <div class="week-title">
+                <span>第{{ week }}週</span>
+                <div class="week-progress">
+                    <span>{{ week_stats[week].completed }}/{{ week_stats[week].total }} 完了</span>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: {{ week_stats[week].completion_rate }}%"></div>
+                    </div>
+                    <span>{{ week_stats[week].completion_rate }}%</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="task-grid">
+            {% for task_data in tasks_by_week[week] %}
+            <div class="task-card {{ task_data.status }}">
+                <div class="task-header">
+                    <h5 class="task-title">{{ task_data.task.title }}</h5>
+                    <span class="task-type {{ task_data.task.task_type }}">
+                        {{ task_data.task.get_type_display() }}
+                    </span>
+                </div>
+                
+                <div class="task-description">
+                    {{ task_data.task.description }}
+                </div>
+                
+                <div class="task-meta">
+                    <span><i class="fas fa-clock"></i> {{ task_data.task.estimated_minutes }}分</span>
+                    <span><i class="fas fa-signal"></i> 難易度: {{ task_data.task.difficulty_level }}/5</span>
+                    {% if task_data.task.is_required %}
+                    <span><i class="fas fa-exclamation-circle"></i> 必須</span>
+                    {% endif %}
+                </div>
+                
+                <div class="task-status {{ task_data.status }}">
+                    {% if task_data.status == 'not_started' %}
+                    <i class="fas fa-play-circle"></i> 未開始
+                    {% elif task_data.status == 'in_progress' %}
+                    <i class="fas fa-spinner"></i> 学習中 ({{ task_data.progress_percentage }}%)
+                    {% elif task_data.status == 'submitted' %}
+                    <i class="fas fa-hourglass-half"></i> 承認待ち
+                    {% elif task_data.status == 'completed' %}
+                    <i class="fas fa-check-circle"></i> 完了
+                    {% elif task_data.status == 'needs_revision' %}
+                    <i class="fas fa-edit"></i> 修正依頼
+                    {% endif %}
+                </div>
+                
+                <div class="task-actions">
+                    {% if task_data.status == 'not_started' %}
+                    <a href="{{ url_for('student_learning.task_work', task_id=task_data.task.id) }}" 
+                       class="btn btn-primary">
+                        <i class="fas fa-play"></i> 開始
+                    </a>
+                    {% elif task_data.status == 'in_progress' %}
+                    <a href="{{ url_for('student_learning.task_work', task_id=task_data.task.id) }}" 
+                       class="btn btn-success">
+                        <i class="fas fa-arrow-right"></i> 続行
+                    </a>
+                    {% elif task_data.status in ['submitted', 'completed', 'needs_revision'] %}
+                    <a href="{{ url_for('student_learning.task_submission', task_id=task_data.task.id) }}" 
+                       class="btn btn-outline-secondary">
+                        <i class="fas fa-eye"></i> 詳細
+                    </a>
+                    {% if task_data.status == 'needs_revision' %}
+                    <a href="{{ url_for('student_learning.task_revise', task_id=task_data.task.id) }}" 
+                       class="btn btn-warning">
+                        <i class="fas fa-edit"></i> 修正
+                    </a>
+                    {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endfor %}
+    
+    {% if not tasks_by_week %}
+    <div class="text-center py-5">
+        <i class="fas fa-tasks fa-3x text-muted mb-3"></i>
+        <h4 class="text-muted">課題が設定されていません</h4>
+        <p class="text-muted">このカリキュラムにはまだ課題が設定されていません。</p>
+        <a href="{{ url_for('student_learning.learning_portal') }}" class="btn btn-primary">
+            <i class="fas fa-arrow-left"></i> 学習ポータルに戻る
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// 課題カードのホバーエフェクト
+document.addEventListener('DOMContentLoaded', function() {
+    const taskCards = document.querySelectorAll('.task-card');
+    
+    taskCards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-4px)';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(-2px)';
+        });
+    });
+});
+</script>
+{% endblock %}

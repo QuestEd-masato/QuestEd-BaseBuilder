@@ -174,10 +174,14 @@
     {% endif %}
     
     <!-- マイルストーン -->
-    {% if milestones %}
-    <div class="card mb-4">
-        <div class="card-header bg-danger text-white">
+    <div class="card mb-4" id="milestones">
+        <div class="card-header bg-danger text-white d-flex justify-content-between align-items-center">
             <h5 class="mb-0">マイルストーン</h5>
+            {% if current_user.role == 'teacher' and current_user.id == class_obj.teacher_id %}
+            <a href="{{ url_for('teacher_class_management.create_milestone', class_id=class_obj.id) }}" class="btn btn-sm btn-light">
+                <i class="fas fa-plus"></i> マイルストーンを追加
+            </a>
+            {% endif %}
         </div>
         <div class="card-body">
             <div class="list-group">
@@ -200,12 +204,34 @@
                             <span class="text-danger">{{ -days_left }}日超過</span>
                         {% endif %}
                     </small>
+                    {% if current_user.role == 'teacher' and current_user.id == class_obj.teacher_id %}
+                    <div class="mt-2">
+                        <a href="{{ url_for('teacher_class_management.view_milestone', milestone_id=milestone.id) }}" class="btn btn-sm btn-info">詳細</a>
+                        <a href="{{ url_for('teacher_class_management.edit_milestone', milestone_id=milestone.id) }}" class="btn btn-sm btn-warning">編雈</a>
+                        <a href="{{ url_for('teacher_class_management.delete_milestone', milestone_id=milestone.id) }}" 
+                           class="btn btn-sm btn-danger" 
+                           onclick="return confirm('このマイルストーンを削除してもよろしいですか？');">
+                            削除
+                        </a>
+                    </div>
+                    {% endif %}
                 </div>
                 {% endfor %}
             </div>
         </div>
     </div>
-    {% endif %}
+        {% if milestones|length == 0 %}
+            <div class="text-center py-5">
+                <i class="fas fa-flag-checkered fa-3x text-muted mb-3"></i>
+                <p class="text-muted">マイルストーンがまだ設定されていません。</p>
+                {% if current_user.role == 'teacher' and current_user.id == class_obj.teacher_id %}
+                <a href="{{ url_for('teacher_class_management.create_milestone', class_id=class_obj.id) }}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> マイルストーンを作成
+                </a>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
     
     <div class="mt-4">
         <a href="{{ url_for('teacher_class_management.classes') }}" class="btn btn-secondary">

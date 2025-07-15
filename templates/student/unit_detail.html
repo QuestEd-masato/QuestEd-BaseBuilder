@@ -1,0 +1,610 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ unit.title }} | 単元学習 | QuestEd{% endblock %}
+
+{% block extra_css %}
+<style>
+.unit-detail-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+}
+
+.unit-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 2rem;
+    border-radius: 12px;
+    margin-bottom: 2rem;
+}
+
+.unit-title {
+    font-size: 1.8rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.unit-meta {
+    display: flex;
+    gap: 2rem;
+    margin-top: 1rem;
+    opacity: 0.9;
+}
+
+.unit-meta span {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.progress-overview {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.progress-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.stat-card {
+    background: #f8f9fa;
+    padding: 1rem;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.stat-value {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #0056b3;
+}
+
+.stat-label {
+    font-size: 0.9rem;
+    color: #6c757d;
+    margin-top: 0.25rem;
+}
+
+.progress-bar-container {
+    background: #e9ecef;
+    border-radius: 10px;
+    height: 12px;
+    overflow: hidden;
+    margin-bottom: 1rem;
+}
+
+.progress-bar-fill {
+    background: linear-gradient(90deg, #28a745 0%, #20c997 100%);
+    height: 100%;
+    transition: width 0.3s ease;
+    border-radius: 10px;
+}
+
+.problems-section {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.problems-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+}
+
+.problem-card {
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.problem-card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    transform: translateY(-2px);
+}
+
+.problem-card.completed {
+    border-color: #28a745;
+    background: #f8fff9;
+}
+
+.problem-card.in-progress {
+    border-color: #007bff;
+    background: #f8f9ff;
+}
+
+.problem-status {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #6c757d;
+}
+
+.problem-status.completed {
+    background: #28a745;
+}
+
+.problem-status.in-progress {
+    background: #007bff;
+}
+
+.problem-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: #212529;
+    padding-right: 2rem;
+}
+
+.problem-question {
+    color: #6c757d;
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+    line-height: 1.4;
+}
+
+.problem-meta {
+    font-size: 0.8rem;
+    color: #6c757d;
+    margin-bottom: 1rem;
+}
+
+.problem-progress {
+    margin-bottom: 1rem;
+}
+
+.problem-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.btn-problem {
+    flex: 1;
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    text-align: center;
+    display: inline-block;
+}
+
+.btn-start {
+    background: #007bff;
+    color: white;
+}
+
+.btn-start:hover {
+    background: #0056b3;
+    color: white;
+}
+
+.btn-continue {
+    background: #28a745;
+    color: white;
+}
+
+.btn-continue:hover {
+    background: #1e7e34;
+    color: white;
+}
+
+.btn-review {
+    background: #6c757d;
+    color: white;
+}
+
+.btn-review:hover {
+    background: #545b62;
+    color: white;
+}
+
+.completion-section {
+    background: #fff3cd;
+    border: 1px solid #ffeaa7;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-top: 2rem;
+    text-align: center;
+}
+
+.completion-section.available {
+    background: #d1ecf1;
+    border-color: #bee5eb;
+}
+
+.btn-completion {
+    background: #17a2b8;
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 6px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-completion:hover {
+    background: #138496;
+}
+
+.btn-completion:disabled {
+    background: #6c757d;
+    cursor: not-allowed;
+}
+
+@media (max-width: 768px) {
+    .unit-meta {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .progress-stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .problems-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="unit-detail-container">
+    <!-- 単元ヘッダー -->
+    <div class="unit-header">
+        <h1 class="unit-title">{{ unit.title }}</h1>
+        <p>{{ unit.description or '単元の詳細学習を開始しましょう' }}</p>
+        
+        <div class="unit-meta">
+            <span>
+                <i class="fas fa-star"></i>
+                難易度: {{ unit.get_difficulty_label() }}
+            </span>
+            <span>
+                <i class="fas fa-clock"></i>
+                推定時間: {{ unit.estimated_minutes }}分
+            </span>
+            <span>
+                <i class="fas fa-book"></i>
+                問題数: {{ stats.total_problems }}問
+            </span>
+        </div>
+        
+        <!-- カリキュラム確認リンク -->
+        <div class="curriculum-link mt-3">
+            <a href="#curriculum-section" class="btn btn-outline-light btn-sm" onclick="showCurriculumModal()">
+                <i class="fas fa-list-ul"></i> カリキュラムを確認
+            </a>
+        </div>
+    </div>
+    
+    <!-- 進捗概要 -->
+    <div class="progress-overview">
+        <h3><i class="fas fa-chart-line"></i> 学習進捗</h3>
+        
+        <div class="progress-stats">
+            <div class="stat-card">
+                <div class="stat-value">{{ stats.completed_problems }}</div>
+                <div class="stat-label">完了済み</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{{ stats.in_progress_problems }}</div>
+                <div class="stat-label">学習中</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{{ (stats.total_problems - stats.completed_problems - stats.in_progress_problems) }}</div>
+                <div class="stat-label">未開始</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{{ "%.1f"|format(stats.progress_percentage) }}%</div>
+                <div class="stat-label">進捗率</div>
+            </div>
+        </div>
+        
+        <div class="progress-bar-container">
+            <div class="progress-bar-fill" style="width: {{ stats.progress_percentage }}%"></div>
+        </div>
+        <div class="text-center">
+            <small class="text-muted">{{ stats.completed_problems }} / {{ stats.total_problems }} 問完了</small>
+        </div>
+    </div>
+    
+    <!-- 問題一覧 -->
+    <div class="problems-section">
+        <h3><i class="fas fa-list"></i> 学習問題一覧</h3>
+        
+        <!-- カリキュラムベースシステム移行案内 -->
+        <div class="text-center py-5">
+            <i class="fas fa-graduation-cap fa-3x text-primary mb-3"></i>
+            <h4>この単元は新しい学習システムに移行しています</h4>
+            <p class="text-muted">より効果的な学習体験のため、レッスン形式またはタスク形式の学習システムをご利用ください。</p>
+            
+            <div class="row mt-4">
+                <div class="col-md-6">
+                    <div class="card h-100">
+                        <div class="card-body text-center">
+                            <i class="fas fa-list-ul fa-2x text-info mb-3"></i>
+                            <h5>レッスン形式学習</h5>
+                            <p class="text-muted">1時間=1ページの構造化された学習</p>
+                            <button class="btn btn-info" onclick="checkLessonSystem()">
+                                <i class="fas fa-search"></i> レッスン確認
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card h-100">
+                        <div class="card-body text-center">
+                            <i class="fas fa-tasks fa-2x text-success mb-3"></i>
+                            <h5>タスク形式学習</h5>
+                            <p class="text-muted">週次課題による段階的な学習</p>
+                            <button class="btn btn-success" onclick="checkTaskSystem()">
+                                <i class="fas fa-search"></i> タスク確認
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-4">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i>
+                    <strong>自動リダイレクト:</strong> 通常は適切な学習システムに自動的に遷移します。
+                    手動で確認したい場合は上記のボタンをご利用ください。
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 完了申請セクション -->
+    {% if stats.progress_percentage >= 80 %}
+        <div class="completion-section available">
+            <h4><i class="fas fa-check-circle"></i> 単元完了申請</h4>
+            <p>学習進捗が80%を超えました。単元完了申請を行うことができます。</p>
+            <button class="btn-completion" onclick="requestCompletion()">
+                <i class="fas fa-graduation-cap"></i> 完了申請を送信
+            </button>
+        </div>
+    {% else %}
+        <div class="completion-section">
+            <h4><i class="fas fa-hourglass-half"></i> 完了申請まで</h4>
+            <p>完了申請には80%以上の進捗が必要です。現在: {{ "%.1f"|format(stats.progress_percentage) }}%</p>
+            <button class="btn-completion" disabled>
+                <i class="fas fa-lock"></i> {{ "%.0f"|format(80 - stats.progress_percentage) }}%進めると申請可能
+            </button>
+        </div>
+    {% endif %}
+    
+    <!-- ナビゲーション -->
+    <div class="text-center mt-4">
+        <a href="{{ url_for('student_learning.learning_portal') }}" class="btn btn-outline-primary">
+            <i class="fas fa-arrow-left"></i> 学習ポータルに戻る
+        </a>
+    </div>
+</div>
+
+<!-- 完了申請モーダル -->
+<div class="modal fade" id="completionModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">単元完了申請</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>「{{ unit.title }}」の完了申請を送信します。</p>
+                <div class="mb-3">
+                    <label for="completionNotes" class="form-label">学習メモ（任意）</label>
+                    <textarea class="form-control" id="completionNotes" rows="3" 
+                              placeholder="学習で気づいたことや感想を記入してください..."></textarea>
+                </div>
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i>
+                    申請後は教師の承認をお待ちください。
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">キャンセル</button>
+                <button type="button" class="btn btn-primary" onclick="submitCompletion()">申請を送信</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- カリキュラム詳細モーダル -->
+<div class="modal fade" id="curriculumModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-list-ul"></i> 単元カリキュラム詳細
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="curriculum-overview mb-4">
+                    <h6 class="text-primary">{{ unit.title }}</h6>
+                    <p class="text-muted">{{ unit.description or '単元の詳細学習内容をご確認ください' }}</p>
+                </div>
+                
+                <div class="curriculum-structure">
+                    <h6><i class="fas fa-tasks"></i> 学習内容構成</h6>
+                    
+                    <!-- BaseBuilder問題リスト -->
+                    <div class="learning-items">
+                        <h7 class="text-secondary">📚 学習問題一覧</h7>
+                        <div class="problems-list mt-2">
+                            {% if problems %}
+                                <div class="list-group">
+                                    {% for problem in problems %}
+                                        {% set progress = progress_records.get(problem.id) %}
+                                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                                            <div class="problem-info">
+                                                <h8 class="mb-1">{{ loop.index }}. {{ problem.title }}</h8>
+                                                <p class="mb-1 text-muted small">{{ problem.question[:80] }}{% if problem.question|length > 80 %}...{% endif %}</p>
+                                            </div>
+                                            <div class="status-badge">
+                                                {% if progress and progress.status == 'completed' %}
+                                                    <span class="badge bg-success">完了</span>
+                                                {% elif progress and progress.status == 'in_progress' %}
+                                                    <span class="badge bg-primary">学習中</span>
+                                                {% else %}
+                                                    <span class="badge bg-secondary">未開始</span>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <div class="text-center py-3">
+                                    <i class="fas fa-exclamation-triangle text-warning"></i>
+                                    <p class="text-muted">学習問題が登録されていません</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- 学習目標・評価基準 -->
+                    <div class="learning-objectives mt-4">
+                        <h7 class="text-secondary">🎯 学習目標と評価基準</h7>
+                        <div class="mt-2">
+                            <div class="alert alert-light">
+                                <ul class="mb-0">
+                                    <li><strong>完了基準:</strong> 80%以上の問題を完了すること</li>
+                                    <li><strong>理解度目標:</strong> 各問題で3段階以上の自己評価</li>
+                                    <li><strong>学習時間目安:</strong> {{ unit.estimated_minutes }}分程度</li>
+                                    <li><strong>申請手順:</strong> 問題完了 → 進捗確認 → 教師承認申請</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">閉じる</button>
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal" onclick="startLearning()">
+                    <i class="fas fa-play"></i> 学習を始める
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// CSRFトークンをグローバルに設定
+window.csrfToken = '{{ csrf_token() }}';
+
+function requestCompletion() {
+    const modal = new bootstrap.Modal(document.getElementById('completionModal'));
+    modal.show();
+}
+
+function showCurriculumModal() {
+    const modal = new bootstrap.Modal(document.getElementById('curriculumModal'));
+    modal.show();
+}
+
+function startLearning() {
+    // 最初の未開始問題を探して開始
+    const firstNotStarted = document.querySelector('.problem-card.not-started .btn-start');
+    if (firstNotStarted) {
+        window.location.href = firstNotStarted.href;
+    } else {
+        // 未開始がない場合は最初の問題へ
+        const firstProblem = document.querySelector('.problem-card .btn-problem');
+        if (firstProblem) {
+            window.location.href = firstProblem.href;
+        }
+    }
+}
+
+async function submitCompletion() {
+    const notes = document.getElementById('completionNotes').value.trim();
+    
+    try {
+        const response = await fetch('{{ url_for("student_unit_learning.request_unit_completion", unit_id=unit.id) }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': window.csrfToken
+            },
+            body: JSON.stringify({
+                completion_notes: notes
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            // モーダルを閉じる
+            const modal = bootstrap.Modal.getInstance(document.getElementById('completionModal'));
+            modal.hide();
+            
+            // 成功メッセージ表示
+            alert('✅ ' + result.message);
+            
+            // ページをリロード
+            window.location.reload();
+        } else {
+            alert('❌ ' + result.message);
+        }
+    } catch (error) {
+        console.error('Completion request error:', error);
+        alert('❌ 完了申請中にエラーが発生しました');
+    }
+}
+
+// カリキュラムベースシステム検出機能
+async function checkLessonSystem() {
+    const unitId = {{ unit.id }};
+    try {
+        // レッスンシステムがあるかチェック
+        {% if unit.legacy_curriculum_id %}
+        const lessonUrl = '{{ url_for("student_learning.curriculum_lessons", curriculum_id=unit.legacy_curriculum_id) }}';
+        window.location.href = lessonUrl;
+        {% else %}
+        alert('この単元にはレッスンシステムが設定されていません。');
+        {% endif %}
+    } catch (error) {
+        console.error('Lesson system check error:', error);
+        alert('レッスンシステムの確認中にエラーが発生しました。');
+    }
+}
+
+async function checkTaskSystem() {
+    const unitId = {{ unit.id }};
+    try {
+        // タスクシステムがあるかチェック
+        {% if unit.legacy_curriculum_id %}
+        const taskUrl = '{{ url_for("student_learning.curriculum_tasks", curriculum_id=unit.legacy_curriculum_id) }}';
+        window.location.href = taskUrl;
+        {% else %}
+        alert('この単元にはタスクシステムが設定されていません。');
+        {% endif %}
+    } catch (error) {
+        console.error('Task system check error:', error);
+        alert('タスクシステムの確認中にエラーが発生しました。');
+    }
+}
+</script>
+{% endblock %}

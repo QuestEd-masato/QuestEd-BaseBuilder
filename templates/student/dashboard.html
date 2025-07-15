@@ -422,8 +422,9 @@
     </div>
     {% endif %}
     
-    <!-- ランキングウィジェット -->
+    <!-- 学習ランキング -->
     <div class="dashboard-card">
+        <h3>🏆 学習ランキング</h3>
         {% include 'components/ranking_widget.html' %}
     </div>
     
@@ -546,25 +547,133 @@
             自分のペースで学習単元を選択し、進捗を管理できます。
         </p>
         
-        {% if unit_stats %}
-        <div class="metric-item">
-            <div class="metric-label">完了単元数</div>
-            <div class="metric-value">{{ unit_stats.completed_units or 0 }} / {{ unit_stats.total_units or 0 }} 単元</div>
+        {% if selected_units and selected_units|length > 0 %}
+        <!-- 選択済み単元一覧 -->
+        <div style="margin-bottom: 1rem;">
+            <div class="metric-label" style="margin-bottom: 0.5rem;">📖 学習中の単元</div>
+            {% for unit in selected_units %}
+            <div style="margin-bottom: 1rem; padding: 1rem; background-color: #f8f9fa; border-radius: 8px; border-left: 4px solid 
+                {% if unit.status == 'pending_approval' %}#ffc107
+                {% elif unit.status == 'ready_for_completion' %}#28a745
+                {% elif unit.status == 'in_progress' %}#007bff
+                {% else %}#6c757d{% endif %};">
+                
+                <!-- 単元情報ヘッダー -->
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
+                    <div style="flex: 1;">
+                        <div style="font-weight: 600; margin-bottom: 0.25rem;">{{ unit.title }}</div>
+                        <div style="font-size: 0.85rem; color: #666; margin-bottom: 0.25rem;">
+                            <i class="fas fa-school"></i> {{ unit.class_name }}
+                        </div>
+                        <div style="font-size: 0.85rem; color: #666; margin-bottom: 0.5rem;">
+                            {% if unit.difficulty_level == 1 %}基礎 ⭐
+                            {% elif unit.difficulty_level == 2 %}標準 ⭐⭐
+                            {% elif unit.difficulty_level == 3 %}応用 ⭐⭐⭐
+                            {% elif unit.difficulty_level == 4 %}発展 ⭐⭐⭐⭐
+                            {% elif unit.difficulty_level == 5 %}最難関 ⭐⭐⭐⭐⭐
+                            {% else %}不明{% endif %}
+                            | {{ unit.estimated_minutes }}分 | {{ unit.completed_items }}/{{ unit.total_items }}タスク
+                        </div>
+                        {% if unit.basebuilder_info %}
+                        <div style="font-size: 0.8rem; color: #17a2b8; background: #e8f7fc; padding: 0.25rem 0.5rem; border-radius: 4px; margin-bottom: 0.5rem;">
+                            <i class="fas fa-brain"></i> {{ unit.basebuilder_info.completion_requirement }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-size: 0.8rem; color: #666; margin-bottom: 0.25rem;">
+                            {% if unit.status == 'completed' %}完了
+                            {% elif unit.can_request_completion %}完了申請可能
+                            {% elif unit.status == 'in_progress' %}学習中
+                            {% else %}未開始{% endif %}
+                        </div>
+                        <div style="font-weight: 600; color: 
+                            {% if unit.progress_percentage >= 80 %}#28a745
+                            {% elif unit.progress_percentage >= 50 %}#ffc107
+                            {% else %}#007bff{% endif %};">
+                            {{ unit.progress_percentage|round(1) }}%
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 進捗バー -->
+                <div style="background: #e9ecef; border-radius: 10px; height: 8px; margin-bottom: 1rem; overflow: hidden;">
+                    <div style="background: {% if unit.progress_percentage >= 80 %}#28a745{% elif unit.progress_percentage >= 50 %}#ffc107{% else %}#007bff{% endif %}; 
+                         height: 100%; width: {{ unit.progress_percentage }}%; transition: width 0.3s ease; border-radius: 10px;"></div>
+                </div>
+                
+                <!-- アクションボタン -->
+                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                    <!-- 学習継続ボタン -->
+                    <a href="{{ url_for('student_learning.curriculum_direct_access', curriculum_id=unit.id) }}"
+                       style="flex: 1; min-width: 80px; display: inline-block; padding: 0.5rem 0.75rem; text-align: center; 
+                              background-color: #007bff; color: white; border: 1px solid #007bff; 
+                              border-radius: 6px; text-decoration: none; font-size: 0.85rem;
+                              transition: all 0.2s;">
+                        {% if unit.progress_percentage > 0 %}📚 続きから{% else %}📖 始める{% endif %}
+                    </a>
+                    
+                    
+                    <!-- 完了申請ボタン（新条件: BaseBuilder達成率90%以上 + レッスン達成または、テキストなしでレッスン達成のみ） -->
+                    {% if unit.can_request_completion %}
+                    <button onclick="console.log('Button clicked for unit {{ unit.id }}'); requestCurriculumCompletion({{ unit.id }}, '{{ unit.title }}')" 
+                       style="flex: 1; min-width: 80px; padding: 0.5rem 0.75rem; text-align: center; 
+                              background-color: #28a745; color: white; border: 1px solid #28a745; 
+                              border-radius: 6px; font-size: 0.85rem; cursor: pointer;
+                              transition: all 0.2s; z-index: 9999; position: relative;"
+                       title="{% if unit.basebuilder_info %}BaseBuilder達成率90%以上かつレッスン達成で申請可能{% else %}レッスン達成で申請可能{% endif %}">
+                        ✅ 完了申請
+                    </button>
+                    {% endif %}
+                    
+                    <!-- 非表示ボタン -->
+                    <button onclick="console.log('Hide button clicked for unit {{ unit.id }}'); hideUnit({{ unit.id }}, '{{ unit.title }}')" 
+                       style="flex: 0 0 auto; padding: 0.5rem 0.75rem; text-align: center; 
+                              background-color: #6c757d; color: white; border: 1px solid #6c757d; 
+                              border-radius: 6px; font-size: 0.85rem; cursor: pointer;
+                              transition: all 0.2s; z-index: 9999; position: relative;"
+                       title="この単元を非表示にする">
+                        🙈 非表示
+                    </button>
+                    
+                    <!-- 基礎力トレーニングボタン -->
+                    <a href="{{ url_for('texts.lesson_texts') }}" 
+                       style="flex: 1; min-width: 80px; display: inline-block; padding: 0.5rem 0.75rem; text-align: center; 
+                              background-color: #17a2b8; color: white; border: 1px solid #17a2b8; 
+                              border-radius: 6px; text-decoration: none; font-size: 0.85rem;
+                              transition: all 0.2s;">
+                        🎯 基礎力UP
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
         </div>
-        <div class="metric-item">
-            <div class="metric-label">学習中の単元</div>
-            <div class="metric-value">{{ unit_stats.in_progress_units or 0 }} 単元</div>
+        
+        <!-- 統計情報 -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 1rem; margin-bottom: 1rem;">
+            <div style="text-align: center; padding: 0.5rem; background: #e3f2fd; border-radius: 6px;">
+                <div style="font-size: 1.2rem; font-weight: 600; color: #1976d2;">{{ (selected_units|length) or 0 }}</div>
+                <div style="font-size: 0.8rem; color: #666;">学習中</div>
+            </div>
+            <div style="text-align: center; padding: 0.5rem; background: #e8f5e8; border-radius: 6px;">
+                <div style="font-size: 1.2rem; font-weight: 600; color: #2e7d32;">{{ completion_rate|default(0)|round(1) }}%</div>
+                <div style="font-size: 0.8rem; color: #666;">平均進捗</div>
+            </div>
         </div>
-        <div class="metric-item">
-            <div class="metric-label">完了率</div>
-            <div class="metric-value">{{ unit_stats.completion_rate or 0 }}%</div>
+        {% else %}
+        <!-- 単元が選択されていない場合 -->
+        <div style="text-align: center; padding: 2rem; background: #f8f9fa; border-radius: 8px; margin-bottom: 1rem;">
+            <div style="font-size: 3rem; margin-bottom: 1rem;">📚</div>
+            <p style="color: #666; margin: 0;">まだ学習単元を選択していません。</p>
+            <p style="color: #999; font-size: 0.9rem; margin-top: 0.5rem;">学習ポータルから単元を選択して学習を始めましょう！</p>
         </div>
         {% endif %}
         
         <div style="margin-top: 1rem;">
             <a href="{{ url_for('student_learning.learning_portal') }}" 
-               style="display: inline-block; padding: 0.375rem 0.75rem; font-size: 0.875rem; border-radius: 0.25rem; text-decoration: none; background-color: #5DADE2; color: white; border: 1px solid #5DADE2;">
-               学習ポータルへ
+               style="display: inline-block; padding: 0.5rem 1rem; font-size: 0.9rem; border-radius: 6px; text-decoration: none; background-color: #5DADE2; color: white; border: 1px solid #5DADE2;
+                      transition: all 0.2s; pointer-events: auto !important; z-index: 1000; position: relative;">
+               📖 学習ポータルへ
             </a>
         </div>
     </div>
@@ -641,6 +750,213 @@
 
 <!-- ページロード時のアニメーション -->
 <script>
+// CSRFトークンをグローバルに設定
+window.csrfToken = '{{ csrf_token() }}';
+
+// CSRF取得のヘルパー関数
+function getCSRFToken() {
+    return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || 
+           window.csrfToken || 
+           '{{ csrf_token() }}';
+}
+
+// カリキュラム確認モーダル表示
+async function showUnitCurriculum(unitId, unitTitle) {
+    try {
+        const response = await fetch(`/api/units/${unitId}/curriculum`, {
+            method: 'GET',
+            credentials: 'same-origin',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json',
+                'X-CSRFToken': getCSRFToken()
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const result = await response.json();
+        const curriculumData = result.data;
+        
+        // モーダルHTML生成
+        const modalHtml = `
+            <div class="modal fade" id="curriculumModal" tabindex="-1">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">📋 ${unitTitle} - カリキュラム詳細</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="row mb-3">
+                                <div class="col-md-4"><small class="text-muted">難易度:</small><br><span class="badge bg-primary">${getDifficultyText(curriculumData.unit.difficulty_level)}</span></div>
+                                <div class="col-md-4"><small class="text-muted">推定時間:</small><br><i class="fas fa-clock"></i> ${curriculumData.unit.estimated_minutes}分</div>
+                                <div class="col-md-4"><small class="text-muted">問題数:</small><br><i class="fas fa-tasks"></i> ${curriculumData.problems.length}問</div>
+                            </div>
+                            <div class="problems-list">
+                                <h6>📚 学習問題一覧</h6>
+                                ${curriculumData.problems.map((problem, index) => `
+                                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                                        <div><strong>${index + 1}. ${problem.title}</strong><br><small class="text-muted">${problem.question.substring(0, 80)}...</small></div>
+                                        <span class="badge ${getStatusBadgeClass(problem.status)}">${getStatusText(problem.status)}</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">閉じる</button>
+                            <a href="/learning/unit/${unitId}" class="btn btn-primary">学習を始める</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // 既存のモーダルがあれば削除
+        const existingModal = document.getElementById('curriculumModal');
+        if (existingModal) existingModal.remove();
+        
+        // 新しいモーダルを追加して表示
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+        const modal = new bootstrap.Modal(document.getElementById('curriculumModal'));
+        modal.show();
+        
+    } catch (error) {
+        console.error('カリキュラム取得エラー:', error);
+        alert('カリキュラム詳細の取得中にエラーが発生しました');
+    }
+}
+
+// カリキュラム完了申請（新システム用）
+async function requestCurriculumCompletion(curriculumId, curriculumTitle) {
+    const confirmed = confirm(`「${curriculumTitle}」の完了申請を送信しますか？\n\nBaseBuilderテキストの達成率とレッスン進捗の両方が条件を満たしている場合に申請できます。\n申請後は教師の承認をお待ちください。`);
+    if (!confirmed) return;
+    
+    try {
+        const response = await fetch(`/api/curriculum/${curriculumId}/request-completion`, {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRFToken()
+            },
+            body: JSON.stringify({
+                completion_notes: '',
+                check_basebuilder: true
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const result = await response.json();
+        
+        if (result.status === 'success') {
+            alert('✅ ' + result.message);
+            // ページをリロードして最新状態を反映
+            window.location.reload();
+        } else {
+            alert('❌ ' + (result.message || 'カリキュラム完了申請に失敗しました'));
+        }
+        
+    } catch (error) {
+        console.error('カリキュラム完了申請エラー:', error);
+        alert('カリキュラム完了申請中にエラーが発生しました');
+    }
+}
+
+// 単元完了申請（旧システム用 - 後方互換性のために保持）
+async function requestUnitCompletion(unitId, unitTitle) {
+    const confirmed = confirm(`「${unitTitle}」の完了申請を送信しますか？\n\n申請後は教師の承認をお待ちください。`);
+    if (!confirmed) return;
+    
+    try {
+        const response = await fetch(`/api/units/${unitId}/request-completion`, {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRFToken()
+            },
+            body: JSON.stringify({
+                completion_notes: ''
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const result = await response.json();
+        
+        if (result.status === 'success') {
+            alert('✅ ' + result.message);
+            // ページをリロードして最新状態を反映
+            window.location.reload();
+        } else {
+            alert('❌ ' + (result.message || '完了申請に失敗しました'));
+        }
+        
+    } catch (error) {
+        console.error('完了申請エラー:', error);
+        alert('完了申請中にエラーが発生しました');
+    }
+}
+
+// 単元非表示
+async function hideUnit(unitId, unitTitle) {
+    const confirmed = confirm(`「${unitTitle}」を非表示にしますか？\n\n学習記録は保持されますが、ダッシュボードからは見えなくなります。`);
+    if (!confirmed) return;
+    
+    try {
+        const response = await fetch(`/api/units/${unitId}/remove`, {
+            method: 'DELETE',
+            credentials: 'same-origin',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRFToken()
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const result = await response.json();
+        
+        if (result.status === 'success') {
+            alert('🙈 ' + result.message);
+            // ページをリロードして最新状態を反映
+            window.location.reload();
+        } else {
+            alert('❌ ' + (result.message || '単元非表示に失敗しました'));
+        }
+        
+    } catch (error) {
+        console.error('単元非表示エラー:', error);
+        alert('単元非表示中にエラーが発生しました');
+    }
+}
+
+// ヘルパー関数
+function getDifficultyText(level) {
+    const labels = {1: '基礎 ⭐', 2: '標準 ⭐⭐', 3: '応用 ⭐⭐⭐', 4: '発展 ⭐⭐⭐⭐', 5: '最難関 ⭐⭐⭐⭐⭐'};
+    return labels[level] || '不明';
+}
+
+function getStatusText(status) {
+    const texts = {'completed': '完了', 'in_progress': '学習中', 'not_started': '未開始'};
+    return texts[status] || '未開始';
+}
+
+function getStatusBadgeClass(status) {
+    const classes = {'completed': 'bg-success', 'in_progress': 'bg-primary', 'not_started': 'bg-secondary'};
+    return classes[status] || 'bg-secondary';
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     // セクションナビゲーションのためのスムーススクロール
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {

@@ -10,12 +10,12 @@ Learning Feature Module
 - 学習リソース管理
 """
 
-from .progress_manager import LearningProgressManager
 from .adaptive_system import AdaptiveLearningSystem
+from .progress_manager import LearningProgressManager
 from .resource_manager import LearningResourceManager
 
 __all__ = [
-    'LearningProgressManager',
-    'AdaptiveLearningSystem',
-    'LearningResourceManager'
+    "LearningProgressManager",
+    "AdaptiveLearningSystem",
+    "LearningResourceManager",
 ]

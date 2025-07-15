@@ -21,13 +21,53 @@
 
 <style>
 .ranking-widget {
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-    overflow: hidden;
-    height: 400px;
+    background: transparent;
+    border-radius: 0;
+    box-shadow: none;
+    overflow: visible;
+    height: auto;
+    max-height: none;
     display: flex;
     flex-direction: column;
+    margin: 0;
+    padding: 0;
+}
+
+/* 高特異性でスクロールバーのスタイルを上書き */
+.dashboard-card .ranking-widget::-webkit-scrollbar {
+    width: 8px !important;
+}
+
+.dashboard-card .ranking-widget::-webkit-scrollbar-track {
+    background: #f7fafc !important;
+    border-radius: 4px !important;
+}
+
+.dashboard-card .ranking-widget::-webkit-scrollbar-thumb {
+    background: #cbd5e0 !important;
+    border-radius: 4px !important;
+}
+
+.dashboard-card .ranking-widget::-webkit-scrollbar-thumb:hover {
+    background: #a0aec0 !important;
+}
+
+.ranking-widget::-webkit-scrollbar {
+    width: 8px;
+}
+
+.ranking-widget::-webkit-scrollbar-track {
+    background: #f7fafc;
+    border-radius: 4px;
+}
+
+.ranking-widget::-webkit-scrollbar-thumb {
+    background: #cbd5e0;
+    border-radius: 4px;
+}
+
+.ranking-widget::-webkit-scrollbar-thumb:hover {
+    background: #a0aec0;
 }
 
 .widget-header {
@@ -37,6 +77,9 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    margin: 0 -1.5rem 0 -1.5rem;
+    border-radius: 8px;
+    flex-shrink: 0;
 }
 
 .widget-header h3 {
@@ -60,8 +103,8 @@
 
 .widget-content {
     flex: 1;
-    padding: 1rem;
-    overflow-y: auto;
+    padding: 1rem 0;
+    overflow: visible;
 }
 
 .loading-placeholder {
@@ -79,7 +122,7 @@
     color: white;
     padding: 1rem;
     border-radius: 8px;
-    margin-bottom: 1rem;
+    margin: 0 1rem 1rem 1rem;
     text-align: center;
 }
 
@@ -94,6 +137,14 @@
     opacity: 0.9;
 }
 
+.ranking-list-container {
+    margin: 0 1rem 1rem 1rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    background: #f9fafb;
+}
+
+
 .ranking-list {
     list-style: none;
     padding: 0;
@@ -104,11 +155,12 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0.75rem;
-    margin-bottom: 0.5rem;
-    border-radius: 8px;
-    background: #f9fafb;
+    padding: 0.5rem;
+    margin-bottom: 0.25rem;
+    border-radius: 4px;
+    background: white;
     transition: background 0.2s;
+    border: 1px solid #e5e7eb;
 }
 
 .ranking-item:hover {
@@ -123,7 +175,7 @@
 .student-info {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
+    gap: 0.5rem;
 }
 
 .rank-number {
@@ -138,8 +190,8 @@
 .rank-3 { color: #cd7c2f; }
 
 .student-avatar {
-    width: 32px;
-    height: 32px;
+    width: 28px;
+    height: 28px;
     border-radius: 50%;
     background: #667eea;
     color: white;
@@ -147,19 +199,19 @@
     align-items: center;
     justify-content: center;
     font-weight: bold;
-    font-size: 0.8rem;
+    font-size: 0.7rem;
 }
 
 .student-name {
     font-weight: 600;
     color: #374151;
-    font-size: 0.9rem;
+    font-size: 0.8rem;
 }
 
 .student-score {
     font-weight: 600;
     color: #059669;
-    font-size: 0.9rem;
+    font-size: 0.8rem;
 }
 
 .analytics-summary {
@@ -193,6 +245,8 @@
     background: #f8fafc;
     border-top: 1px solid #e5e7eb;
     text-align: center;
+    margin: 0 1rem;
+    border-radius: 0 0 8px 8px;
 }
 
 .update-time {
@@ -235,12 +289,8 @@ async function loadRankingWidget() {
     const userRole = widget.dataset.userRole;
     
     try {
-        let scope = 'school';
+        let scope = 'school';  // 常に学校全体のランキングを表示
         let limit = 10;
-        
-        if (userRole === 'teacher') {
-            scope = 'class';
-        }
         
         const apiUrl = `/api/rankings/total_points?scope=${scope}&limit=${limit}`;
         console.log('Fetching ranking data from:', apiUrl);
@@ -269,20 +319,28 @@ async function loadRankingWidget() {
         const data = await response.json();
         console.log('Ranking data received:', data);
         
-        // データ構造をログで確認
-        if (data && data.rankings) {
-            console.log('Using data.rankings structure');
-            displayRankings(data.rankings, data);
-        } else if (data && data.data && data.data.rankings) {
-            console.log('Using data.data.rankings structure');
-            displayRankings(data.data.rankings, data.data);
-        } else if (data.success || data.status === 'success') {
-            console.log('Success response but checking data structure');
-            const rankingData = data.data || data;
-            renderRankingWidget(rankingData, userRole);
+        // 統一されたAPIレスポンス構造を処理
+        if (data && data.status === 'success' && data.api_version === '1.0') {
+            console.log('Using standardized API response structure v1.0');
+            renderRankingWidget({
+                rankings: data.rankings || [],
+                total_participants: data.total_participants || 0,
+                my_rank: data.my_rank,
+                my_score: data.my_score,
+                last_updated: data.last_updated || new Date().toISOString()
+            }, userRole);
+        } else if (data && data.status === 'success' && data.rankings) {
+            console.log('Using legacy API success response structure');
+            renderRankingWidget({
+                rankings: data.rankings,
+                total_participants: data.total_participants,
+                my_rank: data.my_rank,
+                my_score: data.my_score,
+                last_updated: data.last_updated || new Date().toISOString()
+            }, userRole);
         } else {
             console.error('Unexpected ranking data structure:', data);
-            content.innerHTML = `<div class="error-message">データ構造が予期しない形式です</div>`;
+            content.innerHTML = `<div class="error-message">ランキングデータの形式が正しくありません</div>`;
         }
     } catch (error) {
         console.error('Ranking fetch error:', error);
@@ -318,43 +376,54 @@ function renderRankingWidget(rankingData, userRole) {
     console.log('Rendering ranking widget with data:', rankingData);
     console.log('User role:', userRole);
     
-    if (userRole === 'student' && rankingData.my_rank && rankingData.my_rank.rank) {
-        // 学生の場合は自分のランキング情報を表示
+    // 現在のユーザーの順位を取得（API直接レスポンスまたは検索）
+    const currentUserId = {{ current_user.id if current_user.is_authenticated else 'null' }};
+    let myRank = null;
+    
+    // API から直接 my_rank が提供されている場合
+    if (rankingData.my_rank && rankingData.my_score !== undefined) {
+        myRank = {
+            rank: rankingData.my_rank,
+            score: rankingData.my_score,
+            total_participants: rankingData.total_participants || (rankingData.rankings ? rankingData.rankings.length : 0)
+        };
+    } 
+    // ランキングリストから検索
+    else if (currentUserId && rankingData.rankings) {
+        for (let i = 0; i < rankingData.rankings.length; i++) {
+            if (rankingData.rankings[i].student_id === currentUserId) {
+                myRank = {
+                    rank: rankingData.rankings[i].rank,
+                    score: rankingData.rankings[i].score,
+                    total_participants: rankingData.total_participants || rankingData.rankings.length
+                };
+                break;
+            }
+        }
+    }
+    
+    if (myRank) {
+        // 自分のランキング情報を表示（学生・教師共通）
         html += `
             <div class="my-rank-summary">
                 <div class="my-rank-number">
-                    ${rankingData.my_rank.rank <= 3 ? 
-                        (rankingData.my_rank.rank === 1 ? '🥇' : 
-                         rankingData.my_rank.rank === 2 ? '🥈' : '🥉') : ''
+                    ${myRank.rank <= 3 ? 
+                        (myRank.rank === 1 ? '🥇' : 
+                         myRank.rank === 2 ? '🥈' : '🥉') : ''
                     }
-                    ${rankingData.my_rank.rank}位
+                    ${myRank.rank}位
                 </div>
                 <div class="my-rank-details">
-                    スコア: ${rankingData.my_rank.score} | 全${rankingData.my_rank.total_participants}人中
-                </div>
-            </div>
-        `;
-    } else if (userRole === 'teacher' && rankingData.analytics) {
-        // 教師の場合はクラス分析サマリーを表示
-        html += `
-            <div class="analytics-summary">
-                <div class="stat-card">
-                    <div class="stat-value">${rankingData.analytics.class_average || 0}</div>
-                    <div class="stat-label">クラス平均</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value">${rankingData.analytics.participation_rate || 0}%</div>
-                    <div class="stat-label">参加率</div>
+                    スコア: ${Math.floor(myRank.score)}pt | 全${myRank.total_participants}人中
                 </div>
             </div>
         `;
     }
     
     if (rankingData.rankings && rankingData.rankings.length > 0) {
-        html += '<ul class="ranking-list">';
+        html += '<div class="ranking-list-container"><ul class="ranking-list">';
         
-        const currentUserId = {{ current_user.id if current_user.is_authenticated else 'null' }};
-        const displayLimit = Math.min(rankingData.rankings.length, 8);
+        const displayLimit = Math.min(rankingData.rankings.length, 5);  // トップ5まで表示
         
         for (let i = 0; i < displayLimit; i++) {
             const student = rankingData.rankings[i];
@@ -365,14 +434,14 @@ function renderRankingWidget(rankingData, userRole) {
                     <div class="student-info">
                         <div class="rank-number rank-${student.rank <= 3 ? student.rank : ''}">${student.rank}</div>
                         <div class="student-avatar">${student.student_name ? escapeHtml(student.student_name)[0].toUpperCase() : '?'}</div>
-                        <div class="student-name">${escapeHtml(student.student_name) || '不明'}</div>
+                        <div class="student-name">${escapeHtml(student.student_name || student.full_name || student.username) || '不明'}</div>
                     </div>
-                    <div class="student-score">${Math.round(student.score)}pt</div>
+                    <div class="student-score">${Math.floor(student.score)}pt</div>
                 </li>
             `;
         }
         
-        html += '</ul>';
+        html += '</ul></div>';
     } else {
         html += '<div class="no-data-message">ランキングデータがありません</div>';
     }

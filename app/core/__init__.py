@@ -11,11 +11,7 @@ Phase 5.1: 構造最適化 - コア機能の統合
 """
 
 from .base_service import BaseService
-from .security_manager import SecurityManager
 from .data_access import DataAccessLayer
+from .security_manager import SecurityManager
 
-__all__ = [
-    'BaseService',
-    'SecurityManager', 
-    'DataAccessLayer'
-]
+__all__ = ["BaseService", "SecurityManager", "DataAccessLayer"]

@@ -345,7 +345,7 @@ function updateRanking() {
     }
     
     // ページを更新
-    window.location.href = `{{ url_for('student.ranking') }}?${params.toString()}`;
+    window.location.href = `{{ url_for('student_ranking.ranking') }}?${params.toString()}`;
 }
 
 function refreshRanking() {

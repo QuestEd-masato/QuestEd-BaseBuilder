@@ -26,6 +26,50 @@ from basebuilder.utils import require_roles, handle_db_error
 
 texts_bp = Blueprint('texts', __name__, url_prefix='/basebuilder')
 
+@texts_bp.route('/api/text-sets')
+@login_required
+def api_text_sets():
+    """シンプルなBaseBuilder連携用テキスト一覧API"""
+    try:
+        # 全テキストセットを取得（カテゴリ情報付き）
+        text_sets = db.session.query(
+            TextSet.id,
+            TextSet.title,
+            TextSet.description,
+            ProblemCategory.name.label('category_name'),
+            db.func.count(BasicKnowledgeItem.id).label('problem_count')
+        ).outerjoin(
+            ProblemCategory, TextSet.category_id == ProblemCategory.id
+        ).outerjoin(
+            BasicKnowledgeItem, TextSet.id == BasicKnowledgeItem.text_set_id
+        ).group_by(
+            TextSet.id, TextSet.title, TextSet.description, ProblemCategory.name
+        ).order_by(
+            ProblemCategory.name, TextSet.title
+        ).all()
+        
+        text_sets_data = []
+        for text_set in text_sets:
+            text_sets_data.append({
+                'id': text_set.id,
+                'title': text_set.title,
+                'description': text_set.description,
+                'category_name': text_set.category_name or 'その他',
+                'problem_count': text_set.problem_count or 0
+            })
+        
+        return jsonify({
+            'success': True,
+            'text_sets': text_sets_data
+        })
+        
+    except Exception as e:
+        current_app.logger.error(f"API text-sets error: {str(e)}")
+        return jsonify({
+            'success': False,
+            'message': 'テキスト一覧の取得に失敗しました'
+        }), 500
+
 @texts_bp.route('/texts')
 @login_required
 def texts():
@@ -236,6 +280,109 @@ def my_texts():
                              now=datetime.now())
 
 
+@texts_bp.route('/lesson_texts')
+@login_required
+def lesson_texts():
+    """学生向け: レッスンで配信されたBaseBuilderテキスト一覧"""
+    try:
+        # 権限チェック
+        if current_user.role != 'student':
+            flash('学生のみアクセス可能です。')
+            return redirect(url_for('texts.text_sets'))
+        
+        # 学生の所属クラスを取得
+        from app.models import ClassEnrollment, Curriculum
+        from app.modules.lesson_system.models.lesson_models import CurriculumLesson, LessonTask
+        enrolled_class_ids = [enrollment.class_id for enrollment in 
+                            ClassEnrollment.query.filter_by(
+                                student_id=current_user.id,
+                                is_active=True
+                            ).all()]
+        
+        if not enrolled_class_ids:
+            flash('所属クラスが見つかりません。管理者にお問い合わせください。', 'warning')
+            return render_template('basebuilder/lesson_texts.html', 
+                                 basebuilder_texts=[],
+                                 text_proficiency={},
+                                 now=datetime.now())
+        
+        # クラスに配信されたカリキュラムを取得
+        curricula = Curriculum.query.filter(
+            Curriculum.class_id.in_(enrolled_class_ids)
+        ).all()
+        
+        # レッスンのタスクから BaseBuilder テキストを抽出
+        basebuilder_texts = []
+        seen_text_ids = set()  # 重複を避けるため
+        
+        for curriculum in curricula:
+            # カリキュラムのレッスンを取得
+            lessons = CurriculumLesson.query.filter_by(
+                curriculum_id=curriculum.id
+            ).all()
+            
+            for lesson in lessons:
+                # レッスンのタスクを取得
+                tasks = LessonTask.query.filter_by(
+                    lesson_id=lesson.id
+                ).all()
+                
+                for task in tasks:
+                    # タスクの説明からBaseBuilderテキスト情報を抽出
+                    if task.description and 'BaseBuilderテキスト:' in task.description:
+                        import re
+                        pattern = r'BaseBuilderテキスト:\s*"([^"]+)"\s*\(ID:\s*(\d+)\)'
+                        match = re.search(pattern, task.description)
+                        
+                        if match:
+                            text_title = match.group(1)
+                            text_id = int(match.group(2))
+                            
+                            if text_id not in seen_text_ids:
+                                # TextSetを取得
+                                text_set = TextSet.query.get(text_id)
+                                if text_set:
+                                    seen_text_ids.add(text_id)
+                                    basebuilder_texts.append({
+                                        'text_set': text_set,
+                                        'curriculum_title': curriculum.title,
+                                        'lesson_title': lesson.title,
+                                        'task_title': task.title,
+                                        'lesson_number': lesson.lesson_number
+                                    })
+        
+        # テキスト習熟度を取得
+        text_proficiency = {}
+        if basebuilder_texts:
+            text_ids = [bt['text_set'].id for bt in basebuilder_texts]
+            proficiency_records = TextProficiencyRecord.query.filter(
+                TextProficiencyRecord.student_id == current_user.id,
+                TextProficiencyRecord.text_set_id.in_(text_ids)
+            ).all()
+            
+            for record in proficiency_records:
+                text_proficiency[record.text_set_id] = {
+                    'level': record.level,
+                    'last_study': record.updated_at
+                }
+        
+        # レッスン番号でソート
+        basebuilder_texts.sort(key=lambda x: (x['curriculum_title'], x['lesson_number']))
+        
+        return render_template('basebuilder/lesson_texts.html',
+                             basebuilder_texts=basebuilder_texts,
+                             text_proficiency=text_proficiency,
+                             now=datetime.now())
+        
+    except Exception as e:
+        current_app.logger.error(f"Lesson texts error: {str(e)}")
+        flash('テキスト一覧の取得中にエラーが発生しました。', 'error')
+        return render_template('basebuilder/lesson_texts.html', 
+                             basebuilder_texts=[],
+                             text_proficiency={},
+                             now=datetime.now())
+
+
 @texts_bp.route('/text_sets')
 @login_required
 def text_sets():
@@ -341,7 +488,6 @@ def deliver_text(text_id):
         if request.method == 'POST':
             class_ids = request.form.getlist('class_ids')
             due_date_str = request.form.get('due_date')
-            instructions = request.form.get('instructions', '').strip()
             
             if not class_ids:
                 flash('配信先クラスを選択してください。', 'error')
@@ -386,8 +532,7 @@ def deliver_text(text_id):
                         class_id=class_id,
                         delivered_by=current_user.id,
                         delivered_at=datetime.utcnow(),
-                        due_date=due_date,
-                        instructions=instructions
+                        due_date=due_date
                     )
                     
                     db.session.add(delivery)

@@ -146,9 +146,13 @@
         <h1>{{ unit.title }}</h1>
         <div class="unit-meta">
             <span><i class="fas fa-star"></i> 難易度: 
-                {% if unit.difficulty_level == 1 %}基礎 ⭐
-                {% elif unit.difficulty_level == 2 %}標準 ⭐⭐
-                {% else %}応用 ⭐⭐⭐
+                {% set difficulty = unit.difficulty_level|default(2) %}
+                {% if difficulty == 1 %}基礎 ⭐
+                {% elif difficulty == 2 %}標準 ⭐⭐
+                {% elif difficulty == 3 %}応用 ⭐⭐⭐
+                {% elif difficulty == 4 %}発展 ⭐⭐⭐⭐
+                {% elif difficulty == 5 %}最難関 ⭐⭐⭐⭐⭐
+                {% else %}標準 ⭐⭐
                 {% endif %}
             </span>
             <span><i class="fas fa-clock"></i> 推定時間: {{ unit.estimated_minutes }}分</span>

@@ -1,0 +1,446 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ task.title }} - 提出 | QuestEd{% endblock %}
+
+{% block extra_css %}
+<style>
+/* 提出画面専用スタイル */
+.submit-container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 1rem;
+}
+
+/* ヘッダーセクション */
+.submit-header {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    color: white;
+    padding: 2rem;
+    border-radius: 12px;
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+.submit-header h1 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.8rem;
+}
+
+.submit-header p {
+    margin: 0;
+    opacity: 0.9;
+    font-size: 1.1rem;
+}
+
+/* 提出確認セクション */
+.submission-review {
+    background: white;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    margin-bottom: 2rem;
+}
+
+.current-work {
+    background: #f8f9fa;
+    padding: 1.5rem;
+    border-radius: 8px;
+    border-left: 4px solid #17a2b8;
+    margin-bottom: 2rem;
+}
+
+.current-work h5 {
+    color: #17a2b8;
+    margin-bottom: 1rem;
+}
+
+.work-preview {
+    background: white;
+    padding: 1rem;
+    border-radius: 6px;
+    border: 1px solid #dee2e6;
+    max-height: 200px;
+    overflow-y: auto;
+    font-family: 'Inter', sans-serif;
+    line-height: 1.6;
+}
+
+.self-evaluation-summary {
+    background: #fff3cd;
+    padding: 1.5rem;
+    border-radius: 8px;
+    border-left: 4px solid #ffc107;
+    margin-bottom: 2rem;
+}
+
+.self-evaluation-summary h5 {
+    color: #856404;
+    margin-bottom: 1rem;
+}
+
+.evaluation-items {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.evaluation-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem;
+    background: white;
+    border-radius: 4px;
+}
+
+.evaluation-item .criterion {
+    font-weight: 600;
+    color: #495057;
+}
+
+.evaluation-item .rating {
+    font-weight: bold;
+    color: #856404;
+}
+
+/* 最終確認 */
+.final-check {
+    background: #e7f3ff;
+    padding: 2rem;
+    border-radius: 12px;
+    border: 2px solid #0084ff;
+    margin-bottom: 2rem;
+}
+
+.final-check h4 {
+    color: #0056b3;
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+
+.checklist {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.checklist li {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    margin-bottom: 0.5rem;
+    background: white;
+    border-radius: 6px;
+    border: 1px solid #dee2e6;
+}
+
+.checklist input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    accent-color: #0056b3;
+}
+
+.checklist label {
+    flex: 1;
+    margin: 0;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+/* 追加コメント */
+.additional-comment {
+    background: white;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    margin-bottom: 2rem;
+}
+
+.comment-textarea {
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    padding: 1rem;
+    font-family: 'Inter', sans-serif;
+    font-size: 1rem;
+    line-height: 1.6;
+    resize: vertical;
+    min-height: 120px;
+}
+
+.comment-textarea:focus {
+    border-color: #28a745;
+    outline: none;
+    box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+}
+
+/* アクションボタン */
+.submit-actions {
+    background: white;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    text-align: center;
+}
+
+.submit-actions .btn {
+    min-width: 150px;
+    padding: 0.75rem 2rem;
+    font-weight: 600;
+    border-radius: 8px;
+    margin: 0 0.5rem;
+}
+
+.submit-warning {
+    background: #fff3cd;
+    border: 1px solid #ffeaa7;
+    color: #856404;
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+
+.submit-warning i {
+    margin-right: 0.5rem;
+}
+
+/* レスポンシブ対応 */
+@media (max-width: 768px) {
+    .submit-container {
+        padding: 0.5rem;
+    }
+    
+    .submit-header {
+        padding: 1.5rem;
+    }
+    
+    .evaluation-items {
+        grid-template-columns: 1fr;
+    }
+    
+    .submit-actions .btn {
+        width: 100%;
+        margin: 0.25rem 0;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="submit-container">
+    <!-- ナビゲーション -->
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{{ url_for('student_dashboard.dashboard') }}">
+                    <i class="fas fa-home"></i> ダッシュボード
+                </a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="{{ url_for('student_learning.curriculum_tasks', curriculum_id=task.curriculum_id) }}">
+                    <i class="fas fa-tasks"></i> 週次課題
+                </a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="{{ url_for('student_learning.task_work', task_id=task.id) }}">
+                    <i class="fas fa-edit"></i> 課題実行
+                </a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">
+                <i class="fas fa-paper-plane"></i> 提出
+            </li>
+        </ol>
+    </nav>
+
+    <!-- 提出ヘッダー -->
+    <div class="submit-header">
+        <h1>{{ task.title }} - 課題提出</h1>
+        <p>内容を確認して提出してください</p>
+    </div>
+
+    <!-- 提出内容確認 -->
+    <div class="submission-review">
+        <h4><i class="fas fa-eye"></i> 提出内容の確認</h4>
+        
+        <!-- 現在の作業内容 -->
+        <div class="current-work">
+            <h5><i class="fas fa-file-text"></i> 作成した内容</h5>
+            <div class="work-preview">
+                {% if progress.submission_data and progress.submission_data.text_content %}
+                    {{ progress.submission_data.text_content|nl2br }}
+                {% else %}
+                    <em class="text-muted">テキスト内容がありません</em>
+                {% endif %}
+            </div>
+            <div class="mt-2">
+                <small class="text-muted">
+                    文字数: {{ progress.submission_data.text_content|length if progress.submission_data and progress.submission_data.text_content else 0 }}文字
+                </small>
+            </div>
+        </div>
+
+        <!-- 自己評価確認 -->
+        {% if progress.self_evaluation %}
+        <div class="self-evaluation-summary">
+            <h5><i class="fas fa-star"></i> 自己評価</h5>
+            <div class="evaluation-items">
+                {% for criterion, rating in progress.self_evaluation.items() %}
+                <div class="evaluation-item">
+                    <span class="criterion">{{ criterion }}</span>
+                    <span class="rating">{{ rating }}/5</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- 最終確認チェックリスト -->
+    <div class="final-check">
+        <h4><i class="fas fa-clipboard-check"></i> 提出前の最終確認</h4>
+        <ul class="checklist">
+            <li>
+                <input type="checkbox" id="check-content" required>
+                <label for="check-content">提出内容に間違いや誤字脱字がないことを確認しました</label>
+            </li>
+            {% if task.submission_requirements and task.submission_requirements.min_word_count %}
+            <li>
+                <input type="checkbox" id="check-length" required>
+                <label for="check-length">必要な文字数（{{ task.submission_requirements.min_word_count }}文字以上）を満たしています</label>
+            </li>
+            {% endif %}
+            {% if task.submission_requirements and task.submission_requirements.required_elements %}
+            <li>
+                <input type="checkbox" id="check-elements" required>
+                <label for="check-elements">必須要素（{{ task.submission_requirements.required_elements|join(', ') }}）を含めました</label>
+            </li>
+            {% endif %}
+            <li>
+                <input type="checkbox" id="check-evaluation" required>
+                <label for="check-evaluation">自己評価を適切に行いました</label>
+            </li>
+            <li>
+                <input type="checkbox" id="check-final" required>
+                <label for="check-final">提出後は内容を変更できないことを理解しています</label>
+            </li>
+        </ul>
+    </div>
+
+    <!-- 追加コメント -->
+    <div class="additional-comment">
+        <h5><i class="fas fa-comment"></i> 教師への追加コメント（任意）</h5>
+        <textarea 
+            id="teacher-comment" 
+            class="form-control comment-textarea" 
+            placeholder="課題に取り組む中で感じたことや、教師に伝えたいことがあれば記入してください..."
+        ></textarea>
+    </div>
+
+    <!-- 提出アクション -->
+    <div class="submit-actions">
+        <div class="submit-warning">
+            <i class="fas fa-exclamation-triangle"></i>
+            <strong>注意:</strong> 提出後は内容を変更できません。必ず内容を確認してから提出してください。
+        </div>
+        
+        <button type="button" class="btn btn-outline-secondary" onclick="goBack()">
+            <i class="fas fa-arrow-left"></i> 戻って修正
+        </button>
+        
+        <button type="button" class="btn btn-success" id="final-submit-btn" onclick="finalSubmit()" disabled>
+            <i class="fas fa-paper-plane"></i> 提出する
+        </button>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// 提出確認JavaScript
+document.addEventListener('DOMContentLoaded', function() {
+    const checkboxes = document.querySelectorAll('.checklist input[type="checkbox"]');
+    const submitButton = document.getElementById('final-submit-btn');
+    
+    // チェックボックスの状態監視
+    checkboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+            submitButton.disabled = !allChecked;
+            
+            if (allChecked) {
+                submitButton.classList.remove('btn-outline-success');
+                submitButton.classList.add('btn-success');
+            } else {
+                submitButton.classList.remove('btn-success');
+                submitButton.classList.add('btn-outline-success');
+            }
+        });
+    });
+});
+
+function goBack() {
+    if (confirm('提出せずに課題実行画面に戻りますか？')) {
+        window.location.href = '{{ url_for("student_learning.task_work", task_id=task.id) }}';
+    }
+}
+
+function finalSubmit() {
+    const teacherComment = document.getElementById('teacher-comment').value;
+    
+    if (!confirm('この内容で課題を提出しますか？\n\n提出後は内容を変更できません。')) {
+        return;
+    }
+    
+    // 提出データの準備
+    const submissionData = {
+        teacher_comment: teacherComment,
+        submitted_at: new Date().toISOString(),
+        final_check_completed: true
+    };
+    
+    // APIへ提出
+    fetch(`/api/task-management/student/task/{{ task.id }}/submit`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCsrfToken()
+        },
+        body: JSON.stringify(submissionData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            showToast('課題を提出しました！', 'success');
+            setTimeout(() => {
+                window.location.href = '{{ url_for("student_learning.curriculum_tasks", curriculum_id=task.curriculum_id) }}';
+            }, 2000);
+        } else {
+            showToast(data.message || '提出に失敗しました', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('ネットワークエラーが発生しました', 'error');
+    });
+}
+
+function showToast(message, type = 'info') {
+    const toast = document.createElement('div');
+    toast.className = `alert alert-${type === 'error' ? 'danger' : 'success'} position-fixed`;
+    toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    toast.textContent = message;
+    
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.remove();
+    }, 5000);
+}
+
+function getCsrfToken() {
+    const tokenElement = document.querySelector('meta[name=csrf-token]');
+    return tokenElement ? tokenElement.getAttribute('content') : '';
+}
+</script>
+{% endblock %}

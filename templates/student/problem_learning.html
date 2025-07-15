@@ -1,0 +1,561 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ problem.title }} | 問題学習 | QuestEd{% endblock %}
+
+{% block extra_css %}
+<style>
+.problem-learning-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+}
+
+.breadcrumb-nav {
+    background: #f8f9fa;
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 2rem;
+    font-size: 0.9rem;
+}
+
+.breadcrumb-nav a {
+    color: #0056b3;
+    text-decoration: none;
+}
+
+.breadcrumb-nav a:hover {
+    text-decoration: underline;
+}
+
+.problem-header {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    color: white;
+    padding: 2rem;
+    border-radius: 12px;
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+.problem-title {
+    font-size: 2rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.problem-meta {
+    opacity: 0.9;
+    font-size: 0.9rem;
+}
+
+.learning-content {
+    background: white;
+    border-radius: 12px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.problem-question {
+    font-size: 1.2rem;
+    line-height: 1.6;
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border-left: 4px solid #0056b3;
+}
+
+.problem-answer {
+    margin-bottom: 2rem;
+}
+
+.answer-section {
+    background: #e3f2fd;
+    border: 1px solid #bbdefb;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.answer-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #1976d2;
+    margin-bottom: 1rem;
+}
+
+.answer-content {
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: #333;
+}
+
+.problem-explanation {
+    margin-bottom: 2rem;
+}
+
+.explanation-content {
+    background: #fff3e0;
+    border: 1px solid #ffcc02;
+    border-radius: 8px;
+    padding: 1.5rem;
+    line-height: 1.6;
+}
+
+.learning-timer {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 1rem;
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.timer-display {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #28a745;
+    margin-bottom: 0.5rem;
+}
+
+.completion-section {
+    background: white;
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.rating-group {
+    margin-bottom: 1.5rem;
+}
+
+.rating-label {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: #495057;
+}
+
+.rating-stars {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.star {
+    font-size: 1.5rem;
+    color: #ddd;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.star:hover,
+.star.active {
+    color: #ffc107;
+    transform: scale(1.1);
+}
+
+.rating-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8rem;
+    color: #6c757d;
+}
+
+.notes-section {
+    margin-bottom: 2rem;
+}
+
+.btn-complete {
+    background: #28a745;
+    color: white;
+    border: none;
+    padding: 1rem 2rem;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    width: 100%;
+}
+
+.btn-complete:hover {
+    background: #1e7e34;
+}
+
+.btn-complete:disabled {
+    background: #6c757d;
+    cursor: not-allowed;
+}
+
+.progress-info {
+    background: #d1ecf1;
+    border: 1px solid #bee5eb;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+.navigation-buttons {
+    display: flex;
+    gap: 1rem;
+    margin-top: 2rem;
+}
+
+.btn-nav {
+    flex: 1;
+    padding: 0.75rem 1rem;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    text-decoration: none;
+    text-align: center;
+    transition: all 0.2s ease;
+}
+
+.btn-nav:hover {
+    background: #f8f9fa;
+    text-decoration: none;
+}
+
+@media (max-width: 768px) {
+    .problem-learning-container {
+        padding: 1rem 0.5rem;
+    }
+    
+    .problem-title {
+        font-size: 1.5rem;
+    }
+    
+    .learning-content,
+    .completion-section {
+        padding: 1.5rem;
+    }
+    
+    .navigation-buttons {
+        flex-direction: column;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="problem-learning-container">
+    <!-- パンくずナビ -->
+    <div class="breadcrumb-nav">
+        <a href="{{ url_for('student_learning.learning_portal') }}">学習ポータル</a>
+        <span class="mx-2">›</span>
+        <a href="{{ url_for('student_unit_learning.unit_detail', unit_id=unit.id) }}">{{ unit.title }}</a>
+        <span class="mx-2">›</span>
+        <span>{{ problem.title }}</span>
+    </div>
+    
+    <!-- 問題ヘッダー -->
+    <div class="problem-header">
+        <h1 class="problem-title">{{ problem.title }}</h1>
+        <div class="problem-meta">
+            {% if progress_record.attempt_count > 0 %}
+                {{ progress_record.attempt_count }}回目の学習
+            {% else %}
+                初回学習
+            {% endif %}
+            {% if progress_record.started_at %}
+                | 開始時刻: {{ progress_record.started_at.strftime('%H:%M') }}
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- 学習タイマー -->
+    {% if progress_record.status == 'in_progress' %}
+        <div class="learning-timer">
+            <div class="timer-display" id="studyTimer">00:00:00</div>
+            <small class="text-muted">学習経過時間</small>
+        </div>
+    {% endif %}
+    
+    <!-- 進捗情報 -->
+    {% if progress_record.status != 'not_started' %}
+        <div class="progress-info">
+            <strong>学習状況:</strong>
+            {% if progress_record.status == 'completed' %}
+                <span class="text-success">完了済み</span>
+                {% if progress_record.completed_at %}
+                    ({{ progress_record.completed_at.strftime('%Y年%m月%d日 %H:%M') }})
+                {% endif %}
+            {% elif progress_record.status == 'in_progress' %}
+                <span class="text-primary">学習中</span>
+            {% elif progress_record.status == 'reviewed' %}
+                <span class="text-info">復習済み</span>
+            {% endif %}
+        </div>
+    {% endif %}
+    
+    <!-- 学習コンテンツ -->
+    <div class="learning-content">
+        <!-- 問題文 -->
+        <div class="problem-question">
+            <h3>問題</h3>
+            {{ problem.question }}
+        </div>
+        
+        <!-- 解答 -->
+        <div class="problem-answer">
+            <div class="answer-section">
+                <div class="answer-title">解答</div>
+                <div class="answer-content">{{ problem.correct_answer }}</div>
+            </div>
+        </div>
+        
+        <!-- 解説 -->
+        {% if problem.explanation %}
+            <div class="problem-explanation">
+                <h4>解説</h4>
+                <div class="explanation-content">
+                    {{ problem.explanation }}
+                </div>
+            </div>
+        {% endif %}
+        
+        <!-- 選択肢・例文 -->
+        {% if problem.choices %}
+            <div class="problem-choices">
+                <h4>例文・追加情報</h4>
+                <div class="explanation-content">
+                    {{ problem.choices }}
+                </div>
+            </div>
+        {% endif %}
+    </div>
+    
+    <!-- 完了セクション -->
+    {% if progress_record.status != 'completed' %}
+        <div class="completion-section">
+            <h3><i class="fas fa-check-circle"></i> 学習完了</h3>
+            <p>この問題の学習が終わりましたら、以下で評価を行い完了ボタンを押してください。</p>
+            
+            <!-- 自己評価 -->
+            <div class="rating-group">
+                <div class="rating-label">理解度評価</div>
+                <div class="rating-stars" data-rating="self">
+                    <span class="star" data-value="1">★</span>
+                    <span class="star" data-value="2">★</span>
+                    <span class="star" data-value="3">★</span>
+                    <span class="star" data-value="4">★</span>
+                    <span class="star" data-value="5">★</span>
+                </div>
+                <div class="rating-labels">
+                    <span>よくわからない</span>
+                    <span>完全に理解</span>
+                </div>
+            </div>
+            
+            <!-- 難易度評価 -->
+            <div class="rating-group">
+                <div class="rating-label">難易度評価</div>
+                <div class="rating-stars" data-rating="difficulty">
+                    <span class="star" data-value="1">★</span>
+                    <span class="star" data-value="2">★</span>
+                    <span class="star" data-value="3">★</span>
+                    <span class="star" data-value="4">★</span>
+                    <span class="star" data-value="5">★</span>
+                </div>
+                <div class="rating-labels">
+                    <span>とても簡単</span>
+                    <span>とても難しい</span>
+                </div>
+            </div>
+            
+            <!-- 学習メモ -->
+            <div class="notes-section">
+                <label for="learningNotes" class="form-label">学習メモ（任意）</label>
+                <textarea class="form-control" id="learningNotes" rows="3" 
+                          placeholder="気づいたことや覚えておきたいことを記入してください...">{{ progress_record.notes or '' }}</textarea>
+            </div>
+            
+            <button class="btn-complete" onclick="completeProblem()">
+                <i class="fas fa-check"></i> 学習完了
+            </button>
+        </div>
+    {% else %}
+        <!-- 完了済みの表示 -->
+        <div class="completion-section">
+            <div class="text-center">
+                <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+                <h3>学習完了</h3>
+                <p>この問題の学習は完了しています。</p>
+                
+                {% if progress_record.study_time_seconds > 0 %}
+                    <p><strong>学習時間:</strong> {{ progress_record.get_study_time_formatted() }}</p>
+                {% endif %}
+                
+                {% if progress_record.self_rating %}
+                    <p><strong>理解度:</strong> 
+                        {% for i in range(1, 6) %}
+                            {% if i <= progress_record.self_rating %}★{% else %}☆{% endif %}
+                        {% endfor %}
+                    </p>
+                {% endif %}
+                
+                {% if progress_record.notes %}
+                    <div class="mt-3">
+                        <strong>学習メモ:</strong>
+                        <div class="explanation-content mt-2">{{ progress_record.notes }}</div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    {% endif %}
+    
+    <!-- ナビゲーション -->
+    <div class="navigation-buttons">
+        <a href="{{ url_for('student_unit_learning.unit_detail', unit_id=unit.id) }}" class="btn-nav">
+            <i class="fas fa-arrow-left"></i> 単元一覧に戻る
+        </a>
+        <a href="{{ url_for('student_learning.learning_portal') }}" class="btn-nav">
+            <i class="fas fa-home"></i> 学習ポータル
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// CSRFトークンをグローバルに設定
+window.csrfToken = '{{ csrf_token() }}';
+
+// 評価値を保存する変数
+let ratings = {
+    self: {{ progress_record.self_rating or 0 }},
+    difficulty: {{ progress_record.difficulty_rating or 0 }}
+};
+
+// 学習開始時刻
+{% if progress_record.started_at %}
+const startTime = new Date('{{ progress_record.started_at.isoformat() }}');
+{% else %}
+const startTime = new Date();
+{% endif %}
+
+// ページ読み込み時の初期化
+document.addEventListener('DOMContentLoaded', function() {
+    // 評価星の初期化
+    initializeRatings();
+    
+    // タイマーの開始
+    {% if progress_record.status == 'in_progress' %}
+        updateTimer();
+        setInterval(updateTimer, 1000);
+    {% endif %}
+});
+
+function initializeRatings() {
+    // 各評価カテゴリの初期化
+    Object.keys(ratings).forEach(category => {
+        const ratingValue = ratings[category];
+        if (ratingValue > 0) {
+            updateStarDisplay(category, ratingValue);
+        }
+    });
+    
+    // 星クリックイベントの設定
+    document.querySelectorAll('.rating-stars').forEach(container => {
+        const category = container.dataset.rating;
+        
+        container.querySelectorAll('.star').forEach((star, index) => {
+            star.addEventListener('click', function() {
+                const value = parseInt(this.dataset.value);
+                ratings[category] = value;
+                updateStarDisplay(category, value);
+            });
+            
+            star.addEventListener('mouseenter', function() {
+                const value = parseInt(this.dataset.value);
+                highlightStars(category, value);
+            });
+        });
+        
+        container.addEventListener('mouseleave', function() {
+            const currentRating = ratings[category];
+            updateStarDisplay(category, currentRating);
+        });
+    });
+}
+
+function updateStarDisplay(category, rating) {
+    const container = document.querySelector(`[data-rating="${category}"]`);
+    if (!container) return;
+    
+    container.querySelectorAll('.star').forEach((star, index) => {
+        if (index < rating) {
+            star.classList.add('active');
+        } else {
+            star.classList.remove('active');
+        }
+    });
+}
+
+function highlightStars(category, rating) {
+    const container = document.querySelector(`[data-rating="${category}"]`);
+    if (!container) return;
+    
+    container.querySelectorAll('.star').forEach((star, index) => {
+        if (index < rating) {
+            star.style.color = '#ffc107';
+        } else {
+            star.style.color = '#ddd';
+        }
+    });
+}
+
+function updateTimer() {
+    const now = new Date();
+    const elapsed = Math.floor((now - startTime) / 1000);
+    
+    const hours = Math.floor(elapsed / 3600);
+    const minutes = Math.floor((elapsed % 3600) / 60);
+    const seconds = elapsed % 60;
+    
+    const timerDisplay = document.getElementById('studyTimer');
+    if (timerDisplay) {
+        timerDisplay.textContent = 
+            `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    }
+}
+
+async function completeProblem() {
+    // 理解度評価チェック
+    if (ratings.self === 0) {
+        alert('理解度評価を選択してください。');
+        return;
+    }
+    
+    const notes = document.getElementById('learningNotes').value.trim();
+    
+    try {
+        const response = await fetch('{{ url_for("student_unit_learning.complete_problem", unit_id=unit.id, item_id=problem.id) }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': window.csrfToken
+            },
+            body: JSON.stringify({
+                self_rating: ratings.self,
+                difficulty_rating: ratings.difficulty,
+                notes: notes
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            alert('✅ ' + result.message);
+            // 単元詳細ページに戻る
+            window.location.href = '{{ url_for("student_unit_learning.unit_detail", unit_id=unit.id) }}';
+        } else {
+            alert('❌ ' + result.message);
+        }
+    } catch (error) {
+        console.error('Complete problem error:', error);
+        alert('❌ 完了処理中にエラーが発生しました');
+    }
+}
+</script>
+{% endblock %}

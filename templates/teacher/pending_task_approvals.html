@@ -1,0 +1,669 @@
+{% extends "base.html" %}
+
+{% block title %}課題承認 | QuestEd{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header d-flex justify-content-between align-items-center mb-4">
+        <h2>課題承認</h2>
+        <div>
+            <button type="button" class="btn btn-info me-2" onclick="showStatistics()">
+                <i class="fas fa-chart-bar"></i> 統計
+            </button>
+            <a href="{{ url_for('teacher_dashboard.dashboard') }}" class="btn btn-primary">ダッシュボードに戻る</a>
+        </div>
+    </div>
+    
+    <!-- フィルター -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row align-items-end">
+                <div class="col-md-3">
+                    <label for="curriculum-filter">カリキュラム絞り込み</label>
+                    <select class="form-control" id="curriculum-filter" onchange="loadPendingSubmissions()">
+                        <option value="">全てのカリキュラム</option>
+                        <!-- カリキュラム選択肢はJavaScriptで動的追加 -->
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="task-type-filter">課題タイプ</label>
+                    <select class="form-control" id="task-type-filter" onchange="loadPendingSubmissions()">
+                        <option value="">全てのタイプ</option>
+                        <!-- 課題タイプはJavaScriptで動的追加 -->
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="sort-order">並び順</label>
+                    <select class="form-control" id="sort-order" onchange="loadPendingSubmissions()">
+                        <option value="newest">提出日時（新しい順）</option>
+                        <option value="oldest">提出日時（古い順）</option>
+                        <option value="student">学生名順</option>
+                        <option value="task">課題名順</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <button type="button" class="btn btn-secondary" onclick="loadPendingSubmissions()">
+                        <i class="fas fa-sync-alt"></i> 更新
+                    </button>
+                    <button type="button" class="btn btn-success" onclick="showBatchApproval()" id="batch-approve-btn" disabled>
+                        <i class="fas fa-check-double"></i> 一括承認
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 承認待ち一覧 -->
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">提出課題承認待ち一覧</h5>
+            <span class="badge badge-warning" id="pending-count">0</span>
+        </div>
+        <div class="card-body">
+            <div id="pending-submissions-list">
+                <div class="text-center">
+                    <div class="spinner-border" role="status">
+                        <span class="sr-only">読み込み中...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 個別承認モーダル -->
+<div class="modal fade" id="approvalModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">課題承認</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="approval-student-info"></div>
+                <div id="approval-task-info"></div>
+                <div id="approval-submission-info"></div>
+                
+                <form id="approval-form">
+                    <div class="form-group">
+                        <label for="teacher-evaluation">教師評価（0-100点）</label>
+                        <input type="number" class="form-control" id="teacher-evaluation" min="0" max="100" placeholder="評価点数を入力（任意）">
+                    </div>
+                    <div class="form-group">
+                        <label for="approval-feedback">フィードバック（任意）</label>
+                        <textarea class="form-control" id="approval-feedback" rows="3" 
+                                  placeholder="学生へのフィードバックを入力してください"></textarea>
+                    </div>
+                    <input type="hidden" id="approval-progress-id">
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-warning" onclick="showRevisionForm()">修正依頼</button>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">キャンセル</button>
+                <button type="button" class="btn btn-success" onclick="approveSubmission()">承認</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 修正依頼モーダル -->
+<div class="modal fade" id="revisionModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">修正依頼</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p><strong>この提出課題に修正依頼を送信しますか？</strong></p>
+                <div id="revision-task-info"></div>
+                
+                <form id="revision-form">
+                    <div class="form-group">
+                        <label for="revision-feedback">修正依頼内容 <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="revision-feedback" rows="4" 
+                                  placeholder="具体的な修正内容を入力してください（10文字以上）" required></textarea>
+                    </div>
+                    <input type="hidden" id="revision-progress-id">
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">キャンセル</button>
+                <button type="button" class="btn btn-warning" onclick="requestRevision()">修正依頼送信</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 一括承認モーダル -->
+<div class="modal fade" id="batchApprovalModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">一括承認</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p><strong id="batch-count-text">選択された提出課題を一括承認しますか？</strong></p>
+                
+                <form id="batch-approval-form">
+                    <div class="form-group">
+                        <label for="batch-evaluation">一括評価点数（任意）</label>
+                        <input type="number" class="form-control" id="batch-evaluation" min="0" max="100" placeholder="評価点数">
+                    </div>
+                    <div class="form-group">
+                        <label for="batch-feedback">一括フィードバック（任意）</label>
+                        <textarea class="form-control" id="batch-feedback" rows="2" 
+                                  placeholder="一括承認時のフィードバック"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">キャンセル</button>
+                <button type="button" class="btn btn-success" onclick="performBatchApproval()">
+                    一括承認実行
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 統計モーダル -->
+<div class="modal fade" id="statisticsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">課題承認統計</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="statistics-content">
+                    <div class="text-center">
+                        <div class="spinner-border" role="status">
+                            <span class="sr-only">読み込み中...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let pendingSubmissions = [];
+let selectedSubmissions = [];
+let taskTypes = [];
+
+$(document).ready(function() {
+    loadTaskTypes();
+    loadPendingSubmissions();
+});
+
+function loadTaskTypes() {
+    $.get('/api/task-types')
+        .done(function(data) {
+            if (data.status === 'success') {
+                taskTypes = data.task_types;
+                let html = '<option value="">全てのタイプ</option>';
+                taskTypes.forEach(function(type) {
+                    html += `<option value="${type.value}">${type.display}</option>`;
+                });
+                $('#task-type-filter').html(html);
+            }
+        });
+}
+
+function loadPendingSubmissions() {
+    const curriculumId = $('#curriculum-filter').val();
+    const taskType = $('#task-type-filter').val();
+    const sortOrder = $('#sort-order').val();
+    
+    let url = '/api/teacher/pending-submissions';
+    const params = new URLSearchParams();
+    if (curriculumId) params.append('curriculum_id', curriculumId);
+    if (taskType) params.append('task_type', taskType);
+    if (params.toString()) url += '?' + params.toString();
+    
+    $.get(url)
+        .done(function(data) {
+            if (data.status === 'success') {
+                pendingSubmissions = data.submissions;
+                sortSubmissions(sortOrder);
+                displayPendingSubmissions();
+                updatePendingCount();
+            } else {
+                showError('承認待ち一覧の取得に失敗しました: ' + data.message);
+            }
+        })
+        .fail(function(xhr, status, error) {
+            showError('サーバーとの通信に失敗しました: ' + error);
+        });
+}
+
+function sortSubmissions(order) {
+    switch(order) {
+        case 'newest':
+            pendingSubmissions.sort((a, b) => new Date(b.submitted_at) - new Date(a.submitted_at));
+            break;
+        case 'oldest':
+            pendingSubmissions.sort((a, b) => new Date(a.submitted_at) - new Date(b.submitted_at));
+            break;
+        case 'student':
+            pendingSubmissions.sort((a, b) => a.student.name.localeCompare(b.student.name));
+            break;
+        case 'task':
+            pendingSubmissions.sort((a, b) => a.task.title.localeCompare(b.task.title));
+            break;
+    }
+}
+
+function displayPendingSubmissions() {
+    const listContainer = $('#pending-submissions-list');
+    
+    if (pendingSubmissions.length === 0) {
+        listContainer.html('<p class="text-muted text-center">承認待ちの課題提出はありません</p>');
+        return;
+    }
+    
+    let html = '<div class="table-responsive"><table class="table table-hover">';
+    html += `
+        <thead>
+            <tr>
+                <th>
+                    <input type="checkbox" id="select-all" onchange="toggleSelectAll()">
+                </th>
+                <th>学生</th>
+                <th>課題</th>
+                <th>課題タイプ</th>
+                <th>自己評価</th>
+                <th>提出日時</th>
+                <th>待機日数</th>
+                <th>アクション</th>
+            </tr>
+        </thead>
+        <tbody>
+    `;
+    
+    pendingSubmissions.forEach(function(submission, index) {
+        const task = submission.task;
+        const student = submission.student;
+        const progressPercent = Math.round(submission.progress_percentage || 0);
+        const selfEvaluation = submission.self_evaluation || '未評価';
+        const timeSpent = Math.round((submission.time_spent_minutes || 0) / 60);
+        
+        // 待機日数計算
+        const submittedDate = new Date(submission.submitted_at);
+        const now = new Date();
+        const daysPending = Math.floor((now - submittedDate) / (1000 * 60 * 60 * 24));
+        
+        html += `
+            <tr>
+                <td>
+                    <input type="checkbox" class="submission-checkbox" value="${submission.id}" 
+                           onchange="updateSelectedSubmissions()">
+                </td>
+                <td>
+                    <strong>${student.name}</strong>
+                    <br><small class="text-muted">ID: ${student.id}</small>
+                </td>
+                <td>
+                    <strong>${task.title}</strong>
+                    <br><small class="text-muted">
+                        推定時間: ${task.estimated_minutes}分 | 
+                        難易度: ${task.difficulty_level}/5
+                    </small>
+                </td>
+                <td>
+                    <span class="badge badge-info">${getTaskTypeDisplay(task.task_type)}</span>
+                    ${task.is_required ? '<br><span class="badge badge-secondary">必須</span>' : '<br><span class="badge badge-light">任意</span>'}
+                </td>
+                <td>
+                    <div class="progress mb-1" style="height: 15px;">
+                        <div class="progress-bar bg-success" style="width: ${progressPercent}%"></div>
+                    </div>
+                    <small>進捗: ${progressPercent}%</small>
+                    <br><small class="text-muted">
+                        自己評価: ${selfEvaluation} | 学習時間: ${timeSpent}h
+                    </small>
+                </td>
+                <td>
+                    ${formatDate(submission.submitted_at)}
+                    <br><small class="text-muted">${formatTime(submission.submitted_at)}</small>
+                </td>
+                <td>
+                    <span class="badge ${daysPending > 7 ? 'badge-danger' : daysPending > 3 ? 'badge-warning' : 'badge-info'}">
+                        ${daysPending}日
+                    </span>
+                </td>
+                <td>
+                    <button class="btn btn-sm btn-info" onclick="showApprovalModal(${index})">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                    <button class="btn btn-sm btn-success" onclick="quickApprove(${submission.id})">
+                        <i class="fas fa-check"></i>
+                    </button>
+                </td>
+            </tr>
+        `;
+    });
+    
+    html += '</tbody></table></div>';
+    listContainer.html(html);
+}
+
+function getTaskTypeDisplay(taskType) {
+    const type = taskTypes.find(t => t.value === taskType);
+    return type ? type.display : taskType;
+}
+
+function updatePendingCount() {
+    $('#pending-count').text(pendingSubmissions.length);
+}
+
+function toggleSelectAll() {
+    const selectAll = $('#select-all').prop('checked');
+    $('.submission-checkbox').prop('checked', selectAll);
+    updateSelectedSubmissions();
+}
+
+function updateSelectedSubmissions() {
+    selectedSubmissions = [];
+    $('.submission-checkbox:checked').each(function() {
+        selectedSubmissions.push(parseInt($(this).val()));
+    });
+    
+    $('#batch-approve-btn').prop('disabled', selectedSubmissions.length === 0);
+}
+
+function showApprovalModal(index) {
+    const submission = pendingSubmissions[index];
+    const task = submission.task;
+    const student = submission.student;
+    
+    $('#approval-progress-id').val(submission.id);
+    
+    $('#approval-student-info').html(`
+        <div class="mb-3">
+            <h6>学生情報</h6>
+            <p><strong>氏名:</strong> ${student.name}</p>
+            <p><strong>学生ID:</strong> ${student.id}</p>
+        </div>
+    `);
+    
+    $('#approval-task-info').html(`
+        <div class="mb-3">
+            <h6>課題情報</h6>
+            <p><strong>課題名:</strong> ${task.title}</p>
+            <p><strong>課題タイプ:</strong> ${getTaskTypeDisplay(task.task_type)}</p>
+            <p><strong>推定時間:</strong> ${task.estimated_minutes}分</p>
+            <p><strong>難易度:</strong> ${task.difficulty_level}/5</p>
+            <p><strong>必須/任意:</strong> ${task.is_required ? '必須' : '任意'}</p>
+            ${task.description ? `<p><strong>説明:</strong> ${task.description}</p>` : ''}
+        </div>
+    `);
+    
+    const progressPercent = Math.round(submission.progress_percentage || 0);
+    const timeSpent = Math.round((submission.time_spent_minutes || 0) / 60);
+    
+    $('#approval-submission-info').html(`
+        <div class="mb-3">
+            <h6>提出内容</h6>
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong>進捗率:</strong> ${progressPercent}%</p>
+                    <div class="progress mb-2">
+                        <div class="progress-bar bg-success" style="width: ${progressPercent}%"></div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>学習時間:</strong> ${timeSpent}時間</p>
+                    <p><strong>自己評価:</strong> ${submission.self_evaluation || '未評価'}</p>
+                </div>
+            </div>
+            <p><strong>提出日時:</strong> ${formatDateTime(submission.submitted_at)}</p>
+            ${submission.submission_data ? `
+                <div class="mt-3">
+                    <strong>提出データ:</strong>
+                    <div class="bg-light p-3 mt-2 rounded">
+                        <pre style="white-space: pre-wrap; margin: 0;">${JSON.stringify(submission.submission_data, null, 2)}</pre>
+                    </div>
+                </div>
+            ` : ''}
+        </div>
+    `);
+    
+    $('#teacher-evaluation').val('');
+    $('#approval-feedback').val('');
+    $('#approvalModal').modal('show');
+}
+
+function approveSubmission() {
+    const progressId = $('#approval-progress-id').val();
+    const teacherEvaluation = $('#teacher-evaluation').val();
+    const feedback = $('#approval-feedback').val();
+    
+    const data = {};
+    if (teacherEvaluation) data.teacher_evaluation = parseInt(teacherEvaluation);
+    if (feedback) data.feedback = feedback;
+    
+    $.ajax({
+        url: `/api/teacher/submission/${progressId}/approve`,
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify(data),
+        success: function(data) {
+            $('#approvalModal').modal('hide');
+            if (data.status === 'success') {
+                showSuccess(data.message);
+                loadPendingSubmissions();
+            } else {
+                showError(data.message);
+            }
+        },
+        error: function(xhr, status, error) {
+            showError('承認処理に失敗しました: ' + error);
+        }
+    });
+}
+
+function showRevisionForm() {
+    $('#approvalModal').modal('hide');
+    const progressId = $('#approval-progress-id').val();
+    $('#revision-progress-id').val(progressId);
+    
+    // 課題情報をコピー
+    const submission = pendingSubmissions.find(s => s.id == progressId);
+    if (submission) {
+        $('#revision-task-info').html(`
+            <p><strong>学生:</strong> ${submission.student.name}</p>
+            <p><strong>課題:</strong> ${submission.task.title}</p>
+        `);
+    }
+    
+    $('#revision-feedback').val('');
+    $('#revisionModal').modal('show');
+}
+
+function requestRevision() {
+    const progressId = $('#revision-progress-id').val();
+    const feedback = $('#revision-feedback').val().trim();
+    
+    if (feedback.length < 10) {
+        showError('修正依頼内容は10文字以上入力してください');
+        return;
+    }
+    
+    $.ajax({
+        url: `/api/teacher/submission/${progressId}/request-revision`,
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({ feedback: feedback }),
+        success: function(data) {
+            $('#revisionModal').modal('hide');
+            if (data.status === 'success') {
+                showSuccess(data.message);
+                loadPendingSubmissions();
+            } else {
+                showError(data.message);
+            }
+        },
+        error: function(xhr, status, error) {
+            showError('修正依頼に失敗しました: ' + error);
+        }
+    });
+}
+
+function quickApprove(progressId) {
+    if (!confirm('この提出課題を即座に承認しますか？')) return;
+    
+    $.ajax({
+        url: `/api/teacher/submission/${progressId}/approve`,
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({ feedback: '即時承認' }),
+        success: function(data) {
+            if (data.status === 'success') {
+                showSuccess('承認しました');
+                loadPendingSubmissions();
+            } else {
+                showError(data.message);
+            }
+        },
+        error: function(xhr, status, error) {
+            showError('承認処理に失敗しました: ' + error);
+        }
+    });
+}
+
+function showBatchApproval() {
+    if (selectedSubmissions.length === 0) {
+        showError('承認する課題を選択してください');
+        return;
+    }
+    
+    $('#batch-count-text').text(`選択された${selectedSubmissions.length}件の課題を一括承認しますか？`);
+    $('#batch-evaluation').val('');
+    $('#batch-feedback').val('');
+    $('#batchApprovalModal').modal('show');
+}
+
+function performBatchApproval() {
+    const evaluation = $('#batch-evaluation').val();
+    const feedback = $('#batch-feedback').val();
+    
+    let approvedCount = 0;
+    let failedCount = 0;
+    
+    // 個別承認を順次実行（簡易実装）
+    const promises = selectedSubmissions.map(progressId => {
+        const data = {};
+        if (evaluation) data.teacher_evaluation = parseInt(evaluation);
+        if (feedback) data.feedback = feedback;
+        
+        return $.ajax({
+            url: `/api/teacher/submission/${progressId}/approve`,
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(data)
+        }).then(() => {
+            approvedCount++;
+        }).catch(() => {
+            failedCount++;
+        });
+    });
+    
+    Promise.all(promises).finally(() => {
+        $('#batchApprovalModal').modal('hide');
+        
+        if (approvedCount > 0) {
+            showSuccess(`${approvedCount}件の課題を承認しました`);
+        }
+        if (failedCount > 0) {
+            showError(`${failedCount}件の処理に失敗しました`);
+        }
+        
+        loadPendingSubmissions();
+        selectedSubmissions = [];
+    });
+}
+
+function showStatistics() {
+    $('#statisticsModal').modal('show');
+    
+    // 簡易統計表示（より詳細な統計APIがあれば使用）
+    const totalSubmissions = pendingSubmissions.length;
+    const html = `
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <h4 class="text-warning">${totalSubmissions}</h4>
+                        <small>現在の承認待ち課題数</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row mt-3">
+            <div class="col-md-12">
+                <p class="text-muted">詳細な統計情報は今後の機能拡張で提供予定です。</p>
+            </div>
+        </div>
+    `;
+    
+    $('#statistics-content').html(html);
+}
+
+// ユーティリティ関数
+function formatDate(dateString) {
+    if (!dateString) return '未設定';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('ja-JP');
+}
+
+function formatTime(dateString) {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return date.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
+}
+
+function formatDateTime(dateString) {
+    if (!dateString) return '未設定';
+    const date = new Date(dateString);
+    return date.toLocaleString('ja-JP');
+}
+
+function showSuccess(message) {
+    const alert = $(`
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            ${message}
+            <button type="button" class="close" data-dismiss="alert">
+                <span>&times;</span>
+            </button>
+        </div>
+    `);
+    $('body').prepend(alert);
+    setTimeout(() => alert.remove(), 5000);
+}
+
+function showError(message) {
+    const alert = $(`
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            ${message}
+            <button type="button" class="close" data-dismiss="alert">
+                <span>&times;</span>
+            </button>
+        </div>
+    `);
+    $('body').prepend(alert);
+    setTimeout(() => alert.remove(), 8000);
+}
+</script>
+{% endblock %}

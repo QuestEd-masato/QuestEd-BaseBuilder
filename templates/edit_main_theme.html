@@ -1,45 +1,63 @@
 {% extends 'base.html' %}
 
-{% block title %}メインテーマ編集{% endblock %}
+{% block title %}大テーマ編集 - {{ main_theme.title }}{% endblock %}
 
 {% block content %}
 <div class="container mt-4">
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card">
-                <div class="card-header">
-                    <h4 class="mb-0">メインテーマ編集</h4>
-                </div>
-                <div class="card-body">
-                    <form method="POST" action="{{ url_for('teacher_curriculum_management.edit_main_theme', theme_id=theme.id) }}">
-                        {{ form.hidden_tag() if form }}
-                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                        
-                        <div class="form-group mb-3">
-                            <label for="name">テーマ名</label>
-                            <input type="text" class="form-control" id="name" name="name" 
-                                   value="{{ theme.name or main_theme.title }}" required>
-                        </div>
-                        
-                        <div class="form-group mb-3">
-                            <label for="description">説明</label>
-                            <textarea class="form-control" id="description" name="description" 
-                                      rows="4">{{ theme.description or main_theme.description }}</textarea>
-                        </div>
-                        
-                        <div class="form-group">
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-save"></i> 更新
-                            </button>
-                            <a href="{{ url_for('teacher.class_main_themes', class_id=theme.class_id) or url_for('teacher.main_themes', class_id=main_theme.class_id) }}" 
-                               class="btn btn-secondary">
-                                <i class="fas fa-arrow-left"></i> キャンセル
-                            </a>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
+  <h1>大テーマ編集</h1>
+  
+  <div class="mb-4">
+    <a href="{{ url_for('teacher_curriculum_management.view_main_themes', class_id=main_theme.class_id) }}" class="btn btn-secondary">
+      <i class="fas fa-arrow-left"></i> 大テーマ一覧に戻る
+    </a>
+  </div>
+  
+  {% with messages = get_flashed_messages() %}
+    {% if messages %}
+      {% for message in messages %}
+        <div class="alert alert-info">{{ message }}</div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+  
+  <div class="card">
+    <div class="card-header bg-primary text-white">
+      <h5 class="mb-0">大テーマ編集</h5>
     </div>
+    <div class="card-body">
+      <form method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        
+        <div class="mb-3">
+          <label for="title" class="form-label">タイトル <span class="text-danger">*</span></label>
+          <input type="text" class="form-control" id="title" name="title" value="{{ main_theme.title }}" required>
+        </div>
+        
+        <div class="mb-3">
+          <label for="description" class="form-label">説明</label>
+          <textarea class="form-control" id="description" name="description" rows="5" placeholder="大テーマの詳細説明を入力してください">{{ main_theme.description or '' }}</textarea>
+        </div>
+        
+        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+          <a href="{{ url_for('teacher_curriculum_management.view_main_themes', class_id=main_theme.class_id) }}" class="btn btn-secondary">
+            <i class="fas fa-times"></i> キャンセル
+          </a>
+          <button type="submit" class="btn btn-primary">
+            <i class="fas fa-save"></i> 更新
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+  
+  <div class="alert alert-info mt-4">
+    <h5>大テーマ編集のポイント</h5>
+    <ul>
+      <li>生徒が理解しやすい明確なタイトルを設定してください</li>
+      <li>説明では、探究の方向性や期待される成果を具体的に示してください</li>
+      <li>複数の視点からアプローチできる柔軟性を持たせてください</li>
+      <li>現実的な問題解決につながる内容にしてください</li>
+    </ul>
+  </div>
 </div>
 {% endblock %}

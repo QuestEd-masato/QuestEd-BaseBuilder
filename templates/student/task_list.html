@@ -1,0 +1,582 @@
+{% extends 'base.html' %}
+
+{% block title %}週次課題一覧 - {{ curriculum.title }} | QuestEd{% endblock %}
+
+{% block extra_css %}
+<style>
+/* 課題一覧専用スタイル */
+.task-list-container {
+    max-width: 1320px;
+    margin: 0 auto;
+    padding: 1rem;
+}
+
+/* 週セクション */
+.week-section {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    margin-bottom: 2rem;
+    overflow: hidden;
+}
+
+.week-header {
+    background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+    color: white;
+    padding: 1.5rem;
+    display: flex;
+    justify-content: between;
+    align-items: center;
+}
+
+.week-header h4 {
+    margin: 0;
+    font-size: 1.3rem;
+    flex-grow: 1;
+}
+
+.week-progress {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.week-progress span {
+    font-size: 0.9rem;
+    opacity: 0.9;
+}
+
+.progress-bar {
+    width: 120px;
+    height: 8px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: #27ae60;
+    transition: width 0.3s ease;
+}
+
+/* 課題グリッド */
+.tasks-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+    gap: 1.5rem;
+    padding: 1.5rem;
+}
+
+.task-card {
+    border: 2px solid #e9ecef;
+    border-radius: 12px;
+    padding: 1.25rem;
+    transition: all 0.3s ease;
+    position: relative;
+    background: white;
+}
+
+.task-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+/* 課題ステータス別スタイル */
+.task-card.not_started {
+    border-color: #6c757d;
+}
+
+.task-card.in_progress {
+    border-color: #17a2b8;
+    background: linear-gradient(135deg, #ffffff 0%, #f8fdff 100%);
+}
+
+.task-card.submitted {
+    border-color: #ffc107;
+    background: linear-gradient(135deg, #ffffff 0%, #fffcf0 100%);
+}
+
+.task-card.completed {
+    border-color: #28a745;
+    background: linear-gradient(135deg, #ffffff 0%, #f8fff9 100%);
+}
+
+.task-card.needs_revision {
+    border-color: #dc3545;
+    background: linear-gradient(135deg, #ffffff 0%, #fff8f8 100%);
+}
+
+.task-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+}
+
+.task-header h5 {
+    margin: 0;
+    font-size: 1.1rem;
+    color: #2c3e50;
+    flex-grow: 1;
+    margin-right: 0.5rem;
+}
+
+.task-type {
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.task-type.worksheet { background: #e3f2fd; color: #1976d2; }
+.task-type.report { background: #f3e5f5; color: #7b1fa2; }
+.task-type.test { background: #ffebee; color: #c62828; }
+.task-type.presentation { background: #e8f5e8; color: #2e7d32; }
+.task-type.project { background: #fff3e0; color: #ef6c00; }
+.task-type.discussion { background: #fce4ec; color: #ad1457; }
+
+.task-content {
+    margin-bottom: 1rem;
+}
+
+.task-content p {
+    color: #6c757d;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    margin-bottom: 0.75rem;
+}
+
+.task-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.task-meta span {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.8rem;
+    color: #495057;
+}
+
+.task-meta i {
+    color: #6c757d;
+}
+
+.required-badge {
+    background: #dc3545;
+    color: white;
+    padding: 0.2rem 0.5rem;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    font-weight: 600;
+}
+
+.task-progress {
+    margin-bottom: 1rem;
+}
+
+.task-progress .btn {
+    width: 100%;
+    padding: 0.75rem;
+    font-weight: 600;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.status-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.75rem;
+    border-radius: 8px;
+    font-weight: 600;
+    width: 100%;
+}
+
+.status-badge.submitted {
+    background: #fff3cd;
+    color: #856404;
+    border: 2px solid #ffeaa7;
+}
+
+.status-badge.completed {
+    background: #d4edda;
+    color: #155724;
+    border: 2px solid #a3d977;
+}
+
+.task-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.task-actions .btn-sm {
+    flex: 1;
+    padding: 0.5rem;
+    font-size: 0.8rem;
+}
+
+/* プログレスインジケーター */
+.progress-indicator {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: #e9ecef;
+    border-radius: 12px 12px 0 0;
+}
+
+.progress-indicator .fill {
+    height: 100%;
+    background: #17a2b8;
+    border-radius: 12px 12px 0 0;
+    transition: width 0.3s ease;
+}
+
+/* レスポンシブ対応 */
+@media (max-width: 768px) {
+    .tasks-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+        padding: 1rem;
+    }
+    
+    .week-header {
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+    }
+    
+    .week-progress {
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    .progress-bar {
+        width: 100%;
+    }
+}
+
+/* ナビゲーション */
+.task-navigation {
+    background: white;
+    padding: 1rem;
+    margin-bottom: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.task-navigation .breadcrumb {
+    margin: 0;
+    background: none;
+    padding: 0;
+}
+
+.curriculum-info {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 2rem;
+    border-radius: 12px;
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+.curriculum-info h2 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.8rem;
+}
+
+.curriculum-info p {
+    margin: 0;
+    opacity: 0.9;
+    font-size: 1.1rem;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="task-list-container">
+    <!-- ナビゲーション -->
+    <div class="task-navigation">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item">
+                    <a href="{{ url_for('student_dashboard.dashboard') }}">
+                        <i class="fas fa-home"></i> ダッシュボード
+                    </a>
+                </li>
+                <li class="breadcrumb-item">
+                    <a href="{{ url_for('student_learning.learning_portal') }}">
+                        <i class="fas fa-graduation-cap"></i> 学習ポータル
+                    </a>
+                </li>
+                <li class="breadcrumb-item active" aria-current="page">
+                    <i class="fas fa-tasks"></i> 週次課題
+                </li>
+            </ol>
+        </nav>
+    </div>
+
+    <!-- カリキュラム情報 -->
+    <div class="curriculum-info">
+        <h2>{{ curriculum.title }}</h2>
+        <p>{{ curriculum.description or '週次課題に取り組んで学習を進めましょう' }}</p>
+    </div>
+
+    <!-- 週次課題一覧 -->
+    {% if weeks %}
+        {% for week in weeks %}
+        <div class="week-section" id="week-{{ week.week_number }}">
+            <div class="week-header">
+                <h4>{{ week.week_theme or '第' + week.week_number|string + '週' }}</h4>
+                <div class="week-progress">
+                    <span>{{ week.completed_tasks }}/{{ week.total_tasks }} 完了</span>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: {{ week.progress_percentage }}%"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="tasks-grid">
+                {% for task in week.tasks %}
+                <div class="task-card {{ task.progress.status if task.progress else 'not_started' }}" data-task-id="{{ task.id }}">
+                    <!-- プログレス表示 -->
+                    {% if task.progress and task.progress.progress_percentage > 0 %}
+                    <div class="progress-indicator">
+                        <div class="fill" style="width: {{ task.progress.progress_percentage }}%"></div>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="task-header">
+                        <h5>{{ task.title }}</h5>
+                        <span class="task-type {{ task.task_type }}">{{ task.task_type_display }}</span>
+                    </div>
+                    
+                    <div class="task-content">
+                        <p>{{ task.description|truncate(120) if task.description else '課題の詳細説明はありません' }}</p>
+                        <div class="task-meta">
+                            <span><i class="fas fa-clock"></i> {{ task.estimated_minutes }}分</span>
+                            <span><i class="fas fa-signal"></i> 難易度{{ task.difficulty_level }}/5</span>
+                            {% if task.is_required %}
+                            <span class="required-badge">必須</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="task-progress">
+                        {% set status = task.progress.status if task.progress else 'not_started' %}
+                        
+                        {% if status == 'not_started' %}
+                        <button class="btn btn-primary start-task" onclick="startTask({{ task.id }})">
+                            <i class="fas fa-play"></i> 課題を開始
+                        </button>
+                        
+                        {% elif status == 'in_progress' %}
+                        <button class="btn btn-info continue-task" onclick="continueTask({{ task.id }})">
+                            <i class="fas fa-arrow-right"></i> 続行 ({{ task.progress.progress_percentage or 0 }}%)
+                        </button>
+                        
+                        {% elif status == 'submitted' %}
+                        <div class="status-badge submitted">
+                            <i class="fas fa-hourglass-half"></i> 承認待ち
+                        </div>
+                        
+                        {% elif status == 'completed' %}
+                        <div class="status-badge completed">
+                            <i class="fas fa-check-circle"></i> 完了
+                        </div>
+                        
+                        {% elif status == 'needs_revision' %}
+                        <button class="btn btn-warning revise-task" onclick="reviseTask({{ task.id }})">
+                            <i class="fas fa-edit"></i> 修正対応
+                        </button>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- 課題アクション -->
+                    <div class="task-actions">
+                        <button class="btn btn-outline-secondary btn-sm" onclick="viewTaskDetails({{ task.id }})">
+                            <i class="fas fa-info-circle"></i> 詳細
+                        </button>
+                        
+                        {% if status in ['in_progress', 'needs_revision'] %}
+                        <button class="btn btn-outline-success btn-sm" onclick="submitTask({{ task.id }})">
+                            <i class="fas fa-paper-plane"></i> 提出
+                        </button>
+                        {% endif %}
+                        
+                        {% if status == 'completed' %}
+                        <button class="btn btn-outline-info btn-sm" onclick="viewSubmission({{ task.id }})">
+                            <i class="fas fa-eye"></i> 提出内容
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <!-- 課題なしの場合 -->
+        <div class="alert alert-info text-center" role="alert">
+            <i class="fas fa-info-circle fa-2x mb-3"></i>
+            <h4>週次課題がまだ設定されていません</h4>
+            <p>教師がカリキュラムに課題を追加するまでお待ちください。</p>
+            <a href="{{ url_for('student_learning.learning_portal') }}" class="btn btn-primary">
+                <i class="fas fa-arrow-left"></i> 学習ポータルに戻る
+            </a>
+        </div>
+    {% endif %}
+</div>
+
+<!-- 課題操作モーダル（詳細表示・提出用） -->
+<div class="modal fade" id="taskModal" tabindex="-1" aria-labelledby="taskModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="taskModalLabel">課題詳細</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="taskModalBody">
+                <!-- 動的コンテンツ -->
+            </div>
+            <div class="modal-footer" id="taskModalFooter">
+                <!-- 動的フッター -->
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// 課題操作JavaScript
+function startTask(taskId) {
+    fetch(`/api/task-management/student/task/${taskId}/start`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCsrfToken()
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            location.reload();
+        } else {
+            alert(data.message || '課題開始でエラーが発生しました');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('ネットワークエラーが発生しました');
+    });
+}
+
+function continueTask(taskId) {
+    // 課題詳細画面に遷移
+    window.location.href = `/student/task/${taskId}/work`;
+}
+
+function reviseTask(taskId) {
+    // 修正画面に遷移
+    window.location.href = `/student/task/${taskId}/revise`;
+}
+
+function viewTaskDetails(taskId) {
+    // モーダルで課題詳細を表示
+    fetch(`/api/task-management/curriculum/task/${taskId}`)
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            showTaskDetailsModal(data.task);
+        } else {
+            alert('課題詳細の取得に失敗しました');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('ネットワークエラーが発生しました');
+    });
+}
+
+function submitTask(taskId) {
+    // 提出画面に遷移
+    window.location.href = `/student/task/${taskId}/submit`;
+}
+
+function viewSubmission(taskId) {
+    // 提出内容表示画面に遷移
+    window.location.href = `/student/task/${taskId}/submission`;
+}
+
+function showTaskDetailsModal(task) {
+    const modal = document.getElementById('taskModal');
+    const modalBody = document.getElementById('taskModalBody');
+    const modalFooter = document.getElementById('taskModalFooter');
+    
+    modalBody.innerHTML = `
+        <div class="task-detail-content">
+            <h6 class="text-primary">${task.task_type_display} | 難易度 ${task.difficulty_level}/5</h6>
+            <h4>${task.title}</h4>
+            <p class="text-muted">${task.description || '詳細説明はありません'}</p>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <strong>推定作業時間:</strong> ${task.estimated_minutes}分<br>
+                    <strong>必須課題:</strong> ${task.is_required ? 'はい' : 'いいえ'}
+                </div>
+                <div class="col-md-6">
+                    <strong>提出形式:</strong> ${task.submission_requirements ? task.submission_requirements.format || '未設定' : '未設定'}
+                </div>
+            </div>
+            
+            ${task.resources && task.resources.length > 0 ? `
+            <div class="mt-3">
+                <strong>参考資料:</strong>
+                <ul>
+                    ${task.resources.map(resource => `<li>${resource}</li>`).join('')}
+                </ul>
+            </div>
+            ` : ''}
+        </div>
+    `;
+    
+    modalFooter.innerHTML = `
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">閉じる</button>
+    `;
+    
+    const bsModal = new bootstrap.Modal(modal);
+    bsModal.show();
+}
+
+function getCsrfToken() {
+    const tokenElement = document.querySelector('meta[name=csrf-token]');
+    return tokenElement ? tokenElement.getAttribute('content') : '';
+}
+
+// ページ読み込み時の初期化
+document.addEventListener('DOMContentLoaded', function() {
+    // スムーズスクロール
+    document.querySelectorAll('a[href^="#week-"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            const target = document.querySelector(this.getAttribute('href'));
+            if (target) {
+                target.scrollIntoView({
+                    behavior: 'smooth'
+                });
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

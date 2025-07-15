@@ -1,0 +1,1192 @@
+{% extends 'base.html' %}
+
+{% block title %}課題管理ダッシュボード | QuestEd{% endblock %}
+
+{% block extra_css %}
+<style>
+/* 課題管理ダッシュボード専用スタイル */
+.task-management-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 1rem;
+}
+
+/* ヘッダーセクション */
+.management-header {
+    background: linear-gradient(135deg, #6f42c1 0%, #563d7c 100%);
+    color: white;
+    padding: 2rem;
+    border-radius: 12px;
+    margin-bottom: 2rem;
+}
+
+.management-header h1 {
+    margin: 0 0 0.5rem 0;
+    font-size: 2rem;
+}
+
+.management-header p {
+    margin: 0;
+    opacity: 0.9;
+    font-size: 1.1rem;
+}
+
+/* 統計サマリー */
+.statistics-section {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    text-align: center;
+    border-left: 4px solid #6f42c1;
+}
+
+.stat-value {
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: #6f42c1;
+    margin-bottom: 0.5rem;
+}
+
+.stat-label {
+    color: #6c757d;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.stat-card.urgent {
+    border-left-color: #dc3545;
+}
+
+.stat-card.urgent .stat-value {
+    color: #dc3545;
+}
+
+.stat-card.success {
+    border-left-color: #28a745;
+}
+
+.stat-card.success .stat-value {
+    color: #28a745;
+}
+
+.stat-card.warning {
+    border-left-color: #ffc107;
+}
+
+.stat-card.warning .stat-value {
+    color: #856404;
+}
+
+/* フィルターとアクションセクション */
+.filter-actions-section {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    margin-bottom: 2rem;
+}
+
+.filter-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.filter-group label {
+    display: block;
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.filter-group select,
+.filter-group input {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 0.9rem;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.action-buttons .btn {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+    border-radius: 6px;
+}
+
+/* クラス別進捗一覧 */
+.class-progress-section {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    margin-bottom: 2rem;
+    overflow: hidden;
+}
+
+.class-section-header {
+    background: #f8f9fa;
+    padding: 1.5rem;
+    border-bottom: 1px solid #dee2e6;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.class-section-header h4 {
+    margin: 0;
+    color: #495057;
+}
+
+.class-stats {
+    display: flex;
+    gap: 2rem;
+    font-size: 0.9rem;
+    color: #6c757d;
+}
+
+/* 学生進捗テーブル */
+.students-progress-table {
+    overflow-x: auto;
+}
+
+.progress-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.progress-table th {
+    background: #f8f9fa;
+    padding: 1rem;
+    text-align: center;
+    font-weight: 600;
+    color: #495057;
+    border-bottom: 2px solid #dee2e6;
+    font-size: 0.9rem;
+}
+
+.progress-table td {
+    padding: 1rem;
+    text-align: center;
+    border-bottom: 1px solid #dee2e6;
+    vertical-align: middle;
+}
+
+.student-name-cell {
+    text-align: left !important;
+    font-weight: 600;
+    color: #495057;
+    min-width: 120px;
+}
+
+.week-progress-cell {
+    min-width: 80px;
+}
+
+.progress-fraction {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+    font-size: 0.9rem;
+}
+
+.mini-progress-bar {
+    background: #e9ecef;
+    height: 6px;
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 0.25rem;
+}
+
+.mini-progress-bar .fill {
+    height: 100%;
+    background: #28a745;
+    transition: width 0.3s ease;
+    border-radius: 3px;
+}
+
+.mini-progress-bar .fill.warning {
+    background: #ffc107;
+}
+
+.mini-progress-bar .fill.danger {
+    background: #dc3545;
+}
+
+.pending-badge {
+    background: #dc3545;
+    color: white;
+    padding: 0.15rem 0.4rem;
+    border-radius: 10px;
+    font-size: 0.7rem;
+    font-weight: 600;
+}
+
+.action-cell {
+    min-width: 120px;
+}
+
+.action-cell .btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.8rem;
+    margin: 0.1rem;
+}
+
+/* 承認待ち課題詳細セクション */
+.pending-tasks-section {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    padding: 2rem;
+}
+
+.pending-tasks-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #e9ecef;
+}
+
+.pending-tasks-header h4 {
+    margin: 0;
+    color: #495057;
+}
+
+.pending-count {
+    background: #dc3545;
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-weight: 600;
+}
+
+.pending-tasks-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 1.5rem;
+}
+
+.submission-card {
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+    background: white;
+}
+
+.submission-card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    transform: translateY(-2px);
+}
+
+.submission-card.urgent {
+    border-left: 4px solid #dc3545;
+}
+
+.submission-card.overdue {
+    background: #fff5f5;
+    border-color: #fecaca;
+}
+
+.submission-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+}
+
+.submission-header h6 {
+    margin: 0;
+    color: #495057;
+    font-weight: 600;
+    flex: 1;
+}
+
+.student-name {
+    background: #e3f2fd;
+    color: #1976d2;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.submission-date {
+    font-size: 0.8rem;
+    color: #6c757d;
+    margin-top: 0.25rem;
+}
+
+.submission-content {
+    margin-bottom: 1.5rem;
+}
+
+.document-preview,
+.text-preview {
+    background: #f8f9fa;
+    padding: 1rem;
+    border-radius: 6px;
+    margin-bottom: 1rem;
+}
+
+.document-preview {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.document-preview i {
+    font-size: 1.5rem;
+    color: #6f42c1;
+}
+
+.document-preview a {
+    color: #6f42c1;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.document-preview a:hover {
+    text-decoration: underline;
+}
+
+.text-preview {
+    max-height: 100px;
+    overflow-y: auto;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: #495057;
+}
+
+.self-evaluation {
+    margin-top: 1rem;
+}
+
+.self-evaluation small {
+    color: #6c757d;
+    font-weight: 600;
+}
+
+.rating-badge {
+    display: inline-block;
+    background: #fff3cd;
+    color: #856404;
+    padding: 0.2rem 0.5rem;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    margin-right: 0.5rem;
+    margin-top: 0.25rem;
+}
+
+.submission-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.submission-actions .btn {
+    flex: 1;
+    min-width: 80px;
+    padding: 0.5rem;
+    font-size: 0.8rem;
+    text-align: center;
+}
+
+/* レスポンシブ対応 */
+@media (max-width: 1200px) {
+    .pending-tasks-grid {
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    .task-management-container {
+        padding: 0.5rem;
+    }
+    
+    .management-header {
+        padding: 1.5rem;
+    }
+    
+    .filter-row {
+        grid-template-columns: 1fr;
+    }
+    
+    .action-buttons {
+        flex-direction: column;
+    }
+    
+    .class-stats {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .pending-tasks-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .submission-actions {
+        flex-direction: column;
+    }
+    
+    .submission-actions .btn {
+        width: 100%;
+    }
+}
+
+/* 追加スタイル：優先度表示 */
+.priority-indicator {
+    width: 8px;
+    height: 100%;
+    position: absolute;
+    left: 0;
+    top: 0;
+    border-radius: 8px 0 0 8px;
+}
+
+.priority-indicator.high {
+    background: #dc3545;
+}
+
+.priority-indicator.medium {
+    background: #ffc107;
+}
+
+.priority-indicator.low {
+    background: #28a745;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="task-management-container">
+    <!-- ナビゲーション -->
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{{ url_for('teacher_dashboard.dashboard') }}">
+                    <i class="fas fa-home"></i> ダッシュボード
+                </a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">
+                <i class="fas fa-tasks"></i> 課題管理
+            </li>
+        </ol>
+    </nav>
+
+    <!-- ヘッダー -->
+    <div class="management-header">
+        <h1><i class="fas fa-clipboard-check"></i> 課題管理ダッシュボード</h1>
+        <p>学生の課題進捗状況を確認し、提出された課題の承認・評価を行います</p>
+    </div>
+
+    <!-- 統計サマリー -->
+    <div class="statistics-section">
+        <div class="stat-card urgent">
+            <div class="stat-value">{{ pending_submissions_count or 0 }}</div>
+            <div class="stat-label">承認待ち課題</div>
+        </div>
+        
+        <div class="stat-card success">
+            <div class="stat-value">{{ completion_rate or 0 }}%</div>
+            <div class="stat-label">全体完了率</div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-value">{{ active_students_count or 0 }}</div>
+            <div class="stat-label">アクティブ学生</div>
+        </div>
+        
+        <div class="stat-card warning">
+            <div class="stat-value">{{ overdue_tasks_count or 0 }}</div>
+            <div class="stat-label">期限超過課題</div>
+        </div>
+    </div>
+
+    <!-- フィルターとアクション -->
+    <div class="filter-actions-section">
+        <h5><i class="fas fa-filter"></i> フィルター・アクション</h5>
+        
+        <div class="filter-row">
+            <div class="filter-group">
+                <label for="class-filter">クラス</label>
+                <select id="class-filter" class="form-select">
+                    <option value="">全クラス</option>
+                    {% for class_item in teacher_classes %}
+                    <option value="{{ class_item.id }}">{{ class_item.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <label for="curriculum-filter">カリキュラム</label>
+                <select id="curriculum-filter" class="form-select">
+                    <option value="">全カリキュラム</option>
+                    {% for curriculum in teacher_curricula %}
+                    <option value="{{ curriculum.id }}">{{ curriculum.title }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <label for="status-filter">ステータス</label>
+                <select id="status-filter" class="form-select">
+                    <option value="">全ステータス</option>
+                    <option value="submitted">承認待ち</option>
+                    <option value="needs_revision">修正要求</option>
+                    <option value="completed">承認完了</option>
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <label for="week-filter">週</label>
+                <select id="week-filter" class="form-select">
+                    <option value="">全週</option>
+                    {% for i in range(1, 16) %}
+                    <option value="{{ i }}">第{{ i }}週</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        
+        <div class="action-buttons">
+            <button class="btn btn-primary" onclick="applyFilters()">
+                <i class="fas fa-search"></i> フィルター適用
+            </button>
+            <button class="btn btn-outline-secondary" onclick="clearFilters()">
+                <i class="fas fa-times"></i> クリア
+            </button>
+            <button class="btn btn-success" onclick="bulkApproveSelected()">
+                <i class="fas fa-check-double"></i> 選択を一括承認
+            </button>
+            <button class="btn btn-info" onclick="exportProgress()">
+                <i class="fas fa-download"></i> 進捗エクスポート
+            </button>
+        </div>
+    </div>
+
+    <!-- クラス別進捗一覧 -->
+    {% if classes_progress %}
+    {% for class_data in classes_progress %}
+    <div class="class-progress-section">
+        <div class="class-section-header">
+            <h4><i class="fas fa-users"></i> {{ class_data.class_name }}</h4>
+            <div class="class-stats">
+                <span><strong>学生数:</strong> {{ class_data.students|length }}名</span>
+                <span><strong>平均進捗:</strong> {{ class_data.average_progress|round(1) }}%</span>
+                <span><strong>承認待ち:</strong> {{ class_data.pending_count }}件</span>
+            </div>
+        </div>
+        
+        <div class="students-progress-table">
+            <table class="progress-table">
+                <thead>
+                    <tr>
+                        <th><input type="checkbox" id="select-all-{{ class_data.class_id }}"></th>
+                        <th>学生名</th>
+                        {% for week in class_data.weeks %}
+                        <th>第{{ week.number }}週<br><small>({{ week.task_count }}課題)</small></th>
+                        {% endfor %}
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for student in class_data.students %}
+                    <tr>
+                        <td><input type="checkbox" class="student-checkbox" data-student-id="{{ student.id }}"></td>
+                        <td class="student-name-cell">{{ student.name }}</td>
+                        {% for week_progress in student.weeks_progress %}
+                        <td class="week-progress-cell">
+                            <span class="progress-fraction">{{ week_progress.completed }}/{{ week_progress.total }}</span>
+                            <div class="mini-progress-bar">
+                                <div class="fill {% if week_progress.percentage < 50 %}danger{% elif week_progress.percentage < 80 %}warning{% endif %}" 
+                                     style="width: {{ week_progress.percentage }}%"></div>
+                            </div>
+                            {% if week_progress.pending_count > 0 %}
+                            <span class="pending-badge">{{ week_progress.pending_count }}</span>
+                            {% endif %}
+                        </td>
+                        {% endfor %}
+                        <td class="action-cell">
+                            <button class="btn btn-sm btn-outline-primary" onclick="viewStudentDetails({{ student.id }})">
+                                <i class="fas fa-eye"></i> 詳細
+                            </button>
+                            {% if student.pending_tasks > 0 %}
+                            <button class="btn btn-sm btn-success" onclick="bulkApproveStudent({{ student.id }})">
+                                <i class="fas fa-check"></i> 一括承認
+                            </button>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    <!-- 承認待ち課題詳細 -->
+    <div class="pending-tasks-section">
+        <div class="pending-tasks-header">
+            <h4><i class="fas fa-hourglass-half"></i> 承認待ち課題詳細</h4>
+            <span class="pending-count">{{ pending_submissions_detail|length }}件</span>
+        </div>
+        
+        {% if pending_submissions_detail %}
+        <div class="pending-tasks-grid">
+            {% for submission in pending_submissions_detail %}
+            <div class="submission-card {% if submission.is_overdue %}overdue{% elif submission.priority == 'high' %}urgent{% endif %}">
+                <div class="submission-header">
+                    <h6>{{ submission.task_title }}</h6>
+                    <div>
+                        <span class="student-name">{{ submission.student_name }}</span>
+                        <div class="submission-date">{{ submission.submitted_at.strftime('%m/%d %H:%M') if submission.submitted_at else '' }}</div>
+                    </div>
+                </div>
+                
+                <div class="submission-content">
+                    <!-- 提出内容プレビュー -->
+                    {% if submission.submission_type == 'document' %}
+                    <div class="document-preview">
+                        <i class="fas fa-file-alt"></i>
+                        <a href="{{ submission.file_url }}" target="_blank">{{ submission.filename }}</a>
+                    </div>
+                    {% elif submission.submission_type == 'text' %}
+                    <div class="text-preview">
+                        {{ submission.content|truncate(150) }}
+                    </div>
+                    {% endif %}
+                    
+                    <!-- 自己評価表示 -->
+                    {% if submission.self_evaluation %}
+                    <div class="self-evaluation">
+                        <small>学生自己評価:</small><br>
+                        {% for criterion, rating in submission.self_evaluation.items() %}
+                        <span class="rating-badge">{{ criterion }}: {{ rating }}/5</span>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="submission-actions">
+                    <button class="btn btn-sm btn-outline-secondary" onclick="viewFullSubmission({{ submission.id }})">
+                        <i class="fas fa-eye"></i> 詳細
+                    </button>
+                    <button class="btn btn-sm btn-success" onclick="
+                        // 承認処理
+                        if (confirm('この課題を承認しますか？')) {
+                            const url = '/teacher/api/submission/{{ submission.id }}/approve';
+                            console.log('Making request to:', url);
+                            
+                            fetch(url, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRFToken': document.querySelector('meta[name=csrf-token]').getAttribute('content')
+                                }
+                            })
+                            .then(response => {
+                                console.log('Response status:', response.status);
+                                return response.json();
+                            })
+                            .then(data => {
+                                console.log('Response data:', data);
+                                if (data.status === 'success') {
+                                    alert('承認が完了しました');
+                                    location.reload();
+                                } else {
+                                    alert('承認に失敗しました: ' + data.message);
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Error:', error);
+                                alert('Error: ' + error.message);
+                            });
+                        }
+                    ">
+                        <i class="fas fa-check"></i> 承認
+                    </button>
+                    <button class="btn btn-sm btn-warning" onclick="
+                        console.log('Revision button clicked for ID: {{ submission.id }}');
+                        
+                        const feedback = prompt('修正依頼の理由を入力してください：');
+                        if (!feedback) return;
+                        
+                        if (confirm('この課題に修正依頼を送信しますか？')) {
+                            const url = '/teacher/api/submission/{{ submission.id }}/reject';
+                            console.log('Making revision request to:', url);
+                            
+                            fetch(url, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRFToken': document.querySelector('meta[name=csrf-token]').getAttribute('content')
+                                },
+                                body: JSON.stringify({
+                                    reason: '修正依頼: ' + feedback
+                                })
+                            })
+                            .then(response => {
+                                console.log('Revision response status:', response.status);
+                                return response.json();
+                            })
+                            .then(data => {
+                                console.log('Revision response data:', data);
+                                alert('修正依頼結果: ' + data.message);
+                                if (data.status === 'success') {
+                                    location.reload();
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Revision error:', error);
+                                alert('修正依頼エラー: ' + error.message);
+                            });
+                        }
+                    ">
+                        <i class="fas fa-edit"></i> 修正
+                    </button>
+                    <button class="btn btn-sm btn-danger" onclick="
+                        console.log('Reject button clicked for ID: {{ submission.id }}');
+                        
+                        const reason = prompt('却下理由を入力してください：');
+                        if (!reason) return;
+                        
+                        if (confirm('この課題を却下しますか？')) {
+                            const url = '/teacher/api/submission/{{ submission.id }}/reject';
+                            console.log('Making reject request to:', url);
+                            
+                            fetch(url, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRFToken': document.querySelector('meta[name=csrf-token]').getAttribute('content')
+                                },
+                                body: JSON.stringify({
+                                    reason: reason
+                                })
+                            })
+                            .then(response => {
+                                console.log('Reject response status:', response.status);
+                                return response.json();
+                            })
+                            .then(data => {
+                                console.log('Reject response data:', data);
+                                alert('却下結果: ' + data.message);
+                                if (data.status === 'success') {
+                                    location.reload();
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Reject error:', error);
+                                alert('却下エラー: ' + error.message);
+                            });
+                        }
+                    ">
+                        <i class="fas fa-times"></i> 却下
+                    </button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+            <h5>承認待ちの課題はありません</h5>
+            <p class="text-muted">すべての課題が処理されています。</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- 詳細表示モーダル -->
+<div class="modal fade" id="detailModal" tabindex="-1" aria-labelledby="detailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="detailModalLabel">課題詳細</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="detailModalBody">
+                <!-- 動的コンテンツ -->
+            </div>
+            <div class="modal-footer" id="detailModalFooter">
+                <!-- 動的フッター -->
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// 課題管理JavaScript
+try {
+    console.log('JavaScript block started');
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('Task Management JavaScript initialized');
+        try {
+            initializeTaskManagement();
+            console.log('initializeTaskManagement completed');
+        } catch (error) {
+            console.error('Error in initializeTaskManagement:', error);
+            alert('Error in initialization: ' + error.message);
+        }
+    });
+    
+    console.log('JavaScript block completed');
+} catch (error) {
+    console.error('Critical JavaScript error:', error);
+    alert('Critical error: ' + error.message);
+}
+
+function initializeTaskManagement() {
+    // 全選択チェックボックス
+    document.querySelectorAll('[id^="select-all-"]').forEach(selectAll => {
+        selectAll.addEventListener('change', function() {
+            const classId = this.id.split('-')[2];
+            const checkboxes = document.querySelectorAll(`input[data-student-id]`);
+            checkboxes.forEach(cb => {
+                cb.checked = this.checked;
+            });
+        });
+    });
+    
+    // 自動リフレッシュ（2分ごと）
+    setInterval(refreshPendingCount, 120000);
+}
+
+function applyFilters() {
+    const filters = {
+        class_id: document.getElementById('class-filter').value,
+        curriculum_id: document.getElementById('curriculum-filter').value,
+        status: document.getElementById('status-filter').value,
+        week: document.getElementById('week-filter').value
+    };
+    
+    // フィルター適用のためのページリロード
+    const params = new URLSearchParams();
+    Object.keys(filters).forEach(key => {
+        if (filters[key]) {
+            params.append(key, filters[key]);
+        }
+    });
+    
+    const newUrl = window.location.pathname + (params.toString() ? '?' + params.toString() : '');
+    window.location.href = newUrl;
+}
+
+function clearFilters() {
+    document.getElementById('class-filter').value = '';
+    document.getElementById('curriculum-filter').value = '';
+    document.getElementById('status-filter').value = '';
+    document.getElementById('week-filter').value = '';
+    applyFilters();
+}
+
+function bulkApproveSelected() {
+    const selectedStudents = Array.from(document.querySelectorAll('.student-checkbox:checked'))
+                                  .map(cb => cb.dataset.studentId);
+    
+    if (selectedStudents.length === 0) {
+        alert('承認する学生を選択してください。');
+        return;
+    }
+    
+    if (!confirm(`選択した${selectedStudents.length}名の学生の課題を一括承認しますか？`)) {
+        return;
+    }
+    
+    fetch('/api/task-management/teacher/bulk-approve', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCsrfToken()
+        },
+        body: JSON.stringify({
+            student_ids: selectedStudents
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            showToast('一括承認が完了しました', 'success');
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            showToast(data.message || '一括承認に失敗しました', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('ネットワークエラーが発生しました', 'error');
+    });
+}
+
+function bulkApproveStudent(studentId) {
+    if (!confirm('この学生の全承認待ち課題を一括承認しますか？')) {
+        return;
+    }
+    
+    fetch(`/api/task-management/teacher/student/${studentId}/bulk-approve`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCsrfToken()
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            showToast('学生の課題を一括承認しました', 'success');
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            showToast(data.message || '一括承認に失敗しました', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('ネットワークエラーが発生しました', 'error');
+    });
+}
+
+function viewStudentDetails(studentId) {
+    fetch(`/api/task-management/teacher/student/${studentId}/details`)
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            showStudentDetailsModal(data.student);
+        } else {
+            alert('学生詳細の取得に失敗しました');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('ネットワークエラーが発生しました');
+    });
+}
+
+function viewFullSubmission(submissionId) {
+    fetch(`/api/task-management/teacher/submission/${submissionId}/details`)
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            showSubmissionDetailsModal(data.submission);
+        } else {
+            alert('提出詳細の取得に失敗しました');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('ネットワークエラーが発生しました');
+    });
+}
+
+function approveSubmission(submissionId) {
+    console.log('approveSubmission called with ID:', submissionId);
+    
+    if (!confirm('この課題を承認しますか？')) {
+        return;
+    }
+    
+    const url = `/teacher/api/submission/${submissionId}/approve`;
+    console.log('Making request to:', url);
+    
+    fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCsrfToken()
+        }
+    })
+    .then(response => {
+        console.log('Response status:', response.status);
+        console.log('Response headers:', response.headers);
+        return response.json();
+    })
+    .then(data => {
+        console.log('Response data:', data);
+        if (data.status === 'success') {
+            showToast('課題を承認しました', 'success');
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            showToast(data.message || '承認に失敗しました', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error details:', error);
+        showToast('ネットワークエラーが発生しました: ' + error.message, 'error');
+    });
+}
+
+function requestRevision(submissionId) {
+    const feedback = prompt('修正依頼の理由を入力してください:');
+    if (!feedback) return;
+    
+    fetch(`/teacher/api/submission/${submissionId}/reject`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCsrfToken()
+        },
+        body: JSON.stringify({
+            feedback: feedback
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            showToast('修正依頼を送信しました', 'success');
+            refreshSubmissionCard(submissionId);
+        } else {
+            showToast(data.message || '修正依頼に失敗しました', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('ネットワークエラーが発生しました', 'error');
+    });
+}
+
+function rejectSubmission(submissionId) {
+    const reason = prompt('却下理由を入力してください:');
+    if (!reason) return;
+    
+    if (!confirm('この課題を却下しますか？')) {
+        return;
+    }
+    
+    fetch(`/teacher/api/submission/${submissionId}/reject`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCsrfToken()
+        },
+        body: JSON.stringify({
+            reason: reason
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            showToast('課題を却下しました', 'success');
+            refreshSubmissionCard(submissionId);
+        } else {
+            showToast(data.message || '却下に失敗しました', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('ネットワークエラーが発生しました', 'error');
+    });
+}
+
+function exportProgress() {
+    const filters = {
+        class_id: document.getElementById('class-filter').value,
+        curriculum_id: document.getElementById('curriculum-filter').value
+    };
+    
+    const params = new URLSearchParams(filters);
+    window.location.href = `/api/task-management/teacher/export-progress?${params}`;
+}
+
+function refreshPendingCount() {
+    fetch('/api/task-management/teacher/pending-count')
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            document.querySelector('.stat-card.urgent .stat-value').textContent = data.count;
+        }
+    })
+    .catch(error => console.error('Refresh error:', error));
+}
+
+function refreshSubmissionCard(submissionId) {
+    // 提出カードの表示を更新（削除または状態変更）
+    const card = document.querySelector(`[data-submission-id="${submissionId}"]`);
+    if (card) {
+        card.style.opacity = '0.5';
+        setTimeout(() => {
+            card.remove();
+            // 承認待ち件数を減らす
+            const countElement = document.querySelector('.pending-count');
+            const currentCount = parseInt(countElement.textContent);
+            countElement.textContent = Math.max(0, currentCount - 1);
+        }, 1000);
+    }
+}
+
+function showStudentDetailsModal(student) {
+    // 学生詳細モーダル表示実装
+    const modal = document.getElementById('detailModal');
+    const modalBody = document.getElementById('detailModalBody');
+    
+    modalBody.innerHTML = `
+        <h5>${student.name}の課題進捗詳細</h5>
+        <!-- 学生詳細内容をここに実装 -->
+    `;
+    
+    const bsModal = new bootstrap.Modal(modal);
+    bsModal.show();
+}
+
+function showSubmissionDetailsModal(submission) {
+    // 提出詳細モーダル表示実装
+    const modal = document.getElementById('detailModal');
+    const modalBody = document.getElementById('detailModalBody');
+    
+    modalBody.innerHTML = `
+        <h5>${submission.task_title}</h5>
+        <p><strong>学生:</strong> ${submission.student_name}</p>
+        <div class="submission-content-full">
+            ${submission.content}
+        </div>
+    `;
+    
+    const bsModal = new bootstrap.Modal(modal);
+    bsModal.show();
+}
+
+function showToast(message, type = 'info') {
+    const toast = document.createElement('div');
+    toast.className = `alert alert-${type === 'error' ? 'danger' : 'success'} position-fixed`;
+    toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    toast.textContent = message;
+    
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.remove();
+    }, 3000);
+}
+
+function getCsrfToken() {
+    const tokenElement = document.querySelector('meta[name=csrf-token]');
+    const token = tokenElement ? tokenElement.getAttribute('content') : '';
+    console.log('CSRF Token:', token);
+    return token;
+}
+
+// Task Management JavaScript loaded successfully
+console.log('Task Management JavaScript loaded');
+</script>
+{% endblock %}

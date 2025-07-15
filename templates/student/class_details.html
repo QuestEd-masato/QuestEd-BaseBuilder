@@ -383,7 +383,7 @@
         <a href="{{ url_for('student_dashboard.dashboard') }}" class="btn-modern btn-secondary">
             <i class="fas fa-arrow-left"></i> ダッシュボードに戻る
         </a>
-        <a href="{{ url_for('student.class_themes', class_id=class_obj.id) }}" class="btn-modern btn-success">
+        <a href="{{ url_for('student_themes.class_themes', class_id=class_obj.id) }}" class="btn-modern btn-success">
             <i class="fas fa-book"></i> テーマを見る
         </a>
         <a href="{{ url_for('student_activities.activities') }}?class_id={{ class_obj.id }}" class="btn-modern btn-info">

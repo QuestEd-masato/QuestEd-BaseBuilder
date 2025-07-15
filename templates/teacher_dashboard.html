@@ -11,15 +11,17 @@
         <p>担当クラスの情報や学生の活動状況を確認できます</p>
     </div>
     
-    <!-- 統合管理概要 -->
-    {% if integrated_stats %}
+    <!-- 統合管理概要 - レッスンシステムのみ使用のため非表示 -->
+    {% if false and integrated_stats %}
     <div class="dashboard-section integrated-overview">
         <div class="section-header">
             <h3><i class="fas fa-chart-pie"></i> カリキュラム・単元統合管理</h3>
             <div>
+                <!-- 統合管理画面は非表示
                 <a href="{{ url_for('teacher_synchronization.integrated_management') }}" class="btn btn-sm btn-success">
                     <i class="fas fa-cogs"></i> 統合管理画面
                 </a>
+                -->
             </div>
         </div>
         
@@ -85,6 +87,7 @@
                 <div>
                     <a href="{{ url_for('teacher_class_management.create_class') }}" class="btn btn-sm btn-primary">新規クラスを作成</a>
                     <a href="{{ url_for('teacher_dashboard.pending_users') }}" class="btn btn-sm btn-info">承認待ちユーザー</a>
+                    <a href="{{ url_for('teacher_task_management.pending_task_approvals') }}" class="btn btn-sm btn-warning">課題承認</a>
                 </div>
             </div>
             
@@ -770,7 +773,7 @@ function syncAllCurriculums() {
     button.disabled = true;
     button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 同期中...';
     
-    fetch('/teacher/curriculum/sync-all', {
+    fetch('/teacher/sync-all', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',

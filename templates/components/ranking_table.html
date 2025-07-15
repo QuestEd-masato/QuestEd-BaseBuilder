@@ -4,7 +4,8 @@
         <tr>
             <th style="width: 80px; text-align: center;">順位</th>
             <th>学習者</th>
-            <th style="width: 150px; text-align: center;">習得語数</th>
+            <th style="width: 120px; text-align: center;">総合ポイント</th>
+            <th style="width: 150px; text-align: center;">活動内訳</th>
         </tr>
     </thead>
     <tbody>
@@ -36,7 +37,24 @@
             
             <td style="text-align: center;">
                 <div class="score-display">
-                    {{ user.word_count }}語
+                    <strong>{{ user.score|int }}pt</strong>
+                </div>
+            </td>
+            
+            <td style="text-align: center;">
+                <div class="activity-breakdown">
+                    {% if user.correct_answers is defined %}
+                    <div class="breakdown-item basebuilder">正答: {{ user.correct_answers or 0 }}</div>
+                    {% endif %}
+                    {% if user.chat_count is defined %}
+                    <div class="breakdown-item chat">チャット: {{ user.chat_count or 0 }}</div>
+                    {% endif %}
+                    {% if user.activity_count is defined %}
+                    <div class="breakdown-item activity">記録: {{ user.activity_count or 0 }}</div>
+                    {% endif %}
+                    {% if not (user.correct_answers is defined or user.chat_count is defined or user.activity_count is defined) %}
+                    <div class="breakdown-item">-</div>
+                    {% endif %}
                 </div>
             </td>
         </tr>
@@ -44,7 +62,105 @@
     </tbody>
 </table>
 
-<div class="last-updated">
-    最終更新: {{ moment().strftime('%Y-%m-%d %H:%M') }}
-    (参加者数: {{ ranking_data.rankings|length }}人)
+<div class="ranking-info">
+    <div class="last-updated">
+        最終更新: 先ほど
+        (参加者数: {{ ranking_data.rankings|length }}人)
+    </div>
+    
+    <div class="point-system-info">
+        <h4>ポイント計算方式</h4>
+        <div class="point-rules">
+            <span class="rule basebuilder">BaseBuilder正答: 10pt/問</span>
+            <span class="rule chat">チャット利用: 5pt/回</span>
+            <span class="rule activity">学習記録: 15pt/件</span>
+            <span class="rule login">ログイン継続: 30pt/日</span>
+        </div>
+        <small>※ 自立学習活動を重視した多面的ポイント制</small>
+    </div>
 </div>
+
+<style>
+.activity-breakdown {
+    font-size: 0.8rem;
+    line-height: 1.3;
+}
+
+.breakdown-item {
+    padding: 1px 0;
+    font-weight: 600;
+    font-size: 0.75rem;
+}
+
+.breakdown-item.basebuilder {
+    color: #2563eb; /* BaseBuilder - Blue */
+}
+
+.breakdown-item.chat {
+    color: #059669; /* Chat - Green */
+}
+
+.breakdown-item.activity {
+    color: #dc2626; /* Activity - Red */
+}
+
+.score-display {
+    font-size: 1.1rem;
+    color: #1f2937;
+}
+
+.ranking-info {
+    margin-top: 20px;
+    padding: 15px;
+    background-color: #f8fafc;
+    border-radius: 8px;
+    border-left: 4px solid #3b82f6;
+}
+
+.point-system-info h4 {
+    margin: 10px 0 8px 0;
+    color: #1f2937;
+    font-size: 0.9rem;
+}
+
+.point-rules {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+}
+
+.rule {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.rule.basebuilder {
+    background-color: #dbeafe;
+    color: #1e40af;
+}
+
+.rule.chat {
+    background-color: #d1fae5;
+    color: #065f46;
+}
+
+.rule.activity {
+    background-color: #fee2e2;
+    color: #991b1b;
+}
+
+.rule.login {
+    background-color: #fef3c7;
+    color: #92400e;
+}
+
+
+.last-updated {
+    font-size: 0.8rem;
+    color: #6b7280;
+    margin-bottom: 10px;
+}
+</style>
