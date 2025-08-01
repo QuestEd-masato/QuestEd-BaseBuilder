@@ -1,0 +1,429 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "QuestEd API",
+    "version": "1.4.1",
+    "description": "Comprehensive API specification for QuestEd educational platform",
+    "contact": {
+      "name": "QuestEd Development Team"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:5000",
+      "description": "Development server"
+    },
+    {
+      "url": "https://api.quested.example.com",
+      "description": "Production server"
+    }
+  ],
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": {"type": "integer"},
+          "username": {"type": "string"},
+          "full_name": {"type": "string"},
+          "email": {"type": "string", "format": "email"},
+          "role": {"type": "string", "enum": ["admin", "teacher", "student"]},
+          "school_id": {"type": "integer"}
+        }
+      },
+      "Unit": {
+        "type": "object",
+        "properties": {
+          "id": {"type": "integer"},
+          "title": {"type": "string"},
+          "difficulty_level": {"type": "integer", "minimum": 1, "maximum": 5},
+          "estimated_minutes": {"type": "integer"},
+          "subject_id": {"type": "integer"},
+          "school_id": {"type": "integer"}
+        }
+      },
+      "ApiResponse": {
+        "type": "object",
+        "properties": {
+          "success": {"type": "boolean"},
+          "data": {"type": "object"},
+          "message": {"type": "string"},
+          "errors": {"type": "object"},
+          "timestamp": {"type": "string", "format": "date-time"}
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "success": {"type": "boolean", "example": false},
+          "data": {"type": "null"},
+          "message": {"type": "string"},
+          "errors": {"type": "object"},
+          "error_code": {"type": "string"},
+          "timestamp": {"type": "string", "format": "date-time"}
+        }
+      }
+    }
+  },
+  "paths": {
+    "/api/login": {
+      "post": {
+        "summary": "User authentication",
+        "description": "Authenticate user and receive JWT token",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["username", "password"],
+                "properties": {
+                  "username": {"type": "string"},
+                  "password": {"type": "string"}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Authentication successful",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/ApiResponse"}
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication failed",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/ErrorResponse"}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/logout": {
+      "post": {
+        "summary": "User logout",
+        "description": "Logout user and invalidate JWT token",
+        "responses": {
+          "200": {
+            "description": "Logout successful",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/ApiResponse"}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/user/profile": {
+      "get": {
+        "summary": "Get user profile",
+        "description": "Retrieve current user profile information",
+        "responses": {
+          "200": {
+            "description": "Profile retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/ApiResponse"}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/units": {
+      "get": {
+        "summary": "List curriculum units",
+        "description": "Retrieve available curriculum units with optional filtering",
+        "parameters": [
+          {
+            "name": "school_id",
+            "in": "query",
+            "schema": {"type": "integer"},
+            "description": "Filter by school ID"
+          },
+          {
+            "name": "subject_id",
+            "in": "query",
+            "schema": {"type": "integer"},
+            "description": "Filter by subject ID"
+          },
+          {
+            "name": "difficulty_level",
+            "in": "query",
+            "schema": {"type": "integer", "minimum": 1, "maximum": 5},
+            "description": "Filter by difficulty level"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {"type": "integer", "default": 1},
+            "description": "Page number for pagination"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {"type": "integer", "default": 20},
+            "description": "Number of items per page"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Units retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/ApiResponse"}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/units/select": {
+      "post": {
+        "summary": "Select unit for learning",
+        "description": "Student selects a unit for learning in a specific class",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["unit_id", "class_id"],
+                "properties": {
+                  "unit_id": {"type": "integer"},
+                  "class_id": {"type": "integer"}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Unit selected successfully",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/ApiResponse"}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/progress": {
+      "get": {
+        "summary": "Get learning progress",
+        "description": "Retrieve student learning progress information",
+        "parameters": [
+          {
+            "name": "student_id",
+            "in": "query",
+            "schema": {"type": "integer"},
+            "description": "Student ID (required for teachers/admins)"
+          },
+          {
+            "name": "unit_id",
+            "in": "query",
+            "schema": {"type": "integer"},
+            "description": "Filter by unit ID"
+          },
+          {
+            "name": "class_id",
+            "in": "query",
+            "schema": {"type": "integer"},
+            "description": "Filter by class ID"
+          },
+          {
+            "name": "timeframe",
+            "in": "query",
+            "schema": {"type": "string", "enum": ["week", "month", "semester"]},
+            "description": "Progress timeframe"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Progress retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/ApiResponse"}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/chat": {
+      "post": {
+        "summary": "AI chat interface",
+        "description": "Send message to AI chat system and receive response",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["message"],
+                "properties": {
+                  "message": {"type": "string"},
+                  "subject_id": {"type": "integer"},
+                  "class_id": {"type": "integer"},
+                  "context": {"type": "string"},
+                  "conversation_id": {"type": "string"}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "AI response generated successfully",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/ApiResponse"}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/rankings": {
+      "get": {
+        "summary": "Get performance rankings",
+        "description": "Retrieve student performance rankings",
+        "parameters": [
+          {
+            "name": "ranking_type",
+            "in": "query",
+            "schema": {"type": "string", "enum": ["total_points", "weekly_points", "accuracy_rate", "study_time"]},
+            "description": "Type of ranking"
+          },
+          {
+            "name": "scope",
+            "in": "query",
+            "schema": {"type": "string", "enum": ["school", "class"]},
+            "description": "Ranking scope"
+          },
+          {
+            "name": "scope_id",
+            "in": "query",
+            "schema": {"type": "integer"},
+            "description": "Scope identifier (school_id or class_id)"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {"type": "integer", "default": 20},
+            "description": "Number of rankings to return"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Rankings retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/ApiResponse"}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/basebuilder/categories": {
+      "get": {
+        "summary": "Get problem categories",
+        "description": "Retrieve available problem categories for BaseBuilder",
+        "parameters": [
+          {
+            "name": "subject_id",
+            "in": "query",
+            "schema": {"type": "integer"},
+            "description": "Filter by subject ID"
+          },
+          {
+            "name": "include_stats",
+            "in": "query",
+            "schema": {"type": "boolean", "default": false},
+            "description": "Include category statistics"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Categories retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/ApiResponse"}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/basebuilder/problems": {
+      "get": {
+        "summary": "Get problems",
+        "description": "Retrieve problems for BaseBuilder learning sessions",
+        "parameters": [
+          {
+            "name": "category_id",
+            "in": "query",
+            "schema": {"type": "integer"},
+            "description": "Filter by category ID"
+          },
+          {
+            "name": "difficulty",
+            "in": "query",
+            "schema": {"type": "integer", "minimum": 1, "maximum": 5},
+            "description": "Filter by difficulty level"
+          },
+          {
+            "name": "subject_id",
+            "in": "query",
+            "schema": {"type": "integer"},
+            "description": "Filter by subject ID"
+          },
+          {
+            "name": "random",
+            "in": "query",
+            "schema": {"type": "boolean", "default": false},
+            "description": "Randomize problem order"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {"type": "integer", "default": 10},
+            "description": "Number of problems to return"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Problems retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/ApiResponse"}
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -2,7 +2,10 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
+    <!-- TEMPORARY: CSRF disabled for testing -->
+    {% if csrf_token %}
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    {% endif %}
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}QuestEd | 探究学習支援システム{% endblock %}</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer">
@@ -14,6 +17,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/modern-responsive.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/button-overrides.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/speech_input.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/unified_navigation.css') }}">
     <style>
         /* 共通スタイル */
         header {
@@ -618,6 +622,14 @@
 <body>
     {% set is_admin_page = request.path.startswith('/admin') %}
     
+    <!-- 統合ナビゲーション用のデータ準備 -->
+    {% import 'navigation/unified_navigation.html' as nav_macros %}
+    {% if current_user.is_authenticated %}
+        {% set navigation_items = get_navigation(current_user) %}
+        {% set breadcrumbs = get_breadcrumb(request.path, current_user) %}
+        {% set current_module = get_current_module(request.path) %}
+    {% endif %}
+    
     {% if is_admin_page %}
     <!-- 管理画面用ヘッダー -->
     <header class="admin-header">
@@ -633,91 +645,16 @@
             
             <div class="main-nav">
                 <ul id="main-menu">
-                    <!-- デスクトップ用メニュー（管理者） -->
-                    <li><a href="{{ url_for('admin_panel.dashboard') }}"><i class="fas fa-tachometer-alt"></i> ダッシュボード</a></li>
-                    
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle js-dropdown-toggle" href="#" role="button">
-                            <i class="fas fa-school"></i> 学校管理 <span class="dropdown-arrow">▼</span>
-                        </a>
-                        <ul class="dropdown-menu">
-                            <li><a href="{{ url_for('admin_panel.admin_schools') }}">学校一覧</a></li>
-                            <li><a href="{{ url_for('admin_panel.create_school') }}">学校登録</a></li>
-                        </ul>
-                    </li>
-                    
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle js-dropdown-toggle" href="#" role="button">
-                            <i class="fas fa-users"></i> ユーザー管理 <span class="dropdown-arrow">▼</span>
-                        </a>
-                        <ul class="dropdown-menu">
-                            <li><a href="{{ url_for('admin_panel.users') }}">ユーザー一覧</a></li>
-                            <li><a href="{{ url_for('admin_panel.import_users') }}">一括インポート</a></li>
-                        </ul>
-                    </li>
-                    
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle js-dropdown-toggle" href="#" role="button">
-                            <i class="fas fa-cogs"></i> システム設定 <span class="dropdown-arrow">▼</span>
-                        </a>
-                        <ul class="dropdown-menu">
-                            <li><a href="#">基本設定</a></li>
-                            <li><a href="#">バックアップ</a></li>
-                            <li><a href="#">メンテナンス</a></li>
-                        </ul>
-                    </li>
-                    
-                    <li><a href="{{ url_for('index') }}"><i class="fas fa-home"></i> フロントに戻る</a></li>
-                    
-                    <li><a href="{{ url_for('auth.profile') }}"><i class="fas fa-user"></i> プロフィール</a></li>
-                    
-                    <li><a href="{{ url_for('auth.logout') }}"><i class="fas fa-sign-out-alt"></i> ログアウト</a></li>
-                    
-                    <!-- モバイル用メニュー（管理者） -->
-                    <div class="mobile-menu-list">
-                        <a href="{{ url_for('admin_panel.dashboard') }}" class="mobile-menu-item">
-                            <i class="fas fa-tachometer-alt"></i> ダッシュボード
-                        </a>
+                    {% if current_user.is_authenticated %}
+                        <!-- デスクトップ用統合ナビゲーション -->
+                        {{ nav_macros.render_navigation(navigation_items, false) }}
                         
-                        <div class="mobile-menu-item mobile-dropdown" data-target="mobile-menu-schools">
-                            <i class="fas fa-school"></i> 学校管理
-                        </div>
-                        <div id="mobile-menu-schools" class="mobile-submenu">
-                            <a href="{{ url_for('admin_panel.admin_schools') }}" class="mobile-submenu-item">学校一覧</a>
-                            <a href="{{ url_for('admin_panel.create_school') }}" class="mobile-submenu-item">学校登録</a>
-                        </div>
+                        <!-- モバイル用統合ナビゲーション -->
+                        {{ nav_macros.render_navigation(navigation_items, true) }}
                         
-                        <div class="mobile-menu-item mobile-dropdown" data-target="mobile-menu-users">
-                            <i class="fas fa-users"></i> ユーザー管理
-                        </div>
-                        <div id="mobile-menu-users" class="mobile-submenu">
-                            <a href="{{ url_for('admin_panel.users') }}" class="mobile-submenu-item">ユーザー一覧</a>
-                            <a href="{{ url_for('admin_panel.import_users') }}" class="mobile-submenu-item">一括インポート</a>
-                        </div>
-                        
-                        <div class="mobile-menu-item mobile-dropdown" data-target="mobile-menu-settings">
-                            <i class="fas fa-cogs"></i> システム設定
-                        </div>
-                        <div id="mobile-menu-settings" class="mobile-submenu">
-                            <a href="#" class="mobile-submenu-item">基本設定</a>
-                            <a href="#" class="mobile-submenu-item">バックアップ</a>
-                            <a href="#" class="mobile-submenu-item">メンテナンス</a>
-                        </div>
-                        
-                        <div class="mobile-menu-divider"></div>
-                        
-                        <a href="{{ url_for('index') }}" class="mobile-menu-item">
-                            <i class="fas fa-home"></i> フロントに戻る
-                        </a>
-                        
-                        <a href="{{ url_for('auth.profile') }}" class="mobile-menu-item">
-                            <i class="fas fa-user"></i> プロフィール
-                        </a>
-                        
-                        <a href="{{ url_for('auth.logout') }}" class="mobile-menu-item">
-                            <i class="fas fa-sign-out-alt"></i> ログアウト
-                        </a>
-                    </div>
+                        <!-- フロントに戻るリンク（管理者のみ） -->
+                        <li><a href="{{ url_for('index') }}"><i class="fas fa-home"></i> フロントに戻る</a></li>
+                    {% endif %}
                 </ul>
             </div>
         </nav>
@@ -787,179 +724,11 @@
             <div class="main-nav">
                 <ul id="main-menu">
                     {% if current_user.is_authenticated %}
-                        {% if current_user.role == 'student' %}
-                            <!-- デスクトップ用メニュー（学生） -->
-                            <li><a href="{{ url_for('student_dashboard.dashboard') }}"><i class="fas fa-tachometer-alt"></i> ダッシュボード</a></li>
-                            
-                            <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle js-dropdown-toggle" href="#" role="button">
-                                    <i class="fas fa-search"></i> 探究活動 <span class="dropdown-arrow">▼</span>
-                                </a>
-                                <ul class="dropdown-menu">
-                                    <li><a href="{{ url_for('student_themes.themes') }}">探究テーマ（クラス選択）</a></li>
-                                    <li><a href="{{ url_for('student_activities.activities') }}">活動記録</a></li>
-                                </ul>
-                            </li>
-                            
-                            <li class="nav-item dropdown">
-                               <a class="nav-link dropdown-toggle js-dropdown-toggle" href="#" role="button">
-                                   <i class="fas fa-graduation-cap"></i> 基礎学力 <span class="dropdown-arrow">▼</span>
-                               </a>
-                               <ul class="dropdown-menu">
-                                   <li><a href="{{ url_for('texts.dashboard') }}">基礎学力ホーム</a></li>
-                                   <li><a href="/basebuilder/problems">問題に挑戦</a></li>
-                                   <li><a href="/basebuilder/proficiency">熟練度確認</a></li>
-                                   <li><a href="/basebuilder/analysis">理解度分析</a></li>
-                               </ul>
-                            </li>
-                            
-                            <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle js-dropdown-toggle" href="#" role="button">
-                                    <i class="fas fa-tools"></i> ツール <span class="dropdown-arrow">▼</span>
-                                </a>
-                                <ul class="dropdown-menu">
-                                    <li><a href="{{ url_for('student_chat.select_class') }}">AIチャット</a></li>
-                                    <li><a href="{{ url_for('student_surveys.surveys') }}">アンケート</a></li>
-                                    <li><a href="{{ url_for('student_goals_todos.todos') }}">To Doリスト</a></li>
-                                    <li><a href="{{ url_for('student_goals_todos.goals') }}">目標管理</a></li>
-                                </ul>
-                            </li>
-                            
-                            <li><a href="{{ url_for('teacher_class_management.classes') }}"><i class="fas fa-users"></i> クラス</a></li>
-                            
-                            <li><a href="{{ url_for('auth.profile') }}"><i class="fas fa-user"></i> プロフィール</a></li>
-                            
-                            <li><a href="{{ url_for('auth.logout') }}"><i class="fas fa-sign-out-alt"></i> ログアウト</a></li>
-                            
-                            <!-- モバイル用メニュー（学生） -->
-                            <div class="mobile-menu-list">
-                                <a href="{{ url_for('student_dashboard.dashboard') }}" class="mobile-menu-item">
-                                    <i class="fas fa-tachometer-alt"></i> ダッシュボード
-                                </a>
-                                
-                                <div class="mobile-menu-item mobile-dropdown" data-target="mobile-menu-inquiry">
-                                    <i class="fas fa-search"></i> 探究活動
-                                </div>
-                                <div id="mobile-menu-inquiry" class="mobile-submenu">
-                                    <a href="{{ url_for('student_themes.themes') }}" class="mobile-submenu-item">探究テーマ</a>
-                                    <a href="{{ url_for('student_activities.activities') }}" class="mobile-submenu-item">活動記録</a>
-                                </div>
-                                
-                                <div class="mobile-menu-item mobile-dropdown" data-target="mobile-menu-basic">
-                                    <i class="fas fa-graduation-cap"></i> 基礎学力
-                                </div>
-                                <div id="mobile-menu-basic" class="mobile-submenu">
-                                    <a href="{{ url_for('texts.dashboard') }}" class="mobile-submenu-item">基礎学力ホーム</a>
-                                    <a href="/basebuilder/problems" class="mobile-submenu-item">問題に挑戦</a>
-                                    <a href="/basebuilder/proficiency" class="mobile-submenu-item">熟練度確認</a>
-                                    <a href="/basebuilder/learning_paths" class="mobile-submenu-item">学習パス</a>
-                                </div>
-                                
-                                <div class="mobile-menu-item mobile-dropdown" data-target="mobile-menu-tools">
-                                    <i class="fas fa-tools"></i> ツール
-                                </div>
-                                <div id="mobile-menu-tools" class="mobile-submenu">
-                                    <a href="{{ url_for('student_chat.select_class') }}" class="mobile-submenu-item">AIチャット</a>
-                                    <a href="{{ url_for('student_surveys.surveys') }}" class="mobile-submenu-item">アンケート</a>
-                                    <a href="{{ url_for('student_goals_todos.todos') }}" class="mobile-submenu-item">To Doリスト</a>
-                                    <a href="{{ url_for('student_goals_todos.goals') }}" class="mobile-submenu-item">目標管理</a>
-                                </div>
-                                
-                                <a href="{{ url_for('teacher_class_management.classes') }}" class="mobile-menu-item">
-                                    <i class="fas fa-users"></i> クラス
-                                </a>
-                                
-                                <div class="mobile-menu-divider"></div>
-                                
-                                <a href="{{ url_for('auth.profile') }}" class="mobile-menu-item">
-                                    <i class="fas fa-user"></i> プロフィール
-                                </a>
-                                
-                                <a href="{{ url_for('auth.logout') }}" class="mobile-menu-item">
-                                    <i class="fas fa-sign-out-alt"></i> ログアウト
-                                </a>
-                            </div>
-                        {% elif current_user.role == 'teacher' %}
-                            <!-- デスクトップ用メニュー（教師） -->
-                            <li><a href="{{ url_for('teacher_dashboard.dashboard') }}"><i class="fas fa-tachometer-alt"></i> ダッシュボード</a></li>
-                            
-                            <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle js-dropdown-toggle" href="#" role="button">
-                                    <i class="fas fa-search"></i> 探究活動 <span class="dropdown-arrow">▼</span>
-                                </a>
-                                <ul class="dropdown-menu">
-                                    <li><a href="{{ url_for('teacher_student_evaluation.teacher_themes') }}">テーマ管理</a></li>
-                                    <li><a href="{{ url_for('teacher_class_management.classes') }}">クラス管理</a></li>
-                                </ul>
-                            </li>
-                            
-                            <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle js-dropdown-toggle" href="#" role="button">
-                                    <i class="fas fa-graduation-cap"></i> 基礎学力 <span class="dropdown-arrow">▼</span>
-                                </a>
-                                <ul class="dropdown-menu">
-                                    <li><a href="{{ url_for('texts.dashboard') }}">基礎学力ホーム</a></li>
-                                    <li><a href="{{ url_for('problems.problems') }}">問題管理</a></li>
-                                    <li><a href="{{ url_for('texts.text_sets') }}">テキスト一覧</a></li>
-                                    <li><a href="{{ url_for('analytics.analysis') }}">理解度分析</a></li>
-                                </ul>
-                            </li>
-                            
-                            <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle js-dropdown-toggle" href="#" role="button">
-                                    <i class="fas fa-tools"></i> ツール <span class="dropdown-arrow">▼</span>
-                                </a>
-                                <ul class="dropdown-menu">
-                                    <li><a href="{{ url_for('teacher_dashboard.chat_page') }}">AIチャット</a></li>
-                                </ul>
-                            </li>
-                            
-                            <li><a href="{{ url_for('auth.profile') }}"><i class="fas fa-user"></i> プロフィール</a></li>
-                            
-                            <li><a href="{{ url_for('auth.logout') }}"><i class="fas fa-sign-out-alt"></i> ログアウト</a></li>
-                            
-                            <!-- モバイル用メニュー（教師） -->
-                            <div class="mobile-menu-list">
-                                <a href="{{ url_for('teacher_dashboard.dashboard') }}" class="mobile-menu-item">
-                                    <i class="fas fa-tachometer-alt"></i> ダッシュボード
-                                </a>
-                                
-                                <div class="mobile-menu-item mobile-dropdown" data-target="mobile-menu-teacher-inquiry">
-                                    <i class="fas fa-search"></i> 探究活動
-                                </div>
-                                <div id="mobile-menu-teacher-inquiry" class="mobile-submenu">
-                                    <a href="{{ url_for('teacher_student_evaluation.teacher_themes') }}" class="mobile-submenu-item">テーマ管理</a>
-                                    <a href="{{ url_for('teacher_class_management.classes') }}" class="mobile-submenu-item">クラス管理</a>
-                                </div>
-                                
-                                <div class="mobile-menu-item mobile-dropdown" data-target="mobile-menu-teacher-basic">
-                                    <i class="fas fa-graduation-cap"></i> 基礎学力
-                                </div>
-                                <div id="mobile-menu-teacher-basic" class="mobile-submenu">
-                                    <a href="{{ url_for('texts.dashboard') }}" class="mobile-submenu-item">基礎学力ホーム</a>
-                                    <a href="{{ url_for('problems.problems') }}" class="mobile-submenu-item">問題管理</a>
-                                    <a href="{{ url_for('texts.text_sets') }}" class="mobile-submenu-item">テキスト一覧</a>
-                                    <a href="{{ url_for('analytics.analysis') }}" class="mobile-submenu-item">理解度分析</a>
-                                </div>
-                                
-                                <div class="mobile-menu-item mobile-dropdown" data-target="mobile-menu-teacher-tools">
-                                    <i class="fas fa-tools"></i> ツール
-                                </div>
-                                <div id="mobile-menu-teacher-tools" class="mobile-submenu">
-                                    <a href="{{ url_for('teacher_dashboard.chat_page') }}" class="mobile-submenu-item">AIチャット</a>
-                                </div>
-                                
-                                <div class="mobile-menu-divider"></div>
-                                
-                                <a href="{{ url_for('auth.profile') }}" class="mobile-menu-item">
-                                    <i class="fas fa-user"></i> プロフィール
-                                </a>
-                                
-                                <a href="{{ url_for('auth.logout') }}" class="mobile-menu-item">
-                                    <i class="fas fa-sign-out-alt"></i> ログアウト
-                                </a>
-                            </div>
-                        {% endif %}
+                        <!-- デスクトップ用統合ナビゲーション -->
+                        {{ nav_macros.render_navigation(navigation_items, false) }}
+                        
+                        <!-- モバイル用統合ナビゲーション -->
+                        {{ nav_macros.render_navigation(navigation_items, true) }}
                     {% else %}
                         <!-- 未ログイン時のメニュー（デスクトップ） -->
                         <li><a href="{{ url_for('auth.login') }}"><i class="fas fa-sign-in-alt"></i> ログイン</a></li>
@@ -982,8 +751,18 @@
     </header>
     {% endif %}
     
+    <!-- モジュール指示器 -->
+    {% if current_user.is_authenticated %}
+        {{ nav_macros.render_module_indicator(current_module) }}
+    {% endif %}
+    
     <main>
         <div class="container my-4">
+            <!-- パンくずリスト -->
+            {% if current_user.is_authenticated %}
+                {{ nav_macros.render_breadcrumb(breadcrumbs) }}
+            {% endif %}
+            
             <div class="flash-messages">
                 {% with messages = get_flashed_messages() %}
                     {% if messages %}

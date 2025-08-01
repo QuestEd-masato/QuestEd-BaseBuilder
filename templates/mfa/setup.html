@@ -1,0 +1,299 @@
+{% extends "base.html" %}
+
+{% block title %}多要素認証設定 - QuestEd{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-shield-alt me-2"></i>
+                        多要素認証設定
+                    </h4>
+                </div>
+                
+                <div class="card-body">
+                    {% if is_required %}
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>必須設定：</strong>{{ current_user.role|title|e }}アカウントには多要素認証の設定が必要です。
+                    </div>
+                    {% endif %}
+                    
+                    <div class="row">
+                        <!-- ステップ1: QRコード -->
+                        <div class="col-12 mb-4">
+                            <h5 class="text-primary">
+                                <span class="badge badge-primary me-2">1</span>
+                                認証アプリにQRコードを読み取り
+                            </h5>
+                            
+                            <div class="text-center mb-3">
+                                <img src="data:image/png;base64,{{ qr_code }}" 
+                                     alt="QR Code" 
+                                     class="img-fluid border rounded"
+                                     style="max-width: 200px;">
+                            </div>
+                            
+                            <div class="alert alert-info">
+                                <h6><i class="fas fa-mobile-alt me-2"></i>推奨認証アプリ</h6>
+                                <ul class="mb-0">
+                                    <li><strong>Google Authenticator</strong> - iOS/Android</li>
+                                    <li><strong>Microsoft Authenticator</strong> - iOS/Android</li>
+                                    <li><strong>Authy</strong> - iOS/Android/デスクトップ</li>
+                                </ul>
+                            </div>
+                            
+                            <!-- 手動入力用シークレットキー -->
+                            <div class="mt-3">
+                                <button class="btn btn-outline-secondary btn-sm" 
+                                        type="button" 
+                                        onclick="toggleSecretKey()">
+                                    <i class="fas fa-key me-1"></i>
+                                    手動でキーを入力する場合
+                                </button>
+                                
+                                <div id="secretKeySection" class="mt-2" style="display: none;">
+                                    <label class="form-label">シークレットキー:</label>
+                                    <div class="input-group">
+                                        <input type="text" 
+                                               class="form-control font-monospace" 
+                                               value="{{ secret|e }}" 
+                                               readonly>
+                                        <button class="btn btn-outline-secondary" 
+                                                type="button" 
+                                                onclick="copySecretKey()">
+                                            <i class="fas fa-copy"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- ステップ2: 認証コード入力 -->
+                        <div class="col-12 mb-4">
+                            <h5 class="text-primary">
+                                <span class="badge badge-primary me-2">2</span>
+                                認証コードを入力して設定完了
+                            </h5>
+                            
+                            <form method="POST" action="{{ url_for('mfa.setup') }}" class="needs-validation" novalidate>
+                                {{ csrf_token() }}
+                                <div class="mb-3">
+                                    <label for="totp_code" class="form-label">
+                                        <i class="fas fa-lock me-1"></i>
+                                        認証アプリに表示された6桁のコード
+                                    </label>
+                                    <input type="text" 
+                                           class="form-control form-control-lg text-center font-monospace" 
+                                           id="totp_code" 
+                                           name="totp_code" 
+                                           placeholder="000000"
+                                           maxlength="6" 
+                                           pattern="[0-9]{6}"
+                                           required
+                                           autocomplete="off">
+                                    <div class="invalid-feedback">
+                                        6桁の数字を入力してください。
+                                    </div>
+                                </div>
+                                
+                                <div class="d-grid">
+                                    <button type="submit" class="btn btn-primary btn-lg">
+                                        <i class="fas fa-check me-2"></i>
+                                        多要素認証を有効にする
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                        
+                        <!-- ステップ3: バックアップコード -->
+                        <div class="col-12">
+                            <h5 class="text-warning">
+                                <span class="badge badge-warning me-2">3</span>
+                                バックアップコードを保存
+                            </h5>
+                            
+                            <div class="alert alert-warning">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                <strong>重要：</strong>これらのバックアップコードを安全な場所に保存してください。
+                                認証アプリが利用できない場合にログインするために必要です。
+                            </div>
+                            
+                            <div class="backup-codes-container">
+                                <div class="row">
+                                    {% for code in backup_codes %}
+                                    <div class="col-md-6 mb-2">
+                                        <div class="p-2 bg-light border rounded text-center font-monospace">
+                                            {{ code }}
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                
+                                <div class="mt-3">
+                                    <button class="btn btn-success btn-sm" onclick="downloadBackupCodes()">
+                                        <i class="fas fa-download me-1"></i>
+                                        バックアップコードをダウンロード
+                                    </button>
+                                    <button class="btn btn-secondary btn-sm" onclick="printBackupCodes()">
+                                        <i class="fas fa-print me-1"></i>
+                                        印刷
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card-footer">
+                    <div class="row">
+                        <div class="col-md-6">
+                            {% if not is_required %}
+                            <a href="{{ url_for('index') }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-times me-1"></i>
+                                後で設定する
+                            </a>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6 text-end">
+                            <small class="text-muted">
+                                <i class="fas fa-info-circle me-1"></i>
+                                設定は数分で完了します
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// QRコード読み取り手順の表示/非表示
+function toggleSecretKey() {
+    const section = document.getElementById('secretKeySection');
+    section.style.display = section.style.display === 'none' ? 'block' : 'none';
+}
+
+// シークレットキーのコピー
+function copySecretKey() {
+    const input = document.querySelector('#secretKeySection input');
+    input.select();
+    document.execCommand('copy');
+    
+    // コピー完了メッセージ
+    const button = document.querySelector('#secretKeySection button');
+    const originalText = button.innerHTML;
+    button.innerHTML = '<i class="fas fa-check"></i> コピー完了';
+    button.classList.remove('btn-outline-secondary');
+    button.classList.add('btn-success');
+    
+    setTimeout(() => {
+        button.innerHTML = originalText;
+        button.classList.remove('btn-success');
+        button.classList.add('btn-outline-secondary');
+    }, 2000);
+}
+
+// バックアップコードのダウンロード
+function downloadBackupCodes() {
+    const codes = {{ backup_codes|tojson|safe }};
+    const userName = {{ current_user.display_name|tojson|safe }};
+    const content = `QuestEd バックアップコード
+生成日時: ${new Date().toLocaleString('ja-JP')}
+ユーザー: ${userName}
+
+これらのコードは一度だけ使用できます。
+認証アプリが利用できない場合にご使用ください。
+
+${codes.join('\n')}
+
+注意: これらのコードを安全な場所に保管してください。`;
+
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'quested_backup_codes.txt';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+}
+
+// バックアップコードの印刷
+function printBackupCodes() {
+    const codes = {{ backup_codes|tojson|safe }};
+    const userName = {{ current_user.display_name|tojson|safe }};
+    const printWindow = window.open('', '', 'width=600,height=400');
+    printWindow.document.write(`
+        <html>
+        <head>
+            <title>QuestEd バックアップコード</title>
+            <style>
+                body { font-family: Arial, sans-serif; margin: 20px; }
+                .header { text-align: center; border-bottom: 2px solid #333; padding-bottom: 10px; }
+                .codes { margin: 20px 0; }
+                .code { display: inline-block; margin: 5px; padding: 10px; 
+                       border: 1px solid #ccc; font-family: monospace; }
+                .note { margin-top: 20px; font-size: 12px; color: #666; }
+            </style>
+        </head>
+        <body>
+            <div class="header">
+                <h2>QuestEd バックアップコード</h2>
+                <p>ユーザー: ${userName}</p>
+                <p>生成日時: ${new Date().toLocaleString('ja-JP')}</p>
+            </div>
+            <div class="codes">
+                ${codes.map(code => `<div class="code">${code}</div>`).join('')}
+            </div>
+            <div class="note">
+                <p>注意事項:</p>
+                <ul>
+                    <li>これらのコードは一度だけ使用できます</li>
+                    <li>認証アプリが利用できない場合にのみご使用ください</li>
+                    <li>安全な場所に保管してください</li>
+                </ul>
+            </div>
+        </body>
+        </html>
+    `);
+    printWindow.document.close();
+    printWindow.print();
+}
+
+// フォームバリデーション
+(function() {
+    'use strict';
+    window.addEventListener('load', function() {
+        const forms = document.getElementsByClassName('needs-validation');
+        Array.prototype.filter.call(forms, function(form) {
+            form.addEventListener('submit', function(event) {
+                if (form.checkValidity() === false) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                form.classList.add('was-validated');
+            }, false);
+        });
+    }, false);
+})();
+
+// 認証コード入力の自動フォーマット
+document.getElementById('totp_code').addEventListener('input', function(e) {
+    const value = e.target.value.replace(/\D/g, ''); // 数字以外を除去
+    e.target.value = value;
+    
+    if (value.length === 6) {
+        e.target.classList.add('is-valid');
+        e.target.classList.remove('is-invalid');
+    } else {
+        e.target.classList.remove('is-valid');
+    }
+});
+</script>
+{% endblock %}

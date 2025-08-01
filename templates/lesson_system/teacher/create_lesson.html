@@ -1,0 +1,411 @@
+{% extends 'base.html' %}
+
+{% block title %}新規レッスン作成 | QuestEd{% endblock %}
+
+{% block extra_css %}
+<style>
+.lesson-form-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.form-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
+
+.form-header {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+    color: white;
+    padding: 2rem;
+    text-align: center;
+}
+
+.form-header h1 {
+    margin: 0;
+    font-size: 1.8rem;
+}
+
+.form-body {
+    padding: 2rem;
+}
+
+.import-options {
+    margin-bottom: 2rem;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    padding: 1.5rem;
+    background: #f8f9fa;
+}
+
+.import-toggle {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.import-toggle input[type="radio"] {
+    margin-right: 0.5rem;
+}
+
+.csv-import-section {
+    display: none;
+    margin-top: 1rem;
+    padding: 1rem;
+    background: white;
+    border-radius: 6px;
+    border: 1px solid #dee2e6;
+}
+
+.csv-import-section.active {
+    display: block;
+}
+
+.csv-template-info {
+    background: #e7f3ff;
+    border: 1px solid #b8daff;
+    border-radius: 6px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.csv-template-info h6 {
+    color: #004085;
+    margin-bottom: 0.5rem;
+}
+
+.csv-template-info ul {
+    margin-bottom: 0;
+    padding-left: 1.5rem;
+}
+
+.csv-template-info li {
+    color: #004085;
+    font-size: 0.9rem;
+}
+
+.form-section {
+    margin-bottom: 2rem;
+}
+
+.form-section h3 {
+    color: #495057;
+    border-bottom: 2px solid #007bff;
+    padding-bottom: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+    border: none;
+    border-radius: 6px;
+    padding: 0.75rem 2rem;
+    font-weight: 500;
+}
+
+.btn-secondary {
+    border-radius: 6px;
+    padding: 0.75rem 2rem;
+}
+
+.form-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 1px solid #dee2e6;
+}
+
+.alert {
+    border-radius: 6px;
+    margin-bottom: 1rem;
+}
+
+@media (max-width: 768px) {
+    .lesson-form-container {
+        padding: 1rem;
+    }
+    
+    .form-header {
+        padding: 1.5rem;
+    }
+    
+    .form-body {
+        padding: 1.5rem;
+    }
+    
+    .form-actions {
+        flex-direction: column;
+    }
+    
+    .btn {
+        width: 100%;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="lesson-form-container">
+    <div class="form-card">
+        <div class="form-header">
+            <h1><i class="fas fa-plus-circle"></i> 新規レッスン作成</h1>
+            <p class="mb-0">レッスンを個別作成するか、CSVファイルから一括インポートできます</p>
+        </div>
+        
+        <div class="form-body">
+            <!-- インポート方法選択 -->
+            <div class="import-options">
+                <h5><i class="fas fa-cog"></i> 作成方法</h5>
+                <div class="import-toggle">
+                    <label>
+                        <input type="radio" name="import_method" value="manual" checked>
+                        手動作成（1つずつ）
+                    </label>
+                    <label>
+                        <input type="radio" name="import_method" value="csv">
+                        CSV一括インポート
+                    </label>
+                </div>
+                
+                <!-- CSV インポートセクション -->
+                <div class="csv-import-section" id="csv-import-section">
+                    <div class="csv-template-info">
+                        <h6><i class="fas fa-info-circle"></i> CSVインポートについて</h6>
+                        <ul>
+                            <li>複数のレッスンとタスクを一括で作成できます</li>
+                            <li>下記のテンプレートファイルをダウンロードして編集してください</li>
+                            <li>UTF-8エンコーディングで保存してください</li>
+                            <li>学習目標・重要ポイントは「;」で区切って複数指定できます</li>
+                        </ul>
+                        <div class="mt-2">
+                            <a href="{{ url_for('lesson_system.download_csv_template') }}" 
+                               class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-download"></i> CSVテンプレートダウンロード
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <form method="POST" enctype="multipart/form-data" id="csv-import-form">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="csv_curriculum_id" class="form-label">カリキュラム <span class="text-danger">*</span></label>
+                                    <select class="form-select" id="csv_curriculum_id" name="curriculum_id" required>
+                                        <option value="">カリキュラムを選択してください</option>
+                                        {% for curriculum in curriculums %}
+                                        <option value="{{ curriculum.id }}">{{ curriculum.title }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="csv_file" class="form-label">CSVファイル <span class="text-danger">*</span></label>
+                                    <input type="file" class="form-control" id="csv_file" name="csv_file" accept=".csv" required>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <input type="hidden" name="import_type" value="csv">
+                        
+                        <div class="form-actions">
+                            <button type="button" class="btn btn-secondary" onclick="switchToManual()">
+                                <i class="fas fa-arrow-left"></i> 手動作成に戻る
+                            </button>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-upload"></i> CSVインポート実行
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- 手動作成フォーム -->
+            <form method="POST" id="manual-form">
+                <div class="form-section">
+                    <h3><i class="fas fa-info-circle"></i> 基本情報</h3>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="curriculum_id" class="form-label">カリキュラム <span class="text-danger">*</span></label>
+                                <select class="form-select" id="curriculum_id" name="curriculum_id" required>
+                                    <option value="">カリキュラムを選択してください</option>
+                                    {% for curriculum in curriculums %}
+                                    <option value="{{ curriculum.id }}">{{ curriculum.title }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label for="lesson_number" class="form-label">レッスン番号 <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="lesson_number" name="lesson_number" 
+                                       min="1" required placeholder="1">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label for="duration_minutes" class="form-label">所要時間（分）</label>
+                                <input type="number" class="form-control" id="duration_minutes" name="duration_minutes" 
+                                       min="1" value="50" placeholder="50">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="title" class="form-label">レッスンタイトル <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="title" name="title" 
+                               required placeholder="レッスンのタイトルを入力してください">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="description" class="form-label">レッスン説明</label>
+                        <textarea class="form-control" id="description" name="description" rows="3"
+                                  placeholder="レッスンの内容や目的を説明してください"></textarea>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="lesson_type" class="form-label">レッスンタイプ</label>
+                                <select class="form-select" id="lesson_type" name="lesson_type">
+                                    <option value="lecture">講義</option>
+                                    <option value="practice">演習</option>
+                                    <option value="discussion">討論</option>
+                                    <option value="presentation">発表</option>
+                                    <option value="experiment">実験</option>
+                                    <option value="review">復習</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="estimated_prep_time" class="form-label">準備時間（分）</label>
+                                <input type="number" class="form-control" id="estimated_prep_time" name="estimated_prep_time" 
+                                       min="0" value="10" placeholder="10">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-section">
+                    <h3><i class="fas fa-bullseye"></i> 学習目標</h3>
+                    <div class="mb-3">
+                        <label for="learning_objectives" class="form-label">学習目標（改行区切り）</label>
+                        <textarea class="form-control" id="learning_objectives" name="learning_objectives" rows="3"
+                                  placeholder="・基本概念を理解する&#10;・応用問題を解けるようになる&#10;・実際の事例を分析できる"></textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="key_points" class="form-label">重要ポイント（改行区切り）</label>
+                        <textarea class="form-control" id="key_points" name="key_points" rows="3"
+                                  placeholder="・定義と基本原理&#10;・よくある間違い&#10;・実践のコツ"></textarea>
+                    </div>
+                </div>
+                
+                <div class="form-section">
+                    <h3><i class="fas fa-sticky-note"></i> 教師用メモ</h3>
+                    <div class="mb-3">
+                        <label for="teacher_notes" class="form-label">教師用メモ</label>
+                        <textarea class="form-control" id="teacher_notes" name="teacher_notes" rows="3"
+                                  placeholder="指導上の注意点、参考資料、準備物などを記録してください"></textarea>
+                    </div>
+                </div>
+                
+                <input type="hidden" name="import_type" value="manual">
+                
+                <div class="form-actions">
+                    <a href="{{ url_for('lesson_system.lesson_management') }}" class="btn btn-secondary">
+                        <i class="fas fa-times"></i> キャンセル
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> レッスンを作成
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// インポート方法の切り替え
+document.addEventListener('DOMContentLoaded', function() {
+    const radioButtons = document.querySelectorAll('input[name="import_method"]');
+    const csvSection = document.getElementById('csv-import-section');
+    const manualForm = document.getElementById('manual-form');
+    
+    radioButtons.forEach(radio => {
+        radio.addEventListener('change', function() {
+            if (this.value === 'csv') {
+                csvSection.classList.add('active');
+                manualForm.style.display = 'none';
+            } else {
+                csvSection.classList.remove('active');
+                manualForm.style.display = 'block';
+            }
+        });
+    });
+});
+
+function switchToManual() {
+    document.querySelector('input[name="import_method"][value="manual"]').checked = true;
+    document.getElementById('csv-import-section').classList.remove('active');
+    document.getElementById('manual-form').style.display = 'block';
+}
+
+// フォームバリデーション
+document.getElementById('manual-form').addEventListener('submit', function(e) {
+    const curriculumId = document.getElementById('curriculum_id').value;
+    const title = document.getElementById('title').value.trim();
+    const lessonNumber = document.getElementById('lesson_number').value;
+    
+    if (!curriculumId) {
+        e.preventDefault();
+        alert('カリキュラムを選択してください。');
+        return;
+    }
+    
+    if (!title) {
+        e.preventDefault();
+        alert('レッスンタイトルを入力してください。');
+        return;
+    }
+    
+    if (!lessonNumber || lessonNumber < 1) {
+        e.preventDefault();
+        alert('有効なレッスン番号を入力してください。');
+        return;
+    }
+});
+
+document.getElementById('csv-import-form').addEventListener('submit', function(e) {
+    const curriculumId = document.getElementById('csv_curriculum_id').value;
+    const csvFile = document.getElementById('csv_file').files[0];
+    
+    if (!curriculumId) {
+        e.preventDefault();
+        alert('カリキュラムを選択してください。');
+        return;
+    }
+    
+    if (!csvFile) {
+        e.preventDefault();
+        alert('CSVファイルを選択してください。');
+        return;
+    }
+    
+    // ファイルサイズチェック（5MB制限）
+    if (csvFile.size > 5 * 1024 * 1024) {
+        e.preventDefault();
+        alert('ファイルサイズが大きすぎます（5MB以下）。');
+        return;
+    }
+});
+</script>
+{% endblock %}

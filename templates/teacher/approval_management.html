@@ -1,0 +1,613 @@
+{% extends 'base.html' %}
+
+{% block title %}承認待ち一覧 | QuestEd{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-header">
+                <h2><i class="fas fa-clipboard-check"></i> 承認待ち一覧</h2>
+                <p class="text-muted">学生からの学習完了申請を確認し、承認・却下を行います</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- フィルター機能 -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="row align-items-end">
+                        <div class="col-md-3">
+                            <label for="class-filter" class="form-label">クラス絞り込み</label>
+                            <select class="form-select" id="class-filter" onchange="filterApprovals()">
+                                <option value="">全てのクラス</option>
+                                <!-- JavaScriptで動的追加 -->
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="sort-order" class="form-label">並び順</label>
+                            <select class="form-select" id="sort-order" onchange="filterApprovals()">
+                                <option value="newest">申請日時（新しい順）</option>
+                                <option value="oldest">申請日時（古い順）</option>
+                                <option value="student">学生名順</option>
+                                <option value="task">タスク名順</option>
+                                <option value="progress">進捗率順</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="status-filter" class="form-label">ステータス</label>
+                            <select class="form-select" id="status-filter" onchange="filterApprovals()">
+                                <option value="pending">承認待ちのみ</option>
+                                <option value="all">すべて</option>
+                                <option value="approved">承認済み</option>
+                                <option value="rejected">却下済み</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <button type="button" class="btn btn-outline-secondary" onclick="refreshApprovals()">
+                                <i class="fas fa-sync-alt"></i> 更新
+                            </button>
+                            <button type="button" class="btn btn-success" onclick="showBatchApprovalModal()" id="batch-approve-btn" disabled>
+                                <i class="fas fa-check-double"></i> 一括承認
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-hourglass-half"></i> 承認待ち申請
+                        <span class="badge bg-warning ms-2" id="pending-count">{{ pending_requests|length }}</span>
+                    </h5>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-sm btn-info" onclick="showStatistics()">
+                            <i class="fas fa-chart-bar"></i> 統計
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if pending_requests %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th width="30">
+                                            <input type="checkbox" id="select-all" onchange="toggleSelectAll()">
+                                        </th>
+                                        <th>学生名</th>
+                                        <th>タスク名</th>
+                                        <th>完了申請日時</th>
+                                        <th>待機日数</th>
+                                        <th>学習時間</th>
+                                        <th>備考</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for request in pending_requests %}
+                                    <tr class="approval-row" data-student-name="{{ request.student_name }}" data-task-title="{{ request.task_title }}" data-checked-date="{{ request.checked_at.isoformat() if request.checked_at else '' }}" data-status="pending">
+                                        <td>
+                                            <input type="checkbox" class="approval-checkbox" value="{{ request.id }}" 
+                                                   data-type="task_completion" onchange="updateSelectedApprovals()">
+                                        </td>
+                                        <td>
+                                            <strong>{{ request.student_name }}</strong>
+                                            <br><small class="text-muted">ID: {{ request.student_id }}</small>
+                                        </td>
+                                        <td>
+                                            <span class="fw-medium">{{ request.task_title }}</span>
+                                            <br><small class="text-muted">レッスンID: {{ request.lesson_id }}</small>
+                                        </td>
+                                        <td>
+                                            <small class="text-muted">
+                                                {{ request.checked_at.strftime('%m/%d %H:%M') if request.checked_at else '-' }}
+                                            </small>
+                                        </td>
+                                        <td>
+                                            {% set days_pending = ((moment().utcnow() - request.checked_at).days) if request.checked_at else 0 %}
+                                            <span class="badge {% if days_pending > 7 %}bg-danger{% elif days_pending > 3 %}bg-warning{% else %}bg-info{% endif %}">
+                                                {{ days_pending }}日
+                                            </span>
+                                        </td>
+                                        <td>
+                                            {% if request.time_spent %}
+                                                <span class="text-primary">{{ request.time_spent }}分</span>
+                                            {% else %}
+                                                <span class="text-muted">記録なし</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if request.notes %}
+                                                <span class="text-truncate" style="max-width: 150px; display: inline-block;" title="{{ request.notes }}">
+                                                    {{ request.notes }}
+                                                </span>
+                                            {% else %}
+                                                <span class="text-muted">なし</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <div class="btn-group" role="group">
+                                                <a href="{{ url_for('approval_system.teacher_approval_detail', request_id=request.id) }}" 
+                                                   class="btn btn-sm btn-outline-primary">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                                <button type="button" 
+                                                        class="btn btn-sm btn-success"
+                                                        onclick="quickApprove({{ request.id }})" title="即座に承認">
+                                                    <i class="fas fa-check"></i>
+                                                </button>
+                                                <button type="button" 
+                                                        class="btn btn-sm btn-warning"
+                                                        onclick="showApprovalModal({{ request.id }}, '{{ request.student_name }}', '{{ request.task_title }}')" title="コメント付きで承認">
+                                                    <i class="fas fa-comment-check"></i>
+                                                </button>
+                                                <button type="button" 
+                                                        class="btn btn-sm btn-danger"
+                                                        onclick="showRejectionModal({{ request.id }}, '{{ request.student_name }}', '{{ request.task_title }}')">
+                                                    <i class="fas fa-times"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-clipboard-check text-muted" style="font-size: 3rem;"></i>
+                            <h5 class="mt-3 text-muted">承認待ちの申請はありません</h5>
+                            <p class="text-muted">学生からの完了申請があるとここに表示されます</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 承認モーダル -->
+<div class="modal fade" id="approvalModal" tabindex="-1" aria-labelledby="approvalModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="approvalModalLabel">
+                    <i class="fas fa-check-circle text-success"></i> 承認確認
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>以下の申請を承認してもよろしいですか？</p>
+                <div class="alert alert-info">
+                    <strong>学生:</strong> <span id="approvalStudentName"></span><br>
+                    <strong>単元:</strong> <span id="approvalUnitTitle"></span>
+                </div>
+                <div class="mb-3">
+                    <label for="approvalComment" class="form-label">承認コメント（任意）</label>
+                    <textarea class="form-control" id="approvalComment" rows="3" 
+                              placeholder="承認に関するコメントを入力してください"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">キャンセル</button>
+                <button type="button" class="btn btn-success" onclick="approveRequest()">
+                    <i class="fas fa-check"></i> 承認する
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 却下モーダル -->
+<div class="modal fade" id="rejectionModal" tabindex="-1" aria-labelledby="rejectionModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="rejectionModalLabel">
+                    <i class="fas fa-times-circle text-danger"></i> 却下確認
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>以下の申請を却下してもよろしいですか？</p>
+                <div class="alert alert-warning">
+                    <strong>学生:</strong> <span id="rejectionStudentName"></span><br>
+                    <strong>単元:</strong> <span id="rejectionUnitTitle"></span>
+                </div>
+                <div class="mb-3">
+                    <label for="rejectionComment" class="form-label">却下理由 <span class="text-danger">*</span></label>
+                    <textarea class="form-control" id="rejectionComment" rows="3" 
+                              placeholder="却下理由を具体的に入力してください（学生への改善指示）" required></textarea>
+                    <div class="form-text">学生が改善できるよう、具体的な指示を含めてください</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">キャンセル</button>
+                <button type="button" class="btn btn-danger" onclick="rejectRequest()">
+                    <i class="fas fa-times"></i> 却下する
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 一括承認モーダル -->
+<div class="modal fade" id="batchApprovalModal" tabindex="-1" aria-labelledby="batchApprovalModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="batchApprovalModalLabel">
+                    <i class="fas fa-check-double text-success"></i> 一括承認確認
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p><strong id="batch-count-text">選択された申請を一括承認しますか？</strong></p>
+                <div class="alert alert-info">
+                    <strong>注意:</strong> 一括承認されたすべての申請に同じコメントが適用されます。
+                </div>
+                <div class="mb-3">
+                    <label for="batchApprovalComment" class="form-label">一括承認コメント（任意）</label>
+                    <textarea class="form-control" id="batchApprovalComment" rows="2" 
+                              placeholder="一括承認時のコメントを入力してください"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">キャンセル</button>
+                <button type="button" class="btn btn-success" onclick="performBatchApproval()">
+                    <i class="fas fa-check-double"></i> 一括承認実行
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 統計モーダル -->
+<div class="modal fade" id="statisticsModal" tabindex="-1" aria-labelledby="statisticsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="statisticsModalLabel">
+                    <i class="fas fa-chart-bar text-info"></i> 承認統計
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="statistics-content">
+                    <div class="text-center">
+                        <div class="spinner-border" role="status">
+                            <span class="visually-hidden">読み込み中...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentRequestId = null;
+let selectedApprovals = [];
+let allApprovals = [];
+
+function showApprovalModal(requestId, studentName, unitTitle) {
+    currentRequestId = requestId;
+    document.getElementById('approvalStudentName').textContent = studentName;
+    document.getElementById('approvalUnitTitle').textContent = unitTitle;
+    document.getElementById('approvalComment').value = '';
+    new bootstrap.Modal(document.getElementById('approvalModal')).show();
+}
+
+function showRejectionModal(requestId, studentName, unitTitle) {
+    currentRequestId = requestId;
+    document.getElementById('rejectionStudentName').textContent = studentName;
+    document.getElementById('rejectionUnitTitle').textContent = unitTitle;
+    document.getElementById('rejectionComment').value = '';
+    new bootstrap.Modal(document.getElementById('rejectionModal')).show();
+}
+
+function approveRequest() {
+    if (!currentRequestId) return;
+    
+    const comment = document.getElementById('approvalComment').value;
+    
+    fetch(`/approval-system/teacher/approve/${currentRequestId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            comment: comment,
+            type: 'task_completion'
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            bootstrap.Modal.getInstance(document.getElementById('approvalModal')).hide();
+            showAlert('success', data.message);
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000);
+        } else {
+            showAlert('danger', data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showAlert('danger', 'エラーが発生しました');
+    });
+}
+
+function rejectRequest() {
+    if (!currentRequestId) return;
+    
+    const comment = document.getElementById('rejectionComment').value.trim();
+    
+    if (!comment) {
+        showAlert('warning', '却下理由を入力してください');
+        return;
+    }
+    
+    fetch(`/approval-system/teacher/reject/${currentRequestId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            comment: comment,
+            type: 'task_completion'
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            bootstrap.Modal.getInstance(document.getElementById('rejectionModal')).hide();
+            showAlert('success', data.message);
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000);
+        } else {
+            showAlert('danger', data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showAlert('danger', 'エラーが発生しました');
+    });
+}
+
+// フィルタリング機能
+function filterApprovals() {
+    const classFilter = document.getElementById('class-filter').value;
+    const sortOrder = document.getElementById('sort-order').value;
+    const statusFilter = document.getElementById('status-filter').value;
+    
+    let filteredApprovals = allApprovals.filter(row => {
+        if (statusFilter !== 'all' && row.dataset.status !== statusFilter) return false;
+        // クラスフィルターもここで実装可能
+        return true;
+    });
+    
+    // ソート処理
+    filteredApprovals.sort((a, b) => {
+        switch(sortOrder) {
+            case 'newest':
+                return new Date(b.dataset.requestDate) - new Date(a.dataset.requestDate);
+            case 'oldest':
+                return new Date(a.dataset.requestDate) - new Date(b.dataset.requestDate);
+            case 'student':
+                return a.dataset.studentName.localeCompare(b.dataset.studentName);
+            case 'task':
+                return a.dataset.taskTitle.localeCompare(b.dataset.taskTitle);
+            case 'progress':
+                return parseFloat(b.dataset.progress) - parseFloat(a.dataset.progress);
+            default:
+                return 0;
+        }
+    });
+    
+    // 表示更新
+    const tbody = document.querySelector('tbody');
+    tbody.innerHTML = '';
+    filteredApprovals.forEach(row => tbody.appendChild(row));
+    
+    updatePendingCount(filteredApprovals.length);
+}
+
+function refreshApprovals() {
+    location.reload();
+}
+
+function updatePendingCount(count) {
+    document.getElementById('pending-count').textContent = count || document.querySelectorAll('.approval-row').length;
+}
+
+// 選択管理
+function toggleSelectAll() {
+    const selectAll = document.getElementById('select-all').checked;
+    document.querySelectorAll('.approval-checkbox').forEach(checkbox => {
+        checkbox.checked = selectAll;
+    });
+    updateSelectedApprovals();
+}
+
+function updateSelectedApprovals() {
+    selectedApprovals = Array.from(document.querySelectorAll('.approval-checkbox:checked')).map(cb => parseInt(cb.value));
+    document.getElementById('batch-approve-btn').disabled = selectedApprovals.length === 0;
+}
+
+// 即座承認
+function quickApprove(requestId) {
+    if (!confirm('この申請を即座に承認しますか？')) return;
+    
+    fetch(`/approval-system/teacher/approve/${requestId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            comment: '即座承認'
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showAlert('success', data.message);
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000);
+        } else {
+            showAlert('danger', data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showAlert('danger', 'エラーが発生しました');
+    });
+}
+
+// 一括承認
+function showBatchApprovalModal() {
+    if (selectedApprovals.length === 0) {
+        showAlert('warning', '承認する申請を選択してください');
+        return;
+    }
+    
+    document.getElementById('batch-count-text').textContent = `選択された${selectedApprovals.length}件の申請を一括承認しますか？`;
+    document.getElementById('batchApprovalComment').value = '';
+    new bootstrap.Modal(document.getElementById('batchApprovalModal')).show();
+}
+
+function performBatchApproval() {
+    const comment = document.getElementById('batchApprovalComment').value;
+    
+    fetch('/approval-system/teacher/batch-approve', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            request_ids: selectedApprovals,
+            comment: comment
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        bootstrap.Modal.getInstance(document.getElementById('batchApprovalModal')).hide();
+        if (data.success) {
+            showAlert('success', `${data.approved_count}件の申請を承認しました`);
+            if (data.failed_count > 0) {
+                showAlert('warning', `${data.failed_count}件の処理に失敗しました`);
+            }
+            setTimeout(() => {
+                window.location.reload();
+            }, 1500);
+        } else {
+            showAlert('danger', data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showAlert('danger', 'エラーが発生しました');
+    });
+}
+
+// 統計表示
+function showStatistics() {
+    new bootstrap.Modal(document.getElementById('statisticsModal')).show();
+    
+    fetch('/approval-system/api/statistics?days=30')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                displayStatistics(data.statistics);
+            } else {
+                document.getElementById('statistics-content').innerHTML = '<p class="text-danger">統計データの取得に失敗しました</p>';
+            }
+        })
+        .catch(error => {
+            document.getElementById('statistics-content').innerHTML = '<p class="text-danger">サーバーとの通信に失敗しました</p>';
+        });
+}
+
+function displayStatistics(stats) {
+    const html = `
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <h4 class="text-primary">${stats.total_requests || 0}</h4>
+                        <small>総申請数（30日間）</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <h4 class="text-success">${stats.approval_rate || 0}%</h4>
+                        <small>承認率</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row mt-3">
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <h5 class="text-success">${stats.approved_count || 0}</h5>
+                        <small>承認済み</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <h5 class="text-danger">${stats.rejected_count || 0}</h5>
+                        <small>却下</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <h5 class="text-warning">${stats.pending_count || 0}</h5>
+                        <small>承認待ち</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.getElementById('statistics-content').innerHTML = html;
+}
+
+// 初期化
+document.addEventListener('DOMContentLoaded', function() {
+    allApprovals = Array.from(document.querySelectorAll('.approval-row'));
+    updatePendingCount();
+});
+
+function showAlert(type, message) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    document.querySelector('.container-fluid').insertBefore(alertDiv, document.querySelector('.row'));
+    
+    setTimeout(() => {
+        alertDiv.remove();
+    }, 5000);
+}
+</script>
+{% endblock %}

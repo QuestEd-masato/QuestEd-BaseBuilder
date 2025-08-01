@@ -28,9 +28,13 @@ class LessonType(Enum):
 
 class TaskCheckStatus(Enum):
     """タスクチェック状況"""
-    NOT_CHECKED = 'not_checked'
-    CHECKED = 'checked'
-    COMPLETED = 'completed'
+    NOT_CHECKED = 'not_checked'     # 未チェック（初期状態）
+    CHECKED = 'checked'            # チェック済み（承認待ち）
+    COMPLETED = 'completed'        # 完了（承認済み）
+    
+    # 後方互換性のための別名定義
+    NOT_STARTED = 'not_checked'    # NOT_CHECKEDの別名
+    IN_PROGRESS = 'checked'        # CHECKEDの別名（作業中→承認待ち状態）
 
 
 class CurriculumLesson(db.Model):
@@ -163,12 +167,22 @@ class StudentLessonProgress(db.Model):
     is_completed = db.Column(db.Boolean, default=False)   # 完了フラグ
     completion_percentage = db.Column(db.Integer, default=0) # 完了率
     
+    # 承認ワークフロー機能
+    approval_status = db.Column(
+        db.Enum('none', 'pending', 'approved', 'rejected'),
+        default='none',
+        comment='承認状況'
+    )
+    completion_request_date = db.Column(db.DateTime, comment='完了申請日時')
+    teacher_comments = db.Column(db.Text, comment='教師コメント')
+    approved_by = db.Column(db.Integer, db.ForeignKey('users.id'), comment='承認者ID')
+    
     # タイムスタンプ
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     # リレーション
-    student = db.relationship('User', backref='lesson_progress')
+    student = db.relationship('User', foreign_keys=[student_id], backref='lesson_progress')
     task_checks = db.relationship('StudentTaskCheck', backref='lesson_progress', lazy='dynamic', cascade='all, delete-orphan')
     
     # ユニーク制約
@@ -176,6 +190,46 @@ class StudentLessonProgress(db.Model):
     
     def __repr__(self):
         return f'<StudentLessonProgress {self.student_id}-{self.lesson_id}: {self.completion_percentage}%>'
+    
+    def request_completion(self, notes=None):
+        """完了申請を送信"""
+        self.approval_status = 'pending'
+        self.completion_request_date = datetime.utcnow()
+        if notes:
+            self.reflection = notes
+        db.session.commit()
+    
+    def approve_completion(self, teacher_id, comments=None):
+        """完了を承認"""
+        self.approval_status = 'approved'
+        self.approved_by = teacher_id
+        self.teacher_comments = comments
+        self.is_completed = True
+        db.session.commit()
+    
+    def reject_completion(self, teacher_id, reason):
+        """完了申請を却下"""
+        self.approval_status = 'rejected'
+        self.approved_by = teacher_id
+        self.teacher_comments = reason
+        db.session.commit()
+    
+    def can_request_completion(self):
+        """完了申請が可能かチェック"""
+        return (
+            self.completion_percentage >= 80
+            and self.approval_status in ['none', 'rejected']
+        )
+    
+    def get_approval_status_label(self):
+        """承認状況のラベルを取得"""
+        status_labels = {
+            'none': '未申請',
+            'pending': '承認待ち',
+            'approved': '承認済み',
+            'rejected': '却下',
+        }
+        return status_labels.get(self.approval_status, '不明')
     
     def to_dict(self):
         """辞書形式で返す"""
@@ -191,6 +245,11 @@ class StudentLessonProgress(db.Model):
             'reflection': self.reflection,
             'is_completed': self.is_completed,
             'completion_percentage': self.completion_percentage,
+            'approval_status': self.approval_status,
+            'approval_status_label': self.get_approval_status_label(),
+            'completion_request_date': self.completion_request_date.isoformat() if self.completion_request_date else None,
+            'teacher_comments': self.teacher_comments,
+            'approved_by': self.approved_by,
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'updated_at': self.updated_at.isoformat() if self.updated_at else None
         }

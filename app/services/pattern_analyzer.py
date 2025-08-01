@@ -23,7 +23,7 @@ from app.models import (
 )
 
 # LearningPattern は RDSに存在しないためコメントアウト
-from app.services.base_service import BaseService
+from app.core.base_service import BaseService
 
 
 class PatternAnalyzerService(BaseService):

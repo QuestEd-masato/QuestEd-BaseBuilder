@@ -1,0 +1,539 @@
+{% extends 'base.html' %}
+
+{% block title %}レッスン承認管理 | QuestEd{% endblock %}
+
+{% block extra_css %}
+<style>
+/* レッスン承認管理専用スタイル */
+.approval-management-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 1rem;
+}
+
+.approval-card {
+    border: 1px solid #dee2e6;
+    border-radius: 12px;
+    margin-bottom: 1rem;
+    transition: all 0.3s ease;
+}
+
+.approval-card:hover {
+    border-color: #007bff;
+    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.15);
+}
+
+.approval-header {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+    color: white;
+    padding: 1rem 1.5rem;
+    border-radius: 12px 12px 0 0;
+    position: relative;
+}
+
+.approval-header::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #28a745, #20c997, #17a2b8);
+}
+
+.student-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.student-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+}
+
+.lesson-info {
+    background: #f8f9fa;
+    padding: 1.5rem;
+    border-radius: 0 0 12px 12px;
+}
+
+.progress-bar-custom {
+    height: 8px;
+    border-radius: 4px;
+    background: #e9ecef;
+    overflow: hidden;
+    margin: 0.5rem 0;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #28a745, #20c997);
+    border-radius: 4px;
+    transition: width 0.3s ease;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+.btn-approve {
+    background: linear-gradient(135deg, #28a745, #20c997);
+    border: none;
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn-approve:hover {
+    background: linear-gradient(135deg, #218838, #1e7e34);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+}
+
+.btn-reject {
+    background: linear-gradient(135deg, #dc3545, #c82333);
+    border: none;
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn-reject:hover {
+    background: linear-gradient(135deg, #c82333, #bd2130);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+}
+
+.stats-section {
+    background: linear-gradient(135deg, #6f42c1 0%, #563d7c 100%);
+    color: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.stat-item {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 1rem;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.stat-number {
+    font-size: 2rem;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 3rem;
+    color: #6c757d;
+}
+
+.empty-state i {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+.modal-header {
+    background: linear-gradient(135deg, #007bff, #0056b3);
+    color: white;
+    border-radius: 12px 12px 0 0;
+}
+
+.modal-content {
+    border-radius: 12px;
+    border: none;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="approval-management-container">
+    <!-- ページヘッダー -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2><i class="fas fa-clipboard-check"></i> レッスン承認管理</h2>
+            <p class="text-muted mb-0">学生からのレッスン完了申請を承認・却下します</p>
+        </div>
+        <button class="btn btn-outline-primary" onclick="refreshApprovals()">
+            <i class="fas fa-sync-alt"></i> 更新
+        </button>
+    </div>
+
+    <!-- 統計セクション -->
+    <div class="stats-section">
+        <h4><i class="fas fa-chart-bar"></i> 承認状況</h4>
+        <div class="stats-grid">
+            <div class="stat-item">
+                <div class="stat-number" id="pending-count">-</div>
+                <div>承認待ち</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" id="approved-today">-</div>
+                <div>今日承認済み</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" id="total-students">-</div>
+                <div>対象学生数</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- フィルター -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row align-items-end">
+                <div class="col-md-4">
+                    <label for="class-filter" class="form-label">クラス選択</label>
+                    <select class="form-select" id="class-filter" onchange="loadPendingApprovals()">
+                        <option value="">クラスを選択してください</option>
+                        <!-- JavaScriptで動的に追加 -->
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label for="sort-order" class="form-label">並び順</label>
+                    <select class="form-select" id="sort-order" onchange="loadPendingApprovals()">
+                        <option value="newest">申請日時（新しい順）</option>
+                        <option value="oldest">申請日時（古い順）</option>
+                        <option value="student">学生名順</option>
+                        <option value="lesson">レッスン名順</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <button class="btn btn-primary w-100" onclick="loadPendingApprovals()">
+                        <i class="fas fa-search"></i> 検索
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 承認待ち一覧 -->
+    <div id="pending-approvals-container">
+        <div class="empty-state">
+            <i class="fas fa-clipboard-list"></i>
+            <h4>クラスを選択してください</h4>
+            <p>承認待ちのレッスンを確認するために、上記からクラスを選択してください。</p>
+        </div>
+    </div>
+</div>
+
+<!-- 承認モーダル -->
+<div class="modal fade" id="approveModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-check-circle"></i> レッスン承認
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p id="approve-lesson-info"></p>
+                <div class="mb-3">
+                    <label for="approve-comments" class="form-label">承認コメント（任意）</label>
+                    <textarea class="form-control" id="approve-comments" rows="3" 
+                             placeholder="学生への励ましのメッセージをご記入ください"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">キャンセル</button>
+                <button type="button" class="btn btn-success" onclick="confirmApproval()">承認する</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 却下モーダル -->
+<div class="modal fade" id="rejectModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger">
+                <h5 class="modal-title">
+                    <i class="fas fa-times-circle"></i> レッスン却下
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p id="reject-lesson-info"></p>
+                <div class="mb-3">
+                    <label for="reject-reason" class="form-label">却下理由（必須）</label>
+                    <textarea class="form-control" id="reject-reason" rows="4" 
+                             placeholder="却下する理由を具体的にご記入ください" required></textarea>
+                    <div class="form-text">学生が改善点を理解できるよう、具体的な理由をご記入ください。</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">キャンセル</button>
+                <button type="button" class="btn btn-danger" onclick="confirmRejection()">却下する</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// レッスン承認管理 JavaScript
+let currentProgressId = null;
+
+// ページ読み込み時の初期化
+document.addEventListener('DOMContentLoaded', function() {
+    loadTeacherClasses();
+});
+
+// 教師の担当クラス一覧を読み込み
+function loadTeacherClasses() {
+    // TODO: 教師の担当クラス一覧API実装後に実装
+    // 現在は仮データで表示
+    const classFilter = document.getElementById('class-filter');
+    classFilter.innerHTML = `
+        <option value="">クラスを選択してください</option>
+        <option value="1">3年A組</option>
+        <option value="2">3年B組</option>
+    `;
+}
+
+// 承認待ち一覧を読み込み
+function loadPendingApprovals() {
+    const classId = document.getElementById('class-filter').value;
+    
+    if (!classId) {
+        showEmptyState('クラスを選択してください');
+        return;
+    }
+    
+    showLoading();
+    
+    fetch(`/lesson-approval/class/${classId}/pending-approvals`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                displayPendingApprovals(data.data);
+                updateStats(data.data);
+            } else {
+                showError('承認待ち一覧の取得に失敗しました: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showError('サーバーエラーが発生しました');
+        });
+}
+
+// 承認待ち一覧を表示
+function displayPendingApprovals(approvals) {
+    const container = document.getElementById('pending-approvals-container');
+    
+    if (approvals.length === 0) {
+        showEmptyState('承認待ちのレッスンはありません');
+        return;
+    }
+    
+    const html = approvals.map(approval => `
+        <div class="approval-card" data-progress-id="${approval.progress_id}">
+            <div class="approval-header">
+                <div class="student-info">
+                    <div class="student-avatar">
+                        ${approval.student_name.charAt(0)}
+                    </div>
+                    <div>
+                        <h5 class="mb-1">${approval.student_name}</h5>
+                        <small>申請日時: ${formatDate(approval.completion_request_date)}</small>
+                    </div>
+                </div>
+            </div>
+            <div class="lesson-info">
+                <h6 class="text-primary mb-2">
+                    <i class="fas fa-book"></i> ${approval.lesson_title}
+                </h6>
+                <div class="row">
+                    <div class="col-md-6">
+                        <small class="text-muted">進捗率</small>
+                        <div class="progress-bar-custom">
+                            <div class="progress-fill" style="width: ${approval.completion_percentage}%"></div>
+                        </div>
+                        <small>${approval.completion_percentage}% 完了</small>
+                    </div>
+                    <div class="col-md-6">
+                        <small class="text-muted">学習時間</small>
+                        <div><strong>${approval.time_spent_minutes || 0}分</strong></div>
+                    </div>
+                </div>
+                ${approval.reflection ? `
+                    <div class="mt-3">
+                        <small class="text-muted">学生からのメモ:</small>
+                        <p class="mb-2">${approval.reflection}</p>
+                    </div>
+                ` : ''}
+                <div class="action-buttons">
+                    <button class="btn btn-approve" onclick="showApproveModal(${approval.progress_id}, '${approval.student_name}', '${approval.lesson_title}')">
+                        <i class="fas fa-check"></i> 承認
+                    </button>
+                    <button class="btn btn-reject" onclick="showRejectModal(${approval.progress_id}, '${approval.student_name}', '${approval.lesson_title}')">
+                        <i class="fas fa-times"></i> 却下
+                    </button>
+                </div>
+            </div>
+        </div>
+    `).join('');
+    
+    container.innerHTML = html;
+}
+
+// 承認モーダルを表示
+function showApproveModal(progressId, studentName, lessonTitle) {
+    currentProgressId = progressId;
+    document.getElementById('approve-lesson-info').textContent = 
+        `${studentName}さんの「${lessonTitle}」を承認します。`;
+    document.getElementById('approve-comments').value = '';
+    
+    new bootstrap.Modal(document.getElementById('approveModal')).show();
+}
+
+// 却下モーダルを表示
+function showRejectModal(progressId, studentName, lessonTitle) {
+    currentProgressId = progressId;
+    document.getElementById('reject-lesson-info').textContent = 
+        `${studentName}さんの「${lessonTitle}」を却下します。`;
+    document.getElementById('reject-reason').value = '';
+    
+    new bootstrap.Modal(document.getElementById('rejectModal')).show();
+}
+
+// 承認実行
+function confirmApproval() {
+    const comments = document.getElementById('approve-comments').value;
+    
+    fetch(`/lesson-approval/progress/${currentProgressId}/approve`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCsrfToken()
+        },
+        body: JSON.stringify({ comments: comments })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('レッスンを承認しました。');
+            bootstrap.Modal.getInstance(document.getElementById('approveModal')).hide();
+            loadPendingApprovals();
+        } else {
+            alert('承認に失敗しました: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('承認中にエラーが発生しました。');
+    });
+}
+
+// 却下実行
+function confirmRejection() {
+    const reason = document.getElementById('reject-reason').value.trim();
+    
+    if (!reason) {
+        alert('却下理由を入力してください。');
+        return;
+    }
+    
+    fetch(`/lesson-approval/progress/${currentProgressId}/reject`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCsrfToken()
+        },
+        body: JSON.stringify({ reason: reason })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('レッスンを却下しました。');
+            bootstrap.Modal.getInstance(document.getElementById('rejectModal')).hide();
+            loadPendingApprovals();
+        } else {
+            alert('却下に失敗しました: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('却下中にエラーが発生しました。');
+    });
+}
+
+// ユーティリティ関数
+function formatDate(dateString) {
+    if (!dateString) return '-';
+    const date = new Date(dateString);
+    return date.toLocaleString('ja-JP');
+}
+
+function showLoading() {
+    document.getElementById('pending-approvals-container').innerHTML = `
+        <div class="text-center py-5">
+            <i class="fas fa-spinner fa-spin fa-2x text-muted"></i>
+            <p class="mt-2 text-muted">読み込み中...</p>
+        </div>
+    `;
+}
+
+function showEmptyState(message) {
+    document.getElementById('pending-approvals-container').innerHTML = `
+        <div class="empty-state">
+            <i class="fas fa-clipboard-list"></i>
+            <h4>${message}</h4>
+        </div>
+    `;
+}
+
+function showError(message) {
+    document.getElementById('pending-approvals-container').innerHTML = `
+        <div class="text-center py-5">
+            <i class="fas fa-exclamation-triangle fa-2x text-danger"></i>
+            <p class="mt-2 text-danger">${message}</p>
+            <button class="btn btn-outline-primary" onclick="loadPendingApprovals()">再試行</button>
+        </div>
+    `;
+}
+
+function updateStats(approvals) {
+    document.getElementById('pending-count').textContent = approvals.length;
+    // TODO: 今日承認済み数と対象学生数のAPI実装
+    document.getElementById('approved-today').textContent = '-';
+    document.getElementById('total-students').textContent = '-';
+}
+
+function refreshApprovals() {
+    loadPendingApprovals();
+}
+
+function getCsrfToken() {
+    const csrfToken = document.querySelector('meta[name=csrf-token]');
+    return csrfToken ? csrfToken.getAttribute('content') : '';
+}
+</script>
+{% endblock %}

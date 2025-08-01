@@ -92,3 +92,9 @@ dmypy.json
 ACCESS_CONTROL_VULNERABILITIES.md
 backup_endpoint_fix_*/
 .env.dev
+
+# Environment files - keep only templates in git
+.env
+.env.local
+.env.*.local
+.env.backup_*

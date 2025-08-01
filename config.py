@@ -47,6 +47,9 @@ class Config:
     SESSION_COOKIE_HTTPONLY = True  # JavaScript経由でのCookieアクセス無効
     SESSION_COOKIE_SAMESITE = 'Lax'  # CSRF攻撃対策
     
+    # データ暗号化設定
+    ENCRYPTION_KEY = os.getenv('ENCRYPTION_KEY')
+    
     # Curriculum Task System Configuration
     CONVERSION_DISABLED = True  # 変換機能無効化
     TASK_SYSTEM_ENABLED = True  # 新タスクシステム有効化

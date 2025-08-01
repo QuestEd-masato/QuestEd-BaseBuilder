@@ -184,28 +184,10 @@ class RankingService:
             # 段階的計算：各テーブルを個別に集計してからPythonで統合
             from app.models import ActivityLog, ChatHistory
 
-            # 1. 基本ユーザーリストを取得（スコープフィルタリング適用）
-            user_query = db.session.query(
-                User.id, func.coalesce(User.full_name, User.username).label("name")
-            ).filter(User.role == "student", User.is_active == True)
+            # 1. フィルタリングされたユーザーリストを取得（共通メソッド使用）
+            user_ids, user_names = cls._get_filtered_users(scope, scope_id)
 
-            # スコープフィルタリング
-            if scope == "school" and scope_id:
-                user_query = user_query.filter(User.school_id == scope_id)
-            elif scope == "class" and scope_id:
-                from app.models import ClassEnrollment
-
-                user_query = user_query.join(
-                    ClassEnrollment, User.id == ClassEnrollment.student_id
-                ).filter(
-                    ClassEnrollment.class_id == scope_id,
-                    ClassEnrollment.is_active == True,
-                )
-
-            users = user_query.all()
-            logger.info(f"Found {len(users)} eligible students for ranking")
-
-            if not users:
+            if not user_ids:
                 return {
                     "rankings": [],
                     "total_participants": 0,
@@ -213,79 +195,24 @@ class RankingService:
                     "ranking_type": "total_points",
                 }
 
-            user_ids = [user.id for user in users]
+            # 2. BaseBuilder統計を取得（共通メソッド使用）
+            basebuilder_stats = cls._collect_basebuilder_stats(user_ids)
 
-            # 2. BaseBuilder統計を個別に取得（型変換を修正）
-            basebuilder_stats = {}
-            bb_results = (
-                db.session.query(
-                    AnswerRecord.student_id,
-                    func.count(AnswerRecord.id).label("total_answers"),
-                    func.sum(func.cast(AnswerRecord.is_correct, db.Integer)).label(
-                        "correct_answers"
-                    ),  # 明示的な型変換
-                )
-                .filter(AnswerRecord.student_id.in_(user_ids))
-                .group_by(AnswerRecord.student_id)
-                .all()
-            )
+            # 3. チャット統計を取得（共通メソッド使用）
+            chat_stats = cls._collect_chat_stats(user_ids)
 
-            for result in bb_results:
-                # Noneチェックと型変換を強化
-                total_answers = (
-                    result.total_answers if result.total_answers is not None else 0
-                )
-                correct_answers = (
-                    result.correct_answers if result.correct_answers is not None else 0
-                )
-
-                basebuilder_stats[result.student_id] = {
-                    "total_answers": int(total_answers),
-                    "correct_answers": int(correct_answers),
-                }
-
-                logger.debug(
-                    f"BaseBuilder stats for student {result.student_id}: total={total_answers}, correct={correct_answers}"
-                )
-
-            # 3. チャット統計を個別に取得
-            chat_stats = {}
-            chat_results = (
-                db.session.query(
-                    ChatHistory.user_id, func.count(ChatHistory.id).label("chat_count")
-                )
-                .filter(ChatHistory.user_id.in_(user_ids))
-                .group_by(ChatHistory.user_id)
-                .all()
-            )
-
-            for result in chat_results:
-                chat_stats[result.user_id] = int(result.chat_count or 0)
-
-            # 4. 学習記録統計を個別に取得
-            activity_stats = {}
-            activity_results = (
-                db.session.query(
-                    ActivityLog.student_id,
-                    func.count(ActivityLog.id).label("activity_count"),
-                )
-                .filter(ActivityLog.student_id.in_(user_ids))
-                .group_by(ActivityLog.student_id)
-                .all()
-            )
-
-            for result in activity_results:
-                activity_stats[result.student_id] = int(result.activity_count or 0)
+            # 4. アクティビティ統計を取得（共通メソッド使用）
+            activity_stats = cls._collect_activity_stats(user_ids)
 
             # 5. Pythonでポイント計算と統合
             ranking_data = []
-            for user in users:
+            for user_id in user_ids:
                 # 各統計を取得（デフォルト値付き）
                 bb_data = basebuilder_stats.get(
-                    user.id, {"total_answers": 0, "correct_answers": 0}
+                    user_id, {"total_answers": 0, "correct_answers": 0}
                 )
-                chat_count = chat_stats.get(user.id, 0)
-                activity_count = activity_stats.get(user.id, 0)
+                chat_count = chat_stats.get(user_id, 0)
+                activity_count = activity_stats.get(user_id, 0)
 
                 # ポイント計算
                 total_points = (
@@ -296,8 +223,8 @@ class RankingService:
 
                 ranking_data.append(
                     {
-                        "student_id": user.id,
-                        "student_name": user.name,
+                        "student_id": user_id,
+                        "student_name": user_names.get(user_id, f"User {user_id}"),
                         "total_points": total_points,
                         "total_answers": bb_data["total_answers"],
                         "correct_answers": bb_data["correct_answers"],
@@ -306,61 +233,12 @@ class RankingService:
                     }
                 )
 
-            # 6. ポイント順でソート
-            ranking_data.sort(key=lambda x: x["total_points"], reverse=True)
-
-            # 7. 制限適用
-            if limit:
-                ranking_data = ranking_data[:limit]
-
-            logger.info(
-                f"Found {len(ranking_data)} ranking entries with corrected point system"
-            )
-
-            # デバッグ：最初の3件の詳細をログ出力
-            for i, result in enumerate(ranking_data[:3]):
-                logger.info(
-                    f"Rank {i+1}: ID={result['student_id']}, Name={result['student_name']}, Points={result['total_points']}, Correct={result['correct_answers']}"
-                )
-
-            return {
-                "rankings": [
-                    {
-                        "rank": idx + 1,
-                        "student_id": result["student_id"],
-                        "student_name": result["student_name"],
-                        "full_name": result["student_name"],  # テンプレート互換性のため
-                        "username": result["student_name"],  # フォールバック用
-                        "score": float(result["total_points"]),
-                        "total_answers": result["total_answers"],
-                        "correct_answers": result["correct_answers"],
-                        "chat_count": result["chat_count"],
-                        "activity_count": result["activity_count"],
-                        "accuracy_rate": round(
-                            (result["correct_answers"] / result["total_answers"]) * 100,
-                            1,
-                        )
-                        if result["total_answers"] > 0
-                        else 0,
-                        "school_name": None,  # 簡素化のため一時的にNone
-                        "class_name": None,
-                    }
-                    for idx, result in enumerate(ranking_data)
-                ],
-                "total_participants": len(ranking_data),
-                "last_updated": datetime.utcnow().isoformat(),
-                "ranking_type": "total_points",
-            }
+            # 6. 結果フォーマット（共通メソッド使用）
+            return cls._format_ranking_response(ranking_data, "total_points", limit)
 
         except Exception as e:
             logger.error(f"Total points ranking calculation error: {str(e)}")
-            return {
-                "rankings": [],
-                "total_participants": 0,
-                "last_updated": datetime.utcnow().isoformat(),
-                "ranking_type": "total_points",
-                "error": str(e),
-            }
+            return cls._format_ranking_response([], "total_points")
 
     @classmethod
     def _calculate_weekly_points_ranking(
@@ -375,111 +253,29 @@ class RankingService:
         try:
             from app.models import ActivityLog, ChatHistory
 
-            # 1. 基本ユーザーリストを取得（総合ポイントと同じロジック）
-            user_query = db.session.query(
-                User.id, func.coalesce(User.full_name, User.username).label("name")
-            ).filter(User.role == "student", User.is_active == True)
+            # 1. フィルタリングされたユーザーリストを取得（共通メソッド使用）
+            user_ids, user_names = cls._get_filtered_users(scope, scope_id)
 
-            # スコープフィルタリング（修正：school の場合 scope_id がなくても処理続行）
-            if scope == "school" and scope_id:
-                user_query = user_query.filter(User.school_id == scope_id)
-            elif scope == "class" and scope_id:
-                from app.models import ClassEnrollment
+            if not user_ids:
+                return cls._format_ranking_response([], "weekly_points")
 
-                user_query = user_query.join(
-                    ClassEnrollment, User.id == ClassEnrollment.student_id
-                ).filter(
-                    ClassEnrollment.class_id == scope_id,
-                    ClassEnrollment.is_active == True,
-                )
+            # 2. 週間BaseBuilder統計を取得（共通メソッド使用）
+            basebuilder_stats = cls._collect_basebuilder_stats(user_ids, week_start)
 
-            users = user_query.all()
-            logger.info(f"Found {len(users)} eligible students for weekly ranking")
+            # 3. 週間チャット統計を取得（共通メソッド使用）
+            chat_stats = cls._collect_chat_stats(user_ids, week_start)
 
-            if not users:
-                return {
-                    "rankings": [],
-                    "total_participants": 0,
-                    "last_updated": datetime.utcnow().isoformat(),
-                    "ranking_type": "weekly_points",
-                }
-
-            user_ids = [user.id for user in users]
-
-            # 2. 週間BaseBuilder統計を個別に取得
-            basebuilder_stats = {}
-            bb_results = (
-                db.session.query(
-                    AnswerRecord.student_id,
-                    func.count(AnswerRecord.id).label("total_answers"),
-                    func.sum(func.cast(AnswerRecord.is_correct, db.Integer)).label(
-                        "correct_answers"
-                    ),
-                )
-                .filter(
-                    AnswerRecord.student_id.in_(user_ids),
-                    AnswerRecord.created_at >= week_start,
-                )
-                .group_by(AnswerRecord.student_id)
-                .all()
-            )
-
-            for result in bb_results:
-                total_answers = (
-                    result.total_answers if result.total_answers is not None else 0
-                )
-                correct_answers = (
-                    result.correct_answers if result.correct_answers is not None else 0
-                )
-
-                basebuilder_stats[result.student_id] = {
-                    "total_answers": int(total_answers),
-                    "correct_answers": int(correct_answers),
-                }
-
-            # 3. 週間チャット統計を個別に取得
-            chat_stats = {}
-            chat_results = (
-                db.session.query(
-                    ChatHistory.user_id, func.count(ChatHistory.id).label("chat_count")
-                )
-                .filter(
-                    ChatHistory.user_id.in_(user_ids),
-                    ChatHistory.created_at >= week_start,
-                )
-                .group_by(ChatHistory.user_id)
-                .all()
-            )
-
-            for result in chat_results:
-                chat_stats[result.user_id] = int(result.chat_count or 0)
-
-            # 4. 週間学習記録統計を個別に取得
-            activity_stats = {}
-            activity_results = (
-                db.session.query(
-                    ActivityLog.student_id,
-                    func.count(ActivityLog.id).label("activity_count"),
-                )
-                .filter(
-                    ActivityLog.student_id.in_(user_ids),
-                    ActivityLog.created_at >= week_start,
-                )
-                .group_by(ActivityLog.student_id)
-                .all()
-            )
-
-            for result in activity_results:
-                activity_stats[result.student_id] = int(result.activity_count or 0)
+            # 4. 週間アクティビティ統計を取得（共通メソッド使用）
+            activity_stats = cls._collect_activity_stats(user_ids, week_start)
 
             # 5. 週間ポイント計算と統合
             ranking_data = []
-            for user in users:
+            for user_id in user_ids:
                 bb_data = basebuilder_stats.get(
-                    user.id, {"total_answers": 0, "correct_answers": 0}
+                    user_id, {"total_answers": 0, "correct_answers": 0}
                 )
-                chat_count = chat_stats.get(user.id, 0)
-                activity_count = activity_stats.get(user.id, 0)
+                chat_count = chat_stats.get(user_id, 0)
+                activity_count = activity_stats.get(user_id, 0)
 
                 weekly_points = (
                     bb_data["correct_answers"] * cls.POINTS_CONFIG["correct_answer"]
@@ -489,8 +285,9 @@ class RankingService:
 
                 ranking_data.append(
                     {
-                        "student_id": user.id,
-                        "student_name": user.name,
+                        "student_id": user_id,
+                        "student_name": user_names.get(user_id, f"User {user_id}"),
+                        "total_points": weekly_points,  # 共通フォーマット用
                         "weekly_points": weekly_points,
                         "total_answers": bb_data["total_answers"],
                         "correct_answers": bb_data["correct_answers"],
@@ -499,47 +296,12 @@ class RankingService:
                     }
                 )
 
-            # 6. ポイント順でソート
-            ranking_data.sort(key=lambda x: x["weekly_points"], reverse=True)
-
-            # 7. 制限適用
-            if limit:
-                ranking_data = ranking_data[:limit]
-
-            logger.info(f"Found {len(ranking_data)} weekly ranking entries")
-
-            return {
-                "rankings": [
-                    {
-                        "rank": idx + 1,
-                        "student_id": result["student_id"],
-                        "student_name": result["student_name"],
-                        "full_name": result["student_name"],
-                        "username": result["student_name"],
-                        "score": float(result["weekly_points"]),
-                        "total_answers": result["total_answers"],
-                        "correct_answers": result["correct_answers"],
-                        "chat_count": result["chat_count"],
-                        "activity_count": result["activity_count"],
-                        "school_name": None,
-                        "class_name": None,
-                    }
-                    for idx, result in enumerate(ranking_data)
-                ],
-                "total_participants": len(ranking_data),
-                "last_updated": datetime.utcnow().isoformat(),
-                "ranking_type": "weekly_points",
-            }
+            # 6. 結果フォーマット（共通メソッド使用）
+            return cls._format_ranking_response(ranking_data, "weekly_points", limit)
 
         except Exception as e:
             logger.error(f"Weekly points ranking calculation error: {str(e)}")
-            return {
-                "rankings": [],
-                "total_participants": 0,
-                "last_updated": datetime.utcnow().isoformat(),
-                "ranking_type": "weekly_points",
-                "error": str(e),
-            }
+            return cls._format_ranking_response([], "weekly_points")
 
     @classmethod
     def _calculate_monthly_points_ranking(
@@ -554,111 +316,29 @@ class RankingService:
         try:
             from app.models import ActivityLog, ChatHistory
 
-            # 1. 基本ユーザーリストを取得（総合ポイントと同じロジック）
-            user_query = db.session.query(
-                User.id, func.coalesce(User.full_name, User.username).label("name")
-            ).filter(User.role == "student", User.is_active == True)
+            # 1. フィルタリングされたユーザーリストを取得（共通メソッド使用）
+            user_ids, user_names = cls._get_filtered_users(scope, scope_id)
 
-            # スコープフィルタリング（修正：school の場合 scope_id がなくても処理続行）
-            if scope == "school" and scope_id:
-                user_query = user_query.filter(User.school_id == scope_id)
-            elif scope == "class" and scope_id:
-                from app.models import ClassEnrollment
+            if not user_ids:
+                return cls._format_ranking_response([], "monthly_points")
 
-                user_query = user_query.join(
-                    ClassEnrollment, User.id == ClassEnrollment.student_id
-                ).filter(
-                    ClassEnrollment.class_id == scope_id,
-                    ClassEnrollment.is_active == True,
-                )
+            # 2. 月間BaseBuilder統計を取得（共通メソッド使用）
+            basebuilder_stats = cls._collect_basebuilder_stats(user_ids, month_start)
 
-            users = user_query.all()
-            logger.info(f"Found {len(users)} eligible students for monthly ranking")
+            # 3. 月間チャット統計を取得（共通メソッド使用）
+            chat_stats = cls._collect_chat_stats(user_ids, month_start)
 
-            if not users:
-                return {
-                    "rankings": [],
-                    "total_participants": 0,
-                    "last_updated": datetime.utcnow().isoformat(),
-                    "ranking_type": "monthly_points",
-                }
-
-            user_ids = [user.id for user in users]
-
-            # 2. 月間BaseBuilder統計を個別に取得
-            basebuilder_stats = {}
-            bb_results = (
-                db.session.query(
-                    AnswerRecord.student_id,
-                    func.count(AnswerRecord.id).label("total_answers"),
-                    func.sum(func.cast(AnswerRecord.is_correct, db.Integer)).label(
-                        "correct_answers"
-                    ),
-                )
-                .filter(
-                    AnswerRecord.student_id.in_(user_ids),
-                    AnswerRecord.created_at >= month_start,
-                )
-                .group_by(AnswerRecord.student_id)
-                .all()
-            )
-
-            for result in bb_results:
-                total_answers = (
-                    result.total_answers if result.total_answers is not None else 0
-                )
-                correct_answers = (
-                    result.correct_answers if result.correct_answers is not None else 0
-                )
-
-                basebuilder_stats[result.student_id] = {
-                    "total_answers": int(total_answers),
-                    "correct_answers": int(correct_answers),
-                }
-
-            # 3. 月間チャット統計を個別に取得
-            chat_stats = {}
-            chat_results = (
-                db.session.query(
-                    ChatHistory.user_id, func.count(ChatHistory.id).label("chat_count")
-                )
-                .filter(
-                    ChatHistory.user_id.in_(user_ids),
-                    ChatHistory.created_at >= month_start,
-                )
-                .group_by(ChatHistory.user_id)
-                .all()
-            )
-
-            for result in chat_results:
-                chat_stats[result.user_id] = int(result.chat_count or 0)
-
-            # 4. 月間学習記録統計を個別に取得
-            activity_stats = {}
-            activity_results = (
-                db.session.query(
-                    ActivityLog.student_id,
-                    func.count(ActivityLog.id).label("activity_count"),
-                )
-                .filter(
-                    ActivityLog.student_id.in_(user_ids),
-                    ActivityLog.created_at >= month_start,
-                )
-                .group_by(ActivityLog.student_id)
-                .all()
-            )
-
-            for result in activity_results:
-                activity_stats[result.student_id] = int(result.activity_count or 0)
+            # 4. 月間アクティビティ統計を取得（共通メソッド使用）
+            activity_stats = cls._collect_activity_stats(user_ids, month_start)
 
             # 5. 月間ポイント計算と統合
             ranking_data = []
-            for user in users:
+            for user_id in user_ids:
                 bb_data = basebuilder_stats.get(
-                    user.id, {"total_answers": 0, "correct_answers": 0}
+                    user_id, {"total_answers": 0, "correct_answers": 0}
                 )
-                chat_count = chat_stats.get(user.id, 0)
-                activity_count = activity_stats.get(user.id, 0)
+                chat_count = chat_stats.get(user_id, 0)
+                activity_count = activity_stats.get(user_id, 0)
 
                 monthly_points = (
                     bb_data["correct_answers"] * cls.POINTS_CONFIG["correct_answer"]
@@ -668,8 +348,9 @@ class RankingService:
 
                 ranking_data.append(
                     {
-                        "student_id": user.id,
-                        "student_name": user.name,
+                        "student_id": user_id,
+                        "student_name": user_names.get(user_id, f"User {user_id}"),
+                        "total_points": monthly_points,  # 共通フォーマット用
                         "monthly_points": monthly_points,
                         "total_answers": bb_data["total_answers"],
                         "correct_answers": bb_data["correct_answers"],
@@ -678,47 +359,12 @@ class RankingService:
                     }
                 )
 
-            # 6. ポイント順でソート
-            ranking_data.sort(key=lambda x: x["monthly_points"], reverse=True)
-
-            # 7. 制限適用
-            if limit:
-                ranking_data = ranking_data[:limit]
-
-            logger.info(f"Found {len(ranking_data)} monthly ranking entries")
-
-            return {
-                "rankings": [
-                    {
-                        "rank": idx + 1,
-                        "student_id": result["student_id"],
-                        "student_name": result["student_name"],
-                        "full_name": result["student_name"],
-                        "username": result["student_name"],
-                        "score": float(result["monthly_points"]),
-                        "total_answers": result["total_answers"],
-                        "correct_answers": result["correct_answers"],
-                        "chat_count": result["chat_count"],
-                        "activity_count": result["activity_count"],
-                        "school_name": None,
-                        "class_name": None,
-                    }
-                    for idx, result in enumerate(ranking_data)
-                ],
-                "total_participants": len(ranking_data),
-                "last_updated": datetime.utcnow().isoformat(),
-                "ranking_type": "monthly_points",
-            }
+            # 6. 結果フォーマット（共通メソッド使用）
+            return cls._format_ranking_response(ranking_data, "monthly_points", limit)
 
         except Exception as e:
             logger.error(f"Monthly points ranking calculation error: {str(e)}")
-            return {
-                "rankings": [],
-                "total_participants": 0,
-                "last_updated": datetime.utcnow().isoformat(),
-                "ranking_type": "monthly_points",
-                "error": str(e),
-            }
+            return cls._format_ranking_response([], "monthly_points")
 
     @classmethod
     def _calculate_accuracy_ranking(
@@ -990,6 +636,258 @@ class RankingService:
                 "error": str(e),
             }
 
+    @classmethod
+    def _get_filtered_users(cls, scope: str, scope_id: int):
+        """
+        スコープに基づいてフィルタリングされたユーザーリストを取得
+        
+        Args:
+            scope: 'school' または 'class'
+            scope_id: 学校IDまたはクラスID
+            
+        Returns:
+            tuple: (user_ids: List[int], user_names: Dict[int, str])
+        """
+        try:
+            # 基本ユーザーリストを取得（統一されたパターン）
+            user_query = db.session.query(
+                User.id, func.coalesce(User.full_name, User.username).label("name")
+            ).filter(User.role == "student", User.is_active == True)
+
+            # スコープフィルタリング（全ての大きな関数で使用されているパターン）
+            if scope == "school" and scope_id:
+                user_query = user_query.filter(User.school_id == scope_id)
+            elif scope == "class" and scope_id:
+                from app.models import ClassEnrollment
+                user_query = user_query.join(
+                    ClassEnrollment, User.id == ClassEnrollment.student_id
+                ).filter(
+                    ClassEnrollment.class_id == scope_id,
+                    ClassEnrollment.is_active == True,
+                )
+
+            users = user_query.all()
+            user_ids = [user.id for user in users]
+            user_names = {user.id: user.name for user in users}
+            
+            logger.info(f"Found {len(user_ids)} users for scope={scope}, scope_id={scope_id}")
+            return user_ids, user_names
+            
+        except Exception as e:
+            logger.error(f"Error getting filtered users: {str(e)}")
+            return [], {}
+    
+    @classmethod
+    def _collect_basebuilder_stats(cls, user_ids: List[int], date_filter=None):
+        """
+        BaseBuilder統計を収集（共通パターンの抽出）
+        
+        Args:
+            user_ids: ユーザーIDのリスト
+            date_filter: 日付フィルタ（週間・月間ランキング用）
+            
+        Returns:
+            Dict[int, Dict]: ユーザーIDをキーとした統計データ
+        """
+        try:
+            from app.models import AnswerRecord
+            
+            # BaseBuilder統計を個別に取得
+            query = (
+                db.session.query(
+                    AnswerRecord.student_id,
+                    func.count(AnswerRecord.id).label("total_answers"),
+                    func.sum(func.cast(AnswerRecord.is_correct, db.Integer)).label("correct_answers"),
+                )
+                .filter(AnswerRecord.student_id.in_(user_ids))
+            )
+            
+            # 日付フィルタを適用（週間・月間ランキング用）
+            if date_filter:
+                query = query.filter(AnswerRecord.created_at >= date_filter)
+                
+            bb_results = query.group_by(AnswerRecord.student_id).all()
+
+            # 辞書形式で返却
+            basebuilder_stats = {}
+            for result in bb_results:
+                basebuilder_stats[result.student_id] = {
+                    "total_answers": int(result.total_answers or 0),
+                    "correct_answers": int(result.correct_answers or 0),
+                }
+            
+            logger.info(f"Collected BaseBuilder stats for {len(basebuilder_stats)} users")
+            return basebuilder_stats
+            
+        except Exception as e:
+            logger.error(f"Error collecting BaseBuilder stats: {str(e)}")
+            return {}
+    
+    @classmethod 
+    def _collect_chat_stats(cls, user_ids: List[int], date_filter=None):
+        """
+        チャット統計を収集（共通パターンの抽出）
+        
+        Args:
+            user_ids: ユーザーIDのリスト
+            date_filter: 日付フィルタ（週間・月間ランキング用）
+            
+        Returns:
+            Dict[int, int]: ユーザーIDをキーとしたチャット数
+        """
+        try:
+            from app.models import ChatHistory
+            
+            # チャット統計を個別に取得
+            query = (
+                db.session.query(
+                    ChatHistory.user_id,
+                    func.count(ChatHistory.id).label("chat_count"),
+                )
+                .filter(ChatHistory.user_id.in_(user_ids))
+            )
+            
+            # 日付フィルタを適用（週間・月間ランキング用）
+            if date_filter:
+                query = query.filter(ChatHistory.created_at >= date_filter)
+                
+            chat_results = query.group_by(ChatHistory.user_id).all()
+
+            # 辞書形式で返却
+            chat_stats = {}
+            for result in chat_results:
+                chat_stats[result.user_id] = int(result.chat_count or 0)
+            
+            logger.info(f"Collected chat stats for {len(chat_stats)} users")
+            return chat_stats
+            
+        except Exception as e:
+            logger.error(f"Error collecting chat stats: {str(e)}")
+            return {}
+    
+    @classmethod
+    def _collect_activity_stats(cls, user_ids: List[int], date_filter=None):
+        """
+        アクティビティ統計を収集（共通パターンの抽出）
+        
+        Args:
+            user_ids: ユーザーIDのリスト
+            date_filter: 日付フィルタ（週間・月間ランキング用）
+            
+        Returns:
+            Dict[int, int]: ユーザーIDをキーとしたアクティビティ数
+        """
+        try:
+            from app.models import ActivityLog
+            
+            # アクティビティ統計を個別に取得
+            query = (
+                db.session.query(
+                    ActivityLog.student_id,
+                    func.count(ActivityLog.id).label("activity_count"),
+                )
+                .filter(ActivityLog.student_id.in_(user_ids))
+            )
+            
+            # 日付フィルタを適用（週間・月間ランキング用）
+            if date_filter:
+                query = query.filter(ActivityLog.created_at >= date_filter)
+                
+            activity_results = query.group_by(ActivityLog.student_id).all()
+
+            # 辞書形式で返却
+            activity_stats = {}
+            for result in activity_results:
+                activity_stats[result.student_id] = int(result.activity_count or 0)
+            
+            logger.info(f"Collected activity stats for {len(activity_stats)} users")
+            return activity_stats
+            
+        except Exception as e:
+            logger.error(f"Error collecting activity stats: {str(e)}")
+            return {}
+    
+    @classmethod
+    def _format_ranking_response(cls, ranking_data: List[Dict], ranking_type: str, limit: int = None):
+        """
+        ランキング結果を標準フォーマットに変換（共通パターンの抽出）
+        
+        Args:
+            ranking_data: ランキングデータのリスト
+            ranking_type: ランキングタイプ（'total_points', 'weekly_points'等）
+            limit: 結果数制限
+            
+        Returns:
+            Dict: フォーマットされたランキングレスポンス
+        """
+        try:
+            # ソート（ポイント順）
+            ranking_data.sort(key=lambda x: x.get("total_points", x.get("score", 0)), reverse=True)
+            
+            # 制限適用
+            if limit:
+                ranking_data = ranking_data[:limit]
+            
+            logger.info(f"Formatted {len(ranking_data)} ranking entries for {ranking_type}")
+            
+            # デバッグログ（最初の3件）
+            for i, result in enumerate(ranking_data[:3]):
+                score = result.get("total_points", result.get("score", 0))
+                logger.info(
+                    f"Rank {i+1}: ID={result['student_id']}, Name={result['student_name']}, Score={score}"
+                )
+            
+            # 標準フォーマットに変換
+            formatted_rankings = []
+            for idx, result in enumerate(ranking_data):
+                score = result.get("total_points", result.get("score", 0))
+                
+                formatted_entry = {
+                    "rank": idx + 1,
+                    "student_id": result["student_id"],
+                    "student_name": result["student_name"],
+                    "full_name": result["student_name"],  # テンプレート互換性
+                    "username": result["student_name"],  # フォールバック用
+                    "score": float(score),
+                }
+                
+                # ランキングタイプ別の追加フィールド
+                if ranking_type in ["total_points", "weekly_points", "monthly_points"]:
+                    formatted_entry.update({
+                        "total_answers": result.get("total_answers", 0),
+                        "correct_answers": result.get("correct_answers", 0),
+                        "chat_count": result.get("chat_count", 0),
+                        "activity_count": result.get("activity_count", 0),
+                        "accuracy_rate": round(
+                            (result.get("correct_answers", 0) / result.get("total_answers", 1)) * 100, 1
+                        ) if result.get("total_answers", 0) > 0 else 0,
+                    })
+                
+                # 学校・クラス情報（簡素化のため一時的にNone）
+                formatted_entry.update({
+                    "school_name": None,
+                    "class_name": None,
+                })
+                
+                formatted_rankings.append(formatted_entry)
+            
+            return {
+                "rankings": formatted_rankings,
+                "total_participants": len(ranking_data),
+                "last_updated": datetime.utcnow().isoformat(),
+                "ranking_type": ranking_type,
+            }
+            
+        except Exception as e:
+            logger.error(f"Error formatting ranking response: {str(e)}")
+            return {
+                "rankings": [],
+                "total_participants": 0,
+                "last_updated": datetime.utcnow().isoformat(),
+                "ranking_type": ranking_type,
+                "error": str(e),
+            }
+    
     @classmethod
     def _get_base_user_query(cls, scope: str, scope_id: int):
         """ベースとなるユーザークエリを取得"""

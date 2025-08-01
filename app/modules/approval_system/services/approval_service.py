@@ -9,7 +9,8 @@ from datetime import datetime
 from flask import current_app
 from sqlalchemy.exc import SQLAlchemyError
 
-from app.models import db, StudentUnitSelection
+from app.models import db, StudentUnitSelection, User, CurriculumUnit, Class, ClassEnrollment
+from app.modules.lesson_system.models.lesson_models import StudentTaskCheck, LessonTask, StudentLessonProgress
 
 
 class ApprovalService:
@@ -113,6 +114,186 @@ class ApprovalService:
             return False
     
     @staticmethod
+    def get_pending_approvals(teacher_id: int) -> List[Dict[str, Any]]:
+        """教師向け承認待ち一覧取得（タスクベース）"""
+        try:
+            # 教師が担当するクラスの承認待ちタスクを取得
+            pending_tasks = db.session.query(
+                StudentTaskCheck,
+                User,
+                LessonTask,
+                StudentLessonProgress
+            ).join(
+                User, StudentTaskCheck.student_id == User.id
+            ).join(
+                LessonTask, StudentTaskCheck.task_id == LessonTask.id
+            ).join(
+                StudentLessonProgress, StudentTaskCheck.lesson_progress_id == StudentLessonProgress.id
+            ).join(
+                ClassEnrollment, User.id == ClassEnrollment.student_id
+            ).join(
+                Class, ClassEnrollment.class_id == Class.id
+            ).filter(
+                StudentTaskCheck.status == 'CHECKED',
+                Class.teacher_id == teacher_id
+            ).order_by(
+                StudentTaskCheck.checked_at.desc()
+            ).all()
+            
+            approvals = []
+            for task_check, student, task, lesson_progress in pending_tasks:
+                approvals.append({
+                    'id': task_check.id,
+                    'student_name': student.display_name,
+                    'student_id': student.id,
+                    'task_title': task.title,
+                    'task_id': task.id,
+                    'lesson_id': lesson_progress.lesson_id,
+                    'checked_at': task_check.checked_at,
+                    'time_spent': task_check.time_spent_minutes,
+                    'notes': task_check.notes,
+                    'type': 'task_completion'  # タスク完了申請タイプ
+                })
+            
+            return approvals
+            
+        except SQLAlchemyError as e:
+            current_app.logger.error(f"Failed to get pending task approvals: {e}")
+            return []
+    
+    @staticmethod
+    def get_pending_approvals_legacy(teacher_id: int) -> List[Dict[str, Any]]:
+        """教師向け承認待ち一覧取得（従来版）"""
+        try:
+            # 教師が担当するクラスの承認待ち申請を取得
+            pending_selections = db.session.query(
+                StudentUnitSelection,
+                User,
+                CurriculumUnit
+            ).join(
+                User, StudentUnitSelection.student_id == User.id
+            ).join(
+                CurriculumUnit, StudentUnitSelection.unit_id == CurriculumUnit.id
+            ).filter(
+                StudentUnitSelection.approval_status == 'pending'
+            ).all()
+            
+            approvals = []
+            for selection, student, unit in pending_selections:
+                approvals.append({
+                    'id': selection.id,
+                    'student_name': student.display_name,
+                    'unit_title': unit.title,
+                    'progress_percentage': selection.progress_percentage,
+                    'request_date': selection.completion_request_date,
+                    'notes': selection.completion_notes,
+                    'type': 'unit_completion'  # 単元完了申請タイプ
+                })
+            
+            return approvals
+            
+        except SQLAlchemyError as e:
+            current_app.logger.error(f"Failed to get pending approvals: {e}")
+            return []
+    
+    @staticmethod
+    def get_approval_detail(request_id: int, teacher_id: int) -> Optional[Dict[str, Any]]:
+        """承認詳細取得"""
+        try:
+            result = db.session.query(
+                StudentUnitSelection,
+                User,
+                CurriculumUnit
+            ).join(
+                User, StudentUnitSelection.student_id == User.id
+            ).join(
+                CurriculumUnit, StudentUnitSelection.unit_id == CurriculumUnit.id
+            ).filter(
+                StudentUnitSelection.id == request_id
+            ).first()
+            
+            if not result:
+                return None
+            
+            selection, student, unit = result
+            
+            return {
+                'id': selection.id,
+                'student_name': student.display_name,
+                'student_id': student.id,
+                'unit_title': unit.title,
+                'unit_id': unit.id,
+                'progress_percentage': selection.progress_percentage,
+                'request_date': selection.completion_request_date,
+                'notes': selection.completion_notes,
+                'status': selection.approval_status,
+                'approved_at': selection.approved_at,
+                'approved_by': selection.approved_by,
+                'approval_comment': selection.approval_comment
+            }
+            
+        except SQLAlchemyError as e:
+            current_app.logger.error(f"Failed to get approval detail: {e}")
+            return None
+    
+    @staticmethod
+    def approve_request(request_id: int, teacher_id: int, comment: str = '') -> bool:
+        """申請を承認"""
+        try:
+            selection = StudentUnitSelection.query.get(request_id)
+            if not selection:
+                return False
+            
+            if selection.approval_status != 'pending':
+                current_app.logger.warning(f"Invalid status for approval: {selection.approval_status}")
+                return False
+            
+            # 承認処理
+            selection.approval_status = 'approved'
+            selection.approved_at = datetime.utcnow()
+            selection.approved_by = teacher_id
+            selection.completed_at = datetime.utcnow()
+            selection.approval_comment = comment
+            
+            db.session.commit()
+            
+            current_app.logger.info(f"Request {request_id} approved by teacher {teacher_id}")
+            return True
+            
+        except SQLAlchemyError as e:
+            db.session.rollback()
+            current_app.logger.error(f"Failed to approve request: {e}")
+            return False
+    
+    @staticmethod
+    def reject_request(request_id: int, teacher_id: int, comment: str) -> bool:
+        """申請を却下"""
+        try:
+            selection = StudentUnitSelection.query.get(request_id)
+            if not selection:
+                return False
+            
+            if selection.approval_status != 'pending':
+                current_app.logger.warning(f"Invalid status for rejection: {selection.approval_status}")
+                return False
+            
+            # 却下処理
+            selection.approval_status = 'rejected'
+            selection.approved_at = datetime.utcnow()
+            selection.approved_by = teacher_id
+            selection.approval_comment = comment
+            
+            db.session.commit()
+            
+            current_app.logger.info(f"Request {request_id} rejected by teacher {teacher_id}")
+            return True
+            
+        except SQLAlchemyError as e:
+            db.session.rollback()
+            current_app.logger.error(f"Failed to reject request: {e}")
+            return False
+    
+    @staticmethod
     def resubmit_completion(student_id: int, unit_id: int, resubmit_data: Dict[str, Any] = None) -> bool:
         """学習完了を再申請"""
         try:
@@ -154,8 +335,8 @@ class ApprovalService:
             return False
     
     @staticmethod
-    def get_pending_approvals(teacher_id: int = None, class_id: int = None) -> List[StudentUnitSelection]:
-        """承認待ちの申請一覧を取得"""
+    def get_pending_unit_approvals(teacher_id: int = None, class_id: int = None) -> List[StudentUnitSelection]:
+        """承認待ちの申請一覧を取得（単元ベース）"""
         try:
             query = StudentUnitSelection.query.filter_by(approval_status='pending')
             
@@ -169,8 +350,64 @@ class ApprovalService:
             return query.order_by(StudentUnitSelection.completion_request_date.desc()).all()
             
         except SQLAlchemyError as e:
-            current_app.logger.error(f"Failed to fetch pending approvals: {e}")
+            current_app.logger.error(f"Failed to get pending approvals: {e}")
             return []
+    
+    @staticmethod
+    def approve_task(task_check_id: int, teacher_id: int, comment: str = '') -> bool:
+        """タスクを承認してCOMPLETEDに変更"""
+        try:
+            task_check = StudentTaskCheck.query.get(task_check_id)
+            if not task_check:
+                current_app.logger.warning(f"Task check {task_check_id} not found")
+                return False
+            
+            if task_check.status != 'CHECKED':
+                current_app.logger.warning(f"Invalid status for approval: {task_check.status}")
+                return False
+            
+            # タスクを完了状態に変更
+            task_check.status = 'COMPLETED'
+            task_check.completed_at = datetime.utcnow()
+            task_check.notes = f"{task_check.notes or ''}\n[教師承認] {comment}" if comment else task_check.notes
+            
+            db.session.commit()
+            
+            current_app.logger.info(f"Task check {task_check_id} approved by teacher {teacher_id}")
+            return True
+            
+        except SQLAlchemyError as e:
+            db.session.rollback()
+            current_app.logger.error(f"Failed to approve task: {e}")
+            return False
+    
+    @staticmethod
+    def reject_task(task_check_id: int, teacher_id: int, comment: str) -> bool:
+        """タスクを却下してNOT_CHECKEDに戻す"""
+        try:
+            task_check = StudentTaskCheck.query.get(task_check_id)
+            if not task_check:
+                current_app.logger.warning(f"Task check {task_check_id} not found")
+                return False
+            
+            if task_check.status != 'CHECKED':
+                current_app.logger.warning(f"Invalid status for rejection: {task_check.status}")
+                return False
+            
+            # タスクを未チェック状態に戻す
+            task_check.status = 'NOT_CHECKED'
+            task_check.checked_at = None
+            task_check.notes = f"{task_check.notes or ''}\n[教師却下] {comment}"
+            
+            db.session.commit()
+            
+            current_app.logger.info(f"Task check {task_check_id} rejected by teacher {teacher_id}")
+            return True
+            
+        except SQLAlchemyError as e:
+            db.session.rollback()
+            current_app.logger.error(f"Failed to reject task: {e}")
+            return False
     
     @staticmethod
     def get_student_approval_history(student_id: int) -> List[StudentUnitSelection]:

@@ -29,6 +29,13 @@ try:
             db,
         )
         from app.utils.email_sender import EmailSender
+        # ログ記録機能が有効な場合は、LoggedEmailSenderを使用
+        import os
+        if os.getenv("EMAIL_LOG_ENABLED", "false").lower() == "true":
+            try:
+                from app.utils.logged_email_sender import LoggedEmailSender as EmailSender
+            except ImportError:
+                from app.utils.email_sender import EmailSender
 except ImportError:
     # 必要なモジュールが利用できない場合
     CELERY_AVAILABLE = False

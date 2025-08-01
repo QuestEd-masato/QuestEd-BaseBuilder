@@ -1,0 +1,455 @@
+{% extends "base.html" %}
+
+{% block title %}MFA管理 - QuestEd{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-8 col-lg-6 mx-auto">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-shield-alt me-2"></i>
+                        多要素認証管理
+                    </h4>
+                </div>
+                
+                <div class="card-body">
+                    <!-- MFA状態表示 -->
+                    <div class="mb-4">
+                        <div class="row">
+                            <div class="col-sm-4">
+                                <strong>状態:</strong>
+                            </div>
+                            <div class="col-sm-8">
+                                {% if mfa_status.enabled %}
+                                <span class="badge bg-success">
+                                    <i class="fas fa-check-circle me-1"></i>
+                                    有効
+                                </span>
+                                {% if is_required %}
+                                <span class="badge bg-warning text-dark ms-2">
+                                    <i class="fas fa-exclamation-triangle me-1"></i>
+                                    必須
+                                </span>
+                                {% endif %}
+                                {% else %}
+                                <span class="badge bg-secondary">
+                                    <i class="fas fa-times-circle me-1"></i>
+                                    無効
+                                </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        {% if mfa_status.setup_completed_at %}
+                        <div class="row mt-2">
+                            <div class="col-sm-4">
+                                <strong>設定完了日:</strong>
+                            </div>
+                            <div class="col-sm-8">
+                                {{ mfa_status.setup_completed_at.strftime('%Y年%m月%d日 %H:%M') }}
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        {% if mfa_status.last_used_at %}
+                        <div class="row mt-2">
+                            <div class="col-sm-4">
+                                <strong>最終使用:</strong>
+                            </div>
+                            <div class="col-sm-8">
+                                {{ mfa_status.last_used_at.strftime('%Y年%m月%d日 %H:%M') }}
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- バックアップコード管理 -->
+                    {% if mfa_status.enabled %}
+                    <div class="mb-4">
+                        <h5 class="text-primary">
+                            <i class="fas fa-key me-2"></i>
+                            バックアップコード
+                        </h5>
+                        
+                        <div class="row">
+                            <div class="col-sm-4">
+                                <strong>残りコード数:</strong>
+                            </div>
+                            <div class="col-sm-8">
+                                <span class="badge {% if mfa_status.backup_codes_remaining <= 2 %}bg-danger{% elif mfa_status.backup_codes_remaining <= 5 %}bg-warning text-dark{% else %}bg-success{% endif %}">
+                                    {{ mfa_status.backup_codes_remaining|e }}個
+                                </span>
+                                
+                                {% if mfa_status.backup_codes_remaining <= 2 %}
+                                <div class="mt-2">
+                                    <small class="text-danger">
+                                        <i class="fas fa-exclamation-triangle me-1"></i>
+                                        バックアップコードの残りが少なくなっています。新しいコードを生成することをお勧めします。
+                                    </small>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="mt-3">
+                            <button type="button" 
+                                    class="btn btn-warning" 
+                                    onclick="regenerateBackupCodes()">
+                                <i class="fas fa-sync-alt me-1"></i>
+                                新しいバックアップコードを生成
+                            </button>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- 信頼済みデバイス管理 -->
+                    {% if mfa_status.enabled and trusted_devices %}
+                    <div class="mb-4">
+                        <h5 class="text-primary">
+                            <i class="fas fa-laptop me-2"></i>
+                            信頼済みデバイス
+                        </h5>
+                        
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>デバイス</th>
+                                        <th>最終使用</th>
+                                        <th>有効期限</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for device in trusted_devices %}
+                                    <tr>
+                                        <td>
+                                            <i class="fas fa-laptop me-1"></i>
+                                            {{ (device.device_name or 'デバイス')|e }}
+                                            <br>
+                                            <small class="text-muted">{{ device.last_ip|e }}</small>
+                                        </td>
+                                        <td>
+                                            {{ device.last_used_at.strftime('%m/%d %H:%M') if device.last_used_at else '-' }}
+                                        </td>
+                                        <td>
+                                            {% if device.is_valid() %}
+                                            <span class="badge bg-success">
+                                                {{ device.trust_expires_at.strftime('%m/%d') }}
+                                            </span>
+                                            {% else %}
+                                            <span class="badge bg-secondary">期限切れ</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <button type="button" 
+                                                    class="btn btn-outline-danger btn-sm"
+                                                    data-device-id="{{ device.id|e }}"
+                                                    onclick="revokeDevice(this.dataset.deviceId)">
+                                                <i class="fas fa-times me-1"></i>
+                                                取り消し
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- セキュリティ情報 -->
+                    {% if mfa_status.enabled %}
+                    <div class="mb-4">
+                        <h5 class="text-primary">
+                            <i class="fas fa-info-circle me-2"></i>
+                            セキュリティ情報
+                        </h5>
+                        
+                        {% if mfa_status.failed_attempts > 0 %}
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            最近の認証失敗回数: {{ mfa_status.failed_attempts|e }}回
+                        </div>
+                        {% endif %}
+                        
+                        {% if mfa_status.is_locked %}
+                        <div class="alert alert-danger">
+                            <i class="fas fa-lock me-2"></i>
+                            アカウントが一時的にロックされています。しばらく待ってから再試行してください。
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="card-footer">
+                    <div class="row">
+                        <div class="col-6">
+                            {% if mfa_status.enabled and not is_required %}
+                            <button type="button" 
+                                    class="btn btn-outline-danger"
+                                    onclick="disableMFA()">
+                                <i class="fas fa-times me-1"></i>
+                                MFA無効化
+                            </button>
+                            {% endif %}
+                        </div>
+                        <div class="col-6 text-end">
+                            <a href="{{ url_for('index') }}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-1"></i>
+                                戻る
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- バックアップコード表示モーダル -->
+<div class="modal fade" id="backupCodesModal" tabindex="-1" aria-labelledby="backupCodesModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title" id="backupCodesModalLabel">
+                    <i class="fas fa-key me-2"></i>
+                    新しいバックアップコード
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>重要:</strong> これらのバックアップコードを安全な場所に保存してください。
+                    古いバックアップコードは無効になります。
+                </div>
+                
+                <div id="newBackupCodes" class="row">
+                    <!-- JavaScriptで動的に生成 -->
+                </div>
+                
+                <div class="mt-3">
+                    <button class="btn btn-success" onclick="downloadNewBackupCodes()">
+                        <i class="fas fa-download me-1"></i>
+                        ダウンロード
+                    </button>
+                    <button class="btn btn-secondary" onclick="printNewBackupCodes()">
+                        <i class="fas fa-print me-1"></i>
+                        印刷
+                    </button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">
+                    確認しました
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentBackupCodes = [];
+
+// バックアップコード再生成
+function regenerateBackupCodes() {
+    if (!confirm('新しいバックアップコードを生成しますか？\n既存のバックアップコードは全て無効になります。')) {
+        return;
+    }
+    
+    const button = event.target;
+    const originalText = button.innerHTML;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>生成中...';
+    button.disabled = true;
+    
+    fetch('{{ url_for("mfa.regenerate_backup_codes") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            currentBackupCodes = data.backup_codes;
+            displayBackupCodes(data.backup_codes);
+            
+            // ページをリロードして最新の状態を表示
+            setTimeout(() => {
+                location.reload();
+            }, 2000);
+        } else {
+            alert('バックアップコードの生成に失敗しました: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('エラーが発生しました。しばらく後でお試しください。');
+    })
+    .finally(() => {
+        button.innerHTML = originalText;
+        button.disabled = false;
+    });
+}
+
+// バックアップコードをモーダルに表示
+function displayBackupCodes(codes) {
+    const container = document.getElementById('newBackupCodes');
+    container.innerHTML = '';
+    
+    codes.forEach(code => {
+        const div = document.createElement('div');
+        div.className = 'col-md-6 mb-2';
+        div.innerHTML = `
+            <div class="p-2 bg-light border rounded text-center font-monospace">
+                ${code}
+            </div>
+        `;
+        container.appendChild(div);
+    });
+    
+    // モーダルを表示
+    const modal = new bootstrap.Modal(document.getElementById('backupCodesModal'));
+    modal.show();
+}
+
+// 信頼済みデバイスの取り消し
+function revokeDevice(deviceId) {
+    if (!confirm('このデバイスの信頼を取り消しますか？\n次回ログイン時にMFA認証が必要になります。')) {
+        return;
+    }
+    
+    fetch(`{{ url_for("mfa.revoke_device", device_id=0) }}`.replace('0', deviceId), {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('デバイス取り消しに失敗しました: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('エラーが発生しました。');
+    });
+}
+
+// MFA無効化
+function disableMFA() {
+    if (!confirm('多要素認証を無効にしますか？\nセキュリティレベルが低下します。')) {
+        return;
+    }
+    
+    const confirmation = prompt('確認のため「disable」と入力してください:');
+    if (confirmation !== 'disable') {
+        alert('確認テキストが正しくありません。');
+        return;
+    }
+    
+    fetch('{{ url_for("mfa.disable") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('多要素認証を無効にしました。');
+            location.href = '{{ url_for("index") }}';
+        } else {
+            alert('MFA無効化に失敗しました: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('エラーが発生しました。');
+    });
+}
+
+// 新しいバックアップコードのダウンロード
+function downloadNewBackupCodes() {
+    if (currentBackupCodes.length === 0) return;
+    
+    const userName = {{ current_user.display_name|tojson|safe }};
+    const content = `QuestEd バックアップコード（新規生成）
+生成日時: ${new Date().toLocaleString('ja-JP')}
+ユーザー: ${userName}
+
+これらのコードは一度だけ使用できます。
+認証アプリが利用できない場合にご使用ください。
+
+${currentBackupCodes.join('\n')}
+
+注意: 
+- これらのコードを安全な場所に保管してください
+- 古いバックアップコードは無効になりました`;
+
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `quested_backup_codes_${new Date().toISOString().split('T')[0]}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+}
+
+// 新しいバックアップコードの印刷
+function printNewBackupCodes() {
+    if (currentBackupCodes.length === 0) return;
+    
+    const userName = {{ current_user.display_name|tojson|safe }};
+    const printWindow = window.open('', '', 'width=600,height=400');
+    printWindow.document.write(`
+        <html>
+        <head>
+            <title>QuestEd バックアップコード（新規生成）</title>
+            <style>
+                body { font-family: Arial, sans-serif; margin: 20px; }
+                .header { text-align: center; border-bottom: 2px solid #333; padding-bottom: 10px; }
+                .codes { margin: 20px 0; }
+                .code { display: inline-block; margin: 5px; padding: 10px; 
+                       border: 1px solid #ccc; font-family: monospace; }
+                .note { margin-top: 20px; font-size: 12px; color: #666; }
+                .warning { background-color: #fff3cd; padding: 10px; border: 1px solid #ffeaa7; }
+            </style>
+        </head>
+        <body>
+            <div class="header">
+                <h2>QuestEd バックアップコード（新規生成）</h2>
+                <p>ユーザー: ${userName}</p>
+                <p>生成日時: ${new Date().toLocaleString('ja-JP')}</p>
+            </div>
+            <div class="warning">
+                <strong>重要:</strong> 古いバックアップコードは無効になりました。
+            </div>
+            <div class="codes">
+                ${currentBackupCodes.map(code => `<div class="code">${code}</div>`).join('')}
+            </div>
+            <div class="note">
+                <p>注意事項:</p>
+                <ul>
+                    <li>これらのコードは一度だけ使用できます</li>
+                    <li>認証アプリが利用できない場合にのみご使用ください</li>
+                    <li>安全な場所に保管してください</li>
+                </ul>
+            </div>
+        </body>
+        </html>
+    `);
+    printWindow.document.close();
+    printWindow.print();
+}
+</script>
+{% endblock %}

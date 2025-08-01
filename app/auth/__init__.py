@@ -10,6 +10,15 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from app.auth.password_validator import generate_secure_password, validate_password
 from app.models import School, User, db
 from app.utils.email_sender import send_confirmation_email, send_reset_password_email
+
+# ログ記録機能が有効な場合は、LoggedEmailSenderを使用
+import os
+if os.getenv("EMAIL_LOG_ENABLED", "false").lower() == "true":
+    try:
+        from app.utils.logged_email_sender import send_confirmation_email_with_log as send_confirmation_email
+        from app.utils.logged_email_sender import send_reset_password_email_with_log as send_reset_password_email
+    except ImportError:
+        pass  # ログ機能が利用できない場合は、通常のEmailSenderを使用
 from app.utils.rate_limiting import api_limit, auth_limit
 
 auth_bp = Blueprint("auth", __name__)

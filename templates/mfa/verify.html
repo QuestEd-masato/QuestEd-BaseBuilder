@@ -1,0 +1,241 @@
+{% extends "base.html" %}
+
+{% block title %}多要素認証 - QuestEd{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-success text-white text-center">
+                    <h4 class="mb-0">
+                        <i class="fas fa-shield-alt me-2"></i>
+                        多要素認証
+                    </h4>
+                </div>
+                
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('mfa.verify') }}" class="needs-validation" novalidate>
+                        {{ csrf_token() }}
+                        <!-- 認証コード入力 -->
+                        <div class="mb-4">
+                            <label for="code" class="form-label">
+                                <i class="fas fa-mobile-alt me-1"></i>
+                                認証コードを入力してください
+                            </label>
+                            <input type="text" 
+                                   class="form-control form-control-lg text-center font-monospace" 
+                                   id="code" 
+                                   name="code" 
+                                   placeholder="000000"
+                                   maxlength="8"
+                                   required
+                                   autocomplete="off"
+                                   autofocus>
+                            <div class="invalid-feedback">
+                                認証コードを入力してください。
+                            </div>
+                            <div class="form-text">
+                                認証アプリの6桁コード、またはバックアップコード（8桁）
+                            </div>
+                        </div>
+                        
+                        <!-- デバイス信頼設定 -->
+                        <div class="mb-4">
+                            <div class="form-check">
+                                <input class="form-check-input" 
+                                       type="checkbox" 
+                                       id="trust_device" 
+                                       name="trust_device">
+                                <label class="form-check-label" for="trust_device">
+                                    <i class="fas fa-laptop me-1"></i>
+                                    このデバイスを30日間信頼する
+                                </label>
+                            </div>
+                            <div class="form-text">
+                                チェックすると、このデバイスでは一定期間MFA認証をスキップできます。
+                                共有PCでは使用しないでください。
+                            </div>
+                        </div>
+                        
+                        <!-- 認証ボタン -->
+                        <div class="d-grid mb-3">
+                            <button type="submit" class="btn btn-success btn-lg">
+                                <i class="fas fa-key me-2"></i>
+                                認証する
+                            </button>
+                        </div>
+                        
+                        <!-- バックアップコード情報 -->
+                        {% if backup_codes_remaining is defined and backup_codes_remaining > 0 %}
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            バックアップコード残り: {{ backup_codes_remaining|e }}個
+                        </div>
+                        {% elif backup_codes_remaining is defined and backup_codes_remaining <= 2 %}
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            バックアップコードの残りが少なくなっています。
+                            <a href="{{ url_for('mfa.manage') }}" class="alert-link">管理画面</a>で新しいコードを生成してください。
+                        </div>
+                        {% endif %}
+                        
+                        <!-- 失敗回数警告 -->
+                        {% if failed_attempts > 0 %}
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            認証失敗回数: {{ failed_attempts|e }}/5
+                            {% if failed_attempts >= 3 %}
+                            <br><strong>注意:</strong> 5回失敗するとアカウントが一時的にロックされます。
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                    </form>
+                </div>
+                
+                <div class="card-footer">
+                    <div class="row">
+                        <div class="col-6">
+                            <a href="{{ url_for('mfa.manage') }}" class="btn btn-outline-secondary btn-sm">
+                                <i class="fas fa-cog me-1"></i>
+                                MFA管理
+                            </a>
+                        </div>
+                        <div class="col-6 text-end">
+                            <button type="button" 
+                                    class="btn btn-outline-info btn-sm" 
+                                    data-bs-toggle="modal" 
+                                    data-bs-target="#helpModal">
+                                <i class="fas fa-question-circle me-1"></i>
+                                ヘルプ
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ヘルプモーダル -->
+<div class="modal fade" id="helpModal" tabindex="-1" aria-labelledby="helpModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="helpModalLabel">
+                    <i class="fas fa-question-circle me-2"></i>
+                    多要素認証ヘルプ
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <h6><i class="fas fa-mobile-alt me-2"></i>認証アプリのコード</h6>
+                <ul>
+                    <li>Google Authenticator、Microsoft Authenticator、Authyなどの認証アプリを開いてください</li>
+                    <li>QuestEd用の6桁コードを確認してください</li>
+                    <li>コードは30秒ごとに変更されます</li>
+                </ul>
+                
+                <hr>
+                
+                <h6><i class="fas fa-key me-2"></i>バックアップコード</h6>
+                <ul>
+                    <li>認証アプリが利用できない場合に使用します</li>
+                    <li>8桁の英数字コードです</li>
+                    <li>一度使用したコードは再利用できません</li>
+                </ul>
+                
+                <hr>
+                
+                <h6><i class="fas fa-exclamation-triangle me-2"></i>トラブルシューティング</h6>
+                <ul>
+                    <li><strong>コードが認証されない場合:</strong> デバイスの時刻設定を確認してください</li>
+                    <li><strong>認証アプリを紛失した場合:</strong> バックアップコードを使用してログインし、新しい設定を行ってください</li>
+                    <li><strong>すべてのコードが使用できない場合:</strong> システム管理者にお問い合わせください</li>
+                </ul>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">閉じる</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// フォームバリデーション
+(function() {
+    'use strict';
+    window.addEventListener('load', function() {
+        const forms = document.getElementsByClassName('needs-validation');
+        Array.prototype.filter.call(forms, function(form) {
+            form.addEventListener('submit', function(event) {
+                if (form.checkValidity() === false) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                form.classList.add('was-validated');
+            }, false);
+        });
+    }, false);
+})();
+
+// 認証コード入力の自動フォーマット
+document.getElementById('code').addEventListener('input', function(e) {
+    let value = e.target.value.replace(/[^A-Za-z0-9]/g, ''); // 英数字以外を除去
+    
+    // 6桁（TOTP）または8桁（バックアップコード）のみ許可
+    if (value.length > 8) {
+        value = value.substring(0, 8);
+    }
+    
+    e.target.value = value.toUpperCase();
+    
+    // バリデーション表示
+    if (value.length === 6 || value.length === 8) {
+        e.target.classList.add('is-valid');
+        e.target.classList.remove('is-invalid');
+    } else {
+        e.target.classList.remove('is-valid');
+    }
+});
+
+// Enterキーでフォーム送信
+document.getElementById('code').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        const value = e.target.value;
+        if (value.length === 6 || value.length === 8) {
+            e.target.closest('form').submit();
+        }
+    }
+});
+
+// フォーカス時にプレースホルダーをクリア
+document.getElementById('code').addEventListener('focus', function(e) {
+    e.target.placeholder = '';
+});
+
+document.getElementById('code').addEventListener('blur', function(e) {
+    if (!e.target.value) {
+        const codeLength = e.target.value.length;
+        if (codeLength < 6) {
+            e.target.placeholder = '000000';
+        } else {
+            e.target.placeholder = 'XXXXXXXX';
+        }
+    }
+});
+
+// 自動送信（6桁入力完了時）
+document.getElementById('code').addEventListener('input', function(e) {
+    const value = e.target.value;
+    if (value.length === 6 && /^\d{6}$/.test(value)) {
+        // TOTPコードの場合、自動的に送信
+        setTimeout(() => {
+            if (e.target.value === value) { // 値が変更されていない場合のみ
+                e.target.closest('form').submit();
+            }
+        }, 500); // 0.5秒後に送信（ユーザーが修正する時間を与える）
+    }
+});
+</script>
+{% endblock %}

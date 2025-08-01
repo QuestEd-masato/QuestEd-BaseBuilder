@@ -41,7 +41,7 @@
                                     <strong>{{ unit.title }}</strong>
                                     {% if unit.tags %}
                                         <br>
-                                        {% set tags = unit.tags|from_json if unit.tags else [] %}
+                                        {% set tags = unit.tags|fromjson if unit.tags else [] %}
                                         {% for tag in tags %}
                                             <span class="badge bg-secondary me-1">{{ tag }}</span>
                                         {% endfor %}

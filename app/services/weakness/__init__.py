@@ -20,6 +20,7 @@ from .data_collector import WeaknessDataCollector
 from .pattern_analyzer import WeaknessPatternAnalyzer
 from .persistence_service import WeaknessPersistenceService
 from .recommendation_generator import WeaknessRecommendationGenerator
+from .recommendation_engine import WeaknessRecommendationEngine
 from .severity_evaluator import WeaknessSeverityEvaluator
 from .statistics_calculator import WeaknessStatisticsCalculator
 
@@ -106,6 +107,7 @@ __all__ = [
     "WeaknessPatternAnalyzer",
     "WeaknessSeverityEvaluator",
     "WeaknessRecommendationGenerator",
+    "WeaknessRecommendationEngine",
     "WeaknessPersistenceService",
     "BaseBuilderWeaknessAnalyzer",
     "WeaknessAnalysisService",

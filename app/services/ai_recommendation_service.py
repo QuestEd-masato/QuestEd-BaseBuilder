@@ -18,7 +18,7 @@ from app.models import (
 )
 
 # LearningPattern, RecommendationSettings, RecommendationQueue, RecommendationEffectiveness, StudentWeakness は RDSに存在しないためコメントアウト
-from app.services.curriculum_unit_service import CurriculumUnitService
+from app.services.student_unit_service import StudentUnitService
 from basebuilder.models import AnswerRecord, BasicKnowledgeItem
 from extensions import db
 
@@ -217,7 +217,7 @@ class AIRecommendationService:
 
         # 利用可能な単元を取得
         class_enrollment = class_enrollments[0]  # 最初のクラス
-        available_units = CurriculumUnitService.get_units_for_student(
+        available_units = StudentUnitService.get_units_for_student(
             student_id, class_enrollment.class_id, include_progress=True
         )
 

@@ -1,29 +1,34 @@
 {% extends 'base.html' %}
 
-{% block title %}プロフィール | QuestEd{% endblock %}
+{% block title %}{% if admin_view %}ユーザー詳細{% else %}プロフィール{% endif %} | QuestEd{% endblock %}
 
 {% block content %}
 <div class="auth-container">
     <div class="auth-card">
-        <h2>プロフィール</h2>
+        <h2>{% if admin_view %}ユーザー詳細 - {{ user.username }}{% else %}プロフィール{% endif %}</h2>
         
-        <form method="POST" action="{{ url_for('auth.profile') }}">
+        <form method="POST" action="{% if not admin_view %}{{ url_for('auth.profile') }}{% endif %}">
+            {% if not admin_view %}
+            <!-- TEMPORARY: CSRF disabled for testing -->
+            {% if csrf_token %}
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            {% endif %}
+            {% endif %}
             
             <div class="form-group">
                 <label for="username">ユーザー名（ログイン用）</label>
-                <input type="text" id="username" name="username" value="{{ user.username }}" required>
+                <input type="text" id="username" name="username" value="{{ user.username }}" {% if admin_view or readonly %}readonly{% else %}required{% endif %}>
             </div>
             
             <div class="form-group">
                 <label for="full_name">氏名（表示用）</label>
-                <input type="text" id="full_name" name="full_name" value="{{ user.full_name if user.full_name else '' }}" placeholder="フルネームを入力してください">
+                <input type="text" id="full_name" name="full_name" value="{{ user.full_name if user.full_name else '' }}" placeholder="フルネームを入力してください" {% if admin_view or readonly %}readonly{% endif %}>
                 <small class="form-text text-muted">サイト上で表示される名前です（任意）</small>
             </div>
             
             <div class="form-group">
                 <label for="email">メールアドレス</label>
-                <input type="email" id="email" name="email" value="{{ user.email }}" required>
+                <input type="email" id="email" name="email" value="{{ user.email }}" {% if admin_view or readonly %}readonly{% else %}required{% endif %}>
             </div>
             
             <div class="form-group">
@@ -40,6 +45,9 @@
             <!-- 生徒用の追加フィールド -->
             <div class="form-group">
                 <label for="grade">学年</label>
+                {% if admin_view or readonly %}
+                <input type="text" value="{% if user.grade %}{{ user.grade }}年{% else %}未設定{% endif %}" readonly>
+                {% else %}
                 <select id="grade" name="grade" class="form-control">
                     <option value="">選択してください</option>
                     {% for g in range(1, 7) %}
@@ -47,10 +55,14 @@
                     {% endfor %}
                 </select>
                 <small class="form-text text-muted">小学校：1-6年、中学校：1-3年、高校：1-3年、中高一貫校：1-6年</small>
+                {% endif %}
             </div>
             
             <div class="form-group">
                 <label for="classroom">学級</label>
+                {% if admin_view or readonly %}
+                <input type="text" value="{{ user.classroom or '未設定' }}" readonly>
+                {% else %}
                 <select id="classroom" name="classroom" class="form-control">
                     <option value="">選択してください</option>
                     {% for i in range(1, 7) %}
@@ -60,12 +72,15 @@
                     <option value="B組" {% if user.classroom == 'B組' %}selected{% endif %}>B組</option>
                     <option value="C組" {% if user.classroom == 'C組' %}selected{% endif %}>C組</option>
                 </select>
+                {% endif %}
             </div>
             
             <div class="form-group">
                 <label for="student_number">生徒番号</label>
-                <input type="text" id="student_number" name="student_number" value="{{ user.student_number or '' }}" placeholder="例: 2025-02-1-001">
+                <input type="text" id="student_number" name="student_number" value="{{ user.student_number or '' }}" placeholder="例: 2025-02-1-001" {% if admin_view or readonly %}readonly{% endif %}>
+                {% if not admin_view and not readonly %}
                 <small class="form-text text-muted">学校で指定された番号がある場合は入力してください（任意）</small>
+                {% endif %}
             </div>
             {% endif %}
             
@@ -74,21 +89,37 @@
                 <input type="text" value="{{ user.created_at.strftime('%Y年%m月%d日') if user.created_at else '不明' }}" readonly>
             </div>
             
+            {% if not readonly %}
             <div class="form-actions">
+                {% if admin_view %}
+                <button type="submit" class="btn btn-primary">ユーザー情報を更新</button>
+                <a href="{{ url_for('admin_panel.user_detail', user_id=user.id) }}" class="btn btn-secondary">キャンセル</a>
+                {% else %}
                 <button type="submit" class="btn btn-primary">プロフィールを更新</button>
+                {% endif %}
             </div>
+            {% endif %}
         </form>
         
         <div class="auth-links">
-            <p><a href="{{ url_for('auth.change_password') }}">パスワードを変更</a></p>
-            {% if current_user.role == 'student' %}
-                <p><a href="{{ url_for('student_dashboard.dashboard') }}">ダッシュボードに戻る</a></p>
-            {% elif current_user.role == 'teacher' %}
-                <p><a href="{{ url_for('teacher_dashboard.dashboard') }}">ダッシュボードに戻る</a></p>
-            {% elif current_user.role == 'admin' %}
-                <p><a href="{{ url_for('admin_panel.dashboard') }}">ダッシュボードに戻る</a></p>
+            {% if admin_view %}
+                {% if readonly %}
+                <p><a href="{{ url_for('admin_panel.user_edit', user_id=user.id) }}">ユーザー情報を編集</a></p>
+                {% endif %}
+                <p><a href="{{ url_for('admin_panel.users') }}">ユーザー一覧に戻る</a></p>
             {% else %}
-                <p><a href="{{ url_for('index') }}">ホームに戻る</a></p>
+                {% if not readonly %}
+                <p><a href="{{ url_for('auth.change_password') }}">パスワードを変更</a></p>
+                {% endif %}
+                {% if current_user.role == 'student' %}
+                    <p><a href="{{ url_for('student_dashboard.dashboard') }}">ダッシュボードに戻る</a></p>
+                {% elif current_user.role == 'teacher' %}
+                    <p><a href="{{ url_for('teacher_dashboard.dashboard') }}">ダッシュボードに戻る</a></p>
+                {% elif current_user.role == 'admin' %}
+                    <p><a href="{{ url_for('admin_panel.dashboard') }}">ダッシュボードに戻る</a></p>
+                {% else %}
+                    <p><a href="{{ url_for('index') }}">ホームに戻る</a></p>
+                {% endif %}
             {% endif %}
         </div>
     </div>
@@ -170,6 +201,24 @@
     
     .auth-links a:hover {
         text-decoration: underline;
+    }
+    
+    .btn-secondary {
+        background-color: #6c757d;
+        border-color: #6c757d;
+        color: white;
+        padding: 0.75rem 1rem;
+        text-decoration: none;
+        border-radius: 4px;
+        display: inline-block;
+        margin-left: 0.5rem;
+    }
+    
+    .btn-secondary:hover {
+        background-color: #545b62;
+        border-color: #4e555b;
+        color: white;
+        text-decoration: none;
     }
 </style>
 {% endblock %}

@@ -17,6 +17,18 @@ class LessonService:
     """レッスン管理サービス"""
     
     @staticmethod
+    def get_all_lessons() -> List[CurriculumLesson]:
+        """全てのレッスンを取得"""
+        try:
+            return CurriculumLesson.query.order_by(
+                CurriculumLesson.curriculum_id,
+                CurriculumLesson.lesson_number
+            ).all()
+        except SQLAlchemyError as e:
+            current_app.logger.error(f"Failed to fetch all lessons: {e}")
+            return []
+    
+    @staticmethod
     def get_lessons_by_curriculum(curriculum_id: int) -> List[CurriculumLesson]:
         """カリキュラムIDでレッスン一覧を取得"""
         try:

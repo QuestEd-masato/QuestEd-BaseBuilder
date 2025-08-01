@@ -9,7 +9,7 @@ from .modules.class_management import class_management_bp
 
 # 既存の実装したモジュールをインポート
 from .modules.dashboard import dashboard_bp
-from .modules.goals_todos import goals_todos_bp
+from .modules.goals_todos import goals_todos_secure_bp as goals_todos_bp
 from .modules.learning import learning_bp
 from .modules.unit_learning import unit_learning_bp
 from .modules.ranking import ranking_bp
@@ -51,18 +51,17 @@ from .modules.activities import (
 # 後方互換性のため、主要な関数をこのモジュールレベルで公開
 from .modules.dashboard import dashboard
 from .modules.goals_todos import (
-    delete_goal,
     delete_todo,
-    edit_goal,
     edit_todo,
     goals,
-    new_goal,
     new_todo,
     todos,
-    toggle_todo,
-    update_goal_progress,
+    toggle_todo_completion,
 )
 from .modules.surveys import interest_survey, personality_survey, surveys
+
+# Backward compatibility aliases
+toggle_todo = toggle_todo_completion  # Alias for backward compatibility
 
 # TODO: 残りのモジュールを実装する必要があります
 # - themes.py (テーマ選択)

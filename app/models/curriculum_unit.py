@@ -282,12 +282,19 @@ class StudentUnitSelection(db.Model):
         comment="承認状況",
     )
     completion_request_date = db.Column(db.DateTime, nullable=True, comment="完了申請日時")
+    completion_notes = db.Column(db.Text, nullable=True, comment="完了申請時の学生コメント")
     teacher_comments = db.Column(db.Text, nullable=True, comment="教師コメント")
     approved_by = db.Column(
         db.Integer, db.ForeignKey("users.id"), nullable=True, comment="承認者ID"
     )
     approved_at = db.Column(db.DateTime, nullable=True, comment="承認日時")
     rejection_reason = db.Column(db.Text, nullable=True, comment="却下理由")
+    rejection_date = db.Column(db.DateTime, nullable=True, comment="却下日時")
+    rejected_by = db.Column(
+        db.Integer, db.ForeignKey("users.id"), nullable=True, comment="却下者ID"
+    )
+    resubmission_count = db.Column(db.Integer, default=0, comment="再申請回数")
+    resubmission_notes = db.Column(db.Text, nullable=True, comment="再申請時の改善メモ")
 
     created_at = db.Column(db.DateTime, default=datetime.utcnow, comment="作成日時")
     updated_at = db.Column(
@@ -308,6 +315,9 @@ class StudentUnitSelection(db.Model):
         db.Index("idx_approval_status", "approval_status"),
         db.Index("idx_completion_request_date", "completion_request_date"),
         db.Index("idx_approved_by", "approved_by"),
+        db.Index("idx_rejected_by", "rejected_by"),
+        db.Index("idx_rejection_date", "rejection_date"),
+        db.Index("idx_resubmission_count", "resubmission_count"),
     )
 
     # リレーションシップ
@@ -317,6 +327,9 @@ class StudentUnitSelection(db.Model):
     class_obj = db.relationship("Class", backref="unit_selections")
     approver = db.relationship(
         "User", foreign_keys=[approved_by], backref="approved_unit_selections"
+    )
+    rejecter = db.relationship(
+        "User", foreign_keys=[rejected_by], backref="rejected_unit_selections"
     )
 
     def update_progress(self):
@@ -369,8 +382,8 @@ class StudentUnitSelection(db.Model):
     def reject_completion(self, teacher_id, reason):
         """完了申請を却下"""
         self.approval_status = "rejected"
-        self.approved_by = teacher_id
-        self.approved_at = datetime.utcnow()
+        self.rejected_by = teacher_id
+        self.rejection_date = datetime.utcnow()
         self.rejection_reason = reason
         self.updated_at = datetime.utcnow()
 
@@ -421,10 +434,15 @@ class StudentUnitSelection(db.Model):
             "completion_request_date": self.completion_request_date.isoformat()
             if self.completion_request_date
             else None,
+            "completion_notes": self.completion_notes,
             "teacher_comments": self.teacher_comments,
             "approved_by": self.approved_by,
             "approved_at": self.approved_at.isoformat() if self.approved_at else None,
             "rejection_reason": self.rejection_reason,
+            "rejection_date": self.rejection_date.isoformat() if self.rejection_date else None,
+            "rejected_by": self.rejected_by,
+            "resubmission_count": self.resubmission_count,
+            "resubmission_notes": self.resubmission_notes,
             "can_request_completion": self.can_request_completion(),
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,

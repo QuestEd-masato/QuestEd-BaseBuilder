@@ -13,11 +13,9 @@ from .curriculum_task import (
     TaskType, TaskStatus, DueDateType
 )
 
-# Curriculum Lesson System Models - Moved to modules/lesson_system
-# from .curriculum_lesson import (
-#     CurriculumLesson, LessonTask, StudentLessonProgress, StudentTaskCheck,
-#     LessonType, TaskCheckStatus
-# )
+# Curriculum Lesson System Models - Available via modules/lesson_system
+# Note: These models are now accessible through app.modules.lesson_system.models.lesson_models
+# Legacy import paths for backward compatibility are maintained in each service that needs them.
 
 
 # モデル定義
@@ -52,13 +50,14 @@ class User(UserMixin, db.Model):
     student_number = db.Column(db.String(20), nullable=True, comment="生徒番号")
 
     # リレーションシップの定義（カスケード削除を設定）
-    classes_teaching = db.relationship(
-        "Class",
-        foreign_keys="Class.teacher_id",
-        backref="teacher",
-        lazy=True,
-        cascade="all, delete-orphan",
-    )
+    # TEMPORARY: Disabled to fix ambiguous foreign key error
+    # classes_teaching = db.relationship(
+    #     "Class",
+    #     foreign_keys="Class.teacher_id",
+    #     backref="teacher",
+    #     lazy=True,
+    #     cascade="all, delete-orphan",
+    # )
     interest_surveys = db.relationship(
         "InterestSurvey", backref="student", lazy=True, cascade="all, delete-orphan"
     )
@@ -241,7 +240,7 @@ class Class(db.Model):
         secondary="class_enrollments",
         backref=db.backref("enrolled_classes", lazy="dynamic"),
         lazy="dynamic",
-        overlaps="class_enrollments,enrollments",
+        overlaps="class_enrollments,enrollments,student,class_obj",
     )
 
 
@@ -264,7 +263,7 @@ class ClassEnrollment(db.Model):
     class_obj = db.relationship(
         "Class",
         foreign_keys=[class_id],
-        backref="enrollments",
+        backref=db.backref("enrollments", overlaps="students"),
         overlaps="enrolled_classes,students",
     )
 
@@ -398,7 +397,7 @@ class StudentEvaluation(db.Model):
     )
 
     # リレーションシップ
-    student = db.relationship("User", back_populates="student_evaluations")
+    student = db.relationship("User", foreign_keys=[student_id], back_populates="student_evaluations")
     class_obj = db.relationship("Class", backref=db.backref("evaluations", lazy=True))
 
 
@@ -434,7 +433,7 @@ class Curriculum(db.Model):
     # ブリッジ機能関連フィールド
     is_converted_to_units = db.Column(db.Boolean, default=False, comment="単元への変換済みフラグ")
     units_conversion_date = db.Column(db.DateTime, nullable=True, comment="単元変換日時")
-    curriculum_data = db.Column(db.Text, comment="curriculum_unified.html用のデータ")
+    curriculum_data = db.Column(db.Text, comment="カリキュラム詳細データ（JSON形式）")
     created_by = db.Column(
         db.Integer, db.ForeignKey("users.id"), nullable=True, comment="作成者ID"
     )
@@ -611,6 +610,14 @@ from app.models.speech_transcription import (
     SpeechTranscription,  # SpeechSettings, SpeechStatisticsはRDSに存在しないためコメントアウト
 )
 
+# MFA (Multi-Factor Authentication) models
+from app.models.mfa_models import (
+    UserMFASecret,
+    MFABackupCode,
+    MFALoginAttempt,
+    MFADeviceTrust,
+)
+
 # Import Subject model
 from app.models.subject import Subject
 
@@ -628,6 +635,41 @@ from basebuilder.models import (
     TextSet,
     WordProficiency,
 )
+
+# BaseBuilderRecord は存在しないため、AnswerRecord をエイリアスとして使用
+BaseBuilderRecord = AnswerRecord
+
+# StudentMilestone モデルを作成（マイルストーンと学生の関連付け）
+class StudentMilestone(db.Model):
+    __tablename__ = "student_milestones"
+    id = db.Column(db.Integer, primary_key=True)
+    student_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    milestone_id = db.Column(db.Integer, db.ForeignKey("milestones.id"), nullable=False)
+    submitted_at = db.Column(db.DateTime, nullable=True)
+    is_completed = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # リレーションシップ
+    student = db.relationship("User", backref="student_milestones")
+    milestone = db.relationship("Milestone", backref="student_milestones")
+
+
+# WeaknessAnalysis モデルを作成（Phase6で分離された弱点分析用）
+class WeaknessAnalysis(db.Model):
+    __tablename__ = "weakness_analyses"
+    
+    id = db.Column(db.Integer, primary_key=True)
+    student_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    analysis_date = db.Column(db.DateTime, nullable=False)
+    weaknesses_json = db.Column(db.Text, nullable=False)  # JSON形式の弱点データ
+    recommendations_json = db.Column(db.Text, nullable=False)  # JSON形式の推奨事項
+    statistics_json = db.Column(db.Text)  # JSON形式の統計データ
+    patterns_json = db.Column(db.Text)  # JSON形式のパターンデータ
+    is_active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # リレーション
+    student = db.relationship("User", backref="weakness_analyses")
 
 # Note: All model classes are now imported from separate files above
 
@@ -752,6 +794,8 @@ __all__ = [
     "Subject",
     "Ranking",
     "RankingCache",
+    "StudentMilestone",
+    "WeaknessAnalysis",
     # Curriculum Unit models (RDS互換のみ)
     "CurriculumUnit",
     "UnitItemMapping",
@@ -767,6 +811,11 @@ __all__ = [
     "ReviewSetItem",
     # Email models
     "EmailLog",
+    # MFA models
+    "UserMFASecret",
+    "MFABackupCode",
+    "MFALoginAttempt",
+    "MFADeviceTrust",
     # BaseBuilder models
     "ProblemCategory",
     "BasicKnowledgeItem",
@@ -779,4 +828,5 @@ __all__ = [
     "WordProficiency",
     "TextProficiencyRecord",
     "KnowledgeThemeRelation",
+    "BaseBuilderRecord",
 ]

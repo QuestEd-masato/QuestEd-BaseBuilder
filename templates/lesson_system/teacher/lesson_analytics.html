@@ -1,0 +1,1106 @@
+{% extends 'base.html' %}
+
+{% block title %}レッスン分析 | QuestEd Lesson System{% endblock %}
+
+{% block content %}
+<div class="lesson-analytics-container">
+    <div class="page-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h2><i class="fas fa-chart-bar"></i> レッスン分析ダッシュボード</h2>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{{ url_for('teacher_dashboard.dashboard') }}">ダッシュボード</a></li>
+                        <li class="breadcrumb-item"><a href="{{ url_for('lesson_system.lesson_management') }}">レッスン管理</a></li>
+                        <li class="breadcrumb-item active">分析</li>
+                    </ol>
+                </nav>
+            </div>
+            <div class="header-actions">
+                <button class="btn btn-outline-primary" onclick="exportAnalytics()">
+                    <i class="fas fa-download"></i> レポートエクスポート
+                </button>
+                <button class="btn btn-outline-secondary" onclick="refreshAnalytics()">
+                    <i class="fas fa-sync-alt"></i> データ更新
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- フィルタパネル -->
+    <div class="analytics-filters">
+        <div class="row">
+            <div class="col-md-3">
+                <label for="period-filter" class="form-label">期間</label>
+                <select class="form-select" id="period-filter" onchange="updateAnalytics()">
+                    <option value="week">過去1週間</option>
+                    <option value="month" selected>過去1ヶ月</option>
+                    <option value="quarter">過去3ヶ月</option>
+                    <option value="year">過去1年</option>
+                    <option value="all">全期間</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="curriculum-filter" class="form-label">カリキュラム</label>
+                <select class="form-select" id="curriculum-filter" onchange="updateAnalytics()">
+                    <option value="">全てのカリキュラム</option>
+                    {% if curriculums %}
+                        {% for curriculum in curriculums %}
+                        <option value="{{ curriculum.id }}">{{ curriculum.title }}</option>
+                        {% endfor %}
+                    {% endif %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="class-filter" class="form-label">クラス</label>
+                <select class="form-select" id="class-filter" onchange="updateAnalytics()">
+                    <option value="">全てのクラス</option>
+                    {% if classes %}
+                        {% for class in classes %}
+                        <option value="{{ class.id }}">{{ class.name }}</option>
+                        {% endfor %}
+                    {% endif %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="lesson-filter" class="form-label">レッスン</label>
+                <select class="form-select" id="lesson-filter" onchange="updateAnalytics()">
+                    <option value="">全てのレッスン</option>
+                    {% if lessons %}
+                        {% for lesson in lessons %}
+                        <option value="{{ lesson.id }}">{{ lesson.title }}</option>
+                        {% endfor %}
+                    {% endif %}
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- 主要メトリクス -->
+    <div class="key-metrics">
+        <div class="row">
+            <div class="col-lg-3 col-md-6">
+                <div class="metric-card primary">
+                    <div class="metric-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="metric-content">
+                        <h3 id="total-students">{{ analytics.total_students if analytics else 0 }}</h3>
+                        <p>総受講者数</p>
+                        <div class="metric-change positive">
+                            <i class="fas fa-arrow-up"></i>
+                            <span>+{{ analytics.student_growth if analytics else 0 }}%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="metric-card success">
+                    <div class="metric-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <div class="metric-content">
+                        <h3 id="avg-progress">{{ analytics.avg_progress if analytics else 0 }}%</h3>
+                        <p>平均進捗率</p>
+                        <div class="metric-change positive">
+                            <i class="fas fa-arrow-up"></i>
+                            <span>+{{ analytics.progress_improvement if analytics else 0 }}%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="metric-card warning">
+                    <div class="metric-icon">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="metric-content">
+                        <h3 id="avg-time">{{ analytics.avg_time_spent if analytics else 0 }}分</h3>
+                        <p>平均学習時間</p>
+                        <div class="metric-change neutral">
+                            <i class="fas fa-minus"></i>
+                            <span>{{ analytics.time_change if analytics else 0 }}%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="metric-card info">
+                    <div class="metric-icon">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="metric-content">
+                        <h3 id="completion-rate">{{ analytics.completion_rate if analytics else 0 }}%</h3>
+                        <p>完了率</p>
+                        <div class="metric-change positive">
+                            <i class="fas fa-arrow-up"></i>
+                            <span>+{{ analytics.completion_improvement if analytics else 0 }}%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- チャートセクション -->
+    <div class="analytics-charts">
+        <div class="row">
+            <!-- 進捗推移チャート -->
+            <div class="col-lg-8">
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h4><i class="fas fa-line-chart"></i> 進捗推移</h4>
+                        <div class="chart-controls">
+                            <div class="btn-group" role="group">
+                                <input type="radio" class="btn-check" name="chart-type" id="line-chart" checked>
+                                <label class="btn btn-outline-primary btn-sm" for="line-chart">線グラフ</label>
+                                
+                                <input type="radio" class="btn-check" name="chart-type" id="bar-chart">
+                                <label class="btn btn-outline-primary btn-sm" for="bar-chart">棒グラフ</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="progress-chart" width="400" height="200"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 難易度別分析 -->
+            <div class="col-lg-4">
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h4><i class="fas fa-star"></i> 難易度別完了率</h4>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="difficulty-chart" width="300" height="200"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-4">
+            <!-- 学習時間分布 -->
+            <div class="col-lg-6">
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h4><i class="fas fa-clock"></i> 学習時間分布</h4>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="time-distribution-chart" width="300" height="200"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 人気レッスンランキング -->
+            <div class="col-lg-6">
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h4><i class="fas fa-trophy"></i> 人気レッスンランキング</h4>
+                    </div>
+                    <div class="ranking-list">
+                        {% if popular_lessons %}
+                            {% for lesson in popular_lessons %}
+                            <div class="ranking-item">
+                                <div class="ranking-position">{{ loop.index }}</div>
+                                <div class="ranking-content">
+                                    <div class="lesson-name">{{ lesson.title }}</div>
+                                    <div class="lesson-stats">
+                                        <span class="students-count">{{ lesson.students_count }}人受講</span>
+                                        <span class="completion-rate">完了率: {{ lesson.completion_rate }}%</span>
+                                    </div>
+                                </div>
+                                <div class="ranking-score">{{ lesson.popularity_score }}</div>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="no-data">
+                                <i class="fas fa-chart-bar fa-2x text-muted"></i>
+                                <p class="text-muted">データがありません</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 詳細分析テーブル -->
+    <div class="detailed-analysis">
+        <div class="analysis-card">
+            <div class="card-header">
+                <h4><i class="fas fa-table"></i> 詳細分析データ</h4>
+                <div class="table-controls">
+                    <button class="btn btn-sm btn-outline-primary" onclick="exportTableData()">
+                        <i class="fas fa-download"></i> CSVエクスポート
+                    </button>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover" id="analytics-table">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>レッスン名</th>
+                            <th>受講者数</th>
+                            <th>平均進捗率</th>
+                            <th>平均学習時間</th>
+                            <th>完了率</th>
+                            <th>平均評価</th>
+                            <th>最終更新</th>
+                            <th>アクション</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if lesson_analytics %}
+                            {% for lesson in lesson_analytics %}
+                            <tr>
+                                <td>
+                                    <div class="lesson-info">
+                                        <div class="lesson-title">{{ lesson.title }}</div>
+                                        <small class="text-muted">{{ lesson.curriculum_title }}</small>
+                                    </div>
+                                </td>
+                                <td><span class="badge bg-primary">{{ lesson.student_count }}</span></td>
+                                <td>
+                                    <div class="progress" style="height: 20px;">
+                                        <div class="progress-bar" style="width: {{ lesson.avg_progress }}%">
+                                            {{ lesson.avg_progress }}%
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>{{ lesson.avg_time_spent }}分</td>
+                                <td>
+                                    <span class="completion-badge completion-{{ 'high' if lesson.completion_rate >= 80 else 'medium' if lesson.completion_rate >= 60 else 'low' }}">
+                                        {{ lesson.completion_rate }}%
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="rating">
+                                        {% for i in range(1, 6) %}
+                                            <i class="fas fa-star {% if i <= lesson.avg_rating %}active{% endif %}"></i>
+                                        {% endfor %}
+                                        <span class="rating-value">{{ lesson.avg_rating }}/5</span>
+                                    </div>
+                                </td>
+                                <td>{{ lesson.last_activity.strftime('%Y/%m/%d') if lesson.last_activity else '-' }}</td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <a href="{{ url_for('lesson_system.lesson_detail', lesson_id=lesson.id) }}" 
+                                           class="btn btn-sm btn-outline-info" title="詳細">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{{ url_for('lesson_system.lesson_analytics', lesson_id=lesson.id) }}" 
+                                           class="btn btn-sm btn-outline-success" title="個別分析">
+                                            <i class="fas fa-chart-line"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="8" class="text-center py-4">
+                                    <div class="no-data">
+                                        <i class="fas fa-chart-bar fa-3x text-muted mb-3"></i>
+                                        <h5 class="text-muted">分析データがありません</h5>
+                                        <p class="text-muted">レッスンの学習データが蓄積されると分析結果が表示されます</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- 学習者リスト -->
+    <div class="student-analysis">
+        <div class="analysis-card">
+            <div class="card-header">
+                <h4><i class="fas fa-users"></i> 学習者分析</h4>
+                <div class="student-controls">
+                    <button class="btn btn-sm btn-outline-warning" onclick="identifyAtRiskStudents()">
+                        <i class="fas fa-exclamation-triangle"></i> 要注意学習者
+                    </button>
+                    <button class="btn btn-sm btn-outline-success" onclick="identifyTopPerformers()">
+                        <i class="fas fa-star"></i> 優秀学習者
+                    </button>
+                </div>
+            </div>
+            <div class="student-grid">
+                {% if student_analytics %}
+                    {% for student in student_analytics %}
+                    <div class="student-card">
+                        <div class="student-avatar">
+                            <i class="fas fa-user-circle"></i>
+                        </div>
+                        <div class="student-info">
+                            <h5>{{ student.name }}</h5>
+                            <p class="class-info">{{ student.class_name }}</p>
+                        </div>
+                        <div class="student-metrics">
+                            <div class="metric">
+                                <span class="metric-label">進捗率</span>
+                                <span class="metric-value">{{ student.progress }}%</span>
+                            </div>
+                            <div class="metric">
+                                <span class="metric-label">学習時間</span>
+                                <span class="metric-value">{{ student.total_time }}分</span>
+                            </div>
+                            <div class="metric">
+                                <span class="metric-label">完了数</span>
+                                <span class="metric-value">{{ student.completed_lessons }}</span>
+                            </div>
+                        </div>
+                        <div class="student-status">
+                            <span class="status-badge status-{{ student.status }}">
+                                {% if student.status == 'excellent' %}
+                                    <i class="fas fa-star"></i> 優秀
+                                {% elif student.status == 'good' %}
+                                    <i class="fas fa-thumbs-up"></i> 良好
+                                {% elif student.status == 'attention' %}
+                                    <i class="fas fa-exclamation-triangle"></i> 要注意
+                                {% else %}
+                                    <i class="fas fa-minus"></i> 普通
+                                {% endif %}
+                            </span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="no-students">
+                        <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">学習者データがありません</h5>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .lesson-analytics-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 2rem 1rem;
+    }
+
+    .page-header {
+        margin-bottom: 2rem;
+    }
+
+    .page-header h2 {
+        color: #0056b3;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+
+    .header-actions .btn {
+        margin-left: 0.5rem;
+    }
+
+    /* フィルタパネル */
+    .analytics-filters {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        margin-bottom: 2rem;
+    }
+
+    /* 主要メトリクス */
+    .key-metrics {
+        margin-bottom: 2rem;
+    }
+
+    .metric-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        display: flex;
+        align-items: center;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease;
+        height: 100%;
+        margin-bottom: 1rem;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .metric-card:hover {
+        transform: translateY(-2px);
+    }
+
+    .metric-card.primary::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 4px;
+        height: 100%;
+        background: #007bff;
+    }
+
+    .metric-card.success::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 4px;
+        height: 100%;
+        background: #28a745;
+    }
+
+    .metric-card.warning::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 4px;
+        height: 100%;
+        background: #ffc107;
+    }
+
+    .metric-card.info::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 4px;
+        height: 100%;
+        background: #17a2b8;
+    }
+
+    .metric-icon {
+        font-size: 3rem;
+        margin-right: 1rem;
+        opacity: 0.8;
+        color: #6c757d;
+    }
+
+    .metric-content {
+        flex: 1;
+    }
+
+    .metric-content h3 {
+        font-size: 2.5rem;
+        font-weight: bold;
+        margin: 0;
+        color: #333;
+    }
+
+    .metric-content p {
+        margin: 0;
+        color: #6c757d;
+        font-size: 0.9rem;
+    }
+
+    .metric-change {
+        display: flex;
+        align-items: center;
+        font-size: 0.8rem;
+        margin-top: 0.5rem;
+    }
+
+    .metric-change.positive {
+        color: #28a745;
+    }
+
+    .metric-change.negative {
+        color: #dc3545;
+    }
+
+    .metric-change.neutral {
+        color: #6c757d;
+    }
+
+    .metric-change i {
+        margin-right: 0.25rem;
+    }
+
+    /* チャートカード */
+    .chart-card,
+    .analysis-card {
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        margin-bottom: 2rem;
+    }
+
+    .chart-header,
+    .card-header {
+        padding: 1.5rem;
+        border-bottom: 1px solid #eee;
+        display: flex;
+        justify-content: between;
+        align-items: center;
+    }
+
+    .chart-header h4,
+    .card-header h4 {
+        margin: 0;
+        color: #333;
+        font-weight: 600;
+    }
+
+    .chart-container {
+        padding: 1.5rem;
+        height: 300px;
+        position: relative;
+    }
+
+    /* ランキングリスト */
+    .ranking-list {
+        padding: 1.5rem;
+        max-height: 300px;
+        overflow-y: auto;
+    }
+
+    .ranking-item {
+        display: flex;
+        align-items: center;
+        padding: 1rem;
+        border-bottom: 1px solid #eee;
+        transition: background-color 0.2s ease;
+    }
+
+    .ranking-item:hover {
+        background-color: #f8f9fa;
+    }
+
+    .ranking-position {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: #007bff;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        margin-right: 1rem;
+    }
+
+    .ranking-content {
+        flex: 1;
+    }
+
+    .lesson-name {
+        font-weight: 500;
+        color: #333;
+        margin-bottom: 0.25rem;
+    }
+
+    .lesson-stats {
+        font-size: 0.8rem;
+        color: #6c757d;
+    }
+
+    .lesson-stats span {
+        margin-right: 1rem;
+    }
+
+    .ranking-score {
+        font-size: 1.2rem;
+        font-weight: bold;
+        color: #007bff;
+    }
+
+    /* テーブルスタイル */
+    .table-responsive {
+        padding: 1.5rem;
+    }
+
+    .lesson-info {
+        min-width: 200px;
+    }
+
+    .lesson-title {
+        font-weight: 500;
+        color: #333;
+        margin-bottom: 0.25rem;
+    }
+
+    .completion-badge {
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.8rem;
+        font-weight: 500;
+    }
+
+    .completion-badge.completion-high {
+        background: #d4edda;
+        color: #155724;
+    }
+
+    .completion-badge.completion-medium {
+        background: #fff3cd;
+        color: #856404;
+    }
+
+    .completion-badge.completion-low {
+        background: #f8d7da;
+        color: #721c24;
+    }
+
+    .rating .fas.fa-star {
+        color: #ddd;
+        font-size: 0.875rem;
+    }
+
+    .rating .fas.fa-star.active {
+        color: #ffc107;
+    }
+
+    .rating-value {
+        margin-left: 0.5rem;
+        font-size: 0.8rem;
+        color: #6c757d;
+    }
+
+    /* 学習者カード */
+    .student-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 1.5rem;
+        padding: 1.5rem;
+    }
+
+    .student-card {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 1.5rem;
+        border: 1px solid #eee;
+        text-align: center;
+        transition: transform 0.2s ease;
+    }
+
+    .student-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    .student-avatar {
+        font-size: 3rem;
+        color: #6c757d;
+        margin-bottom: 1rem;
+    }
+
+    .student-info h5 {
+        color: #333;
+        margin-bottom: 0.25rem;
+    }
+
+    .class-info {
+        font-size: 0.8rem;
+        color: #6c757d;
+        margin-bottom: 1rem;
+    }
+
+    .student-metrics {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .metric {
+        text-align: center;
+    }
+
+    .metric-label {
+        display: block;
+        font-size: 0.7rem;
+        color: #6c757d;
+        margin-bottom: 0.25rem;
+    }
+
+    .metric-value {
+        display: block;
+        font-size: 1.1rem;
+        font-weight: bold;
+        color: #333;
+    }
+
+    .student-status {
+        margin-top: 1rem;
+    }
+
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        font-size: 0.8rem;
+        font-weight: 500;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+    }
+
+    .status-badge.status-excellent {
+        background: #d4edda;
+        color: #155724;
+    }
+
+    .status-badge.status-good {
+        background: #d1ecf1;
+        color: #0c5460;
+    }
+
+    .status-badge.status-attention {
+        background: #fff3cd;
+        color: #856404;
+    }
+
+    .status-badge.status-normal {
+        background: #e2e3e5;
+        color: #495057;
+    }
+
+    /* 空状態 */
+    .no-data,
+    .no-students {
+        text-align: center;
+        padding: 3rem;
+    }
+
+    /* レスポンシブ対応 */
+    @media (max-width: 768px) {
+        .lesson-analytics-container {
+            padding: 1rem 0.5rem;
+        }
+
+        .header-actions {
+            margin-top: 1rem;
+        }
+
+        .header-actions .btn {
+            margin: 0.25rem;
+            font-size: 0.875rem;
+        }
+
+        .analytics-filters .row {
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .metric-card {
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .metric-icon {
+            margin: 0 0 1rem 0;
+        }
+
+        .chart-container {
+            height: 250px;
+        }
+
+        .student-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .student-metrics {
+            grid-template-columns: 1fr;
+            gap: 0.25rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// チャート初期化
+let progressChart, difficultyChart, timeDistributionChart;
+
+document.addEventListener('DOMContentLoaded', function() {
+    initializeCharts();
+});
+
+function initializeCharts() {
+    // 進捗推移チャート
+    const progressCtx = document.getElementById('progress-chart').getContext('2d');
+    progressChart = new Chart(progressCtx, {
+        type: 'line',
+        data: {
+            labels: {{ chart_data.progress_labels | tojson if chart_data else '[]' | safe }},
+            datasets: [{
+                label: '平均進捗率',
+                data: {{ chart_data.progress_data | tojson if chart_data else '[]' | safe }},
+                borderColor: '#007bff',
+                backgroundColor: 'rgba(0, 123, 255, 0.1)',
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100,
+                    ticks: {
+                        callback: function(value) {
+                            return value + '%';
+                        }
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                }
+            }
+        }
+    });
+
+    // 難易度別完了率チャート
+    const difficultyCtx = document.getElementById('difficulty-chart').getContext('2d');
+    difficultyChart = new Chart(difficultyCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['レベル1', 'レベル2', 'レベル3', 'レベル4', 'レベル5'],
+            datasets: [{
+                data: {{ chart_data.difficulty_data | tojson if chart_data else '[0,0,0,0,0]' | safe }},
+                backgroundColor: [
+                    '#28a745',
+                    '#17a2b8',
+                    '#007bff',
+                    '#ffc107',
+                    '#dc3545'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+
+    // 学習時間分布チャート
+    const timeCtx = document.getElementById('time-distribution-chart').getContext('2d');
+    timeDistributionChart = new Chart(timeCtx, {
+        type: 'bar',
+        data: {
+            labels: ['0-15分', '16-30分', '31-45分', '46-60分', '60分以上'],
+            datasets: [{
+                label: '学習者数',
+                data: {{ chart_data.time_distribution | tojson if chart_data else '[0,0,0,0,0]' | safe }},
+                backgroundColor: '#17a2b8'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                }
+            }
+        }
+    });
+}
+
+// チャートタイプ変更
+document.addEventListener('change', function(e) {
+    if (e.target.name === 'chart-type') {
+        const chartType = e.target.id === 'line-chart' ? 'line' : 'bar';
+        progressChart.config.type = chartType;
+        progressChart.update();
+    }
+});
+
+// 分析データ更新
+function updateAnalytics() {
+    const period = document.getElementById('period-filter').value;
+    const curriculumId = document.getElementById('curriculum-filter').value;
+    const classId = document.getElementById('class-filter').value;
+    const lessonId = document.getElementById('lesson-filter').value;
+    
+    const params = new URLSearchParams({
+        period: period,
+        curriculum_id: curriculumId || '',
+        class_id: classId || '',
+        lesson_id: lessonId || ''
+    });
+    
+    fetch(`/lesson-system/analytics/data?${params}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                updateMetrics(data.metrics);
+                updateCharts(data.charts);
+                updateTable(data.lessons);
+            }
+        })
+        .catch(error => {
+            console.error('Analytics update error:', error);
+        });
+}
+
+// メトリクス更新
+function updateMetrics(metrics) {
+    document.getElementById('total-students').textContent = metrics.total_students;
+    document.getElementById('avg-progress').textContent = metrics.avg_progress + '%';
+    document.getElementById('avg-time').textContent = metrics.avg_time + '分';
+    document.getElementById('completion-rate').textContent = metrics.completion_rate + '%';
+}
+
+// チャート更新
+function updateCharts(chartData) {
+    progressChart.data.labels = chartData.progress_labels;
+    progressChart.data.datasets[0].data = chartData.progress_data;
+    progressChart.update();
+    
+    difficultyChart.data.datasets[0].data = chartData.difficulty_data;
+    difficultyChart.update();
+    
+    timeDistributionChart.data.datasets[0].data = chartData.time_distribution;
+    timeDistributionChart.update();
+}
+
+// テーブル更新
+function updateTable(lessons) {
+    const tbody = document.querySelector('#analytics-table tbody');
+    tbody.innerHTML = '';
+    
+    lessons.forEach(lesson => {
+        const row = createTableRow(lesson);
+        tbody.appendChild(row);
+    });
+}
+
+function createTableRow(lesson) {
+    const row = document.createElement('tr');
+    row.innerHTML = `
+        <td>
+            <div class="lesson-info">
+                <div class="lesson-title">${lesson.title}</div>
+                <small class="text-muted">${lesson.curriculum_title}</small>
+            </div>
+        </td>
+        <td><span class="badge bg-primary">${lesson.student_count}</span></td>
+        <td>
+            <div class="progress" style="height: 20px;">
+                <div class="progress-bar" style="width: ${lesson.avg_progress}%">
+                    ${lesson.avg_progress}%
+                </div>
+            </div>
+        </td>
+        <td>${lesson.avg_time_spent}分</td>
+        <td>
+            <span class="completion-badge completion-${lesson.completion_rate >= 80 ? 'high' : lesson.completion_rate >= 60 ? 'medium' : 'low'}">
+                ${lesson.completion_rate}%
+            </span>
+        </td>
+        <td>
+            <div class="rating">
+                ${Array.from({length: 5}, (_, i) => 
+                    `<i class="fas fa-star ${i < lesson.avg_rating ? 'active' : ''}"></i>`
+                ).join('')}
+                <span class="rating-value">${lesson.avg_rating}/5</span>
+            </div>
+        </td>
+        <td>${lesson.last_activity || '-'}</td>
+        <td>
+            <div class="btn-group" role="group">
+                <a href="/lesson-system/lesson/${lesson.id}" class="btn btn-sm btn-outline-info" title="詳細">
+                    <i class="fas fa-eye"></i>
+                </a>
+                <a href="/lesson-system/analytics/${lesson.id}" class="btn btn-sm btn-outline-success" title="個別分析">
+                    <i class="fas fa-chart-line"></i>
+                </a>
+            </div>
+        </td>
+    `;
+    return row;
+}
+
+// データ更新
+function refreshAnalytics() {
+    const button = event.target;
+    const originalText = button.innerHTML;
+    
+    button.disabled = true;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 更新中...';
+    
+    updateAnalytics();
+    
+    setTimeout(() => {
+        button.disabled = false;
+        button.innerHTML = originalText;
+    }, 2000);
+}
+
+// エクスポート機能
+function exportAnalytics() {
+    const period = document.getElementById('period-filter').value;
+    const curriculumId = document.getElementById('curriculum-filter').value;
+    const classId = document.getElementById('class-filter').value;
+    const lessonId = document.getElementById('lesson-filter').value;
+    
+    const params = new URLSearchParams({
+        period: period,
+        curriculum_id: curriculumId || '',
+        class_id: classId || '',
+        lesson_id: lessonId || '',
+        format: 'pdf'
+    });
+    
+    window.open(`/lesson-system/analytics/export?${params}`, '_blank');
+}
+
+function exportTableData() {
+    const period = document.getElementById('period-filter').value;
+    const params = new URLSearchParams({
+        period: period,
+        format: 'csv'
+    });
+    
+    window.open(`/lesson-system/analytics/export-table?${params}`, '_blank');
+}
+
+// 学習者フィルタリング
+function identifyAtRiskStudents() {
+    const studentCards = document.querySelectorAll('.student-card');
+    
+    studentCards.forEach(card => {
+        const statusBadge = card.querySelector('.status-badge');
+        if (statusBadge && statusBadge.classList.contains('status-attention')) {
+            card.style.display = 'block';
+            card.style.border = '2px solid #ffc107';
+        } else {
+            card.style.display = 'none';
+        }
+    });
+}
+
+function identifyTopPerformers() {
+    const studentCards = document.querySelectorAll('.student-card');
+    
+    studentCards.forEach(card => {
+        const statusBadge = card.querySelector('.status-badge');
+        if (statusBadge && statusBadge.classList.contains('status-excellent')) {
+            card.style.display = 'block';
+            card.style.border = '2px solid #28a745';
+        } else {
+            card.style.display = 'none';
+        }
+    });
+}
+</script>
+{% endblock %}

@@ -1,0 +1,401 @@
+{% extends 'base.html' %}
+
+{% block title %}承認詳細 | QuestEd{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-header">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item">
+                            <a href="{{ url_for('approval_system.teacher_pending_approvals') }}">承認待ち一覧</a>
+                        </li>
+                        <li class="breadcrumb-item active" aria-current="page">承認詳細</li>
+                    </ol>
+                </nav>
+                <h2><i class="fas fa-clipboard-check"></i> 承認詳細</h2>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-user-graduate"></i> 学習完了申請詳細
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="info-group">
+                                <label class="info-label">学生名</label>
+                                <p class="info-value">{{ approval_detail.student_name }}</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="info-group">
+                                <label class="info-label">単元名</label>
+                                <p class="info-value">{{ approval_detail.unit_title }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="info-group">
+                                <label class="info-label">申請日時</label>
+                                <p class="info-value">
+                                    {% if approval_detail.request_date %}
+                                        {{ approval_detail.request_date.strftime('%Y年%m月%d日 %H:%M') }}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="info-group">
+                                <label class="info-label">現在の状態</label>
+                                <p class="info-value">
+                                    {% if approval_detail.status == 'pending' %}
+                                        <span class="badge bg-warning">承認待ち</span>
+                                    {% elif approval_detail.status == 'approved' %}
+                                        <span class="badge bg-success">承認済み</span>
+                                    {% elif approval_detail.status == 'rejected' %}
+                                        <span class="badge bg-danger">却下済み</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">未設定</span>
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="info-group">
+                                <label class="info-label">進捗率</label>
+                                <div class="progress mt-2" style="height: 25px;">
+                                    <div class="progress-bar" role="progressbar" 
+                                         style="width: {{ approval_detail.progress_percentage or 0 }}%"
+                                         aria-valuenow="{{ approval_detail.progress_percentage or 0 }}" 
+                                         aria-valuemin="0" aria-valuemax="100">
+                                        {{ approval_detail.progress_percentage or 0 }}%
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {% if approval_detail.notes %}
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="info-group">
+                                <label class="info-label">学生からの申請メモ</label>
+                                <div class="alert alert-info">
+                                    <i class="fas fa-comment"></i>
+                                    {{ approval_detail.notes }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if approval_detail.approval_comment %}
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="info-group">
+                                <label class="info-label">承認・却下コメント</label>
+                                <div class="alert alert-secondary">
+                                    <i class="fas fa-user-tie"></i>
+                                    {{ approval_detail.approval_comment }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if approval_detail.approved_at %}
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="info-group">
+                                <label class="info-label">処理日時</label>
+                                <p class="info-value">
+                                    {{ approval_detail.approved_at.strftime('%Y年%m月%d日 %H:%M') }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-cogs"></i> 操作パネル
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if approval_detail.status == 'pending' %}
+                        <div class="d-grid gap-2">
+                            <button type="button" class="btn btn-success" 
+                                    onclick="showApprovalModal({{ approval_detail.id }}, '{{ approval_detail.student_name }}', '{{ approval_detail.unit_title }}')">
+                                <i class="fas fa-check"></i> 承認する
+                            </button>
+                            <button type="button" class="btn btn-danger" 
+                                    onclick="showRejectionModal({{ approval_detail.id }}, '{{ approval_detail.student_name }}', '{{ approval_detail.unit_title }}')">
+                                <i class="fas fa-times"></i> 却下する
+                            </button>
+                        </div>
+                    {% elif approval_detail.status == 'approved' %}
+                        <div class="alert alert-success">
+                            <i class="fas fa-check-circle"></i>
+                            この申請は承認済みです
+                        </div>
+                    {% elif approval_detail.status == 'rejected' %}
+                        <div class="alert alert-danger">
+                            <i class="fas fa-times-circle"></i>
+                            この申請は却下済みです
+                        </div>
+                    {% endif %}
+                    
+                    <hr>
+                    
+                    <div class="d-grid">
+                        <a href="{{ url_for('approval_system.teacher_pending_approvals') }}" 
+                           class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left"></i> 一覧に戻る
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-info-circle"></i> 承認ガイド
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <h6><i class="fas fa-lightbulb"></i> 承認の判断基準</h6>
+                        <ul class="mb-0">
+                            <li>進捗率が80%以上であること</li>
+                            <li>学習内容の理解度が適切であること</li>
+                            <li>提出物の品質が基準を満たしていること</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="alert alert-warning">
+                        <h6><i class="fas fa-exclamation-triangle"></i> 却下する場合</h6>
+                        <ul class="mb-0">
+                            <li>具体的な改善点を明記</li>
+                            <li>学習のヒントを提供</li>
+                            <li>再申請への道筋を示す</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 承認モーダル -->
+<div class="modal fade" id="approvalModal" tabindex="-1" aria-labelledby="approvalModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="approvalModalLabel">
+                    <i class="fas fa-check-circle text-success"></i> 承認確認
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>以下の申請を承認してもよろしいですか？</p>
+                <div class="alert alert-info">
+                    <strong>学生:</strong> <span id="approvalStudentName"></span><br>
+                    <strong>単元:</strong> <span id="approvalUnitTitle"></span>
+                </div>
+                <div class="mb-3">
+                    <label for="approvalComment" class="form-label">承認コメント（任意）</label>
+                    <textarea class="form-control" id="approvalComment" rows="3" 
+                              placeholder="承認に関するコメントを入力してください"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">キャンセル</button>
+                <button type="button" class="btn btn-success" onclick="approveRequest()">
+                    <i class="fas fa-check"></i> 承認する
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 却下モーダル -->
+<div class="modal fade" id="rejectionModal" tabindex="-1" aria-labelledby="rejectionModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="rejectionModalLabel">
+                    <i class="fas fa-times-circle text-danger"></i> 却下確認
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>以下の申請を却下してもよろしいですか？</p>
+                <div class="alert alert-warning">
+                    <strong>学生:</strong> <span id="rejectionStudentName"></span><br>
+                    <strong>単元:</strong> <span id="rejectionUnitTitle"></span>
+                </div>
+                <div class="mb-3">
+                    <label for="rejectionComment" class="form-label">却下理由 <span class="text-danger">*</span></label>
+                    <textarea class="form-control" id="rejectionComment" rows="3" 
+                              placeholder="却下理由を具体的に入力してください（学生への改善指示）" required></textarea>
+                    <div class="form-text">学生が改善できるよう、具体的な指示を含めてください</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">キャンセル</button>
+                <button type="button" class="btn btn-danger" onclick="rejectRequest()">
+                    <i class="fas fa-times"></i> 却下する
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentRequestId = null;
+
+function showApprovalModal(requestId, studentName, unitTitle) {
+    currentRequestId = requestId;
+    document.getElementById('approvalStudentName').textContent = studentName;
+    document.getElementById('approvalUnitTitle').textContent = unitTitle;
+    document.getElementById('approvalComment').value = '';
+    new bootstrap.Modal(document.getElementById('approvalModal')).show();
+}
+
+function showRejectionModal(requestId, studentName, unitTitle) {
+    currentRequestId = requestId;
+    document.getElementById('rejectionStudentName').textContent = studentName;
+    document.getElementById('rejectionUnitTitle').textContent = unitTitle;
+    document.getElementById('rejectionComment').value = '';
+    new bootstrap.Modal(document.getElementById('rejectionModal')).show();
+}
+
+function approveRequest() {
+    if (!currentRequestId) return;
+    
+    const comment = document.getElementById('approvalComment').value;
+    
+    fetch(`/approval-system/teacher/approve/${currentRequestId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            comment: comment
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            bootstrap.Modal.getInstance(document.getElementById('approvalModal')).hide();
+            showAlert('success', data.message);
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000);
+        } else {
+            showAlert('danger', data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showAlert('danger', 'エラーが発生しました');
+    });
+}
+
+function rejectRequest() {
+    if (!currentRequestId) return;
+    
+    const comment = document.getElementById('rejectionComment').value.trim();
+    
+    if (!comment) {
+        showAlert('warning', '却下理由を入力してください');
+        return;
+    }
+    
+    fetch(`/approval-system/teacher/reject/${currentRequestId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            comment: comment
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            bootstrap.Modal.getInstance(document.getElementById('rejectionModal')).hide();
+            showAlert('success', data.message);
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000);
+        } else {
+            showAlert('danger', data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showAlert('danger', 'エラーが発生しました');
+    });
+}
+
+function showAlert(type, message) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    document.querySelector('.container-fluid').insertBefore(alertDiv, document.querySelector('.row'));
+    
+    setTimeout(() => {
+        alertDiv.remove();
+    }, 5000);
+}
+</script>
+
+<style>
+.info-group {
+    margin-bottom: 1rem;
+}
+
+.info-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #6c757d;
+    margin-bottom: 0.25rem;
+    display: block;
+}
+
+.info-value {
+    font-size: 1rem;
+    color: #495057;
+    margin-bottom: 0;
+}
+
+.page-header {
+    margin-bottom: 2rem;
+}
+</style>
+{% endblock %}

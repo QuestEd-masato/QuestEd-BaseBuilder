@@ -140,7 +140,8 @@ def learning_portal():
                         ).first()
                         
                         if lesson_progress:
-                            if lesson_progress.is_completed:
+                            # Phase5: 承認済みレッスンのみを完了とする
+                            if hasattr(lesson_progress, 'approval_status') and lesson_progress.approval_status == 'approved':
                                 completed_lessons += 1
                             elif lesson_progress.completion_percentage > 0:
                                 in_progress_lessons += 1
@@ -352,146 +353,6 @@ def curriculum_direct_access(curriculum_id):
 
 
 # ============================================
-# レッスンシステム機能
+# レッスンシステム機能は新しいモジュール式システムに移行済み
+# 旧機能は削除済み - lesson_system ブループリントを使用
 # ============================================
-
-@learning_bp.route("/curriculum/<int:curriculum_id>/lessons")
-@login_required
-@student_required
-def curriculum_lessons(curriculum_id):
-    """カリキュラムのレッスン一覧表示"""
-    try:
-        # レッスンモデルの遅延インポート
-        LESSON_SYSTEM_AVAILABLE = get_lesson_models()
-        
-        current_app.logger.info(f"curriculum_lessons called for curriculum_id: {curriculum_id}")
-        current_app.logger.info(f"LESSON_SYSTEM_AVAILABLE: {LESSON_SYSTEM_AVAILABLE}")
-        current_app.logger.info(f"CurriculumLesson is None: {CurriculumLesson is None}")
-        
-        # レッスンシステムが利用可能かチェック
-        if not LESSON_SYSTEM_AVAILABLE or CurriculumLesson is None:
-            current_app.logger.error("Lesson system models not available")
-            flash("レッスンシステムが利用できません。", "error")
-            return redirect(url_for("student_learning.learning_portal"))
-            
-        curriculum = Curriculum.query.get_or_404(curriculum_id)
-        current_app.logger.info(f"Found curriculum: {curriculum.title}")
-        
-        # レッスン一覧を取得（順序付き）
-        try:
-            lessons = CurriculumLesson.query.filter_by(curriculum_id=curriculum_id)\
-                .order_by(CurriculumLesson.lesson_number).all()
-            current_app.logger.info(f"Found {len(lessons)} lessons for curriculum {curriculum_id}")
-        except Exception as lesson_error:
-            current_app.logger.error(f"Failed to fetch lessons: {str(lesson_error)}")
-            flash("レッスン一覧の取得に失敗しました。", "error")
-            return redirect(url_for("student_learning.learning_portal"))
-            
-        # 学生の進捗データを取得
-        lesson_progresses = {}
-        if lessons:
-            try:
-                progresses = StudentLessonProgress.query.filter_by(
-                    student_id=current_user.id
-                ).filter(
-                    StudentLessonProgress.lesson_id.in_([l.id for l in lessons])
-                ).all()
-                lesson_progresses = {p.lesson_id: p for p in progresses}
-            except Exception as progress_error:
-                current_app.logger.error(f"Failed to fetch lesson progress: {str(progress_error)}")
-                # 進捗データが取得できなくても続行
-        
-        # レッスンごとの進捗情報を付与
-        lesson_data = []
-        for lesson in lessons:
-            progress = lesson_progresses.get(lesson.id)
-            lesson_data.append({
-                'lesson': lesson,
-                'progress': progress,
-                'is_completed': progress.is_completed if progress else False,
-                'completion_percentage': progress.completion_percentage if progress else 0,
-                'can_start': True,  # 制限なしで開始可能
-            })
-        
-        current_app.logger.info(f"Rendering template with {len(lesson_data)} lesson items")
-        return render_template(
-            "student/curriculum_lessons.html",
-            curriculum=curriculum,
-            lesson_data=lesson_data
-        )
-        
-    except Exception as e:
-        current_app.logger.error(f"Curriculum lessons error: {str(e)}")
-        flash("レッスン一覧の読み込み中にエラーが発生しました。", "error")
-        return redirect(url_for("student_learning.learning_portal"))
-
-
-@learning_bp.route("/lesson/<int:lesson_id>")
-@login_required
-@student_required
-def lesson_detail(lesson_id):
-    """レッスン詳細表示と学習"""
-    try:
-        # レッスンモデルの遅延インポート
-        LESSON_SYSTEM_AVAILABLE = get_lesson_models()
-        
-        # レッスンシステムが利用可能かチェック
-        if not LESSON_SYSTEM_AVAILABLE or CurriculumLesson is None:
-            current_app.logger.error("Lesson system models not available")
-            flash("レッスンシステムが利用できません。", "error")
-            return redirect(url_for("student_learning.learning_portal"))
-            
-        lesson = CurriculumLesson.query.get_or_404(lesson_id)
-        
-        # 学生の進捗データ取得または作成
-        progress = StudentLessonProgress.query.filter_by(
-            student_id=current_user.id, lesson_id=lesson_id
-        ).first()
-        
-        if not progress:
-            # 進捗レコードが存在しない場合は作成
-            progress = StudentLessonProgress(
-                student_id=current_user.id,
-                lesson_id=lesson_id,
-                completion_percentage=0,
-                is_completed=False
-            )
-            db.session.add(progress)
-            db.session.commit()
-        
-        # レッスンのタスク一覧を取得
-        lesson_tasks = LessonTask.query.filter_by(lesson_id=lesson_id)\
-            .order_by(LessonTask.task_number).all()
-        
-        # タスクの完了状況を取得
-        task_checks = {}
-        if lesson_tasks:
-            checks = StudentTaskCheck.query.filter_by(
-                student_id=current_user.id
-            ).filter(
-                StudentTaskCheck.task_id.in_([t.id for t in lesson_tasks])
-            ).all()
-            task_checks = {c.task_id: c for c in checks}
-        
-        # タスクデータを構築
-        task_data = []
-        for task in lesson_tasks:
-            check = task_checks.get(task.id)
-            task_data.append({
-                'task': task,
-                'check': check,
-                'is_completed': check and check.status == TaskCheckStatus.COMPLETED,
-                'status': check.status if check else None
-            })
-        
-        return render_template(
-            "student/lesson_detail.html",
-            lesson=lesson,
-            progress=progress,
-            task_data=task_data
-        )
-        
-    except Exception as e:
-        current_app.logger.error(f"Lesson detail error: {str(e)}")
-        flash("レッスン詳細の読み込み中にエラーが発生しました。", "error")
-        return redirect(url_for("student_learning.curriculum_lessons", curriculum_id=lesson.curriculum_id))

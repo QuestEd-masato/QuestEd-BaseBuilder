@@ -146,6 +146,7 @@ def create_class():
 
 @class_management_bp.route("/class/<int:class_id>")
 @login_required
+@teacher_required
 def class_details(class_id):
     """クラス詳細"""
     class_obj = Class.query.get_or_404(class_id)

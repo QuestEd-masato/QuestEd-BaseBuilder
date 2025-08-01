@@ -111,7 +111,7 @@ def class_detail(class_id):
 
         # Calculate progress statistics
         completed_milestones = len(
-            [m for m in all_milestones if hasattr(m, "is_completed") and m.is_completed]
+            [m for m in all_milestones if getattr(m, "is_completed", False)]
         )
         total_milestones = len(all_milestones)
         progress_percentage = (

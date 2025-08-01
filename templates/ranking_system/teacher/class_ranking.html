@@ -1,0 +1,670 @@
+{% extends 'base.html' %}
+
+{% block title %}クラスランキング管理 | QuestEd{% endblock %}
+
+{% block content %}
+<div class="class-ranking-container">
+    <div class="page-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h2><i class="fas fa-chart-line"></i> クラスランキング管理</h2>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{{ url_for('teacher_dashboard.dashboard') }}">ダッシュボード</a></li>
+                        <li class="breadcrumb-item active">クラスランキング</li>
+                    </ol>
+                </nav>
+            </div>
+            <div class="header-actions">
+                <button class="btn btn-outline-primary" onclick="exportRankings()">
+                    <i class="fas fa-download"></i> ランキングエクスポート
+                </button>
+                <button class="btn btn-outline-secondary" onclick="refreshRankings()">
+                    <i class="fas fa-sync-alt"></i> 更新
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- クラス選択 -->
+    <div class="class-selector">
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <label for="class-select" class="form-label">クラス選択</label>
+                <select class="form-select" id="class-select" onchange="changeClass()">
+                    <option value="">クラスを選択してください</option>
+                    {% for class in teacher_classes %}
+                    <option value="{{ class.id }}" {% if selected_class and selected_class.id == class.id %}selected{% endif %}>
+                        {{ class.name }} ({{ class.students|length }}名)
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-6">
+                {% if selected_class %}
+                <div class="class-info">
+                    <h5>{{ selected_class.name }}</h5>
+                    <p class="text-muted">学生数: {{ selected_class.students|length }}名</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    {% if selected_class and ranking_data %}
+    <!-- 統計概要 -->
+    <div class="ranking-overview">
+        <div class="row">
+            <div class="col-md-3">
+                <div class="overview-card active-students">
+                    <div class="card-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="card-content">
+                        <h3>{{ ranking_data.statistics.total_students }}</h3>
+                        <p>総学生数</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="overview-card active-today">
+                    <div class="card-icon">
+                        <i class="fas fa-user-check"></i>
+                    </div>
+                    <div class="card-content">
+                        <h3>{{ ranking_data.statistics.active_today }}</h3>
+                        <p>今日のアクティブ</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="overview-card activity-rate">
+                    <div class="card-icon">
+                        <i class="fas fa-percentage"></i>
+                    </div>
+                    <div class="card-content">
+                        <h3>{{ ranking_data.statistics.activity_rate|round(1) }}%</h3>
+                        <p>活動率</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="overview-card top-performer">
+                    <div class="card-icon">
+                        <i class="fas fa-trophy"></i>
+                    </div>
+                    <div class="card-content">
+                        <h3>{{ ranking_data.top_performers[0].full_name if ranking_data.top_performers else '-' }}</h3>
+                        <p>トップパフォーマー</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ランキング表示タブ -->
+    <div class="ranking-tabs">
+        <ul class="nav nav-tabs" id="rankingTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="lesson-tab" data-bs-toggle="tab" data-bs-target="#lesson-ranking" type="button" role="tab">
+                    <i class="fas fa-book-open"></i> レッスン進捗
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="vocabulary-tab" data-bs-toggle="tab" data-bs-target="#vocabulary-ranking" type="button" role="tab">
+                    <i class="fas fa-language"></i> 語彙習熟度
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="overall-tab" data-bs-toggle="tab" data-bs-target="#overall-ranking" type="button" role="tab">
+                    <i class="fas fa-star"></i> 総合ランキング
+                </button>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="rankingTabsContent">
+            <!-- レッスン進捗ランキング -->
+            <div class="tab-pane fade show active" id="lesson-ranking" role="tabpanel">
+                <div class="ranking-table-container">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>順位</th>
+                                    <th>学生</th>
+                                    <th>完了レッスン</th>
+                                    <th>完了率</th>
+                                    <th>平均進捗</th>
+                                    <th>学習時間</th>
+                                    <th>アクション</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for rank in ranking_data.lesson_progress %}
+                                <tr>
+                                    <td>
+                                        <span class="rank-badge rank-{{ rank.rank }}">{{ rank.rank }}</span>
+                                    </td>
+                                    <td>
+                                        <div class="student-info">
+                                            <strong>{{ rank.full_name or rank.username }}</strong>
+                                            <small class="text-muted d-block">{{ rank.username }}</small>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="lesson-count">{{ rank.completed_lessons }}/{{ rank.total_lessons }}</span>
+                                    </td>
+                                    <td>
+                                        <div class="progress" style="width: 100px;">
+                                            <div class="progress-bar" style="width: {{ rank.completion_rate }}%">
+                                                {{ rank.completion_rate }}%
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>{{ rank.avg_completion }}%</td>
+                                    <td>{{ rank.total_time_spent }}分</td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-primary" onclick="viewStudentDetail({{ rank.user_id }})">
+                                            <i class="fas fa-eye"></i> 詳細
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 語彙習熟度ランキング -->
+            <div class="tab-pane fade" id="vocabulary-ranking" role="tabpanel">
+                <div class="ranking-table-container">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>順位</th>
+                                    <th>学生</th>
+                                    <th>習得語彙数</th>
+                                    <th>平均習熟度</th>
+                                    <th>正答率</th>
+                                    <th>回答数</th>
+                                    <th>アクション</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for rank in ranking_data.vocabulary %}
+                                <tr>
+                                    <td>
+                                        <span class="rank-badge rank-{{ rank.rank }}">{{ rank.rank }}</span>
+                                    </td>
+                                    <td>
+                                        <div class="student-info">
+                                            <strong>{{ rank.full_name or rank.username }}</strong>
+                                            <small class="text-muted d-block">{{ rank.username }}</small>
+                                        </div>
+                                    </td>
+                                    <td>{{ rank.total_words }}</td>
+                                    <td>
+                                        <span class="proficiency-score">{{ rank.avg_proficiency }}</span>
+                                    </td>
+                                    <td>{{ rank.accuracy }}%</td>
+                                    <td>{{ rank.total_attempts }}</td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-primary" onclick="viewStudentDetail({{ rank.user_id }})">
+                                            <i class="fas fa-eye"></i> 詳細
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 総合ランキング -->
+            <div class="tab-pane fade" id="overall-ranking" role="tabpanel">
+                <div class="ranking-table-container">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>順位</th>
+                                    <th>学生</th>
+                                    <th>総合スコア</th>
+                                    <th>レッスン</th>
+                                    <th>語彙</th>
+                                    <th>活動</th>
+                                    <th>アクション</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for rank in ranking_data.overall %}
+                                <tr>
+                                    <td>
+                                        <span class="rank-badge rank-{{ rank.rank }}">{{ rank.rank }}</span>
+                                    </td>
+                                    <td>
+                                        <div class="student-info">
+                                            <strong>{{ rank.full_name or rank.username }}</strong>
+                                            <small class="text-muted d-block">{{ rank.username }}</small>
+                                        </div>
+                                    </td>
+                                    <td><strong>{{ rank.total_score }}</strong></td>
+                                    <td>{{ rank.lesson_score }}</td>
+                                    <td>{{ rank.vocab_score }}</td>
+                                    <td>{{ rank.activity_score }}</td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-primary" onclick="viewStudentDetail({{ rank.user_id }})">
+                                            <i class="fas fa-eye"></i> 詳細
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 週別活動グラフ -->
+    {% if ranking_data.statistics.weekly_activity %}
+    <div class="weekly-activity-chart">
+        <h4><i class="fas fa-chart-area"></i> 週別活動統計</h4>
+        <div class="chart-container">
+            <canvas id="weeklyActivityChart"></canvas>
+        </div>
+    </div>
+    {% endif %}
+
+    {% else %}
+    <!-- クラス未選択状態 -->
+    <div class="empty-state">
+        <div class="text-center py-5">
+            <i class="fas fa-chart-line fa-3x text-muted mb-3"></i>
+            <h5 class="text-muted">クラスを選択してください</h5>
+            <p class="text-muted">上記のドロップダウンからクラスを選択して、ランキングを表示しましょう</p>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .class-ranking-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 2rem 1rem;
+    }
+
+    .page-header {
+        margin-bottom: 2rem;
+    }
+
+    .page-header h2 {
+        color: #0056b3;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+
+    .breadcrumb {
+        background: none;
+        padding: 0;
+    }
+
+    .header-actions .btn {
+        margin-left: 0.5rem;
+    }
+
+    /* クラス選択 */
+    .class-selector {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 8px;
+        margin-bottom: 2rem;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .class-info h5 {
+        margin: 0;
+        color: #333;
+        font-weight: 600;
+    }
+
+    .class-info p {
+        margin: 0;
+        color: #6c757d;
+    }
+
+    /* 統計概要 */
+    .ranking-overview {
+        margin-bottom: 2rem;
+    }
+
+    .overview-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        display: flex;
+        align-items: center;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease;
+        height: 100%;
+    }
+
+    .overview-card:hover {
+        transform: translateY(-2px);
+    }
+
+    .overview-card.active-students {
+        border-left: 4px solid #007bff;
+    }
+
+    .overview-card.active-today {
+        border-left: 4px solid #28a745;
+    }
+
+    .overview-card.activity-rate {
+        border-left: 4px solid #17a2b8;
+    }
+
+    .overview-card.top-performer {
+        border-left: 4px solid #ffc107;
+    }
+
+    .card-icon {
+        font-size: 2.5rem;
+        margin-right: 1rem;
+        opacity: 0.8;
+    }
+
+    .card-icon i {
+        color: #6c757d;
+    }
+
+    .card-content h3 {
+        font-size: 2rem;
+        font-weight: bold;
+        margin: 0;
+        color: #333;
+    }
+
+    .card-content p {
+        margin: 0;
+        color: #6c757d;
+        font-size: 0.9rem;
+    }
+
+    /* ランキングタブ */
+    .ranking-tabs {
+        margin-bottom: 2rem;
+    }
+
+    .nav-tabs .nav-link {
+        color: #6c757d;
+        border: none;
+        padding: 1rem 1.5rem;
+        font-weight: 500;
+    }
+
+    .nav-tabs .nav-link.active {
+        color: #007bff;
+        border-bottom: 2px solid #007bff;
+        background: none;
+    }
+
+    .nav-tabs .nav-link:hover {
+        color: #007bff;
+        border-color: transparent;
+    }
+
+    /* ランキングテーブル */
+    .ranking-table-container {
+        background: white;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .table {
+        margin: 0;
+    }
+
+    .table thead th {
+        border-bottom: 2px solid #495057;
+        font-weight: 600;
+        font-size: 0.875rem;
+        padding: 1rem 0.75rem;
+    }
+
+    .table tbody td {
+        padding: 1rem 0.75rem;
+        vertical-align: middle;
+    }
+
+    .rank-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 2rem;
+        height: 2rem;
+        border-radius: 50%;
+        font-weight: bold;
+        font-size: 0.875rem;
+    }
+
+    .rank-badge.rank-1 {
+        background: #ffd700;
+        color: #fff;
+    }
+
+    .rank-badge.rank-2 {
+        background: #c0c0c0;
+        color: #fff;
+    }
+
+    .rank-badge.rank-3 {
+        background: #cd7f32;
+        color: #fff;
+    }
+
+    .rank-badge:not(.rank-1):not(.rank-2):not(.rank-3) {
+        background: #6c757d;
+        color: #fff;
+    }
+
+    .student-info strong {
+        color: #333;
+    }
+
+    .student-info small {
+        font-size: 0.75rem;
+    }
+
+    .lesson-count {
+        font-weight: 500;
+        color: #495057;
+    }
+
+    .proficiency-score {
+        color: #28a745;
+        font-weight: 500;
+    }
+
+    /* 週別活動グラフ */
+    .weekly-activity-chart {
+        background: white;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-top: 2rem;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .weekly-activity-chart h4 {
+        color: #333;
+        margin-bottom: 1rem;
+        font-weight: 600;
+    }
+
+    .chart-container {
+        position: relative;
+        height: 300px;
+    }
+
+    /* 空状態 */
+    .empty-state {
+        background: white;
+        border-radius: 8px;
+        padding: 3rem;
+        text-align: center;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    /* レスポンシブ対応 */
+    @media (max-width: 1200px) {
+        .class-selector .row {
+            flex-direction: column;
+            gap: 1rem;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .class-ranking-container {
+            padding: 1rem 0.5rem;
+        }
+
+        .header-actions {
+            margin-top: 1rem;
+        }
+
+        .header-actions .btn {
+            margin: 0.25rem;
+            width: 100%;
+        }
+
+        .overview-card {
+            margin-bottom: 1rem;
+        }
+
+        .table-responsive {
+            font-size: 0.875rem;
+        }
+
+        .nav-tabs .nav-link {
+            padding: 0.75rem 1rem;
+            font-size: 0.875rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// クラス変更機能
+function changeClass() {
+    const classSelect = document.getElementById('class-select');
+    const classId = classSelect.value;
+    
+    if (classId) {
+        const currentUrl = new URL(window.location.href);
+        currentUrl.searchParams.set('class_id', classId);
+        window.location.href = currentUrl.toString();
+    }
+}
+
+// ランキング更新機能
+function refreshRankings() {
+    location.reload();
+}
+
+// エクスポート機能
+function exportRankings() {
+    const classSelect = document.getElementById('class-select');
+    const classId = classSelect.value;
+    
+    if (!classId) {
+        alert('クラスを選択してください。');
+        return;
+    }
+    
+    const exportUrl = `/ranking-system/api/export?class_id=${classId}`;
+    window.open(exportUrl, '_blank');
+}
+
+// 学生詳細表示
+function viewStudentDetail(userId) {
+    const detailUrl = `/student-learning/student-detail/${userId}`;
+    window.open(detailUrl, '_blank');
+}
+
+// 週別活動グラフ（Chart.js使用）
+{% if ranking_data.statistics.weekly_activity %}
+document.addEventListener('DOMContentLoaded', function() {
+    const ctx = document.getElementById('weeklyActivityChart').getContext('2d');
+    
+    const weeklyData = {{ ranking_data.statistics.weekly_activity | tojson }};
+    const labels = weeklyData.map(item => item.date);
+    const activeUsers = weeklyData.map(item => item.active_users);
+    const totalActivities = weeklyData.map(item => item.total_activities);
+    
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'アクティブユーザー数',
+                data: activeUsers,
+                borderColor: '#007bff',
+                backgroundColor: 'rgba(0, 123, 255, 0.1)',
+                tension: 0.1
+            }, {
+                label: '総活動数',
+                data: totalActivities,
+                borderColor: '#28a745',
+                backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                tension: 0.1,
+                yAxisID: 'y1'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    type: 'linear',
+                    display: true,
+                    position: 'left',
+                    title: {
+                        display: true,
+                        text: 'アクティブユーザー数'
+                    }
+                },
+                y1: {
+                    type: 'linear',
+                    display: true,
+                    position: 'right',
+                    title: {
+                        display: true,
+                        text: '総活動数'
+                    },
+                    grid: {
+                        drawOnChartArea: false,
+                    },
+                }
+            },
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top'
+                }
+            }
+        }
+    });
+});
+{% endif %}
+</script>
+{% endblock %}

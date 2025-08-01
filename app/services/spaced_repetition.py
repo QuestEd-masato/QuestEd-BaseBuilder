@@ -19,8 +19,8 @@ from app.models import (
     User,
 )
 
-# StudentWeakness は RDSに存在しないためコメントアウト
-from app.services.weakness_analyzer import WeaknessAnalyzer
+# Phase6-A: 新しい分割済みWeaknessAnalyzerを使用
+from app.services.weakness import WeaknessAnalyzer
 from app.utils.exceptions import InsufficientDataError, SpacedRepetitionError
 from extensions import db
 

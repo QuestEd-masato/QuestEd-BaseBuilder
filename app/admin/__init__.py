@@ -168,6 +168,91 @@ def delete_user(user_id):
     return redirect(url_for("admin_panel.users"))
 
 
+@admin_bp.route("/users/<int:user_id>")
+@login_required
+@admin_required
+def user_detail(user_id):
+    """ユーザー詳細表示（管理者専用）"""
+    user = User.query.get_or_404(user_id)
+    return render_template("profile.html", 
+                         user=user, 
+                         readonly=True,
+                         admin_view=True)
+
+
+@admin_bp.route("/users/<int:user_id>/edit", methods=["GET", "POST"])
+@login_required
+@admin_required
+def user_edit(user_id):
+    """ユーザー編集（管理者専用）"""
+    user = User.query.get_or_404(user_id)
+    
+    if request.method == "POST":
+        # フォームデータ取得
+        username = request.form.get("username")
+        full_name = request.form.get("full_name")
+        email = request.form.get("email")
+        
+        # 生徒の場合は学年・学級・番号も取得
+        if user.role == "student":
+            grade = request.form.get("grade")
+            classroom = request.form.get("classroom")
+            student_number = request.form.get("student_number")
+        
+        # 入力検証
+        if not username or not email:
+            flash("ユーザー名とメールアドレスは必須です。")
+            return render_template("profile.html", user=user, readonly=False, admin_view=True)
+        
+        # 他のユーザーとの重複チェック（対象ユーザー以外）
+        existing_user = User.query.filter(
+            User.username == username, User.id != user_id
+        ).first()
+        if existing_user:
+            flash("そのユーザー名は既に使用されています。")
+            return render_template("profile.html", user=user, readonly=False, admin_view=True)
+        
+        existing_email = User.query.filter(
+            User.email == email, User.id != user_id
+        ).first()
+        if existing_email:
+            flash("そのメールアドレスは既に使用されています。")
+            return render_template("profile.html", user=user, readonly=False, admin_view=True)
+        
+        try:
+            # ユーザー情報を更新
+            user.username = username
+            user.full_name = full_name
+            user.email = email
+            
+            # 生徒の場合は学年・学級・番号も更新
+            if user.role == "student":
+                if grade:
+                    user.grade = int(grade) if grade else None
+                else:
+                    user.grade = None
+                
+                user.classroom = classroom if classroom else None
+                user.student_number = student_number if student_number else None
+            
+            db.session.commit()
+            
+            flash(f"ユーザー「{user.username}」の情報を更新しました。")
+            return redirect(url_for("admin_panel.user_detail", user_id=user_id))
+            
+        except Exception as e:
+            db.session.rollback()
+            logging.error(f"ユーザー更新エラー: {e}")
+            flash("ユーザー情報の更新に失敗しました。")
+            return render_template("profile.html", user=user, readonly=False, admin_view=True)
+    
+    # GETリクエスト: 編集フォーム表示
+    return render_template("profile.html", 
+                         user=user, 
+                         readonly=False,
+                         admin_view=True)
+
+
 # 学校関連のルートはschool_managementモジュールに移動
 
 

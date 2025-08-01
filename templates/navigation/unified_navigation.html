@@ -1,0 +1,97 @@
+{% macro render_navigation(navigation_items, is_mobile=False) %}
+    {% if is_mobile %}
+        <!-- モバイル用ナビゲーション -->
+        <div class="mobile-menu-list">
+            {% for item in navigation_items %}
+                {% if item.submenu %}
+                    <div class="mobile-menu-item mobile-dropdown" data-target="mobile-menu-{{ loop.index }}">
+                        <i class="{{ item.icon }}"></i> {{ item.title }}
+                        <span class="dropdown-arrow">▼</span>
+                    </div>
+                    <div id="mobile-menu-{{ loop.index }}" class="mobile-submenu">
+                        {% for subitem in item.submenu %}
+                            <a href="{% if subitem.url != '#' %}{{ url_for(subitem.url) }}{% else %}#{% endif %}" class="mobile-submenu-item">
+                                <i class="{{ subitem.icon }}"></i> {{ subitem.title }}
+                            </a>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <a href="{% if item.url != '#' %}{{ url_for(item.url) }}{% else %}#{% endif %}" class="mobile-menu-item">
+                        <i class="{{ item.icon }}"></i> {{ item.title }}
+                    </a>
+                {% endif %}
+            {% endfor %}
+            
+            <!-- 共通項目 -->
+            <div class="mobile-menu-divider"></div>
+            <a href="{{ url_for('auth.profile') }}" class="mobile-menu-item">
+                <i class="fas fa-user"></i> プロフィール
+            </a>
+            <a href="{{ url_for('auth.logout') }}" class="mobile-menu-item">
+                <i class="fas fa-sign-out-alt"></i> ログアウト
+            </a>
+        </div>
+    {% else %}
+        <!-- デスクトップ用ナビゲーション -->
+        {% for item in navigation_items %}
+            {% if item.submenu %}
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle js-dropdown-toggle" href="#" role="button">
+                        <i class="{{ item.icon }}"></i> {{ item.title }} <span class="dropdown-arrow">▼</span>
+                    </a>
+                    <ul class="dropdown-menu">
+                        {% for subitem in item.submenu %}
+                            <li><a href="{% if subitem.url != '#' %}{{ url_for(subitem.url) }}{% else %}#{% endif %}">
+                                <i class="{{ subitem.icon }}"></i> {{ subitem.title }}
+                            </a></li>
+                        {% endfor %}
+                    </ul>
+                </li>
+            {% else %}
+                <li><a href="{% if item.url != '#' %}{{ url_for(item.url) }}{% else %}#{% endif %}">
+                    <i class="{{ item.icon }}"></i> {{ item.title }}
+                </a></li>
+            {% endif %}
+        {% endfor %}
+        
+        <!-- 共通項目 -->
+        <li><a href="{{ url_for('auth.profile') }}"><i class="fas fa-user"></i> プロフィール</a></li>
+        <li><a href="{{ url_for('auth.logout') }}"><i class="fas fa-sign-out-alt"></i> ログアウト</a></li>
+    {% endif %}
+{% endmacro %}
+
+{% macro render_breadcrumb(breadcrumbs) %}
+    {% if breadcrumbs and breadcrumbs|length > 1 %}
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                {% for crumb in breadcrumbs %}
+                    {% if loop.last %}
+                        <li class="breadcrumb-item active" aria-current="page">{{ crumb.title }}</li>
+                    {% else %}
+                        <li class="breadcrumb-item"><a href="{{ crumb.url }}">{{ crumb.title }}</a></li>
+                    {% endif %}
+                {% endfor %}
+            </ol>
+        </nav>
+    {% endif %}
+{% endmacro %}
+
+{% macro render_module_indicator(current_module) %}
+    {% if current_module %}
+        <div class="module-indicator">
+            <span class="module-badge module-{{ current_module }}">
+                {% if current_module == 'lesson_system' %}
+                    <i class="fas fa-book-open"></i> 学習システム
+                {% elif current_module == 'ranking_system' %}
+                    <i class="fas fa-trophy"></i> ランキング
+                {% elif current_module == 'approval_system' %}
+                    <i class="fas fa-clipboard-check"></i> 承認管理
+                {% elif current_module == 'admin' %}
+                    <i class="fas fa-cog"></i> 管理画面
+                {% else %}
+                    <i class="fas fa-home"></i> {{ current_module }}
+                {% endif %}
+            </span>
+        </div>
+    {% endif %}
+{% endmacro %}

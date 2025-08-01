@@ -66,16 +66,12 @@ from .modules.class_management import (
 
 # カリキュラム管理関数
 from .modules.curriculum_management import (
-    convert_curriculum_to_units,
     create_curriculum_form,
     delete_curriculum,
-    delete_unit,
     edit_curriculum,
-    edit_unit,
     export_curriculum,
     generate_curriculum,
     import_curriculum,
-    view_converted_units,
     view_curriculum,
     view_curriculums,
 )

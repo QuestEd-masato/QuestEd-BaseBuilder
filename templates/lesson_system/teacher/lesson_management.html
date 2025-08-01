@@ -1,0 +1,784 @@
+{% extends 'base.html' %}
+
+{% block title %}レッスン管理 | QuestEd Lesson System{% endblock %}
+
+{% block content %}
+<div class="lesson-management-container">
+    <div class="page-header">
+        <h2><i class="fas fa-book-open"></i> レッスン管理システム</h2>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('teacher_dashboard.dashboard') }}">ダッシュボード</a></li>
+                <li class="breadcrumb-item active">レッスン管理</li>
+            </ol>
+        </nav>
+    </div>
+    
+    <!-- 管理概要統計 -->
+    <div class="management-overview">
+        <div class="row">
+            <div class="col-md-3">
+                <div class="overview-card lessons">
+                    <div class="card-icon">
+                        <i class="fas fa-book"></i>
+                    </div>
+                    <div class="card-content">
+                        <h3>{{ lesson_stats.total_lessons if lesson_stats else 0 }}</h3>
+                        <p>総レッスン数</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="overview-card active">
+                    <div class="card-icon">
+                        <i class="fas fa-play-circle"></i>
+                    </div>
+                    <div class="card-content">
+                        <h3>{{ lesson_stats.active_lessons if lesson_stats else 0 }}</h3>
+                        <p>アクティブレッスン</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="overview-card students">
+                    <div class="card-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="card-content">
+                        <h3>{{ lesson_stats.total_students if lesson_stats else 0 }}</h3>
+                        <p>受講学生数</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="overview-card progress">
+                    <div class="card-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <div class="card-content">
+                        <h3>{{ lesson_stats.avg_progress if lesson_stats else 0 }}%</h3>
+                        <p>平均進捗率</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- フィルタとアクションバー -->
+    <div class="filter-action-bar">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <div class="d-flex gap-3 align-items-center">
+                    <!-- カリキュラム選択 -->
+                    <div class="filter-group">
+                        <label for="curriculum-filter" class="form-label mb-1">カリキュラム</label>
+                        <select class="form-select" id="curriculum-filter" onchange="filterLessons()">
+                            <option value="">全てのカリキュラム</option>
+                            {% if curriculums %}
+                                {% for curriculum in curriculums %}
+                                <option value="{{ curriculum.id }}">{{ curriculum.title }}</option>
+                                {% endfor %}
+                            {% endif %}
+                        </select>
+                    </div>
+
+                    <!-- 難易度フィルタ -->
+                    <div class="filter-group">
+                        <label for="difficulty-filter" class="form-label mb-1">難易度</label>
+                        <select class="form-select" id="difficulty-filter" onchange="filterLessons()">
+                            <option value="">全レベル</option>
+                            <option value="1">レベル 1</option>
+                            <option value="2">レベル 2</option>
+                            <option value="3">レベル 3</option>
+                            <option value="4">レベル 4</option>
+                            <option value="5">レベル 5</option>
+                        </select>
+                    </div>
+
+                    <!-- 状態フィルタ -->
+                    <div class="filter-group">
+                        <label for="status-filter" class="form-label mb-1">状態</label>
+                        <select class="form-select" id="status-filter" onchange="filterLessons()">
+                            <option value="">全状態</option>
+                            <option value="active">アクティブ</option>
+                            <option value="draft">下書き</option>
+                            <option value="archived">アーカイブ</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 text-end">
+                <div class="action-buttons">
+                    <button class="btn btn-outline-primary" onclick="exportLessons()">
+                        <i class="fas fa-download"></i> エクスポート
+                    </button>
+                    <a href="{{ url_for('lesson_system.create_lesson') }}" class="btn btn-success">
+                        <i class="fas fa-plus"></i> 新規レッスン作成
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- レッスン一覧テーブル -->
+    <div class="lessons-table-container">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        <th scope="col">
+                            <div class="d-flex align-items-center">
+                                <input type="checkbox" id="select-all" class="form-check-input me-2">
+                                レッスン名
+                            </div>
+                        </th>
+                        <th scope="col">カリキュラム</th>
+                        <th scope="col">難易度</th>
+                        <th scope="col">推定時間</th>
+                        <th scope="col">受講者数</th>
+                        <th scope="col">平均進捗</th>
+                        <th scope="col">状態</th>
+                        <th scope="col">最終更新</th>
+                        <th scope="col">アクション</th>
+                    </tr>
+                </thead>
+                <tbody id="lessons-table-body">
+                    {% if lessons %}
+                        {% for lesson in lessons %}
+                        <tr class="lesson-row" data-lesson-id="{{ lesson.id }}">
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <input type="checkbox" class="form-check-input me-2 lesson-checkbox" value="{{ lesson.id }}">
+                                    <div>
+                                        <div class="lesson-title">{{ lesson.title }}</div>
+                                        <small class="text-muted">#{{ lesson.lesson_number }}</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="curriculum-badge">{{ lesson.curriculum.title if lesson.curriculum else 'なし' }}</span>
+                            </td>
+                            <td>
+                                <div class="difficulty-indicator">
+                                    {% for i in range(1, 6) %}
+                                        <i class="fas fa-star {% if i <= lesson.difficulty_level %}active{% endif %}"></i>
+                                    {% endfor %}
+                                    <span class="ms-1">{{ lesson.difficulty_level }}/5</span>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="time-estimate">{{ lesson.estimated_minutes }}分</span>
+                            </td>
+                            <td>
+                                <span class="student-count">{{ lesson.student_count or 0 }}人</span>
+                            </td>
+                            <td>
+                                <div class="progress-container">
+                                    <div class="progress" style="height: 20px;">
+                                        <div class="progress-bar" style="width: {{ lesson.avg_progress or 0 }}%">
+                                            {{ lesson.avg_progress or 0 }}%
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="status-badge status-{{ lesson.status }}">
+                                    {% if lesson.status == 'active' %}
+                                        <i class="fas fa-check-circle"></i> アクティブ
+                                    {% elif lesson.status == 'draft' %}
+                                        <i class="fas fa-edit"></i> 下書き
+                                    {% elif lesson.status == 'archived' %}
+                                        <i class="fas fa-archive"></i> アーカイブ
+                                    {% endif %}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="update-date">{{ lesson.updated_at.strftime('%Y/%m/%d') if lesson.updated_at else '' }}</span>
+                            </td>
+                            <td>
+                                <div class="action-buttons-cell">
+                                    <div class="btn-group" role="group">
+                                        <a href="{{ url_for('lesson_system.lesson_detail', lesson_id=lesson.id) }}" 
+                                           class="btn btn-sm btn-outline-info" title="詳細">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{{ url_for('lesson_system.edit_lesson', lesson_id=lesson.id) }}" 
+                                           class="btn btn-sm btn-outline-primary" title="編集">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <a href="{{ url_for('lesson_system.lesson_analytics', lesson_id=lesson.id) }}" 
+                                           class="btn btn-sm btn-outline-success" title="分析">
+                                            <i class="fas fa-chart-bar"></i>
+                                        </a>
+                                        <button class="btn btn-sm btn-outline-danger" 
+                                                onclick="confirmDelete({{ lesson.id }}, '{{ lesson.title }}')" 
+                                                title="削除">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="9" class="text-center py-5">
+                                <div class="empty-state">
+                                    <i class="fas fa-book fa-3x text-muted mb-3"></i>
+                                    <h5 class="text-muted">レッスンがありません</h5>
+                                    <p class="text-muted">新しいレッスンを作成して学習コンテンツを管理しましょう</p>
+                                    <a href="{{ url_for('lesson_system.create_lesson') }}" class="btn btn-primary">
+                                        <i class="fas fa-plus"></i> 最初のレッスンを作成
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- 一括操作バー -->
+    <div class="bulk-actions-bar" id="bulk-actions" style="display: none;">
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <span id="selected-count">0</span> 件のレッスンが選択されています
+            </div>
+            <div class="col-md-6 text-end">
+                <div class="btn-group">
+                    <button class="btn btn-outline-primary" onclick="bulkEdit()">
+                        <i class="fas fa-edit"></i> 一括編集
+                    </button>
+                    <button class="btn btn-outline-success" onclick="bulkActivate()">
+                        <i class="fas fa-play"></i> 一括アクティブ化
+                    </button>
+                    <button class="btn btn-outline-warning" onclick="bulkArchive()">
+                        <i class="fas fa-archive"></i> 一括アーカイブ
+                    </button>
+                    <button class="btn btn-outline-danger" onclick="bulkDelete()">
+                        <i class="fas fa-trash"></i> 一括削除
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ページネーション -->
+    {% if pagination %}
+    <nav aria-label="レッスン一覧ページネーション">
+        <ul class="pagination justify-content-center">
+            {% if pagination.has_prev %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('lesson_system.lesson_management', page=pagination.prev_num) }}">前へ</a>
+                </li>
+            {% endif %}
+            
+            {% for page_num in pagination.iter_pages() %}
+                {% if page_num %}
+                    {% if page_num != pagination.page %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('lesson_system.lesson_management', page=page_num) }}">{{ page_num }}</a>
+                        </li>
+                    {% else %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ page_num }}</span>
+                        </li>
+                    {% endif %}
+                {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">…</span>
+                    </li>
+                {% endif %}
+            {% endfor %}
+            
+            {% if pagination.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('lesson_system.lesson_management', page=pagination.next_num) }}">次へ</a>
+                </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .lesson-management-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 2rem 1rem;
+    }
+
+    .page-header {
+        margin-bottom: 2rem;
+    }
+
+    .page-header h2 {
+        color: #0056b3;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+
+    .breadcrumb {
+        background: none;
+        padding: 0;
+    }
+
+    /* 管理概要統計スタイル */
+    .management-overview {
+        margin-bottom: 2rem;
+    }
+
+    .overview-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        display: flex;
+        align-items: center;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease;
+        height: 100%;
+    }
+
+    .overview-card:hover {
+        transform: translateY(-2px);
+    }
+
+    .overview-card.lessons {
+        border-left: 4px solid #007bff;
+    }
+
+    .overview-card.active {
+        border-left: 4px solid #28a745;
+    }
+
+    .overview-card.students {
+        border-left: 4px solid #17a2b8;
+    }
+
+    .overview-card.progress {
+        border-left: 4px solid #ffc107;
+    }
+
+    .card-icon {
+        font-size: 2.5rem;
+        margin-right: 1rem;
+        opacity: 0.8;
+    }
+
+    .card-icon i {
+        color: #6c757d;
+    }
+
+    .card-content h3 {
+        font-size: 2rem;
+        font-weight: bold;
+        margin: 0;
+        color: #333;
+    }
+
+    .card-content p {
+        margin: 0;
+        color: #6c757d;
+        font-size: 0.9rem;
+    }
+
+    /* フィルタとアクションバー */
+    .filter-action-bar {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 8px;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .filter-group {
+        min-width: 150px;
+    }
+
+    .form-label {
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: #495057;
+    }
+
+    .form-select {
+        font-size: 0.875rem;
+    }
+
+    .action-buttons .btn {
+        margin-left: 0.5rem;
+    }
+
+    /* テーブルスタイル */
+    .lessons-table-container {
+        background: white;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        margin-bottom: 1.5rem;
+    }
+
+    .table {
+        margin: 0;
+    }
+
+    .table thead th {
+        border-bottom: 2px solid #495057;
+        font-weight: 600;
+        font-size: 0.875rem;
+        padding: 1rem 0.75rem;
+    }
+
+    .table tbody td {
+        padding: 1rem 0.75rem;
+        vertical-align: middle;
+    }
+
+    .lesson-title {
+        font-weight: 500;
+        color: #333;
+        margin-bottom: 0.25rem;
+    }
+
+    .curriculum-badge {
+        display: inline-block;
+        background: #e9ecef;
+        color: #495057;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.8rem;
+        font-weight: 500;
+    }
+
+    .difficulty-indicator .fas.fa-star {
+        color: #ddd;
+        font-size: 0.875rem;
+    }
+
+    .difficulty-indicator .fas.fa-star.active {
+        color: #ffc107;
+    }
+
+    .time-estimate,
+    .student-count {
+        font-weight: 500;
+        color: #495057;
+    }
+
+    .progress-container {
+        min-width: 100px;
+    }
+
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        font-size: 0.8rem;
+        font-weight: 500;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+    }
+
+    .status-badge.status-active {
+        background: #d4edda;
+        color: #155724;
+    }
+
+    .status-badge.status-draft {
+        background: #fff3cd;
+        color: #856404;
+    }
+
+    .status-badge.status-archived {
+        background: #f8d7da;
+        color: #721c24;
+    }
+
+    .update-date {
+        font-size: 0.875rem;
+        color: #6c757d;
+    }
+
+    .action-buttons-cell .btn-group .btn {
+        border-radius: 4px;
+    }
+
+    /* 空状態 */
+    .empty-state {
+        padding: 3rem;
+    }
+
+    /* 一括操作バー */
+    .bulk-actions-bar {
+        background: #f8f9fa;
+        padding: 1rem 1.5rem;
+        border-radius: 8px;
+        border: 2px solid #007bff;
+        margin-bottom: 1.5rem;
+    }
+
+    /* レスポンシブ対応 */
+    @media (max-width: 1200px) {
+        .filter-action-bar .row {
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .filter-action-bar .col-md-8,
+        .filter-action-bar .col-md-4 {
+            text-align: center;
+        }
+
+        .d-flex.gap-3 {
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .lesson-management-container {
+            padding: 1rem 0.5rem;
+        }
+
+        .overview-card {
+            margin-bottom: 1rem;
+        }
+
+        .filter-group {
+            min-width: auto;
+            width: 100%;
+        }
+
+        .action-buttons .btn {
+            margin: 0.25rem;
+            width: 100%;
+        }
+
+        .table-responsive {
+            font-size: 0.875rem;
+        }
+
+        .action-buttons-cell .btn-group {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+        }
+
+        .action-buttons-cell .btn {
+            margin-bottom: 0.25rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// レッスン一覧フィルタリング機能
+function filterLessons() {
+    const curriculumFilter = document.getElementById('curriculum-filter').value;
+    const difficultyFilter = document.getElementById('difficulty-filter').value;
+    const statusFilter = document.getElementById('status-filter').value;
+    
+    const rows = document.querySelectorAll('.lesson-row');
+    
+    rows.forEach(row => {
+        let show = true;
+        
+        // フィルタ条件をチェック
+        if (curriculumFilter && !row.querySelector('.curriculum-badge').textContent.includes(curriculumFilter)) {
+            show = false;
+        }
+        
+        if (difficultyFilter && !row.querySelector('.difficulty-indicator').textContent.includes(difficultyFilter)) {
+            show = false;
+        }
+        
+        if (statusFilter && !row.querySelector('.status-badge').classList.contains(`status-${statusFilter}`)) {
+            show = false;
+        }
+        
+        row.style.display = show ? '' : 'none';
+    });
+}
+
+// 全選択機能
+document.getElementById('select-all').addEventListener('change', function() {
+    const checkboxes = document.querySelectorAll('.lesson-checkbox');
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = this.checked;
+    });
+    updateBulkActions();
+});
+
+// 個別選択時の処理
+document.addEventListener('change', function(e) {
+    if (e.target.classList.contains('lesson-checkbox')) {
+        updateBulkActions();
+    }
+});
+
+// 一括操作バーの表示/非表示
+function updateBulkActions() {
+    const selectedCheckboxes = document.querySelectorAll('.lesson-checkbox:checked');
+    const bulkActions = document.getElementById('bulk-actions');
+    const selectedCount = document.getElementById('selected-count');
+    
+    if (selectedCheckboxes.length > 0) {
+        bulkActions.style.display = 'block';
+        selectedCount.textContent = selectedCheckboxes.length;
+    } else {
+        bulkActions.style.display = 'none';
+    }
+}
+
+// 削除確認
+function confirmDelete(lessonId, lessonTitle) {
+    if (confirm(`レッスン「${lessonTitle}」を削除しますか？\nこの操作は取り消せません。`)) {
+        deleteLesson(lessonId);
+    }
+}
+
+// レッスン削除実行
+function deleteLesson(lessonId) {
+    fetch(`/lesson-system/lesson/${lessonId}`, {
+        method: 'DELETE',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('削除に失敗しました: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Delete error:', error);
+        alert('削除処理中にエラーが発生しました。');
+    });
+}
+
+// エクスポート機能
+function exportLessons() {
+    const selectedLessons = Array.from(document.querySelectorAll('.lesson-checkbox:checked'))
+        .map(cb => cb.value);
+    
+    if (selectedLessons.length === 0) {
+        alert('エクスポートするレッスンを選択してください。');
+        return;
+    }
+    
+    const exportUrl = '/lesson-system/export?' + 
+        selectedLessons.map(id => `lesson_ids=${id}`).join('&');
+    
+    window.open(exportUrl, '_blank');
+}
+
+// 一括操作機能
+function bulkEdit() {
+    const selectedLessons = getSelectedLessonIds();
+    if (selectedLessons.length === 0) {
+        alert('編集するレッスンを選択してください。');
+        return;
+    }
+    
+    // 一括編集モーダルを表示
+    showBulkEditModal(selectedLessons);
+}
+
+function bulkActivate() {
+    const selectedLessons = getSelectedLessonIds();
+    if (selectedLessons.length === 0) {
+        alert('アクティブ化するレッスンを選択してください。');
+        return;
+    }
+    
+    if (confirm(`${selectedLessons.length}件のレッスンをアクティブ化しますか？`)) {
+        bulkUpdateStatus(selectedLessons, 'active');
+    }
+}
+
+function bulkArchive() {
+    const selectedLessons = getSelectedLessonIds();
+    if (selectedLessons.length === 0) {
+        alert('アーカイブするレッスンを選択してください。');
+        return;
+    }
+    
+    if (confirm(`${selectedLessons.length}件のレッスンをアーカイブしますか？`)) {
+        bulkUpdateStatus(selectedLessons, 'archived');
+    }
+}
+
+function bulkDelete() {
+    const selectedLessons = getSelectedLessonIds();
+    if (selectedLessons.length === 0) {
+        alert('削除するレッスンを選択してください。');
+        return;
+    }
+    
+    if (confirm(`${selectedLessons.length}件のレッスンを削除しますか？\nこの操作は取り消せません。`)) {
+        bulkDeleteLessons(selectedLessons);
+    }
+}
+
+// ヘルパー関数
+function getSelectedLessonIds() {
+    return Array.from(document.querySelectorAll('.lesson-checkbox:checked'))
+        .map(cb => cb.value);
+}
+
+function bulkUpdateStatus(lessonIds, status) {
+    fetch('/lesson-system/bulk-update-status', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            lesson_ids: lessonIds,
+            status: status
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('一括更新に失敗しました: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Bulk update error:', error);
+        alert('一括更新処理中にエラーが発生しました。');
+    });
+}
+
+function bulkDeleteLessons(lessonIds) {
+    fetch('/lesson-system/bulk-delete', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            lesson_ids: lessonIds
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('一括削除に失敗しました: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Bulk delete error:', error);
+        alert('一括削除処理中にエラーが発生しました。');
+    });
+}
+</script>
+{% endblock %}

@@ -9,7 +9,8 @@ from datetime import datetime
 from typing import Dict, List, Optional, Tuple
 
 from app.models import db
-from app.modules.lesson_system.models.lesson_models import LessonTask, StudentTaskCheck, TaskCheckStatus
+# Lesson system removed - legacy imports disabled
+# from app.modules.lesson_system.models.lesson_models import LessonTask, StudentTaskCheck, TaskCheckStatus
 from basebuilder.models import (
     TextSet, BasicKnowledgeItem, AnswerRecord, 
     WordProficiency, TextProficiencyRecord
@@ -20,7 +21,7 @@ class BaseBuilderTaskService:
     """BaseBuilderとタスクシステムの統合サービス"""
     
     @staticmethod
-    def get_task_basebuilder_info(task: LessonTask) -> Optional[Dict]:
+    def get_task_basebuilder_info(task) -> Optional[Dict]:
         """タスクのBaseBuilder情報を取得"""
         if not task.description:
             return None
@@ -114,6 +115,7 @@ class BaseBuilderTaskService:
         """タスクのBaseBuilder達成率をチェックし、必要に応じて自動完了"""
         try:
             # タスクを取得
+            from app.modules.lesson_system.models.lesson_models import LessonTask
             task = LessonTask.query.get(task_id)
             if not task:
                 return False
@@ -145,6 +147,7 @@ class BaseBuilderTaskService:
         """BaseBuilder達成率に基づいてタスクを自動完了"""
         try:
             # タスクを取得
+            from app.modules.lesson_system.models.lesson_models import LessonTask
             task = LessonTask.query.get(task_id)
             if not task:
                 return False
@@ -302,6 +305,7 @@ def check_student_basebuilder_progress(student_id: int) -> Dict:
 def get_task_basebuilder_achievement(student_id: int, task_id: int) -> Optional[Dict]:
     """特定タスクのBaseBuilder達成状況を取得"""
     try:
+        from app.modules.lesson_system.models.lesson_models import LessonTask
         task = LessonTask.query.get(task_id)
         if not task:
             return None

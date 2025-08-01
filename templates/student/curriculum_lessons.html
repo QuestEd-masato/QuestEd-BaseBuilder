@@ -413,6 +413,49 @@
         </div>
     </div>
 
+    <!-- 評価ルーブリック -->
+    {% if curriculum_data and curriculum_data.rubric_suggestion %}
+    <div class="evaluation-rubric fade-in">
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white d-flex align-items-center">
+                <i class="fas fa-clipboard-check me-2"></i>
+                <h3 class="mb-0 h5">評価ルーブリック</h3>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-bordered mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width: 15%">評価項目</th>
+                                <th style="width: 25%">説明</th>
+                                {% set first_rubric = curriculum_data.rubric_suggestion[0] if curriculum_data.rubric_suggestion and curriculum_data.rubric_suggestion|length > 0 else None %}
+                                {% if first_rubric and first_rubric.levels %}
+                                    {% for level in first_rubric.levels %}
+                                        <th>{{ level.level or level.name or 'レベル' + loop.index|string }}</th>
+                                    {% endfor %}
+                                {% endif %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for rubric in curriculum_data.rubric_suggestion %}
+                                <tr>
+                                    <td class="align-middle bg-light fw-bold">{{ rubric.category or '項目' + loop.index|string }}</td>
+                                    <td class="align-middle">{{ rubric.description or '' }}</td>
+                                    {% if rubric.levels %}
+                                        {% for level in rubric.levels %}
+                                            <td class="align-middle">{{ level.description or '' }}</td>
+                                        {% endfor %}
+                                    {% endif %}
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
     <!-- 全体進捗 -->
     {% if lessons_with_progress %}
     <div class="overall-progress fade-in">
@@ -454,8 +497,15 @@
         <h2><i class="fas fa-list"></i> レッスン一覧</h2>
         
         {% if lessons_with_progress %}
+        
+        <!-- 進行中・未開始レッスン (Phase5: 承認済み以外) -->
+        {% set ongoing_lessons = lessons_with_progress | selectattr('approval_status', 'ne', 'approved') | list %}
+        {% if ongoing_lessons %}
+        <div class="section-header">
+            <h3><i class="fas fa-play-circle"></i> 学習中のレッスン</h3>
+        </div>
         <div class="lessons-grid">
-            {% for item in lessons_with_progress %}
+            {% for item in ongoing_lessons %}
             {% set lesson = item.lesson %}
             {% set progress = item.progress %}
             {% set total_tasks = item.total_tasks %}
@@ -466,7 +516,7 @@
                 {% if completion_percentage >= 100 %}completed
                 {% elif completion_percentage > 0 %}in-progress
                 {% else %}not-started{% endif %}"
-                onclick="location.href='{{ url_for('student_learning.lesson_learning', lesson_id=lesson.id) }}'">
+                onclick="location.href='{{ url_for('student_learning.lesson_detail', lesson_id=lesson.id) }}'">
                 
                 <div class="lesson-header">
                     <div class="d-flex align-items-center flex-1">
@@ -518,17 +568,17 @@
                 
                 <div class="lesson-actions">
                     {% if completion_percentage >= 100 %}
-                        <a href="{{ url_for('student_learning.lesson_learning', lesson_id=lesson.id) }}" 
+                        <a href="{{ url_for('student_learning.lesson_detail', lesson_id=lesson.id) }}" 
                            class="btn-lesson btn-review">
                             <i class="fas fa-eye"></i> 復習する
                         </a>
                     {% elif completion_percentage > 0 %}
-                        <a href="{{ url_for('student_learning.lesson_learning', lesson_id=lesson.id) }}" 
+                        <a href="{{ url_for('student_learning.lesson_detail', lesson_id=lesson.id) }}" 
                            class="btn-lesson btn-continue">
                             <i class="fas fa-play"></i> 続きから
                         </a>
                     {% else %}
-                        <a href="{{ url_for('student_learning.lesson_learning', lesson_id=lesson.id) }}" 
+                        <a href="{{ url_for('student_learning.lesson_detail', lesson_id=lesson.id) }}" 
                            class="btn-lesson btn-start">
                             <i class="fas fa-play"></i> 開始する
                         </a>
@@ -537,8 +587,71 @@
             </div>
             {% endfor %}
         </div>
+        {% endif %}
         
-        {% else %}
+        <!-- 完了済みレッスン (Phase5: 承認済み) -->
+        {% set completed_lessons = lessons_with_progress | selectattr('approval_status', 'equalto', 'approved') | list %}
+        {% if completed_lessons %}
+        <div class="section-header mt-4">
+            <h3><i class="fas fa-check-circle text-success"></i> 完了したレッスン</h3>
+            <button class="btn btn-outline-secondary btn-sm" onclick="toggleCompletedLessons()">
+                <i class="fas fa-eye" id="toggle-icon"></i> <span id="toggle-text">表示</span>
+            </button>
+        </div>
+        <div class="lessons-grid" id="completed-lessons-grid" style="display: none;">
+            {% for item in completed_lessons %}
+            {% set lesson = item.lesson %}
+            {% set progress = item.progress %}
+            {% set total_tasks = item.total_tasks %}
+            {% set completed_tasks = item.completed_tasks %}
+            {% set completion_percentage = item.completion_percentage %}
+            
+            <div class="lesson-card completed"
+                onclick="location.href='{{ url_for('student_learning.lesson_detail', lesson_id=lesson.id) }}'">
+                
+                <div class="lesson-header">
+                    <div class="d-flex align-items-center flex-1">
+                        <div class="lesson-number">{{ lesson.lesson_number }}</div>
+                        <div class="flex-1">
+                            <h3 class="lesson-title">{{ lesson.title }}</h3>
+                            <span class="badge bg-success">承認済み</span>
+                        </div>
+                    </div>
+                    <div class="lesson-status">
+                        <i class="fas fa-check-circle text-success"></i>
+                    </div>
+                </div>
+                
+                <div class="lesson-content">
+                    {% if lesson.description %}
+                    <p class="lesson-description">{{ lesson.description }}</p>
+                    {% endif %}
+                    
+                    <div class="lesson-meta">
+                        <div class="meta-item">
+                            <i class="fas fa-tasks"></i>
+                            <span>{{ completed_tasks }}/{{ total_tasks }} タスク完了</span>
+                        </div>
+                        <div class="meta-item">
+                            <i class="fas fa-clock"></i>
+                            <span>{{ lesson.duration_minutes }}分</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="lesson-progress">
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 100%"></div>
+                    </div>
+                    <small class="progress-text">100% 完了（承認済み）</small>
+                </div>
+                
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        
+        {% if not ongoing_lessons and not completed_lessons %}
         <div class="empty-state">
             <i class="fas fa-book"></i>
             <h3>レッスンがありません</h3>
@@ -549,6 +662,23 @@
 </div>
 
 <script>
+// Phase5: 完了レッスン表示切り替え機能
+function toggleCompletedLessons() {
+    const grid = document.getElementById('completed-lessons-grid');
+    const icon = document.getElementById('toggle-icon');
+    const text = document.getElementById('toggle-text');
+    
+    if (grid.style.display === 'none') {
+        grid.style.display = 'grid';
+        icon.className = 'fas fa-eye-slash';
+        text.textContent = '非表示';
+    } else {
+        grid.style.display = 'none';
+        icon.className = 'fas fa-eye';
+        text.textContent = '表示';
+    }
+}
+
 // ページ読み込み時のアニメーション
 document.addEventListener('DOMContentLoaded', function() {
     // カードにホバー効果を追加

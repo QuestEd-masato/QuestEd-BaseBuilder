@@ -376,19 +376,19 @@
     </div>
 
     <!-- 進捗セクション -->
-    {% if lesson_progress %}
+    {% if progress %}
     <div class="progress-section">
         <h3 class="section-title">
             <i class="fas fa-chart-line"></i>
             学習進捗
         </h3>
         <div class="progress-bar-container">
-            <div class="progress-bar" style="width: {{ lesson_progress.completion_percentage or 0 }}%"></div>
+            <div class="progress-bar" style="width: {{ progress.completion_percentage or 0 }}%"></div>
         </div>
         <div class="progress-text">
-            {{ lesson_progress.completion_percentage or 0 }}% 完了
-            {% if lesson_progress.completed_at %}
-            （{{ lesson_progress.completed_at.strftime('%Y年%m月%d日') }} 完了）
+            {{ progress.completion_percentage or 0 }}% 完了
+            {% if progress.completed_at %}
+            （{{ progress.completed_at.strftime('%Y年%m月%d日') }} 完了）
             {% endif %}
         </div>
     </div>
@@ -504,18 +504,73 @@
     </div>
     {% endif %}
 
-    <!-- 完了申請セクション -->
-    {% if lesson_progress and lesson_progress.completion_percentage >= 80 and not lesson_progress.completed_at %}
+    <!-- 完了申請・承認状態セクション (Phase5拡張) -->
+    {% if progress and progress.completion_percentage >= 80 %}
     <div class="completion-section">
+        {% if progress.approval_status == 'none' and not progress.is_completed %}
+        <!-- 申請可能状態 -->
         <h3>
             <i class="fas fa-trophy"></i>
             レッスン完了申請
         </h3>
         <p>全タスクを80%以上完了しました。レッスンの完了申請を行うことができます。</p>
-        <button class="btn btn-success btn-lg" onclick="requestLessonCompletion({{ lesson.id }})">
+        <div class="mb-3">
+            <textarea id="completion-notes" class="form-control" rows="3" placeholder="申請時のメモ（任意）"></textarea>
+        </div>
+        <button class="btn btn-success btn-lg" onclick="submitCompletionRequest({{ lesson.id }})">
             <i class="fas fa-check-circle"></i>
             完了申請を提出
         </button>
+        
+        {% elif progress.approval_status == 'pending' %}
+        <!-- 承認待ち状態 -->
+        <h3>
+            <i class="fas fa-clock text-warning"></i>
+            承認待ち
+        </h3>
+        <div class="alert alert-warning">
+            <i class="fas fa-info-circle"></i>
+            レッスンの完了申請を送信しました。教師による承認をお待ちください。
+            {% if progress.completion_request_date %}
+            <br><small>申請日時: {{ progress.completion_request_date.strftime('%Y年%m月%d日 %H:%M') }}</small>
+            {% endif %}
+        </div>
+        
+        {% elif progress.approval_status == 'approved' %}
+        <!-- 承認済み状態 -->
+        <h3>
+            <i class="fas fa-check-circle text-success"></i>
+            承認済み
+        </h3>
+        <div class="alert alert-success">
+            <i class="fas fa-thumbs-up"></i>
+            レッスンが承認されました。おめでとうございます！
+            {% if progress.teacher_comments %}
+            <br><strong>教師からのコメント:</strong> {{ progress.teacher_comments }}
+            {% endif %}
+        </div>
+        
+        {% elif progress.approval_status == 'rejected' %}
+        <!-- 却下状態 -->
+        <h3>
+            <i class="fas fa-exclamation-triangle text-danger"></i>
+            再提出が必要
+        </h3>
+        <div class="alert alert-danger">
+            <i class="fas fa-redo"></i>
+            申請が却下されました。内容を確認して再度申請してください。
+            {% if progress.teacher_comments %}
+            <br><strong>教師からのコメント:</strong> {{ progress.teacher_comments }}
+            {% endif %}
+        </div>
+        <div class="mb-3">
+            <textarea id="completion-notes" class="form-control" rows="3" placeholder="再申請時のメモ（任意）"></textarea>
+        </div>
+        <button class="btn btn-primary btn-lg" onclick="submitCompletionRequest({{ lesson.id }})">
+            <i class="fas fa-redo"></i>
+            再申請を提出
+        </button>
+        {% endif %}
     </div>
     {% endif %}
 
@@ -526,14 +581,14 @@
             レッスン一覧に戻る
         </a>
         
-        {% if lesson_progress and not lesson_progress.completed_at %}
+        {% if progress and not progress.completed_at %}
         <a href="{{ url_for('student_learning.lesson_learning', lesson_id=lesson.id) }}" class="btn btn-primary">
             <i class="fas fa-play-circle"></i>
             学習を開始/続行
         </a>
         {% endif %}
 
-        {% if lesson_progress and lesson_progress.completed_at %}
+        {% if progress and progress.completed_at %}
         <a href="{{ url_for('student_learning.lesson_learning', lesson_id=lesson.id) }}" class="btn btn-success">
             <i class="fas fa-redo"></i>
             復習する
@@ -543,29 +598,52 @@
 </div>
 
 <script>
-function requestLessonCompletion(lessonId) {
+// Phase5 承認ワークフロー対応 JavaScript
+function submitCompletionRequest(lessonId) {
+    const notes = document.getElementById('completion-notes')?.value || '';
+    
     if (confirm('このレッスンの完了申請を提出しますか？')) {
-        fetch(`/api/lesson/${lessonId}/request-completion`, {
+        // ボタンを無効化して重複送信を防止
+        const submitBtn = event.target;
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 送信中...';
+        
+        fetch(`/lesson-approval/lesson/${lessonId}/submit-completion`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRFToken': document.querySelector('meta[name=csrf-token]').getAttribute('content')
-            }
+                'X-CSRFToken': getCsrfToken()
+            },
+            body: JSON.stringify({
+                notes: notes
+            })
         })
         .then(response => response.json())
         .then(data => {
-            if (data.status === 'success') {
-                alert('完了申請を提出しました。教師による確認をお待ちください。');
+            if (data.success) {
+                alert('完了申請を提出しました。教師による承認をお待ちください。');
                 location.reload();
             } else {
                 alert('申請に失敗しました: ' + data.message);
+                // ボタンを再有効化
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-check-circle"></i> 完了申請を提出';
             }
         })
         .catch(error => {
             console.error('Error:', error);
             alert('申請中にエラーが発生しました。');
+            // ボタンを再有効化
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fas fa-check-circle"></i> 完了申請を提出';
         });
     }
+}
+
+// CSRFトークン取得ヘルパー関数
+function getCsrfToken() {
+    const csrfToken = document.querySelector('meta[name=csrf-token]');
+    return csrfToken ? csrfToken.getAttribute('content') : '';
 }
 </script>
 {% endblock %}

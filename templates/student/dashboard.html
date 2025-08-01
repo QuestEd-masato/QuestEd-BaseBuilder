@@ -310,15 +310,6 @@
         
         <!-- アクションボタン -->
         <div style="display: flex; gap: 10px;">
-            <!-- 基礎学力機能は現在開発中のため一時的にコメントアウト
-            <a href="#" onclick="alert('基礎学力機能は現在準備中です'); return false;" 
-               style="flex: 1; display: inline-block; padding: 10px 12px; text-align: center; 
-                      background-color: #f8f9fa; color: #6c757d; border: 1px solid #dee2e6; 
-                      border-radius: 6px; text-decoration: none; font-size: 0.9rem;
-                      transition: all 0.2s; pointer-events: auto !important; z-index: 1000; position: relative;">
-                📚 テキスト一覧
-            </a>
-            -->
             <a href="{{ url_for('texts.my_texts') }}" 
                style="flex: 1; display: inline-block; padding: 10px 12px; text-align: center; 
                       background-color: #0056b3; color: white; border: 1px solid #0056b3; 
@@ -479,11 +470,11 @@
         </div>
         
         <div style="margin-top: 1rem;">
-            <a href="{{ url_for('student_goals_todos.todos') }}" 
+            <a href="{{ url_for('student_goals_todos_secure.todos') }}" 
                style="display: inline-block; padding: 0.375rem 0.75rem; font-size: 0.875rem; border-radius: 0.25rem; text-decoration: none; background-color: transparent; color: #5DADE2; border: 1px solid #5DADE2; margin-right: 0.5rem;">
                ToDoを見る
             </a>
-            <a href="{{ url_for('student_goals_todos.goals') }}" 
+            <a href="{{ url_for('student_goals_todos_secure.goals') }}" 
                style="display: inline-block; padding: 0.375rem 0.75rem; font-size: 0.875rem; border-radius: 0.25rem; text-decoration: none; background-color: transparent; color: #5DADE2; border: 1px solid #5DADE2;">
                目標を見る
             </a>
@@ -750,14 +741,30 @@
 
 <!-- ページロード時のアニメーション -->
 <script>
-// CSRFトークンをグローバルに設定
+// CSRFトークンをグローバルに設定（CSRF無効時対応）
+{% if csrf_token %}
 window.csrfToken = '{{ csrf_token() }}';
+{% else %}
+window.csrfToken = '';
+{% endif %}
 
 // CSRF取得のヘルパー関数
 function getCSRFToken() {
     return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || 
            window.csrfToken || 
-           '{{ csrf_token() }}';
+           '';
+}
+
+// AJAXヘッダー生成ヘルパー関数
+function getAjaxHeaders(includeCSRF = false) {
+    const headers = {
+        'Content-Type': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest'
+    };
+    if (includeCSRF && window.csrfToken) {
+        headers['X-CSRFToken'] = getCSRFToken();
+    }
+    return headers;
 }
 
 // カリキュラム確認モーダル表示
@@ -768,8 +775,7 @@ async function showUnitCurriculum(unitId, unitTitle) {
             credentials: 'same-origin',
             headers: {
                 'X-Requested-With': 'XMLHttpRequest',
-                'Accept': 'application/json',
-                'X-CSRFToken': getCSRFToken()
+                'Accept': 'application/json'
             }
         });
         
@@ -838,10 +844,7 @@ async function requestCurriculumCompletion(curriculumId, curriculumTitle) {
         const response = await fetch(`/api/curriculum/${curriculumId}/request-completion`, {
             method: 'POST',
             credentials: 'same-origin',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': getCSRFToken()
-            },
+            headers: getAjaxHeaders(true),
             body: JSON.stringify({
                 completion_notes: '',
                 check_basebuilder: true
@@ -877,10 +880,7 @@ async function requestUnitCompletion(unitId, unitTitle) {
         const response = await fetch(`/api/units/${unitId}/request-completion`, {
             method: 'POST',
             credentials: 'same-origin',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': getCSRFToken()
-            },
+            headers: getAjaxHeaders(true),
             body: JSON.stringify({
                 completion_notes: ''
             })
@@ -915,10 +915,7 @@ async function hideUnit(unitId, unitTitle) {
         const response = await fetch(`/api/units/${unitId}/remove`, {
             method: 'DELETE',
             credentials: 'same-origin',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': getCSRFToken()
-            }
+            headers: getAjaxHeaders(true)
         });
         
         if (!response.ok) {

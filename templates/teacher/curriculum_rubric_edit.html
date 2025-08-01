@@ -1,0 +1,379 @@
+{% extends 'base.html' %}
+
+{% block title %}ルーブリック編集 - {{ curriculum.title }} | QuestEd{% endblock %}
+
+{% block extra_css %}
+<style>
+.rubric-editor {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.curriculum-header {
+    background: linear-gradient(135deg, #0056b3 0%, #004494 100%);
+    color: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.rubric-form {
+    background: white;
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.evaluation-aspects {
+    margin-bottom: 2rem;
+}
+
+.aspect-group {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.aspect-item {
+    background: #f8f9fa;
+    padding: 1rem;
+    border-radius: 8px;
+    border: 2px solid #e9ecef;
+}
+
+.aspect-item label {
+    font-weight: bold;
+    color: #495057;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+.aspect-item input {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    text-align: center;
+    font-size: 1.1rem;
+}
+
+.rubric-matrix {
+    margin-top: 2rem;
+}
+
+.matrix-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 1rem;
+}
+
+.matrix-table th,
+.matrix-table td {
+    border: 1px solid #dee2e6;
+    padding: 0.75rem;
+    text-align: left;
+}
+
+.matrix-table th {
+    background: #f8f9fa;
+    font-weight: bold;
+}
+
+.matrix-table input,
+.matrix-table textarea {
+    width: 100%;
+    border: none;
+    background: transparent;
+    resize: vertical;
+}
+
+.matrix-table textarea {
+    min-height: 60px;
+}
+
+.add-row-btn {
+    background: #28a745;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-bottom: 1rem;
+}
+
+.remove-row-btn {
+    background: #dc3545;
+    color: white;
+    border: none;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.8rem;
+}
+
+.form-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid #dee2e6;
+}
+
+.btn {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1rem;
+    text-decoration: none;
+    display: inline-block;
+    text-align: center;
+}
+
+.btn-primary {
+    background: #007bff;
+    color: white;
+}
+
+.btn-secondary {
+    background: #6c757d;
+    color: white;
+}
+
+.alert {
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border-radius: 6px;
+    display: none;
+}
+
+.alert-success {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.alert-danger {
+    background: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="rubric-editor">
+    <div class="curriculum-header">
+        <h1>{{ curriculum.title }}</h1>
+        <p>ルーブリック編集</p>
+    </div>
+
+    <div class="rubric-form">
+        <div id="alert-container"></div>
+
+        <form id="rubric-form">
+            <!-- 評価観点（①②③） -->
+            <div class="evaluation-aspects">
+                <h3>評価観点の配分</h3>
+                <div class="aspect-group">
+                    <div class="aspect-item">
+                        <label for="knowledge">①知識・技能</label>
+                        <input type="number" id="knowledge" name="knowledge" 
+                               value="{{ rubric_info.evaluation_aspects.knowledge or 30 }}" 
+                               min="0" max="100" step="5">
+                        <small>%</small>
+                    </div>
+                    <div class="aspect-item">
+                        <label for="thinking">②思考・判断・表現</label>
+                        <input type="number" id="thinking" name="thinking" 
+                               value="{{ rubric_info.evaluation_aspects.thinking or 40 }}" 
+                               min="0" max="100" step="5">
+                        <small>%</small>
+                    </div>
+                    <div class="aspect-item">
+                        <label for="attitude">③主体的に学習に取り組む態度</label>
+                        <input type="number" id="attitude" name="attitude" 
+                               value="{{ rubric_info.evaluation_aspects.attitude or 30 }}" 
+                               min="0" max="100" step="5">
+                        <small>%</small>
+                    </div>
+                </div>
+                <div id="percentage-total" style="text-align: center; font-weight: bold; margin-top: 0.5rem;">
+                    合計: <span id="total-value">100</span>%
+                </div>
+            </div>
+
+            <!-- ルーブリックマトリックス -->
+            <div class="rubric-matrix">
+                <h3>評価ルーブリック</h3>
+                <button type="button" class="add-row-btn" onclick="addRubricRow()">
+                    <i class="fas fa-plus"></i> 評価項目を追加
+                </button>
+                
+                <table class="matrix-table" id="rubric-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 150px;">評価項目</th>
+                            <th style="width: 200px;">説明</th>
+                            <th>優秀 (A)</th>
+                            <th>良好 (B)</th>
+                            <th>要改善 (C)</th>
+                            <th style="width: 80px;">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="rubric-tbody">
+                        {% if rubric_info.rubric %}
+                            {% for item in rubric_info.rubric %}
+                                <tr>
+                                    <td><input type="text" name="category[]" value="{{ item.category or '' }}" placeholder="評価項目名"></td>
+                                    <td><textarea name="description[]" placeholder="この項目の説明">{{ item.description or '' }}</textarea></td>
+                                    <td><textarea name="level_a[]" placeholder="優秀な状態の説明">{{ item.levels[0] if item.levels and item.levels|length > 0 else '' }}</textarea></td>
+                                    <td><textarea name="level_b[]" placeholder="良好な状態の説明">{{ item.levels[1] if item.levels and item.levels|length > 1 else '' }}</textarea></td>
+                                    <td><textarea name="level_c[]" placeholder="要改善な状態の説明">{{ item.levels[2] if item.levels and item.levels|length > 2 else '' }}</textarea></td>
+                                    <td><button type="button" class="remove-row-btn" onclick="removeRubricRow(this)">削除</button></td>
+                                </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td><input type="text" name="category[]" placeholder="評価項目名" value="知識の理解"></td>
+                                <td><textarea name="description[]" placeholder="この項目の説明">基本的な知識や概念の理解度</textarea></td>
+                                <td><textarea name="level_a[]" placeholder="優秀な状態の説明">重要な概念を正確に理解し、他の概念との関連も説明できる</textarea></td>
+                                <td><textarea name="level_b[]" placeholder="良好な状態の説明">基本的な概念を理解し、簡単な例で説明できる</textarea></td>
+                                <td><textarea name="level_c[]" placeholder="要改善な状態の説明">概念の理解が不十分で、説明に誤りがある</textarea></td>
+                                <td><button type="button" class="remove-row-btn" onclick="removeRubricRow(this)">削除</button></td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="form-actions">
+                <a href="{{ url_for('teacher_curriculum_management.view_curriculums', class_id=curriculum.class_id) }}" 
+                   class="btn btn-secondary">キャンセル</a>
+                <button type="submit" class="btn btn-primary">保存</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+// 評価観点の合計計算
+function updatePercentageTotal() {
+    const knowledge = parseInt(document.getElementById('knowledge').value) || 0;
+    const thinking = parseInt(document.getElementById('thinking').value) || 0;
+    const attitude = parseInt(document.getElementById('attitude').value) || 0;
+    const total = knowledge + thinking + attitude;
+    
+    document.getElementById('total-value').textContent = total;
+    document.getElementById('total-value').style.color = total === 100 ? '#28a745' : '#dc3545';
+}
+
+// イベントリスナー設定
+document.getElementById('knowledge').addEventListener('input', updatePercentageTotal);
+document.getElementById('thinking').addEventListener('input', updatePercentageTotal);
+document.getElementById('attitude').addEventListener('input', updatePercentageTotal);
+
+// ルーブリック行追加
+function addRubricRow() {
+    const tbody = document.getElementById('rubric-tbody');
+    const newRow = document.createElement('tr');
+    newRow.innerHTML = `
+        <td><input type="text" name="category[]" placeholder="評価項目名"></td>
+        <td><textarea name="description[]" placeholder="この項目の説明"></textarea></td>
+        <td><textarea name="level_a[]" placeholder="優秀な状態の説明"></textarea></td>
+        <td><textarea name="level_b[]" placeholder="良好な状態の説明"></textarea></td>
+        <td><textarea name="level_c[]" placeholder="要改善な状態の説明"></textarea></td>
+        <td><button type="button" class="remove-row-btn" onclick="removeRubricRow(this)">削除</button></td>
+    `;
+    tbody.appendChild(newRow);
+}
+
+// ルーブリック行削除
+function removeRubricRow(button) {
+    if (document.getElementById('rubric-tbody').children.length > 1) {
+        button.closest('tr').remove();
+    } else {
+        showAlert('最低1つの評価項目が必要です。', 'danger');
+    }
+}
+
+// アラート表示
+function showAlert(message, type) {
+    const alertContainer = document.getElementById('alert-container');
+    alertContainer.innerHTML = `<div class="alert alert-${type}" style="display: block;">${message}</div>`;
+    setTimeout(() => {
+        alertContainer.innerHTML = '';
+    }, 5000);
+}
+
+// フォーム送信
+document.getElementById('rubric-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    // バリデーション
+    const total = parseInt(document.getElementById('total-value').textContent);
+    if (total !== 100) {
+        showAlert('評価観点の合計は100%である必要があります。', 'danger');
+        return;
+    }
+    
+    // データ収集
+    const formData = new FormData(this);
+    const rubricData = {
+        evaluation_aspects: {
+            knowledge: parseInt(formData.get('knowledge')),
+            thinking: parseInt(formData.get('thinking')),
+            attitude: parseInt(formData.get('attitude'))
+        },
+        rubric: []
+    };
+    
+    // ルーブリックデータ構築
+    const categories = formData.getAll('category[]');
+    const descriptions = formData.getAll('description[]');
+    const levelAs = formData.getAll('level_a[]');
+    const levelBs = formData.getAll('level_b[]');
+    const levelCs = formData.getAll('level_c[]');
+    
+    for (let i = 0; i < categories.length; i++) {
+        if (categories[i].trim()) {
+            rubricData.rubric.push({
+                category: categories[i],
+                description: descriptions[i],
+                levels: [levelAs[i], levelBs[i], levelCs[i]]
+            });
+        }
+    }
+    
+    // サーバーに送信
+    fetch(window.location.pathname, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(rubricData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showAlert(data.message, 'success');
+            setTimeout(() => {
+                window.location.href = '{{ url_for("teacher_curriculum_management.view_curriculums", class_id=curriculum.class_id) }}';
+            }, 2000);
+        } else {
+            showAlert(data.message, 'danger');
+        }
+    })
+    .catch(error => {
+        showAlert('保存中にエラーが発生しました。', 'danger');
+        console.error('Error:', error);
+    });
+});
+
+// 初期化
+updatePercentageTotal();
+</script>
+{% endblock %}

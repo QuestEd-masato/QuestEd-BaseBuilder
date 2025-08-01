@@ -17,6 +17,26 @@ class RankingService:
     """ランキング管理サービス"""
     
     @staticmethod
+    def get_ranking_statistics() -> Dict[str, Any]:
+        """ランキング統計を取得"""
+        try:
+            # 基本的な統計情報
+            total_students = User.query.filter_by(role='student').count()
+            
+            return {
+                'total_students': total_students,
+                'active_rankings': 0,  # 実装予定
+                'last_updated': datetime.utcnow().isoformat()
+            }
+        except Exception as e:
+            current_app.logger.error(f"Failed to get ranking statistics: {e}")
+            return {
+                'total_students': 0,
+                'active_rankings': 0,
+                'last_updated': datetime.utcnow().isoformat()
+            }
+    
+    @staticmethod
     def get_lesson_progress_ranking(class_id: int = None, limit: int = 10) -> List[Dict[str, Any]]:
         """レッスン進捗ランキングを取得"""
         try:
@@ -224,8 +244,25 @@ class RankingService:
             return None
     
     @staticmethod
-    def get_ranking_summary(class_id: int = None) -> Dict[str, Any]:
-        """ランキングサマリーを取得"""
+    def get_student_rank(student_id: int, class_id: int = None) -> Dict[str, Any]:
+        """学生の各ランキング順位を取得"""
+        try:
+            return {
+                'lesson_rank': RankingService.get_student_rank_position(student_id, 'lesson', class_id),
+                'vocabulary_rank': RankingService.get_student_rank_position(student_id, 'vocabulary', class_id),
+                'overall_rank': RankingService.get_student_rank_position(student_id, 'overall', class_id)
+            }
+        except Exception as e:
+            current_app.logger.error(f"Failed to get student rank: {e}")
+            return {
+                'lesson_rank': None,
+                'vocabulary_rank': None,
+                'overall_rank': None
+            }
+    
+    @staticmethod
+    def get_ranking_statistics(class_id: int = None) -> Dict[str, Any]:
+        """ランキング統計情報を取得"""
         try:
             # 基本統計
             query = "SELECT COUNT(*) as total_students FROM users WHERE role = 'student'"
@@ -264,10 +301,58 @@ class RankingService:
             }
             
         except Exception as e:
-            current_app.logger.error(f"Failed to get ranking summary: {e}")
+            current_app.logger.error(f"Failed to get ranking statistics: {e}")
             return {
                 'total_students': 0,
                 'active_today': 0,
                 'activity_rate': 0,
                 'last_updated': datetime.now().isoformat()
             }
+    
+    @staticmethod
+    def get_detailed_ranking_statistics(class_id: int) -> Dict[str, Any]:
+        """詳細なランキング統計情報を取得（教師用）"""
+        try:
+            # 基本統計
+            basic_stats = RankingService.get_ranking_statistics(class_id)
+            
+            # 週別活動統計
+            weekly_query = """
+            SELECT 
+                DATE(created_at) as date,
+                COUNT(DISTINCT user_id) as active_users,
+                COUNT(*) as total_activities
+            FROM activity_logs 
+            WHERE created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+            AND user_id IN (SELECT id FROM users WHERE class_id = :class_id)
+            GROUP BY DATE(created_at)
+            ORDER BY date DESC
+            """
+            
+            result = db.session.execute(text(weekly_query), {'class_id': class_id})
+            weekly_activity = [
+                {
+                    'date': row.date.strftime('%Y-%m-%d'),
+                    'active_users': row.active_users,
+                    'total_activities': row.total_activities
+                }
+                for row in result
+            ]
+            
+            # 上位パフォーマー
+            top_performers = RankingService.get_overall_ranking(class_id, 5)
+            
+            return {
+                **basic_stats,
+                'weekly_activity': weekly_activity,
+                'top_performers': top_performers
+            }
+            
+        except Exception as e:
+            current_app.logger.error(f"Failed to get detailed ranking statistics: {e}")
+            return RankingService.get_ranking_statistics(class_id)
+    
+    @staticmethod
+    def get_ranking_summary(class_id: int = None) -> Dict[str, Any]:
+        """ランキングサマリーを取得"""
+        return RankingService.get_ranking_statistics(class_id)
