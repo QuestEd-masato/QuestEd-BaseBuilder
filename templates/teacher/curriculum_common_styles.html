@@ -1,0 +1,115 @@
+<!-- カリキュラム編集共通スタイル - 重複回避設計 -->
+<!-- Phase1修正: Preloadのみ保持 - シンプル化による技術的負債削減 -->
+<link rel="preload" href="{{ url_for('static', filename='css/curriculum.css') }}" as="style">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/curriculum.css') }}">
+<style>
+/* curriculum_edit.html 専用拡張スタイル - 既存ファイル拡張により重複回避 */
+
+/* ルーブリック編集との統一ヘッダー設計 */
+.curriculum-edit-header {
+    background: linear-gradient(135deg, #0056b3 0%, #004494 100%);
+    color: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 12px rgba(0, 86, 179, 0.2);
+}
+
+.curriculum-edit-header h2 {
+    margin: 0;
+    font-size: 1.8rem;
+    font-weight: 600;
+}
+
+/* フォーム統合カード設計 */
+.curriculum-edit-card {
+    background: white;
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e9ecef;
+    margin-bottom: 2rem;
+}
+
+/* テーブル編集統合準備 - matrix-tableスタイル統合 */
+.curriculum-edit-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+}
+
+.curriculum-edit-table th,
+.curriculum-edit-table td {
+    border: 1px solid #dee2e6;
+    padding: 0.75rem;
+    text-align: left;
+    vertical-align: top;
+}
+
+.curriculum-edit-table th {
+    background: #f8f9fa;
+    font-weight: bold;
+    color: #495057;
+}
+
+.curriculum-edit-table input,
+.curriculum-edit-table textarea {
+    width: 100%;
+    border: none;
+    background: transparent;
+    resize: vertical;
+    padding: 0.25rem;
+    font-family: inherit;
+}
+
+.curriculum-edit-table textarea {
+    min-height: 60px;
+    resize: vertical;
+}
+
+/* モダンなform-section設計 */
+.form-section-enhanced {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    border-left: 4px solid #0056b3;
+}
+
+.form-section-enhanced h3 {
+    color: #0056b3;
+    margin: 0 0 1rem 0;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* アクションボタンの統一設計 */
+.curriculum-edit-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    padding: 1.5rem 0;
+    border-top: 1px solid #e9ecef;
+    margin-top: 2rem;
+}
+
+/* レスポンシブ対応 */
+@media (max-width: 768px) {
+    .curriculum-edit-header {
+        padding: 1rem;
+        text-align: center;
+    }
+    
+    .curriculum-edit-card {
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .curriculum-edit-actions {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+}
+</style>

@@ -19,21 +19,9 @@ from app.models import (
 
 logger = logging.getLogger(__name__)
 
-# レッスンシステムモデル（エラー保護）
-try:
-    from app.modules.lesson_system.models.lesson_models import (
-        CurriculumLesson, LessonTask, StudentLessonProgress, 
-        StudentTaskCheck, TaskCheckStatus
-    )
-    LESSON_SYSTEM_AVAILABLE = True
-except ImportError:
-    logger.warning("Lesson system models not available")
-    CurriculumLesson = None
-    LessonTask = None
-    StudentLessonProgress = None
-    StudentTaskCheck = None
-    TaskCheckStatus = None
-    LESSON_SYSTEM_AVAILABLE = False
+# レッスンシステムモデル（共通ローダー使用）
+from app.utils.lesson_model_loader import get_lesson_models
+CurriculumLesson, LessonTask, StudentLessonProgress, StudentTaskCheck, TaskCheckStatus, LESSON_SYSTEM_AVAILABLE = get_lesson_models()
 
 # StudentUnitSelection（Phase5対応）
 try:

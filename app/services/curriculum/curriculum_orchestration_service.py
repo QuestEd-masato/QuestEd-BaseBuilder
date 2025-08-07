@@ -58,7 +58,7 @@ class CurriculumOrchestrationService:
                 return {
                     'success': False,
                     'message': result['message'],
-                    'redirect': 'teacher.dashboard'
+                    'redirect': 'teacher_dashboard.dashboard'
                 }
             
             # ビューデータ構築
@@ -76,7 +76,7 @@ class CurriculumOrchestrationService:
             return {
                 'success': False,
                 'message': 'カリキュラム一覧の取得に失敗しました',
-                'redirect': 'teacher.dashboard'
+                'redirect': 'teacher_dashboard.dashboard'
             }
 
     def create_curriculum_view(self, class_id: int) -> Dict[str, Any]:
@@ -98,7 +98,7 @@ class CurriculumOrchestrationService:
                 return {
                     'success': False,
                     'message': permission_check['message'],
-                    'redirect': 'teacher.dashboard'
+                    'redirect': 'teacher_dashboard.dashboard'
                 }
             
             # フォームデータ準備
@@ -115,7 +115,7 @@ class CurriculumOrchestrationService:
             return {
                 'success': False,
                 'message': 'カリキュラム作成フォームの準備に失敗しました',
-                'redirect': 'teacher.dashboard'
+                'redirect': 'teacher_dashboard.dashboard'
             }
 
     def generate_curriculum_view(self, class_id: int) -> Dict[str, Any]:
@@ -137,7 +137,7 @@ class CurriculumOrchestrationService:
                 return {
                     'success': False,
                     'message': permission_check['message'],
-                    'redirect': 'teacher.dashboard'
+                    'redirect': 'teacher_dashboard.dashboard'
                 }
             
             # AI生成フォームデータ準備
@@ -154,7 +154,7 @@ class CurriculumOrchestrationService:
             return {
                 'success': False,
                 'message': 'AI生成フォームの準備に失敗しました',
-                'redirect': 'teacher.dashboard'
+                'redirect': 'teacher_dashboard.dashboard'
             }
 
     def curriculum_detail_view(self, curriculum_id: int) -> Dict[str, Any]:
@@ -176,7 +176,7 @@ class CurriculumOrchestrationService:
                 return {
                     'success': False,
                     'message': detail_result['message'],
-                    'redirect': 'teacher.dashboard'
+                    'redirect': 'teacher_dashboard.dashboard'
                 }
             
             # 関連データ統合
@@ -199,7 +199,7 @@ class CurriculumOrchestrationService:
             return {
                 'success': False,
                 'message': 'カリキュラム詳細の取得に失敗しました',
-                'redirect': 'teacher.dashboard'
+                'redirect': 'teacher_dashboard.dashboard'
             }
 
     def edit_curriculum_view(self, curriculum_id: int) -> Dict[str, Any]:
@@ -221,16 +221,27 @@ class CurriculumOrchestrationService:
                 return {
                     'success': False,
                     'message': permission_check['message'],
-                    'redirect': 'teacher.dashboard'
+                    'redirect': 'teacher_dashboard.dashboard'
                 }
             
             # 編集フォームデータ準備
-            edit_data = self.data_service.prepare_curriculum_edit_data(curriculum_id)
+            edit_result = self.data_service.prepare_curriculum_edit_data(curriculum_id)
+            if not edit_result['success']:
+                return {
+                    'success': False,
+                    'message': edit_result['message'],
+                    'redirect': 'teacher_dashboard.dashboard'
+                }
             
             return {
                 'success': True,
-                'template': 'teacher/curriculum_edit.html',
-                'data': edit_data
+                'template': 'teacher/curriculum_edit.html',  
+                'data': {
+                    'curriculum': edit_result['curriculum'],
+                    'units': edit_result['units'],
+                    'form_data': edit_result['form_data'],
+                    'table_content_data': edit_result.get('table_content_data', [])
+                }
             }
             
         except Exception as e:
@@ -238,7 +249,7 @@ class CurriculumOrchestrationService:
             return {
                 'success': False,
                 'message': 'カリキュラム編集フォームの準備に失敗しました',
-                'redirect': 'teacher.dashboard'
+                'redirect': 'teacher_dashboard.dashboard'
             }
 
     def process_curriculum_creation(self, class_id: int, form_data: Dict[str, Any]) -> Dict[str, Any]:
@@ -316,11 +327,12 @@ class CurriculumOrchestrationService:
             Dict: 処理結果
         """
         try:
-            logger.info(f"Processing curriculum update for {curriculum_id}")
+            logger.info(f"[CURRICULUM] Processing curriculum update for {curriculum_id}")
             
             # バリデーション
             validation_result = self.validation_service.validate_curriculum_update(curriculum_id, form_data)
             if not validation_result['valid']:
+                logger.warning(f"[CURRICULUM] Validation failed for curriculum {curriculum_id}: {validation_result['message']}")
                 return {
                     'success': False,
                     'message': validation_result['message'],
@@ -328,8 +340,33 @@ class CurriculumOrchestrationService:
                     'redirect_args': {'curriculum_id': curriculum_id}
                 }
             
+            # テーブル編集データの前処理（Phase 3新機能）
+            processed_form_data = dict(form_data)
+            logger.info(f"[CURRICULUM] Original form_data keys: {list(form_data.keys())}")
+            
+            if 'table_content_data' in form_data:
+                raw_data = form_data['table_content_data']
+                logger.info(f"[CURRICULUM] Raw table_content_data type: {type(raw_data)}, length: {len(str(raw_data))}")
+                try:
+                    import json
+                    if isinstance(raw_data, str):
+                        table_data = json.loads(raw_data)
+                    else:
+                        table_data = raw_data  # 既にパース済みの場合
+                    processed_form_data['table_content_data'] = table_data
+                    logger.info(f"[CURRICULUM] Parsed table content: {len(table_data)} rows")
+                    # 各行のデータをログ
+                    for idx, row in enumerate(table_data):
+                        logger.info(f"[CURRICULUM] Row {idx}: item='{row.get('item', '')}', time={row.get('time')}, basebuilder={row.get('basebuilder_id')}, rubric={row.get('rubric_aspect')}")
+                except (json.JSONDecodeError, TypeError) as e:
+                    logger.error(f"[CURRICULUM] Failed to parse table content data: {str(e)}")
+                    logger.error(f"[CURRICULUM] Raw data was: {repr(raw_data)}")
+                    processed_form_data['table_content_data'] = []
+            else:
+                logger.warning(f"[CURRICULUM] No table_content_data in form_data")
+            
             # カリキュラム更新
-            update_result = self.data_service.update_curriculum(curriculum_id, form_data)
+            update_result = self.data_service.update_curriculum(curriculum_id, processed_form_data)
             if not update_result['success']:
                 return {
                     'success': False,
@@ -337,6 +374,16 @@ class CurriculumOrchestrationService:
                     'redirect': 'teacher_curriculum_management.edit_curriculum',
                     'redirect_args': {'curriculum_id': curriculum_id}
                 }
+            
+            # Phase1統合: レッスンテーブルへの直接更新（同期処理の置き換え）
+            if 'table_content_data' in processed_form_data and processed_form_data['table_content_data']:
+                logger.info(f"[CURRICULUM] Directly updating {len(processed_form_data['table_content_data'])} lessons to database")
+                from app.api.curriculum_lesson_direct import batch_update_lessons_direct
+                sync_result = batch_update_lessons_direct(curriculum_id, processed_form_data['table_content_data'])
+                if sync_result['success']:
+                    logger.info(f"[CURRICULUM] Successfully updated {sync_result['created_count']} lessons directly")
+                else:
+                    logger.warning(f"[CURRICULUM] Direct lesson update failed: {sync_result['message']}")
             
             return {
                 'success': True,
@@ -373,7 +420,7 @@ class CurriculumOrchestrationService:
                 return {
                     'success': False,
                     'message': permission_check['message'],
-                    'redirect': 'teacher.dashboard'
+                    'redirect': 'teacher_dashboard.dashboard'
                 }
             
             # 関連データ削除（レッスン、テーマ）
@@ -389,7 +436,7 @@ class CurriculumOrchestrationService:
                 return {
                     'success': False,
                     'message': deletion_result['message'],
-                    'redirect': 'teacher.dashboard'
+                    'redirect': 'teacher_dashboard.dashboard'
                 }
             
             class_id = deletion_result.get('class_id')
@@ -405,28 +452,45 @@ class CurriculumOrchestrationService:
             return {
                 'success': False,
                 'message': 'カリキュラムの削除に失敗しました',
-                'redirect': 'teacher.dashboard'
+                'redirect': 'teacher_dashboard.dashboard'
             }
 
-    def get_service_status(self) -> Dict[str, Any]:
-        """サービス状態取得"""
-        return {
-            'service_name': 'CurriculumOrchestrationService',
-            'status': 'active',
-            'version': '1.0.0',
-            'integrated_services': [
-                'CurriculumDataService',
-                'CurriculumValidationService', 
-                'CurriculumAIService',
-                'CurriculumImportExportService',
-                'LessonService (新システム)',
-                'ThemeManagementService',
-                'CurriculumUnitService'
-            ],
-            'capabilities': [
-                'view_orchestration',
-                'workflow_management',
-                'multi_service_integration',
-                'error_handling_unification'
-            ]
-        }
+    def rubric_edit_view(self, curriculum_id: int) -> Dict[str, Any]:
+        """
+        ルーブリック編集ビュー統合制御（アーキテクチャ統一）
+        
+        Args:
+            curriculum_id: カリキュラムID
+            
+        Returns:
+            Dict: ビューレンダリング用データ
+        """
+        try:
+            logger.info(f"Getting rubric edit view for {curriculum_id}")
+            
+            # 既存のデータ取得ロジックを再利用（重複排除）
+            detail_result = self.data_service.get_curriculum_detail(curriculum_id)
+            if not detail_result['success']:
+                return {
+                    'success': False,
+                    'message': detail_result['message'],
+                    'redirect': 'teacher_dashboard.dashboard'
+                }
+            
+            # Orchestration形式で統一
+            return {
+                'success': True,
+                'template': 'teacher/curriculum_rubric_edit.html',
+                'data': {
+                    'curriculum': detail_result['curriculum'],
+                    'rubric_info': detail_result.get('rubric_info', {})
+                }
+            }
+            
+        except Exception as e:
+            logger.error(f"Error in rubric_edit_view: {str(e)}")
+            return {
+                'success': False,
+                'message': 'ルーブリック編集画面の表示に失敗しました',
+                'redirect': 'teacher_dashboard.dashboard'
+            }

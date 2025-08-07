@@ -42,7 +42,7 @@ class Config:
     WTF_CSRF_TIME_LIMIT = 3600  # 1時間でCSRFトークンを無効化
     
     # セッション設定
-    PERMANENT_SESSION_LIFETIME = 1800  # 30分でセッションタイムアウト
+    PERMANENT_SESSION_LIFETIME = 3600  # 1時間でセッションタイムアウト
     SESSION_COOKIE_SECURE = True  # HTTPS必須
     SESSION_COOKIE_HTTPONLY = True  # JavaScript経由でのCookieアクセス無効
     SESSION_COOKIE_SAMESITE = 'Lax'  # CSRF攻撃対策
@@ -53,6 +53,10 @@ class Config:
     # Curriculum Task System Configuration
     CONVERSION_DISABLED = True  # 変換機能無効化
     TASK_SYSTEM_ENABLED = True  # 新タスクシステム有効化
+    
+    # Phase 6: カリキュラムデータ同期設定
+    ENABLE_CURRICULUM_DATA_SYNC = False  # JSONとテーブルの同期を無効化
+    PREFER_CURRICULUM_LESSONS = True    # curriculum_lessonsテーブルを優先
     
     # AI機能設定
     OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')

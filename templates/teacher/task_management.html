@@ -1179,13 +1179,6 @@ function showToast(message, type = 'info') {
     }, 3000);
 }
 
-function getCsrfToken() {
-    const tokenElement = document.querySelector('meta[name=csrf-token]');
-    const token = tokenElement ? tokenElement.getAttribute('content') : '';
-    console.log('CSRF Token:', token);
-    return token;
-}
-
 // Task Management JavaScript loaded successfully
 console.log('Task Management JavaScript loaded');
 </script>

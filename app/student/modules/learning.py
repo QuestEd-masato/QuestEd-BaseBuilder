@@ -1,5 +1,5 @@
 # app/student/modules/learning.py
-"""学生自由進度学習機能 - レッスンシステムのみ"""
+"""学生学習ポータル機能 - レッスンシステムとの統合インターフェース"""
 
 from datetime import datetime
 
@@ -65,6 +65,21 @@ from ..utils import student_required
 
 learning_bp = Blueprint("student_learning", __name__)
 
+# ===== 責任境界の明確化 (Phase A-2) =====
+# 
+# student_learning.py の責任:
+# 1. 学習ポータル (learning_portal) - メイン機能
+# 2. 単元詳細 (unit_detail) - レガシーサポート
+# 3. レッスンシステムとの連携インターフェース (curriculum_lessons等のリダイレクト)
+# 
+# lesson_system.py の責任:  
+# 1. レッスン管理 (curriculum_lessons, lesson_detail)
+# 2. タスク管理 (task_*, lesson_learning)
+# 3. レッスン進捗管理
+# 
+# リダイレクト層は Phase B で段階的削除予定
+# ================================================
+
 
 @learning_bp.route("/learning")
 @login_required
@@ -92,15 +107,28 @@ def learning_portal():
             if class_obj:
                 class_curricula = Curriculum.query.filter_by(class_id=class_id).all()
                 for curriculum in class_curricula:
-                    # レッスンシステムのみを使用
+                    # Phase修正: curriculum_dataからレッスン数を取得
+                    total_lessons = 0
+                    
+                    # 1. curriculum_lessonsテーブルをチェック
                     if LESSON_SYSTEM_AVAILABLE and CurriculumLesson is not None:
                         try:
                             total_lessons = CurriculumLesson.query.filter_by(curriculum_id=curriculum.id).count()
                         except Exception as e:
                             current_app.logger.error(f"CurriculumLesson count error for curriculum {curriculum.id}: {e}")
-                            total_lessons = 0
-                    else:
-                        total_lessons = 0
+                    
+                    # 2. curriculum_lessonsが0件の場合、移行アダプター経由で取得
+                    if total_lessons == 0:
+                        try:
+                            # Phase 5-3: 移行アダプター経由で統一的に取得
+                            from app.services.curriculum.migration_adapter import CurriculumMigrationAdapter
+                            content = CurriculumMigrationAdapter.read_curriculum_content(curriculum.id)
+                            if content:
+                                table_content = content.get('table_content', [])
+                                total_lessons = len(table_content)
+                                current_app.logger.info(f"Using migration adapter for {curriculum.id}: {total_lessons} lessons")
+                        except Exception as e:
+                            current_app.logger.error(f"Error reading curriculum content for {curriculum.id}: {e}")
                     
                     # レッスンがあるカリキュラムのみ表示
                     if total_lessons > 0:
@@ -116,19 +144,24 @@ def learning_portal():
         for curriculum_data in available_curricula:
             curriculum = curriculum_data['curriculum']
             
-            # レッスンシステムの進捗処理のみ
+            # Phase修正: curriculum_lessonsとcurriculum_dataの統合進捗処理
+            total_lessons = curriculum_data['total_lessons']
+            completed_lessons = 0
+            in_progress_lessons = 0
+            total_lesson_tasks = 0
+            completed_lesson_tasks = 0
+            
+            # 1. curriculum_lessonsテーブルベースの進捗（優先）
+            lessons = []
             if LESSON_SYSTEM_AVAILABLE and CurriculumLesson is not None:
-                # レッスンシステムの進捗処理
                 try:
                     lessons = CurriculumLesson.query.filter_by(curriculum_id=curriculum.id).all()
                 except Exception as lesson_error:
                     current_app.logger.error(f"Lesson progress query error: {str(lesson_error)}")
-                    continue
-                total_lessons = len(lessons)
-                completed_lessons = 0
-                in_progress_lessons = 0
-                
-                # 各レッスンの完了タスク数を計算
+                    lessons = []
+            
+            if lessons:
+                # curriculum_lessonsベースの詳細進捗計算
                 total_lesson_tasks = 0
                 completed_lesson_tasks = 0
                 
@@ -168,22 +201,28 @@ def learning_portal():
                         continue
                 
                 progress_percentage = round((completed_lesson_tasks / total_lesson_tasks * 100) if total_lesson_tasks > 0 else 0, 1)
-                
-                my_progress.append({
-                    'curriculum_id': curriculum.id,
-                    'curriculum_title': curriculum.title,
-                    'class_name': curriculum_data['class_name'],
-                    'total_tasks': total_lesson_tasks,
-                    'completed_tasks': completed_lesson_tasks,
-                    'in_progress_tasks': total_lesson_tasks - completed_lesson_tasks,
-                    'submitted_tasks': 0,  # レッスンシステムでは提出概念なし
-                    'progress_percentage': progress_percentage,
-                    'can_start': total_lessons > 0,
-                    'system_type': 'lessons',
-                    'total_lessons': total_lessons,
-                    'completed_lessons': completed_lessons,
-                    'in_progress_lessons': in_progress_lessons
-                })
+            else:
+                # 2. curriculum_dataベースの簡易進捗計算
+                total_lesson_tasks = total_lessons  # 1レッスン=1タスクとして簡略化
+                completed_lesson_tasks = 0  # 実際の進捗は未実装のため0
+                progress_percentage = 0.0
+                current_app.logger.info(f"Using simple progress for curriculum_data based curriculum {curriculum.id}")
+            
+            my_progress.append({
+                'curriculum_id': curriculum.id,
+                'curriculum_title': curriculum.title,
+                'class_name': curriculum_data['class_name'],
+                'total_tasks': total_lesson_tasks,
+                'completed_tasks': completed_lesson_tasks,
+                'in_progress_tasks': total_lesson_tasks - completed_lesson_tasks,
+                'submitted_tasks': 0,  # レッスンシステムでは提出概念なし
+                'progress_percentage': progress_percentage,
+                'can_start': total_lessons > 0,
+                'system_type': 'lessons' if lessons else 'curriculum_data',
+                'total_lessons': total_lessons,
+                'completed_lessons': completed_lessons,
+                'in_progress_lessons': in_progress_lessons
+            })
 
         # 全体統計の計算
         total_available = len(available_curricula)
@@ -211,6 +250,44 @@ def learning_portal():
         current_app.logger.error(f"Traceback: {traceback.format_exc()}")
         flash("学習ポータルの読み込み中にエラーが発生しました。", "error")
         return redirect(url_for("student_dashboard.dashboard"))
+
+
+@learning_bp.route("/curriculum/<int:curriculum_id>/lessons")
+@login_required
+@student_required
+def curriculum_lessons(curriculum_id):
+    """カリキュラムレッスン一覧表示 - lesson_systemへのリダイレクト"""
+    try:
+        # lesson_systemのcurriculum_lessonsにリダイレクト
+        return redirect(url_for('lesson_system.curriculum_lessons', curriculum_id=curriculum_id))
+    except Exception as e:
+        current_app.logger.error(f"Error in curriculum_lessons redirect: {e}")
+        flash("レッスン一覧の読み込み中にエラーが発生しました。", "error")
+        return redirect(url_for('student_learning.learning_portal'))
+
+
+@learning_bp.route("/lesson/<int:lesson_id>")
+@login_required
+@student_required
+def lesson_detail(lesson_id):
+    """レッスン詳細表示 - lesson_systemへのリダイレクト"""
+    try:
+        # lesson_systemのlesson_detailにリダイレクト
+        return redirect(url_for('lesson_system.lesson_detail', lesson_id=lesson_id))
+    except Exception as e:
+        current_app.logger.error(f"Error in lesson_detail redirect: {e}")
+        flash("レッスン詳細の読み込み中にエラーが発生しました。", "error")
+        return redirect(url_for('student_learning.learning_portal'))
+
+
+# ===== Phase B-3: lesson_learning統合完了 =====
+# lesson_learning機能は削除済み
+# テンプレートで直接 lesson_system.lesson_detail を参照するよう変更
+
+
+# ===== Phase B-2: タスクルート削除 =====
+# タスク機能は lesson_system.py で管理
+# テンプレートで404エラーの場合、lesson_systemへの移行を促すメッセージ表示
 
 
 @learning_bp.route("/unit/<int:unit_id>")
@@ -349,6 +426,54 @@ def curriculum_direct_access(curriculum_id):
     except Exception as e:
         current_app.logger.error(f"Direct curriculum access error: {str(e)}")
         flash("カリキュラムへのアクセス中にエラーが発生しました。", "error")
+        return redirect(url_for("student_learning.learning_portal"))
+
+
+# ============================================
+# カリキュラム詳細表示機能（学生用）
+# ============================================
+
+@learning_bp.route("/curriculum/<int:curriculum_id>")
+@login_required
+@student_required
+def curriculum_detail(curriculum_id):
+    """学生用カリキュラム詳細表示"""
+    try:
+        from app.models import Curriculum, ClassEnrollment
+        
+        # カリキュラムの存在確認
+        curriculum = Curriculum.query.get_or_404(curriculum_id)
+        
+        # アクセス権限チェック：学生が所属するクラスのカリキュラムのみ表示
+        enrollments = ClassEnrollment.query.filter_by(student_id=current_user.id).all()
+        class_ids = [e.class_id for e in enrollments]
+        
+        if curriculum.class_id not in class_ids:
+            flash("このカリキュラムにはアクセスできません。", "error")
+            return redirect(url_for("student_learning.learning_portal"))
+        
+        # レッスン取得
+        lessons = []
+        if get_lesson_models() and CurriculumLesson:
+            try:
+                lessons = CurriculumLesson.query.filter_by(curriculum_id=curriculum_id).all()
+            except Exception as e:
+                current_app.logger.error(f"Failed to get lessons for curriculum {curriculum_id}: {e}")
+        
+        # クラス情報取得
+        from app.models import Class
+        class_obj = Class.query.get(curriculum.class_id)
+        
+        return render_template(
+            "student/curriculum_detail.html",
+            curriculum=curriculum,
+            lessons=lessons,
+            class_name=class_obj.name if class_obj else "不明",
+        )
+        
+    except Exception as e:
+        current_app.logger.error(f"Student curriculum detail error for {curriculum_id}: {str(e)}")
+        flash("カリキュラム詳細の取得中にエラーが発生しました。", "error")
         return redirect(url_for("student_learning.learning_portal"))
 
 

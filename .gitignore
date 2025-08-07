@@ -98,3 +98,6 @@ backup_endpoint_fix_*/
 .env.local
 .env.*.local
 .env.backup_*
+
+# Whitelist environment file
+.env.whitelist

@@ -27,14 +27,9 @@ except ImportError:
     AnswerRecord = None
     BASEBUILDER_AVAILABLE = False
 
-# レッスンシステムモデル（エラー保護）
-try:
-    from app.modules.lesson_system.models.lesson_models import StudentLessonProgress
-    LESSON_SYSTEM_AVAILABLE = True
-except ImportError:
-    logger.warning("Lesson system models not available")
-    StudentLessonProgress = None
-    LESSON_SYSTEM_AVAILABLE = False
+# レッスンシステムモデル（共通ローダー使用）
+from app.utils.lesson_model_loader import get_basic_lesson_models
+CurriculumLesson, StudentLessonProgress, LESSON_SYSTEM_AVAILABLE = get_basic_lesson_models()
 
 
 class StudentRankingService:

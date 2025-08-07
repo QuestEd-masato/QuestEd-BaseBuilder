@@ -253,6 +253,7 @@ function updateProgress(completedItems, totalItems, studyTimeMinutes) {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
+            'X-CSRFToken': getCsrfToken(),
         },
         body: JSON.stringify({
             completed_items: completedItems,

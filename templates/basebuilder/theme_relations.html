@@ -194,6 +194,9 @@
       // 関連付けを作成するAPIを呼び出す
       fetch('/basebuilder/theme_relation/create', {
         method: 'POST',
+        headers: {
+          'X-CSRFToken': getCsrfToken(),
+        },
         body: formData
       })
       .then(response => response.json())
@@ -236,6 +239,9 @@
       // 関連付けを削除するAPIを呼び出す
       fetch('/basebuilder/theme_relation/delete', {
         method: 'POST',
+        headers: {
+          'X-CSRFToken': getCsrfToken(),
+        },
         body: formData
       })
       .then(response => response.json())

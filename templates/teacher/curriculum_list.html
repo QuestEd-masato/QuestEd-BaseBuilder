@@ -27,69 +27,39 @@
             {% for curriculum in curriculums %}
                 <div class="curriculum-card">
                     <div class="curriculum-header">
-                        <h3>{{ curriculum.title }}</h3>
+                        <h3>{{ (curriculum|as_curriculum).title }}</h3>
                         <div class="curriculum-meta">
-                            <span class="difficulty-badge difficulty-{{ curriculum.difficulty_level }}">
-                                難易度: {{ curriculum.difficulty_level }}
+                            <span class="difficulty-badge difficulty-{{ (curriculum|as_curriculum).difficulty_level }}">
+                                難易度: {{ (curriculum|as_curriculum).difficulty_level }}
                             </span>
-                            <span class="hours-badge">{{ curriculum.total_hours }}時間</span>
+                            <span class="hours-badge">{{ (curriculum|as_curriculum).total_hours }}時間</span>
                         </div>
                     </div>
 
                     <div class="curriculum-description">
-                        <p>{{ curriculum.description or '説明なし' }}</p>
+                        {% set description = (curriculum|as_curriculum).description or '説明なし' %}
+                        <p>{{ description[:100] }}{% if description|length > 100 %}...{% endif %}</p>
                     </div>
 
-                    <!-- 評価ルーブリック表示（新機能） -->
-                    {% if curriculum.curriculum_data %}
-                        {% set curriculum_json = curriculum.curriculum_data | fromjson %}
-                        {% if curriculum_json and (curriculum_json.evaluation_aspects or curriculum_json.rubric) %}
-                            <div class="rubric-section">
-                                <h4><i class="fas fa-clipboard-check"></i> 評価ルーブリック</h4>
-                                
-                                <!-- 評価観点（①②③） -->
-                                {% if curriculum_json.evaluation_aspects %}
-                                    <div class="evaluation-aspects">
-                                        <div class="aspect-grid">
-                                            <div class="aspect-item">
-                                                <span class="aspect-label">①知識・技能</span>
-                                                <span class="aspect-value">{{ curriculum_json.evaluation_aspects.knowledge or 30 }}%</span>
-                                            </div>
-                                            <div class="aspect-item">
-                                                <span class="aspect-label">②思考・判断・表現</span>
-                                                <span class="aspect-value">{{ curriculum_json.evaluation_aspects.thinking or 40 }}%</span>
-                                            </div>
-                                            <div class="aspect-item">
-                                                <span class="aspect-label">③主体的態度</span>
-                                                <span class="aspect-value">{{ curriculum_json.evaluation_aspects.attitude or 30 }}%</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                {% endif %}
-
-                                <!-- ルーブリックマトリックス -->
-                                {% if curriculum_json.rubric %}
-                                    <div class="rubric-matrix">
-                                        <table class="rubric-table">
-                                            <thead>
-                                                <tr>
-                                                    <th>評価項目</th>
-                                                    <th>優秀(A)</th>
-                                                    <th>良好(B)</th>
-                                                    <th>要改善(C)</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {% for item in curriculum_json.rubric %}
-                                                    <tr>
-                                                        <td><strong>{{ item.category }}</strong><br><small>{{ item.description }}</small></td>
-                                                        <td>{{ item.levels[0] if item.levels and item.levels|length > 0 else '' }}</td>
-                                                        <td>{{ item.levels[1] if item.levels and item.levels|length > 1 else '' }}</td>
-                                                        <td>{{ item.levels[2] if item.levels and item.levels|length > 2 else '' }}</td>
-                                                    </tr>
-                                                {% endfor %}
-                                            </tbody>
-                                        </table>
+                    <!-- 評価ルーブリック表示（簡潔版） -->
+                    {% if (curriculum|as_curriculum).curriculum_data %}
+                        {% set curriculum_json = (curriculum|as_curriculum).curriculum_data | fromjson %}
+                        {% if curriculum_json and (curriculum_json.get('evaluation_aspects') or curriculum_json.get('rubric')) %}
+                            <div class="rubric-summary">
+                                <div class="rubric-header">
+                                    <i class="fas fa-clipboard-check"></i>
+                                    <span>評価設定あり</span>
+                                    {% if curriculum_json.get('evaluation_aspects') %}
+                                        <span class="aspect-summary">
+                                            (知識{{ curriculum_json.get('evaluation_aspects', {}).get('knowledge', 30) }}% / 
+                                            思考{{ curriculum_json.get('evaluation_aspects', {}).get('thinking', 40) }}% / 
+                                            態度{{ curriculum_json.get('evaluation_aspects', {}).get('attitude', 30) }}%)
+                                        </span>
+                                    {% endif %}
+                                </div>
+                                {% if curriculum_json.get('rubric') %}
+                                    <div class="rubric-items-count">
+                                        評価項目: {{ curriculum_json.get('rubric', [])|length }}項目
                                     </div>
                                 {% endif %}
                             </div>
@@ -97,13 +67,13 @@
                     {% endif %}
 
                     <div class="curriculum-actions">
-                        <a href="{{ url_for('teacher_curriculum_management.curriculum_detail', curriculum_id=curriculum.id) }}" 
+                        <a href="{{ url_for('teacher_curriculum_management.curriculum_detail', curriculum_id=(curriculum|as_curriculum).id) }}" 
                            class="btn btn-sm btn-primary">詳細表示</a>
-                        <a href="{{ url_for('teacher_curriculum_management.edit_curriculum', curriculum_id=curriculum.id) }}" 
+                        <a href="{{ url_for('teacher_curriculum_management.edit_curriculum', curriculum_id=(curriculum|as_curriculum).id) }}" 
                            class="btn btn-sm btn-secondary">編集</a>
-                        <a href="{{ url_for('teacher_curriculum_management.edit_curriculum_rubric', curriculum_id=curriculum.id) }}" 
+                        <a href="{{ url_for('teacher_curriculum_management.edit_curriculum_rubric', curriculum_id=(curriculum|as_curriculum).id) }}" 
                            class="btn btn-sm btn-info">ルーブリック編集</a>
-                        <a href="{{ url_for('teacher_curriculum_management.export_curriculum', curriculum_id=curriculum.id) }}" 
+                        <a href="{{ url_for('teacher_curriculum_management.export_curriculum', curriculum_id=(curriculum|as_curriculum).id) }}" 
                            class="btn btn-sm btn-success">エクスポート</a>
                     </div>
                 </div>
@@ -154,15 +124,15 @@
 
 .curriculum-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(600px, 1fr));
-    gap: 2rem;
+    grid-template-columns: repeat(auto-fill, minmax(500px, 1fr));
+    gap: 1.5rem;
 }
 
 .curriculum-card {
     background: white;
-    border-radius: 12px;
-    padding: 2rem;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     border: 1px solid #e9ecef;
     transition: transform 0.2s, box-shadow 0.2s;
 }
@@ -212,82 +182,38 @@
     color: #6c757d;
 }
 
-/* ルーブリック表示スタイル */
-.rubric-section {
+/* ルーブリック簡潔表示スタイル */
+.rubric-summary {
     background: #f8f9fa;
-    border-radius: 8px;
-    padding: 1.5rem;
-    margin-bottom: 1.5rem;
-    border-left: 4px solid #0056b3;
-}
-
-.rubric-section h4 {
-    color: #0056b3;
-    margin: 0 0 1rem 0;
-    font-size: 1.1rem;
-}
-
-.evaluation-aspects {
-    margin-bottom: 1.5rem;
-}
-
-.aspect-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1rem;
-}
-
-.aspect-item {
-    background: white;
-    padding: 1rem;
     border-radius: 6px;
-    text-align: center;
-    border: 1px solid #dee2e6;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    border-left: 3px solid #0056b3;
 }
 
-.aspect-label {
-    display: block;
+.rubric-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
     font-size: 0.9rem;
-    font-weight: bold;
-    color: #495057;
+    color: #0056b3;
+    font-weight: 500;
     margin-bottom: 0.5rem;
 }
 
-.aspect-value {
-    display: block;
-    font-size: 1.2rem;
-    font-weight: bold;
-    color: #0056b3;
+.rubric-header i {
+    font-size: 0.8rem;
 }
 
-.rubric-matrix {
-    overflow-x: auto;
+.aspect-summary {
+    font-size: 0.8rem;
+    color: #6c757d;
+    font-weight: normal;
 }
 
-.rubric-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.9rem;
-}
-
-.rubric-table th,
-.rubric-table td {
-    border: 1px solid #dee2e6;
-    padding: 0.75rem;
-    text-align: left;
-    vertical-align: top;
-}
-
-.rubric-table th {
-    background: #e9ecef;
-    font-weight: bold;
-    color: #495057;
-}
-
-.rubric-table td:first-child {
-    background: #f8f9fa;
-    font-weight: bold;
-    width: 200px;
+.rubric-items-count {
+    font-size: 0.8rem;
+    color: #6c757d;
 }
 
 .curriculum-actions {

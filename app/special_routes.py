@@ -15,14 +15,15 @@ def register_special_routes(app):
     @app.after_request
     def set_security_headers(response):
         """セキュリティヘッダーを設定"""
-        response.headers["Content-Security-Policy"] = (
-            "default-src 'self'; "
-            "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
-            "style-src 'self' 'unsafe-inline'; "
-            "img-src 'self' data:; "
-            "font-src 'self' https://fonts.gstatic.com; "
-            "connect-src 'self'"
-        )
+        # CSP統一管理: security_config.pyで一元管理されるため、重複設定を無効化
+        # response.headers["Content-Security-Policy"] = (
+        #     "default-src 'self'; "
+        #     "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
+        #     "style-src 'self' 'unsafe-inline'; "
+        #     "img-src 'self' data:; "
+        #     "font-src 'self' https://fonts.gstatic.com; "
+        #     "connect-src 'self'"
+        # )
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["X-Frame-Options"] = "DENY"
         response.headers["X-XSS-Protection"] = "1; mode=block"

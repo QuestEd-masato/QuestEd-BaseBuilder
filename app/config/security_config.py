@@ -56,11 +56,19 @@ API_SECURITY = {
         "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
         "Content-Security-Policy": (
             "default-src 'self'; "
-            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com; "
-            "style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; "
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval' "
+                "https://cdnjs.cloudflare.com "
+                "https://cdn.jsdelivr.net; "
+            "style-src 'self' 'unsafe-inline' "
+                "https://cdnjs.cloudflare.com "
+                "https://use.fontawesome.com "
+                "https://cdn.jsdelivr.net; "
+            "font-src 'self' "
+                "https://cdnjs.cloudflare.com "
+                "https://use.fontawesome.com; "
             "img-src 'self' data: https:; "
-            "font-src 'self' https://cdnjs.cloudflare.com; "
-            "connect-src 'self';"
+            "connect-src 'self'; "
+            "frame-ancestors 'none';"
         ),
     },
 }
@@ -196,3 +204,13 @@ def get_cache_duration(ranking_type):
         int: キャッシュ有効期限（秒）
     """
     return RANKING_SECURITY["CACHE_DURATIONS"].get(ranking_type, 3600)
+
+
+def get_unified_csp_policy():
+    """
+    統一CSPポリシーを取得
+    
+    Returns:
+        str: 統一されたContent-Security-Policyヘッダー値
+    """
+    return API_SECURITY["SECURITY_HEADERS"]["Content-Security-Policy"]

@@ -1,0 +1,1466 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ curriculum.title }} 編集 | QuestEd{% endblock %}
+
+{% block content %}
+<div class="curriculum-list-container">
+    <!-- モダンなヘッダー（ルーブリック編集と統一） -->
+    <div class="curriculum-edit-header">
+        <h2>{{ curriculum.title }} - 編集</h2>
+        <div class="header-actions">
+            <a href="{{ url_for('teacher_curriculum_management.curriculum_detail', curriculum_id=curriculum.id) }}" 
+               class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> 詳細に戻る
+            </a>
+            <a href="{{ url_for('teacher_curriculum_management.view_curriculums', class_id=curriculum.class_id) }}" 
+               class="btn btn-info">
+                <i class="fas fa-list"></i> 一覧に戻る
+            </a>
+        </div>
+    </div>
+
+    <div class="curriculum-edit-card">
+        <form method="post" action="{{ url_for('teacher_curriculum_management.update_curriculum', curriculum_id=curriculum.id) }}" id="curriculum-edit-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            
+            <!-- 基本情報セクション -->
+            <div class="form-section-enhanced">
+                <h3><i class="fas fa-info-circle"></i> 基本情報</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="title" class="form-label">
+                            カリキュラムタイトル <span class="required">*</span>
+                        </label>
+                        <input type="text" class="form-control" id="title" name="title" required
+                               value="{{ form_data.title }}">
+                        <div class="change-indicator" id="title-changed" style="display: none;">
+                            <i class="fas fa-exclamation-circle"></i> 変更あり
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="description" class="form-label">説明</label>
+                        <textarea class="form-control" id="description" name="description" rows="3">{{ form_data.description }}</textarea>
+                        <div class="change-indicator" id="description-changed" style="display: none;">
+                            <i class="fas fa-exclamation-circle"></i> 変更あり
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 設定セクション -->
+            <div class="form-section-enhanced">
+                <h3><i class="fas fa-cog"></i> 設定</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="difficulty_level" class="form-label">難易度レベル</label>
+                        <select class="form-control" id="difficulty_level" name="difficulty_level">
+                            <option value="1" {% if curriculum.difficulty_level == 1 %}selected{% endif %}>1 - 基礎</option>
+                            <option value="2" {% if curriculum.difficulty_level == 2 or curriculum.difficulty_level is none %}selected{% endif %}>2 - 標準</option>
+                            <option value="3" {% if curriculum.difficulty_level == 3 %}selected{% endif %}>3 - 応用</option>
+                        </select>
+                        <div class="change-indicator" id="difficulty_level-changed" style="display: none;">
+                            <i class="fas fa-exclamation-circle"></i> 変更あり
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="total_hours" class="form-label">予定時間数</label>
+                        <div class="input-group">
+                            <input type="number" class="form-control" id="total_hours" name="total_hours" 
+                                   min="1" value="{{ curriculum.total_hours or 20 }}" step="0.5">
+                            <span class="input-group-text">時間</span>
+                        </div>
+                        <div class="change-indicator" id="total_hours-changed" style="display: none;">
+                            <i class="fas fa-exclamation-circle"></i> 変更あり
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 詳細内容セクション -->
+            <div class="form-section-enhanced">
+                <h3><i class="fas fa-edit"></i> 詳細内容</h3>
+                
+                <!-- テーブル編集モード（専用） -->
+                <div class="edit-mode-info">
+                    <h4><i class="fas fa-table"></i> テーブル編集モード</h4>
+                    <p class="text-muted">カリキュラム内容を構造化して管理できます</p>
+                </div>
+
+                <!-- テーブル編集モード -->
+                <div id="table-edit-mode" class="edit-mode-section">
+                    <div class="table-controls">
+                        <button type="button" class="add-row-btn" onclick="addContentRow()">
+                            <i class="fas fa-plus"></i> 項目を追加
+                        </button>
+                        <small class="text-muted">テーブル形式でカリキュラム内容を構造化して管理できます</small>
+                    </div>
+                    
+                    <table class="curriculum-edit-table" id="content-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 120px;">項目</th>
+                                <th style="width: 150px;">説明</th>
+                                <th style="min-width: 300px;">詳細内容</th>
+                                <th style="width: 80px;">時間(分)</th>
+                                <th style="width: 150px;">課題(BaseBuilder)</th>
+                                <th style="width: 120px;">評価の観点</th>
+                                <th style="width: 120px;">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="content-table-body">
+                            {% if table_content_data and table_content_data|length > 0 %}
+                                {% for item in table_content_data %}
+                                <tr>
+                                    <td><input type="text" name="content_item[]" placeholder="学習項目名" value="{{ item.item or '' }}"></td>
+                                    <td><textarea name="content_desc[]" placeholder="この項目の説明">{{ item.description or '' }}</textarea></td>
+                                    <td><textarea name="content_detail[]" placeholder="詳細な学習内容">{{ item.detail or '' }}</textarea></td>
+                                    <td><input type="number" name="content_time[]" placeholder="時間" min="1" step="1" value="{{ item.time or '' }}"></td>
+                                    <td>
+                                        <select name="content_basebuilder[]" class="basebuilder-select" data-current="{{ item.basebuilder_id or '' }}">
+                                            <option value="">-- 選択 --</option>
+                                        </select>
+                                    </td>
+                                    <td>
+                                        <select name="content_rubric[]" class="rubric-select">
+                                            <option value="">-- 選択 --</option>
+                                            <option value="knowledge" {% if item.rubric_aspect == 'knowledge' %}selected{% endif %}>知識・技能</option>
+                                            <option value="thinking" {% if item.rubric_aspect == 'thinking' %}selected{% endif %}>思考・判断・表現</option>
+                                            <option value="attitude" {% if item.rubric_aspect == 'attitude' %}selected{% endif %}>主体的態度</option>
+                                        </select>
+                                    </td>
+                                    <td>
+                                        <button type="button" class="lesson-detail-btn" onclick="openLessonDetailModal(this, {{ loop.index0 }})">
+                                            <i class="fas fa-edit"></i> 詳細
+                                        </button>
+                                        <button type="button" class="remove-row-btn" onclick="removeContentRow(this)">削除</button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td><input type="text" name="content_item[]" placeholder="学習項目名" value=""></td>
+                                    <td><textarea name="content_desc[]" placeholder="この項目の説明"></textarea></td>
+                                    <td><textarea name="content_detail[]" placeholder="詳細な学習内容"></textarea></td>
+                                    <td><input type="number" name="content_time[]" placeholder="時間" min="1" step="1"></td>
+                                    <td>
+                                        <select name="content_basebuilder[]" class="basebuilder-select">
+                                            <option value="">-- 選択 --</option>
+                                        </select>
+                                    </td>
+                                    <td>
+                                        <select name="content_rubric[]" class="rubric-select">
+                                            <option value="">-- 選択 --</option>
+                                            <option value="knowledge">知識・技能</option>
+                                            <option value="thinking">思考・判断・表現</option>
+                                            <option value="attitude">主体的態度</option>
+                                        </select>
+                                    </td>
+                                    <td>
+                                        <button type="button" class="lesson-detail-btn" onclick="openLessonDetailModal(this, 0)">
+                                            <i class="fas fa-edit"></i> 詳細
+                                        </button>
+                                        <button type="button" class="remove-row-btn" onclick="removeContentRow(this)">削除</button>
+                                    </td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 保存状態表示 -->
+            <div class="save-status" id="save-status" style="display: none;">
+                <div class="save-status-content">
+                    <i class="fas fa-save"></i>
+                    <span id="save-status-text">変更が保存されました</span>
+                </div>
+            </div>
+
+            <!-- フォームアクション -->
+            <div class="curriculum-edit-actions">
+                <button type="button" class="btn btn-secondary" onclick="confirmCancel()">
+                    <i class="fas fa-times"></i> キャンセル
+                </button>
+                <button type="button" class="btn btn-warning" onclick="resetForm()" id="reset-btn" style="display: none;">
+                    <i class="fas fa-undo"></i> リセット
+                </button>
+                <button type="submit" class="btn btn-primary" id="save-btn" disabled>
+                    <i class="fas fa-save"></i> 保存
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Phase 2: レッスン詳細編集モーダル -->
+<div id="lesson-detail-modal" class="modal-overlay" style="display: none;">
+    <div class="modal-content lesson-detail-modal">
+        <div class="modal-header">
+            <h3><i class="fas fa-edit"></i> レッスン詳細編集</h3>
+            <button type="button" class="modal-close" onclick="closeLessonDetailModal()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        
+        <div class="modal-body">
+            <form id="lesson-detail-form">
+                <div class="form-group">
+                    <label for="detail-title" class="form-label">
+                        レッスンタイトル <span class="required">*</span>
+                    </label>
+                    <input type="text" id="detail-title" class="form-control" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="detail-description" class="form-label">レッスン説明</label>
+                    <textarea id="detail-description" class="form-control" rows="3"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="detail-learning-content" class="form-label">詳細な学習内容</label>
+                    <textarea id="detail-learning-content" class="form-control" rows="4"></textarea>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="detail-duration" class="form-label">授業時間(分)</label>
+                        <input type="number" id="detail-duration" class="form-control" min="1" step="1" value="50">
+                    </div>
+                    <div class="form-group">
+                        <label for="detail-evaluation" class="form-label">評価の観点</label>
+                        <select id="detail-evaluation" class="form-control">
+                            <option value="">-- 選択 --</option>
+                            <option value="knowledge">知識・技能</option>
+                            <option value="thinking">思考・判断・表現</option>
+                            <option value="attitude">主体的態度</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="detail-learning-objectives" class="form-label">学習目標</label>
+                    <textarea id="detail-learning-objectives" class="form-control" rows="3" 
+                              placeholder="各行に1つずつ学習目標を記入してください"></textarea>
+                    <small class="text-muted">改行で区切って複数の目標を記入できます</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="detail-basebuilder" class="form-label">BaseBuilder連携</label>
+                    <select id="detail-basebuilder" class="form-control basebuilder-select">
+                        <option value="">-- 選択 --</option>
+                    </select>
+                </div>
+                
+                <!-- タスク管理セクション -->
+                <div class="form-section">
+                    <div class="form-section-header">
+                        <h4><i class="fas fa-tasks"></i> レッスンタスク管理</h4>
+                        <small class="text-muted">最大3つまでタスクを設定できます</small>
+                    </div>
+                    
+                    <div id="modal-task-list" class="task-list">
+                        <!-- タスクリストは JavaScript で動的生成 -->
+                    </div>
+                    
+                    <button type="button" id="add-modal-task-btn" class="btn btn-success btn-sm">
+                        <i class="fas fa-plus"></i> タスクを追加
+                    </button>
+                </div>
+            </form>
+        </div>
+        
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" onclick="closeLessonDetailModal()">
+                キャンセル
+            </button>
+            <button type="button" class="btn btn-primary" onclick="saveLessonDetail()">
+                <i class="fas fa-save"></i> 適用
+            </button>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_css %}
+<!-- 共有スタイル読み込み（重複排除設計） -->
+{% include 'teacher/curriculum_common_styles.html' %}
+
+<!-- curriculum_edit専用の追加スタイル -->
+<style>
+.curriculum-list-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.header-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+/* フォーム専用スタイル（既存機能維持） */
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+}
+
+.form-group {
+    margin-bottom: 1rem;
+    position: relative;
+}
+
+.form-label {
+    display: block;
+    font-weight: bold;
+    color: #495057;
+    margin-bottom: 0.5rem;
+}
+
+.required {
+    color: #dc3545;
+}
+
+.form-control {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    font-size: 1rem;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.form-control:focus {
+    outline: 0;
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.form-control.changed {
+    border-color: #ffc107;
+    background-color: #fff9e6;
+}
+
+.input-group {
+    display: flex;
+}
+
+.input-group .form-control {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.input-group-text {
+    background: #e9ecef;
+    border: 1px solid #ced4da;
+    border-left: none;
+    padding: 0.75rem;
+    border-top-right-radius: 6px;
+    border-bottom-right-radius: 6px;
+    color: #495057;
+}
+
+.content-editor {
+    min-height: 150px;
+    resize: vertical;
+}
+
+/* 編集専用スタイル */
+.change-indicator {
+    position: absolute;
+    top: 0;
+    right: 0;
+    background: #ffc107;
+    color: #856404;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0 6px 0 6px;
+    font-size: 0.75rem;
+    font-weight: bold;
+}
+
+.save-status {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+    border-radius: 6px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+.save-status-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.btn {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.btn-primary {
+    background: #007bff;
+    color: white;
+}
+
+.btn-secondary {
+    background: #6c757d;
+    color: white;
+}
+
+.btn-warning {
+    background: #ffc107;
+    color: #212529;
+}
+
+.btn-info {
+    background: #17a2b8;
+    color: white;
+}
+
+.btn:not(:disabled):hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* テーブル編集専用スタイル */
+.edit-mode-info {
+    padding: 1rem;
+    background: #f0f8ff;
+    border-radius: 8px;
+    border-left: 4px solid #0056b3;
+    margin-bottom: 1.5rem;
+}
+
+.edit-mode-info h4 {
+    margin: 0 0 0.5rem 0;
+    color: #0056b3;
+    font-size: 1.1rem;
+}
+
+.edit-mode-info .text-muted {
+    margin: 0;
+    font-size: 0.9rem;
+}
+
+.edit-mode-section {
+    transition: opacity 0.3s ease;
+}
+
+/* テーブル編集機能スタイル */
+.table-controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+    padding: 1rem;
+    background: #f0f8ff;
+    border-radius: 6px;
+    border-left: 4px solid #0056b3;
+}
+
+.add-row-btn {
+    background: #28a745;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.add-row-btn:hover {
+    background: #218838;
+    transform: translateY(-1px);
+}
+
+.remove-row-btn {
+    background: #dc3545;
+    color: white;
+    border: none;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    transition: all 0.2s;
+}
+
+.remove-row-btn:hover {
+    background: #c82333;
+}
+
+/* Phase 2: レッスン詳細編集ボタン */
+.lesson-detail-btn {
+    background: #17a2b8;
+    color: white;
+    border: none;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    margin-right: 0.25rem;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.lesson-detail-btn:hover {
+    background: #138496;
+}
+
+/* Phase 2: モーダルスタイル */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-content {
+    background: white;
+    border-radius: 8px;
+    max-width: 600px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+    from {
+        transform: translateY(-50px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.modal-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid #dee2e6;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h3 {
+    margin: 0;
+    color: #495057;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #6c757d;
+    padding: 0.25rem;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.modal-close:hover {
+    background: #f8f9fa;
+    color: #495057;
+}
+
+.modal-body {
+    padding: 1.5rem;
+}
+
+.modal-footer {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid #dee2e6;
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+}
+
+/* タスク管理専用スタイル */
+.form-section {
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 6px;
+    border-left: 4px solid #17a2b8;
+}
+
+.form-section-header {
+    margin-bottom: 1rem;
+}
+
+.form-section-header h4 {
+    margin: 0 0 0.25rem 0;
+    color: #17a2b8;
+    font-size: 1.1rem;
+}
+
+.task-list {
+    margin-bottom: 1rem;
+}
+
+.task-item {
+    background: white;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+    position: relative;
+}
+
+.task-item:last-child {
+    margin-bottom: 0;
+}
+
+.task-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+}
+
+.task-number {
+    background: #17a2b8;
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.task-remove-btn {
+    background: #dc3545;
+    color: white;
+    border: none;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    transition: all 0.2s;
+}
+
+.task-remove-btn:hover {
+    background: #c82333;
+}
+
+.task-fields {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.task-field {
+    display: flex;
+    flex-direction: column;
+}
+
+.task-field label {
+    font-size: 0.9rem;
+    font-weight: 500;
+    margin-bottom: 0.25rem;
+    color: #495057;
+}
+
+.task-field input,
+.task-field textarea {
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    padding: 0.375rem 0.75rem;
+    font-size: 0.9rem;
+    transition: border-color 0.15s ease-in-out;
+}
+
+.task-field input:focus,
+.task-field textarea:focus {
+    outline: none;
+    border-color: #17a2b8;
+    box-shadow: 0 0 0 0.2rem rgba(23, 162, 184, 0.25);
+}
+
+.task-field textarea {
+    min-height: 60px;
+    resize: vertical;
+}
+
+.task-field-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 0.75rem;
+}
+
+.task-duration {
+    width: 100px;
+}
+
+#add-modal-task-btn {
+    width: 100%;
+    padding: 0.75rem;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+#add-modal-task-btn:hover {
+    background: #218838;
+    transform: translateY(-1px);
+}
+
+#add-modal-task-btn:disabled {
+    background: #6c757d;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.task-count-info {
+    font-size: 0.8rem;
+    color: #6c757d;
+    text-align: center;
+    margin-top: 0.5rem;
+}
+
+/* 共有スタイルから継承するテーブルスタイルの調整 */
+.curriculum-edit-table {
+    font-size: 0.9rem;
+}
+
+.curriculum-edit-table input[type="number"] {
+    text-align: center;
+}
+
+.curriculum-edit-table textarea {
+    min-height: 40px;
+    font-size: 0.9rem;
+}
+
+/* レスポンシブ対応 */
+@media (max-width: 768px) {
+    .curriculum-list-container {
+        padding: 1rem;
+    }
+    
+    .header-actions {
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    
+    .form-row {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .btn {
+        justify-content: center;
+    }
+    
+    
+    .table-controls {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .curriculum-edit-table {
+        font-size: 0.8rem;
+    }
+    
+    .curriculum-edit-table th,
+    .curriculum-edit-table td {
+        padding: 0.5rem 0.25rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('curriculum-edit-form');
+    const saveBtn = document.getElementById('save-btn');
+    const resetBtn = document.getElementById('reset-btn');
+    const saveStatus = document.getElementById('save-status');
+    
+    // テーブル編集モード専用設定（編集モード切り替え削除）
+    
+    // ヘルパー関数: 現在のすべての入力要素を取得
+    function getAllInputs() {
+        return form.querySelectorAll('input, textarea, select');
+    }
+    
+    // 初期値を保存
+    const originalValues = {};
+    const inputs = getAllInputs();
+    inputs.forEach(input => {
+        originalValues[input.name] = input.value;
+    });
+    
+    // 変更検知
+    function checkChanges() {
+        let hasChanges = false;
+        
+        // 現在のすべての入力要素を取得（動的に追加された要素も含む）
+        const currentInputs = getAllInputs();
+        
+        currentInputs.forEach(input => {
+            // 元の値が存在しない場合は空文字として扱う（新規追加行対応）
+            const originalValue = originalValues[input.name] || '';
+            const isChanged = input.value !== originalValue;
+            const indicator = document.getElementById(input.name + '-changed');
+            
+            if (isChanged) {
+                hasChanges = true;
+                input.classList.add('changed');
+                if (indicator) indicator.style.display = 'block';
+            } else {
+                input.classList.remove('changed');
+                if (indicator) indicator.style.display = 'none';
+            }
+        });
+        
+        saveBtn.disabled = !hasChanges;
+        resetBtn.style.display = hasChanges ? 'inline-flex' : 'none';
+    }
+    
+    // 入力イベントリスナー
+    inputs.forEach(input => {
+        input.addEventListener('input', checkChanges);
+        input.addEventListener('change', checkChanges);
+    });
+    
+    // リセット機能
+    window.resetForm = function() {
+        if (confirm('変更内容をリセットしますか？')) {
+            const currentInputs = getAllInputs();
+            currentInputs.forEach(input => {
+                input.value = originalValues[input.name] || '';
+            });
+            checkChanges();
+        }
+    };
+    
+    // キャンセル確認
+    window.confirmCancel = function() {
+        const hasChanges = !saveBtn.disabled;
+        if (hasChanges) {
+            if (confirm('変更内容が保存されていません。破棄して戻りますか？')) {
+                history.back();
+            }
+        } else {
+            history.back();
+        }
+    };
+    
+    // フォーム送信
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(form);
+        const submitBtn = form.querySelector('button[type="submit"]');
+        
+        // テーブル編集データの収集・追加（常にテーブルモード）
+        const tableData = collectTableData();
+        console.log('Collected table data:', tableData);
+        console.log('Table data JSON:', JSON.stringify(tableData));
+        formData.append('table_content_data', JSON.stringify(tableData));
+        formData.append('edit_mode', 'table');
+        
+        // 送信ボタンの状態変更
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 保存中...';
+        
+        // CSRFトークンを取得
+        const csrfToken = document.querySelector('input[name="csrf_token"]').value;
+        console.log('CSRF Token:', csrfToken ? 'あり' : 'なし');
+        
+        // AJAX送信
+        fetch(form.action, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrfToken,
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+            body: formData
+        })
+        .then(response => {
+            console.log('Response status:', response.status);
+            console.log('Response ok:', response.ok);
+            console.log('Response redirected:', response.redirected);
+            console.log('Response URL:', response.url);
+            
+            // 成功判定を先に行う
+            if (response.ok || response.redirected) {
+                console.log('保存成功: ステータス', response.status);
+                // 成功時の処理
+                saveStatus.style.display = 'block';
+                
+                // 初期値を更新（動的要素も含めて）
+                const currentInputs = getAllInputs();
+                currentInputs.forEach(input => {
+                    originalValues[input.name] = input.value;
+                });
+                
+                checkChanges();
+                
+                setTimeout(() => {
+                    saveStatus.style.display = 'none';
+                }, 3000);
+                
+                // リダイレクトの場合は遷移
+                if (response.redirected) {
+                    setTimeout(() => {
+                        window.location.href = response.url;
+                    }, 1000);
+                }
+            } else {
+                console.log('保存失敗: ステータス', response.status);
+                // エラー詳細を取得
+                return response.text().then(text => {
+                    console.log('エラーレスポンス内容:', text.substring(0, 500));
+                    throw new Error(`保存に失敗しました (${response.status})`);
+                });
+            }
+        })
+        .catch(error => {
+            console.error('保存エラー詳細:', error);
+            
+            // CSRFエラーの場合
+            if (error.message && error.message.includes('CSRF')) {
+                saveStatus.innerHTML = '<div class="save-status-content"><i class="fas fa-exclamation-triangle"></i> <span>セキュリティトークンの問題です。ページを再読み込みして再試行してください。</span></div>';
+                setTimeout(() => location.reload(), 2000);
+            } else {
+                saveStatus.innerHTML = '<div class="save-status-content"><i class="fas fa-times"></i> <span>保存に失敗しました</span></div>';
+            }
+            
+            saveStatus.style.display = 'block';
+            saveStatus.style.backgroundColor = '#f8d7da';
+            saveStatus.style.borderColor = '#f5c6cb';
+            setTimeout(() => {
+                saveStatus.style.display = 'none';
+                saveStatus.style.backgroundColor = '';
+                saveStatus.style.borderColor = '';
+                saveStatus.innerHTML = '<div class="save-status-content"><i class="fas fa-check"></i> <span id="save-status-text">変更が保存されました</span></div>';
+            }, 3000);
+        })
+        .finally(() => {
+            // ボタンの状態を戻す
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fas fa-save"></i> 保存';
+        });
+    });
+    
+    // 初期チェック
+    checkChanges();
+});
+
+// テーブル編集機能（グローバル関数）
+function addContentRow() {
+    const tbody = document.getElementById('content-table-body');
+    const newRow = document.createElement('tr');
+    newRow.innerHTML = `
+        <td><input type="text" name="content_item[]" placeholder="学習項目名"></td>
+        <td><textarea name="content_desc[]" placeholder="この項目の説明"></textarea></td>
+        <td><textarea name="content_detail[]" placeholder="詳細な学習内容"></textarea></td>
+        <td><input type="number" name="content_time[]" placeholder="時間" min="1" step="1"></td>
+        <td>
+            <select name="content_basebuilder[]" class="basebuilder-select">
+                <option value="">-- 選択 --</option>
+            </select>
+        </td>
+        <td>
+            <select name="content_rubric[]" class="rubric-select">
+                <option value="">-- 選択 --</option>
+                <option value="knowledge">知識・技能</option>
+                <option value="thinking">思考・判断・表現</option>
+                <option value="attitude">主体的態度</option>
+            </select>
+        </td>
+        <td>
+            <button type="button" class="lesson-detail-btn" onclick="openLessonDetailModal(this, -1)">
+                <i class="fas fa-edit"></i> 詳細
+            </button>
+            <button type="button" class="remove-row-btn" onclick="removeContentRow(this)">削除</button>
+        </td>
+    `;
+    tbody.appendChild(newRow);
+    
+    // 新しい行のBaseBuilderセレクトを初期化
+    loadBaseBuilderOptions(newRow.querySelector('.basebuilder-select'));
+    
+    // 新しい入力フィールドにイベントリスナーを追加（select要素も含む）
+    const newInputs = newRow.querySelectorAll('input, textarea, select');
+    newInputs.forEach(input => {
+        input.addEventListener('input', checkChanges);
+        input.addEventListener('change', checkChanges);
+    });
+}
+
+function removeContentRow(button) {
+    const tbody = document.getElementById('content-table-body');
+    if (tbody.children.length > 1) {
+        button.closest('tr').remove();
+        checkChanges(); // 削除後に変更をチェック
+    } else {
+        alert('最低1つの項目が必要です。');
+    }
+}
+
+// テーブルデータ収集機能（Phase 3新機能）
+function collectTableData() {
+    const rows = document.querySelectorAll('#content-table-body tr');
+    const tableData = [];
+    
+    rows.forEach(row => {
+        const item = row.querySelector('input[name="content_item[]"]').value.trim();
+        const description = row.querySelector('textarea[name="content_desc[]"]').value.trim();
+        const detail = row.querySelector('textarea[name="content_detail[]"]').value.trim();
+        const time = row.querySelector('input[name="content_time[]"]').value;
+        const basebuilder = row.querySelector('select[name="content_basebuilder[]"]').value;
+        const rubric = row.querySelector('select[name="content_rubric[]"]').value;
+        
+        // 空の行はスキップしない（デフォルト行対応）
+        tableData.push({
+            item: item,
+            description: description,
+            detail: detail,
+            time: time ? parseInt(time) : null,
+            basebuilder_id: basebuilder || null,
+            rubric_aspect: rubric || null
+        });
+    });
+    
+    return tableData;
+}
+
+// BaseBuilderコンテンツ読み込み関数
+function loadBaseBuilderOptions(selectElement) {
+    if (!selectElement) return;
+    
+    // 教科IDを取得（カリキュラムの教科ID）
+    const subjectId = {{ curriculum.subject_id or 'null' }};
+    if (!subjectId) {
+        selectElement.innerHTML = '<option value="">教科が設定されていません</option>';
+        return;
+    }
+    
+    // 現在の値を保持
+    const currentValue = selectElement.dataset.current || '';
+    
+    // BaseBuilderコンテンツを非同期で読み込み
+    fetch(`/api/basebuilder/content?subject_id=${subjectId}`)
+        .then(response => response.json())
+        .then(data => {
+            selectElement.innerHTML = '<option value="">-- 選択 --</option>';
+            
+            if (data.textsets && data.textsets.length > 0) {
+                const optgroup = document.createElement('optgroup');
+                optgroup.label = 'テキストセット';
+                data.textsets.forEach(textset => {
+                    const option = document.createElement('option');
+                    option.value = `textset_${textset.id}`;
+                    option.textContent = `${textset.title} (${textset.category_name})`;
+                    if (currentValue === `textset_${textset.id}`) {
+                        option.selected = true;
+                    }
+                    optgroup.appendChild(option);
+                });
+                selectElement.appendChild(optgroup);
+            }
+            
+            if (data.items && data.items.length > 0) {
+                const optgroup = document.createElement('optgroup');
+                optgroup.label = '基本知識';
+                data.items.forEach(item => {
+                    const option = document.createElement('option');
+                    option.value = `item_${item.id}`;
+                    option.textContent = `${item.title} (${item.category_name})`;
+                    if (currentValue === `item_${item.id}`) {
+                        option.selected = true;
+                    }
+                    optgroup.appendChild(option);
+                });
+                selectElement.appendChild(optgroup);
+            }
+        })
+        .catch(error => {
+            console.error('BaseBuilderコンテンツの読み込みエラー:', error);
+            selectElement.innerHTML = '<option value="">読み込みエラー</option>';
+        });
+}
+
+// ページ読み込み時に既存のBaseBuilderセレクトを初期化
+document.addEventListener('DOMContentLoaded', function() {
+    const basebuilderSelects = document.querySelectorAll('.basebuilder-select');
+    basebuilderSelects.forEach(select => {
+        loadBaseBuilderOptions(select);
+    });
+});
+
+// Phase 2: レッスン詳細編集モーダル機能
+let currentEditingRow = null;
+let currentEditingRowIndex = -1;
+
+function openLessonDetailModal(button, rowIndex) {
+    const row = button.closest('tr');
+    currentEditingRow = row;
+    currentEditingRowIndex = rowIndex;
+    
+    // 現在の値を取得してモーダルに設定
+    const titleInput = row.querySelector('input[name="content_item[]"]');
+    const descInput = row.querySelector('textarea[name="content_desc[]"]');
+    const detailInput = row.querySelector('textarea[name="content_detail[]"]');
+    const timeInput = row.querySelector('input[name="content_time[]"]');
+    const basebuilderSelect = row.querySelector('select[name="content_basebuilder[]"]');
+    const rubricSelect = row.querySelector('select[name="content_rubric[]"]');
+    
+    // モーダルフィールドに値を設定
+    document.getElementById('detail-title').value = titleInput ? titleInput.value : '';
+    document.getElementById('detail-description').value = descInput ? descInput.value : '';
+    document.getElementById('detail-learning-content').value = detailInput ? detailInput.value : '';
+    document.getElementById('detail-duration').value = timeInput ? (timeInput.value || 50) : 50;
+    document.getElementById('detail-evaluation').value = rubricSelect ? rubricSelect.value : '';
+    document.getElementById('detail-basebuilder').value = basebuilderSelect ? basebuilderSelect.value : '';
+    
+    // 学習目標は詳細内容から抽出（改行区切りで表示）
+    const learningContent = detailInput ? detailInput.value : '';
+    document.getElementById('detail-learning-objectives').value = learningContent;
+    
+    // モーダル内のBaseBuilderセレクトを初期化
+    const modalBasebuilderSelect = document.getElementById('detail-basebuilder');
+    loadBaseBuilderOptions(modalBasebuilderSelect);
+    // 初期化完了後に値を設定するため、少し遅延
+    setTimeout(() => {
+        modalBasebuilderSelect.value = basebuilderSelect ? basebuilderSelect.value : '';
+    }, 500);
+    
+    // タスクリストを初期化
+    initializeModalTaskList(rowIndex);
+    
+    // モーダル表示
+    document.getElementById('lesson-detail-modal').style.display = 'flex';
+    document.body.style.overflow = 'hidden'; // 背景スクロールを無効化
+}
+
+function closeLessonDetailModal() {
+    document.getElementById('lesson-detail-modal').style.display = 'none';
+    document.body.style.overflow = ''; // 背景スクロールを復元
+    currentEditingRow = null;
+    currentEditingRowIndex = -1;
+}
+
+function saveLessonDetail() {
+    if (!currentEditingRow) return;
+    
+    // モーダルの値を取得
+    const title = document.getElementById('detail-title').value.trim();
+    const description = document.getElementById('detail-description').value.trim();
+    const learningContent = document.getElementById('detail-learning-objectives').value.trim();
+    const duration = document.getElementById('detail-duration').value;
+    const evaluation = document.getElementById('detail-evaluation').value;
+    const basebuilder = document.getElementById('detail-basebuilder').value;
+    
+    if (!title) {
+        alert('レッスンタイトルは必須です。');
+        return;
+    }
+    
+    // テーブル行の値を更新
+    const titleInput = currentEditingRow.querySelector('input[name="content_item[]"]');
+    const descInput = currentEditingRow.querySelector('textarea[name="content_desc[]"]');
+    const detailInput = currentEditingRow.querySelector('textarea[name="content_detail[]"]');
+    const timeInput = currentEditingRow.querySelector('input[name="content_time[]"]');
+    const basebuilderSelect = currentEditingRow.querySelector('select[name="content_basebuilder[]"]');
+    const rubricSelect = currentEditingRow.querySelector('select[name="content_rubric[]"]');
+    
+    if (titleInput) titleInput.value = title;
+    if (descInput) descInput.value = description;
+    if (detailInput) detailInput.value = learningContent; // 学習目標を詳細内容として保存
+    if (timeInput) timeInput.value = duration;
+    if (basebuilderSelect) basebuilderSelect.value = basebuilder;
+    if (rubricSelect) rubricSelect.value = evaluation;
+    
+    // 変更検知をトリガー
+    checkChanges();
+    
+    // モーダルを閉じる
+    closeLessonDetailModal();
+    
+    // 成功メッセージ（短時間表示）
+    const successMsg = document.createElement('div');
+    successMsg.className = 'alert alert-success';
+    successMsg.style.cssText = 'position: fixed; top: 20px; right: 20px; z-index: 1001; padding: 1rem; background: #d4edda; border: 1px solid #c3e6cb; border-radius: 6px; color: #155724;';
+    successMsg.innerHTML = '<i class="fas fa-check"></i> レッスン詳細を更新しました';
+    document.body.appendChild(successMsg);
+    
+    setTimeout(() => {
+        if (successMsg && successMsg.parentNode) {
+            successMsg.parentNode.removeChild(successMsg);
+        }
+    }, 2000);
+}
+
+// ESCキーでモーダルを閉じる
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeLessonDetailModal();
+    }
+});
+
+// モーダル背景クリックで閉じる
+document.getElementById('lesson-detail-modal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeLessonDetailModal();
+    }
+});
+
+// ===== タスク管理機能 =====
+
+let modalTasks = [];
+const MAX_TASKS = 3;
+let currentLessonId = null;
+
+// タスク管理初期化
+function initializeModalTaskList(rowIndex) {
+    // 既存のタスクデータをクリア
+    modalTasks = [];
+    const taskListContainer = document.getElementById('modal-task-list');
+    taskListContainer.innerHTML = '';
+    
+    // 既存レッスンの場合、タスクデータを読み込み
+    if (rowIndex >= 0) {
+        // テーブル行からレッスンIDを推測（仮の実装）
+        // 実際のレッスンIDが分からない場合はスキップ
+        console.log('Loading tasks for existing lesson at row', rowIndex);
+        // loadExistingTasks(lessonId); // 将来的に実装
+    }
+    
+    // 「タスクを追加」ボタンのイベントリスナー
+    const addTaskBtn = document.getElementById('add-modal-task-btn');
+    addTaskBtn.onclick = addModalTask;
+    
+    // 初期状態でタスクが0個の場合、デフォルトタスクを1個追加
+    if (modalTasks.length === 0) {
+        addModalTask();
+    }
+    
+    updateTaskUI();
+}
+
+// タスクを追加
+function addModalTask() {
+    if (modalTasks.length >= MAX_TASKS) {
+        alert(`最大${MAX_TASKS}個までタスクを追加できます。`);
+        return;
+    }
+    
+    const newTask = {
+        id: null, // 新規タスクの場合はnull
+        tempId: 'temp_' + Date.now(),
+        title: '',
+        description: '',
+        instructions: '',
+        estimated_minutes: 10,
+        is_required: true
+    };
+    
+    modalTasks.push(newTask);
+    updateTaskUI();
+}
+
+// タスクを削除
+function removeModalTask(tempId) {
+    const index = modalTasks.findIndex(task => task.tempId === tempId);
+    if (index > -1) {
+        modalTasks.splice(index, 1);
+        updateTaskUI();
+    }
+}
+
+// タスクUIを更新
+function updateTaskUI() {
+    const taskListContainer = document.getElementById('modal-task-list');
+    taskListContainer.innerHTML = '';
+    
+    modalTasks.forEach((task, index) => {
+        const taskElement = createTaskElement(task, index);
+        taskListContainer.appendChild(taskElement);
+    });
+    
+    // 「タスクを追加」ボタンの状態を更新
+    const addTaskBtn = document.getElementById('add-modal-task-btn');
+    addTaskBtn.disabled = modalTasks.length >= MAX_TASKS;
+    
+    // カウント情報を更新
+    updateTaskCountInfo();
+}
+
+// タスク要素を作成
+function createTaskElement(task, index) {
+    const taskDiv = document.createElement('div');
+    taskDiv.className = 'task-item';
+    taskDiv.setAttribute('data-temp-id', task.tempId);
+    
+    taskDiv.innerHTML = `
+        <div class="task-item-header">
+            <span class="task-number">タスク ${index + 1}</span>
+            <button type="button" class="task-remove-btn" onclick="removeModalTask('${task.tempId}')">
+                <i class="fas fa-trash"></i> 削除
+            </button>
+        </div>
+        
+        <div class="task-fields">
+            <div class="task-field">
+                <label>タスク名 <span style="color: #dc3545;">*</span></label>
+                <input type="text" 
+                       value="${task.title}" 
+                       placeholder="例: 理解確認クイズ"
+                       onchange="updateTaskField('${task.tempId}', 'title', this.value)">
+            </div>
+            
+            <div class="task-field">
+                <label>説明</label>
+                <textarea placeholder="学生に表示される説明文を入力してください"
+                         onchange="updateTaskField('${task.tempId}', 'description', this.value)">${task.description}</textarea>
+            </div>
+            
+            <div class="task-field">
+                <label>詳細な指示</label>
+                <textarea placeholder="具体的な取り組み方や注意点を入力してください"
+                         onchange="updateTaskField('${task.tempId}', 'instructions', this.value)">${task.instructions}</textarea>
+            </div>
+            
+            <div class="task-field-row">
+                <div class="task-field">
+                    <label>予想所要時間</label>
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <input type="number" 
+                               class="task-duration"
+                               value="${task.estimated_minutes}" 
+                               min="1" 
+                               max="60"
+                               onchange="updateTaskField('${task.tempId}', 'estimated_minutes', parseInt(this.value))">
+                        <span>分</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    return taskDiv;
+}
+
+// タスクフィールドを更新
+function updateTaskField(tempId, field, value) {
+    const task = modalTasks.find(t => t.tempId === tempId);
+    if (task) {
+        task[field] = value;
+    }
+}
+
+// タスクカウント情報を更新
+function updateTaskCountInfo() {
+    const taskListContainer = document.getElementById('modal-task-list');
+    
+    // 既存のカウント情報を削除
+    const existingInfo = taskListContainer.querySelector('.task-count-info');
+    if (existingInfo) {
+        existingInfo.remove();
+    }
+    
+    // 新しいカウント情報を追加
+    if (modalTasks.length === 0) {
+        const infoDiv = document.createElement('div');
+        infoDiv.className = 'task-count-info';
+        infoDiv.innerHTML = 'タスクを追加してください（最大3個）';
+        taskListContainer.appendChild(infoDiv);
+    }
+}
+
+// 既存タスクをロード（将来的な実装）
+function loadExistingTasks(lessonId) {
+    if (!lessonId) return;
+    
+    fetch(`/lesson-system/api/lesson/${lessonId}/tasks`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                modalTasks = data.tasks.map(task => ({
+                    ...task,
+                    tempId: 'existing_' + task.id
+                }));
+                updateTaskUI();
+            }
+        })
+        .catch(error => {
+            console.error('Error loading tasks:', error);
+        });
+}
+
+// タスクデータを収集
+function collectModalTaskData() {
+    return modalTasks.filter(task => task.title.trim() !== '').map(task => ({
+        id: task.id,
+        title: task.title.trim(),
+        description: task.description.trim(),
+        instructions: task.instructions.trim(),
+        estimated_minutes: task.estimated_minutes,
+        is_required: task.is_required
+    }));
+}
+
+// タスクをサーバーに保存
+function saveTasksToServer(lessonId, tasks) {
+    // 既存タスクを削除
+    return fetch(`/lesson-system/api/lesson/${lessonId}/tasks`, {
+        method: 'DELETE'
+    })
+    .then(() => {
+        // 新しいタスクを作成
+        const promises = tasks.map(task => 
+            fetch(`/lesson-system/api/lesson/${lessonId}/tasks`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('input[name="csrf_token"]').value
+                },
+                body: JSON.stringify(task)
+            })
+        );
+        return Promise.all(promises);
+    });
+}
+
+</script>
+{% endblock %}

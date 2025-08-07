@@ -15,11 +15,19 @@ class RealtimeSyncClient {
         this.notificationQueue = [];
         this.syncStatusCallbacks = new Map();
         
+        // Socket.IOが利用可能かチェック
+        this.socketIOAvailable = typeof io !== 'undefined';
+        
         // UI要素の初期化
         this.initializeUI();
         
-        // 接続開始
-        this.connect();
+        // Socket.IOが利用可能な場合のみ接続開始
+        if (this.socketIOAvailable) {
+            this.connect();
+        } else {
+            console.log('RealtimeSync: Socket.IO is not available, running in offline mode');
+            this.showOfflineStatus();
+        }
     }
     
     /**
@@ -43,6 +51,13 @@ class RealtimeSyncClient {
         
         // CSS スタイルの追加
         this.addStyles();
+    }
+    
+    /**
+     * オフラインステータスを表示
+     */
+    showOfflineStatus() {
+        this.updateConnectionStatus('offline', 'オフラインモード');
     }
     
     /**
@@ -255,6 +270,12 @@ class RealtimeSyncClient {
      * WebSocket接続
      */
     connect() {
+        // Socket.IOが利用可能でない場合は何もしない
+        if (!this.socketIOAvailable) {
+            console.log('RealtimeSync: Socket.IO not available, skipping connection');
+            return;
+        }
+        
         if (this.socket && this.isConnected) {
             return;
         }

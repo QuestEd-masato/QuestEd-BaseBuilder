@@ -36,7 +36,7 @@ def handle_orchestration_result(result):
             flash(f"エラー: {str(e)}", 'error')
         else:
             flash('申し訳ありません。エラーが発生しました。', 'error')
-        return redirect(url_for('teacher.dashboard'))
+        return redirect(url_for('teacher_dashboard.dashboard'))
 
 # Phase8F: View関数の軽量化（Orchestration Pattern適用）
 
@@ -125,7 +125,38 @@ def edit_curriculum(curriculum_id):
 @teacher_required
 def update_curriculum(curriculum_id):
     """カリキュラム更新処理（Phase8F統合ファサード）"""
-    form_data = request.form.to_dict()
+    logger.info(f"[CURRICULUM] Starting update for curriculum_id: {curriculum_id}")
+    
+    # 配列データを適切に処理するため、MultiDictを使用
+    form_data = {}
+    for key in request.form.keys():
+        if key.endswith('[]'):
+            # 配列フィールドの処理
+            form_data[key] = request.form.getlist(key)
+            logger.debug(f"[CURRICULUM] Array field {key}: {len(form_data[key])} items")
+        else:
+            form_data[key] = request.form.get(key)
+    
+    # Phase修正: table_content_dataのJSON処理
+    if 'table_content_data' in form_data:
+        try:
+            import json
+            table_data_str = form_data['table_content_data']
+            if isinstance(table_data_str, str) and table_data_str.strip():
+                form_data['table_content_data'] = json.loads(table_data_str)
+                logger.info(f"[CURRICULUM] Parsed table_content_data: {len(form_data['table_content_data'])} items")
+            else:
+                form_data['table_content_data'] = []
+                logger.warning(f"[CURRICULUM] Empty or invalid table_content_data, using empty array")
+        except (json.JSONDecodeError, TypeError) as e:
+            logger.error(f"[CURRICULUM] Failed to parse table_content_data: {str(e)}")
+            form_data['table_content_data'] = []
+    
+    # デバッグ: 受信したデータの概要
+    logger.info(f"[CURRICULUM] Received data keys: {list(form_data.keys())}")
+    if 'table_content_data' in form_data:
+        logger.info(f"[CURRICULUM] Table content data length: {len(form_data['table_content_data'])}")
+    
     return handle_orchestration_result(orchestration_service.process_curriculum_update(curriculum_id, form_data))
 
 @curriculum_management_bp.route('/curriculum/<int:curriculum_id>/delete', methods=['POST'])
@@ -141,15 +172,15 @@ def delete_curriculum(curriculum_id):
 def export_curriculum(curriculum_id):
     """カリキュラムエクスポート（Phase8F統合ファサード）"""
     try:
-        export_result = orchestration_service.import_export_service.export_curriculum(curriculum_id)
+        export_result = orchestration_service.import_export_service.export_curriculum_to_csv(curriculum_id)
         if not export_result['success']:
             flash(export_result['message'], 'error')
             return redirect(url_for('teacher_curriculum_management.curriculum_detail', curriculum_id=curriculum_id))
         
         return Response(
-            export_result['content'],
-            mimetype='application/json',
-            headers={'Content-Disposition': f'attachment; filename=curriculum_{curriculum_id}.json'}
+            export_result['csv_data'],
+            mimetype='text/csv',
+            headers={'Content-Disposition': f'attachment; filename={export_result["filename"]}'}
         )
         
     except Exception as e:
@@ -167,7 +198,7 @@ def import_curriculum_form(class_id):
     except Exception as e:
         logger.error(f"Import form error: {str(e)}")
         flash('インポートフォームの表示に失敗しました', 'error')
-        return redirect(url_for('teacher.dashboard'))
+        return redirect(url_for('teacher_dashboard.dashboard'))
 
 @curriculum_management_bp.route('/curriculum/<int:class_id>/import', methods=['POST'])
 @login_required
@@ -202,21 +233,9 @@ def import_curriculum(class_id):
 @teacher_required
 def edit_curriculum_rubric(curriculum_id):
     """カリキュラムルーブリック編集画面"""
-    try:
-        result = orchestration_service.data_service.get_curriculum_detail(curriculum_id)
-        if result['success']:
-            return render_template(
-                'teacher/curriculum_rubric_edit.html',
-                curriculum=result['curriculum'],
-                rubric_info=result.get('rubric_info', {})
-            )
-        else:
-            flash(result['message'], 'error')
-            return redirect(url_for('teacher.dashboard'))
-    except Exception as e:
-        logger.error(f"Rubric edit error: {str(e)}")
-        flash('ルーブリック編集画面の表示に失敗しました', 'error')
-        return redirect(url_for('teacher.dashboard'))
+    return handle_orchestration_result(
+        orchestration_service.rubric_edit_view(curriculum_id)
+    )
 
 @curriculum_management_bp.route('/curriculum/<int:curriculum_id>/rubric', methods=['POST'])
 @login_required
@@ -251,7 +270,7 @@ def download_template():
         template_result = orchestration_service.import_export_service.generate_template()
         if not template_result['success']:
             flash(template_result['message'], 'error')
-            return redirect(url_for('teacher.dashboard'))
+            return redirect(url_for('teacher_dashboard.dashboard'))
         
         return Response(
             template_result['content'],
@@ -262,7 +281,7 @@ def download_template():
     except Exception as e:
         logger.error(f"Template download error: {str(e)}")
         flash('テンプレートのダウンロードに失敗しました', 'error')
-        return redirect(url_for('teacher.dashboard'))
+        return redirect(url_for('teacher_dashboard.dashboard'))
 
 @curriculum_management_bp.route('/curriculum/<int:curriculum_id>/lessons/edit')
 @login_required
@@ -282,8 +301,15 @@ def update_curriculum_lessons(curriculum_id):
     flash("新しいレッスン管理システムでレッスンを編集してください。", "info")
     return redirect(url_for('lesson_system.lesson_management'))
 
-# Phase8F: 使用されていないレガシー関数は削除済み（Phase1-B重複削減）
+# Phase8F: レガシー互換性ルート（簡素化）
+@curriculum_management_bp.route('/curriculum/<int:curriculum_id>/view')
+@login_required
+@teacher_required
+def view_curriculum_route(curriculum_id):
+    """カリキュラム詳細表示（レガシー互換性対応）"""
+    return handle_orchestration_result(orchestration_service.curriculum_detail_view(curriculum_id))
 
-def view_curriculum(curriculum_id: int) -> dict:
-    """カリキュラム表示（レガシー互換性）"""
-    return orchestration_service.data_service.get_curriculum_detail(curriculum_id)
+# 後方互換性のためのエイリアス
+def view_curriculum(curriculum_id: int):
+    """レガシー互換性のためのエイリアス関数"""
+    return view_curriculum_route(curriculum_id)

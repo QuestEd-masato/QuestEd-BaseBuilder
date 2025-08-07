@@ -483,6 +483,34 @@ class Curriculum(db.Model):
         """自由進度学習が有効かどうか"""
         return self.self_paced_mode in ["flexible", "completely_free"]
 
+    @property
+    def total_classes(self):
+        """総授業数を取得（デフォルト値35）"""
+        # curriculum_dataからtotal_classesを取得、なければデフォルト値
+        if self.curriculum_data:
+            try:
+                data = json.loads(self.curriculum_data)
+                return data.get('total_classes', 35)
+            except:
+                pass
+        return 35
+    
+    @property
+    def total_hours(self):
+        """総時間数を取得（50分コマ x 総授業数）"""
+        return round(self.total_classes * 50 / 60, 1)  # 50分コマを時間に換算
+    
+    @property 
+    def difficulty_level(self):
+        """難易度レベルを取得（デフォルト値2）"""
+        if self.curriculum_data:
+            try:
+                data = json.loads(self.curriculum_data)
+                return data.get('difficulty_level', 2)
+            except:
+                pass
+        return 2
+
     def to_dict(self):
         """辞書形式に変換"""
         return {

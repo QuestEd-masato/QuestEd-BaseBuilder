@@ -270,6 +270,7 @@ function regenerateBackupCodes() {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
+            'X-CSRFToken': getCsrfToken(),
         },
     })
     .then(response => response.json())
@@ -327,6 +328,7 @@ function revokeDevice(deviceId) {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
+            'X-CSRFToken': getCsrfToken(),
         },
     })
     .then(response => response.json())
@@ -359,6 +361,7 @@ function disableMFA() {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
+            'X-CSRFToken': getCsrfToken(),
         },
     })
     .then(response => response.json())

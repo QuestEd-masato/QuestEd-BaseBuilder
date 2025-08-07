@@ -267,3 +267,41 @@ class CurriculumAIService:
                 "estimated_hours": data.get("total_hours", 29.2)
             }
         }
+
+    def prepare_generation_form(self, class_id: int) -> Dict[str, Any]:
+        """
+        AI生成フォーム用データを準備（最小実装）
+        
+        Args:
+            class_id: クラスID
+            
+        Returns:
+            Dict: フォーム用データ
+        """
+        try:
+            # クラス情報取得（既存パターン踏襲）
+            class_obj = Class.query.get(class_id)
+            if not class_obj:
+                return {
+                    "success": False,
+                    "message": "クラスが見つかりません"
+                }
+
+            # 最小限のフォームデータ準備
+            form_data = {
+                'class': class_obj,
+                'ai_available': False,  # 安全な初期値
+                'form_defaults': {
+                    'difficulty_level': 2,
+                    'total_hours': 20
+                }
+            }
+            
+            return form_data
+            
+        except Exception as e:
+            logger.error(f"Error preparing AI generation form for class {class_id}: {str(e)}")
+            return {
+                "success": False,
+                "message": f"AI生成フォームの準備中にエラーが発生しました: {str(e)}"
+            }

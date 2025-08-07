@@ -232,3 +232,67 @@ class CurriculumValidationService:
             "valid": True,
             "data": data
         }
+
+    def validate_curriculum_edit_permission(self, curriculum_id: int) -> Dict[str, Any]:
+        """
+        カリキュラムの編集権限をチェック
+        
+        Args:
+            curriculum_id: カリキュラムID
+            
+        Returns:
+            Dict: 権限チェック結果
+        """
+        # 既存のvalidate_curriculum_permissionを活用して重複を避ける
+        return self.validate_curriculum_permission(curriculum_id)
+
+    def validate_curriculum_delete_permission(self, curriculum_id: int) -> Dict[str, Any]:
+        """
+        カリキュラムの削除権限をチェック
+        
+        Args:
+            curriculum_id: カリキュラムID
+            
+        Returns:
+            Dict: 権限チェック結果
+        """
+        # 既存のvalidate_curriculum_permissionを活用して重複を避ける
+        return self.validate_curriculum_permission(curriculum_id)
+
+    def validate_curriculum_creation(self, class_id: int, form_data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        カリキュラム作成データの妥当性を検証
+        
+        Args:
+            class_id: クラスID
+            form_data: フォームデータ
+            
+        Returns:
+            Dict: 検証結果
+        """
+        # 権限チェック
+        permission_result = self.validate_teacher_permission(class_id)
+        if not permission_result['valid']:
+            return permission_result
+        
+        # データ検証
+        return self.validate_curriculum_data(form_data)
+
+    def validate_curriculum_update(self, curriculum_id: int, form_data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        カリキュラム更新データの妥当性を検証
+        
+        Args:
+            curriculum_id: カリキュラムID
+            form_data: フォームデータ
+            
+        Returns:
+            Dict: 検証結果
+        """
+        # 権限チェック
+        permission_result = self.validate_curriculum_permission(curriculum_id)
+        if not permission_result['valid']:
+            return permission_result
+        
+        # データ検証
+        return self.validate_curriculum_data(form_data)

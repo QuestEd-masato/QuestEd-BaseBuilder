@@ -777,6 +777,7 @@ function syncAllCurriculums() {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
+            'X-CSRFToken': getCsrfToken(),
         }
     })
     .then(response => response.json())

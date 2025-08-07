@@ -558,11 +558,6 @@ function showTaskDetailsModal(task) {
     bsModal.show();
 }
 
-function getCsrfToken() {
-    const tokenElement = document.querySelector('meta[name=csrf-token]');
-    return tokenElement ? tokenElement.getAttribute('content') : '';
-}
-
 // ページ読み込み時の初期化
 document.addEventListener('DOMContentLoaded', function() {
     // スムーズスクロール

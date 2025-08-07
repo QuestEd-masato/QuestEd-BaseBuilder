@@ -274,13 +274,13 @@ def setup_security_headers(app):
                 "Strict-Transport-Security"
             ] = "max-age=31536000; includeSubDomains"
 
-        # コンテンツセキュリティポリシー
-        response.headers["Content-Security-Policy"] = (
-            "default-src 'self'; "
-            "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
-            "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
-            "img-src 'self' data: https:; "
-            "font-src 'self' https://cdn.jsdelivr.net"
-        )
+        # CSP統一管理: security_config.pyで一元管理されるため、重複設定を無効化
+        # response.headers["Content-Security-Policy"] = (
+        #     "default-src 'self'; "
+        #     "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
+        #     "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
+        #     "img-src 'self' data: https:; "
+        #     "font-src 'self' https://cdn.jsdelivr.net"
+        # )
 
         return response

@@ -378,7 +378,7 @@ class CurriculumConverter:
             # 既存単元の無効化（オプション）
             if options.get("replace_existing", False):
                 existing_units = dal.safe_query(
-                    CurriculumUnit, filters={"curriculum_id": curriculum.id}
+                    CurriculumUnit, filters={"legacy_curriculum_id": curriculum.id}
                 )
 
                 for unit in existing_units:

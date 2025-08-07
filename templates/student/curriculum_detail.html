@@ -1,0 +1,613 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ curriculum.title }} - カリキュラム詳細 | QuestEd{% endblock %}
+
+{% block content %}
+<div class="curriculum-detail-container">
+    <div class="page-header">
+        <h2>{{ curriculum.title }}</h2>
+        <div class="header-actions">
+            <a href="{{ url_for('student_learning.learning_portal') }}" 
+               class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> 学習ポータルに戻る
+            </a>
+        </div>
+    </div>
+
+    <div class="curriculum-grid">
+        <div class="curriculum-card">
+            <div class="curriculum-header">
+                <h3>{{ curriculum.title }}</h3>
+                <div class="curriculum-meta">
+                    <span class="difficulty-badge difficulty-{{ curriculum.difficulty_level or 2 }}">
+                        難易度: {{ curriculum.difficulty_level or 2 }}
+                    </span>
+                    <span class="hours-badge">{{ curriculum.total_hours or 20 }}時間</span>
+                    <span class="class-badge">{{ class_name }}</span>
+                </div>
+            </div>
+
+            <div class="curriculum-description">
+                <p>{{ curriculum.description or '説明なし' }}</p>
+            </div>
+
+            {% if curriculum.content %}
+            <div class="curriculum-content">
+                <h4>詳細内容</h4>
+                <div>{{ curriculum.content | nl2br | safe }}</div>
+            </div>
+            {% endif %}
+
+            <!-- レッスン一覧（学生向け） -->
+            {% if lessons %}
+            <div class="lessons-section student-view">
+                <h4><i class="fas fa-book-open"></i> 学習レッスン</h4>
+                <div class="lessons-list">
+                    {% for lesson in lessons %}
+                    <div class="lesson-item student-lesson">
+                        <div class="lesson-info">
+                            <span class="lesson-title">{{ lesson.title }}</span>
+                            {% if lesson.description %}
+                            <small class="lesson-description">{{ lesson.description }}</small>
+                            {% endif %}
+                        </div>
+                        <div class="lesson-actions">
+                            <a href="{{ url_for('lesson_system.student_lesson_detail', lesson_id=lesson.id) }}" 
+                               class="btn btn-sm btn-primary">
+                                <i class="fas fa-play"></i> 学習開始
+                            </a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- カリキュラムテーブル表示（学生用） -->
+            {% set curriculum_json = {} %}
+            {% if curriculum.curriculum_data %}
+                {% set curriculum_json = curriculum.curriculum_data | fromjson %}
+            {% endif %}
+            
+            <div class="curriculum-table-section student-view">
+                <h4><i class="fas fa-list-alt"></i> 学習内容</h4>
+                {% if curriculum_json and curriculum_json.get('table_content') and curriculum_json.get('table_content')|length > 0 %}
+                    <div class="table-responsive">
+                        <table class="curriculum-content-table student-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 25%">学習項目</th>
+                                    <th style="width: 15%">時間</th>
+                                    <th style="width: 40%">詳細内容</th>
+                                    <th style="width: 20%">評価の観点</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for row in curriculum_json.get('table_content') %}
+                                <tr>
+                                    <td class="item-name">{{ row.get('item', '') }}</td>
+                                    <td class="time-info">{{ row.get('time', '') }}{% if row.get('time') %}分{% endif %}</td>
+                                    <td class="detail-content">{{ row.get('detail', '') }}</td>
+                                    <td class="evaluation-aspect">
+                                        {% if row.get('rubric_aspect') %}
+                                            {% if row.get('rubric_aspect') == 'knowledge' %}
+                                                <span class="aspect-badge knowledge">知識・技能</span>
+                                            {% elif row.get('rubric_aspect') == 'thinking' %}
+                                                <span class="aspect-badge thinking">思考・判断・表現</span>
+                                            {% elif row.get('rubric_aspect') == 'attitude' %}
+                                                <span class="aspect-badge attitude">主体的態度</span>
+                                            {% endif %}
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="empty-content student-empty">
+                        <p class="text-muted">
+                            <i class="fas fa-info-circle"></i> 
+                            学習内容の詳細はまだ設定されていません。
+                        </p>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- ルーブリック表示（学生用） -->
+            <div class="rubric-section student-view">
+                <h4><i class="fas fa-star"></i> 評価基準</h4>
+                {% if curriculum_json and (curriculum_json.get('evaluation_aspects') or curriculum_json.get('rubric')) %}
+                        
+                        <!-- 評価観点（学生向け表示） -->
+                        {% if curriculum_json.get('evaluation_aspects') %}
+                            <div class="evaluation-aspects student-aspects">
+                                <h5><i class="fas fa-chart-pie"></i> 評価の配分</h5>
+                                <div class="aspect-grid student-grid">
+                                    <div class="aspect-item knowledge-aspect">
+                                        <i class="fas fa-brain"></i>
+                                        <span class="aspect-label">知識・技能</span>
+                                        <span class="aspect-value">{{ curriculum_json.get('evaluation_aspects', {}).get('knowledge', 30) }}%</span>
+                                    </div>
+                                    <div class="aspect-item thinking-aspect">
+                                        <i class="fas fa-lightbulb"></i>
+                                        <span class="aspect-label">思考・判断・表現</span>
+                                        <span class="aspect-value">{{ curriculum_json.get('evaluation_aspects', {}).get('thinking', 40) }}%</span>
+                                    </div>
+                                    <div class="aspect-item attitude-aspect">
+                                        <i class="fas fa-heart"></i>
+                                        <span class="aspect-label">主体的態度</span>
+                                        <span class="aspect-value">{{ curriculum_json.get('evaluation_aspects', {}).get('attitude', 30) }}%</span>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endif %}
+
+                        <!-- ルーブリックマトリックス（学生向け） -->
+                        {% if curriculum_json.get('rubric') and curriculum_json.get('rubric')|length > 0 %}
+                            <div class="rubric-matrix student-rubric">
+                                <h5><i class="fas fa-clipboard-list"></i> 評価項目の詳細</h5>
+                                <div class="rubric-cards">
+                                    {% for item in curriculum_json.get('rubric', []) %}
+                                        <div class="rubric-card">
+                                            <div class="rubric-header">
+                                                <h6>{{ item.category or '評価項目' }}</h6>
+                                                {% if item.description %}
+                                                    <p class="rubric-description">{{ item.description }}</p>
+                                                {% endif %}
+                                            </div>
+                                            <div class="rubric-levels">
+                                                <div class="level-item level-a">
+                                                    <span class="level-badge">優秀 (A)</span>
+                                                    <p>{{ item.levels[0] if item.levels and item.levels|length > 0 else '基準が設定されていません' }}</p>
+                                                </div>
+                                                <div class="level-item level-b">
+                                                    <span class="level-badge">良好 (B)</span>
+                                                    <p>{{ item.levels[1] if item.levels and item.levels|length > 1 else '基準が設定されていません' }}</p>
+                                                </div>
+                                                <div class="level-item level-c">
+                                                    <span class="level-badge">要改善 (C)</span>
+                                                    <p>{{ item.levels[2] if item.levels and item.levels|length > 2 else '基準が設定されていません' }}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        {% else %}
+                            <div class="rubric-empty student-empty">
+                                <p class="text-muted">
+                                    <i class="fas fa-info-circle"></i> 
+                                    評価項目の詳細はまだ設定されていません。
+                                </p>
+                            </div>
+                        {% endif %}
+                {% else %}
+                    <div class="empty-content student-empty">
+                        <p class="text-muted">
+                            <i class="fas fa-info-circle"></i> 
+                            評価基準はまだ設定されていません。
+                        </p>
+                    </div>
+                {% endif %}
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+/* 学生用カリキュラム詳細のスタイル */
+.curriculum-detail-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #e9ecef;
+}
+
+.page-header h2 {
+    color: #0056b3;
+    margin: 0;
+}
+
+.header-actions {
+    display: flex;
+    gap: 1rem;
+}
+
+.curriculum-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2rem;
+}
+
+.curriculum-card {
+    background: white;
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e9ecef;
+}
+
+.curriculum-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+}
+
+.curriculum-header h3 {
+    color: #333;
+    margin: 0;
+    flex: 1;
+}
+
+.curriculum-meta {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    flex-shrink: 0;
+}
+
+.difficulty-badge, .hours-badge, .class-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: bold;
+}
+
+.difficulty-1 { background: #d4edda; color: #155724; }
+.difficulty-2 { background: #fff3cd; color: #856404; }
+.difficulty-3 { background: #f8d7da; color: #721c24; }
+
+.hours-badge {
+    background: #e3f2fd;
+    color: #0d47a1;
+}
+
+.class-badge {
+    background: #e8f5e8;
+    color: #2e7d2e;
+}
+
+.curriculum-description {
+    margin-bottom: 1.5rem;
+    color: #6c757d;
+    font-size: 1rem;
+}
+
+.curriculum-content {
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+
+.curriculum-content h4 {
+    color: #0056b3;
+    margin: 0 0 1rem 0;
+}
+
+/* 学生用レッスン表示 */
+.lessons-section.student-view {
+    background: #e8f4fd;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    border-left: 4px solid #007bff;
+}
+
+.lessons-section.student-view h4 {
+    color: #007bff;
+    margin: 0 0 1rem 0;
+    font-size: 1.1rem;
+}
+
+.lesson-item.student-lesson {
+    background: white;
+    padding: 1rem;
+    border-radius: 6px;
+    border: 1px solid #dee2e6;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+}
+
+.lesson-info {
+    flex: 1;
+}
+
+.lesson-title {
+    font-weight: bold;
+    color: #495057;
+    display: block;
+    margin-bottom: 0.25rem;
+}
+
+.lesson-description {
+    color: #6c757d;
+    font-size: 0.9rem;
+}
+
+.lesson-actions {
+    flex-shrink: 0;
+}
+
+/* 学生用テーブル表示 */
+.curriculum-table-section.student-view {
+    background: #f0f8ff;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    border-left: 4px solid #28a745;
+}
+
+.curriculum-table-section.student-view h4 {
+    color: #28a745;
+    margin: 0 0 1rem 0;
+    font-size: 1.1rem;
+}
+
+.curriculum-content-table.student-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.curriculum-content-table.student-table th,
+.curriculum-content-table.student-table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #dee2e6;
+    vertical-align: top;
+}
+
+.curriculum-content-table.student-table th {
+    background: #e9ecef;
+    font-weight: bold;
+    color: #495057;
+    font-size: 0.9rem;
+}
+
+.curriculum-content-table.student-table tbody tr:hover {
+    background: #f8f9fa;
+}
+
+.item-name {
+    font-weight: bold;
+    color: #0056b3;
+}
+
+.time-info {
+    text-align: center;
+    font-weight: bold;
+    color: #6c757d;
+}
+
+.detail-content {
+    word-wrap: break-word;
+    line-height: 1.4;
+}
+
+.aspect-badge {
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    color: white;
+}
+
+.aspect-badge.knowledge { background: #17a2b8; }
+.aspect-badge.thinking { background: #6f42c1; }
+.aspect-badge.attitude { background: #e83e8c; }
+
+/* 学生用ルーブリック表示 */
+.rubric-section.student-view {
+    background: #fff8e1;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    border-left: 4px solid #ffc107;
+}
+
+.rubric-section.student-view h4 {
+    color: #f57c00;
+    margin: 0 0 1rem 0;
+    font-size: 1.1rem;
+}
+
+.evaluation-aspects.student-aspects {
+    margin-bottom: 1.5rem;
+}
+
+.aspect-grid.student-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.aspect-item {
+    background: white;
+    padding: 1rem;
+    border-radius: 8px;
+    text-align: center;
+    border: 1px solid #dee2e6;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.aspect-item i {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.knowledge-aspect i { color: #17a2b8; }
+.thinking-aspect i { color: #6f42c1; }
+.attitude-aspect i { color: #e83e8c; }
+
+.aspect-label {
+    font-size: 0.9rem;
+    font-weight: bold;
+    color: #495057;
+}
+
+.aspect-value {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #0056b3;
+}
+
+/* ルーブリックカード表示 */
+.rubric-matrix.student-rubric {
+    overflow-x: auto;
+}
+
+.rubric-cards {
+    display: grid;
+    gap: 1rem;
+}
+
+.rubric-card {
+    background: white;
+    border-radius: 8px;
+    padding: 1rem;
+    border: 1px solid #dee2e6;
+}
+
+.rubric-header h6 {
+    color: #0056b3;
+    margin: 0 0 0.5rem 0;
+    font-size: 1rem;
+}
+
+.rubric-description {
+    color: #6c757d;
+    font-size: 0.9rem;
+    margin: 0 0 1rem 0;
+}
+
+.rubric-levels {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 0.75rem;
+}
+
+.level-item {
+    padding: 0.75rem;
+    border-radius: 6px;
+    border: 1px solid #dee2e6;
+}
+
+.level-item.level-a { background: #d4edda; border-color: #c3e6cb; }
+.level-item.level-b { background: #fff3cd; border-color: #ffeaa7; }  
+.level-item.level-c { background: #f8d7da; border-color: #f5c6cb; }
+
+.level-badge {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.level-item.level-a .level-badge { color: #155724; }
+.level-item.level-b .level-badge { color: #856404; }
+.level-item.level-c .level-badge { color: #721c24; }
+
+.level-item p {
+    margin: 0;
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+/* 空の状態表示 */
+.empty-content.student-empty,
+.rubric-empty.student-empty {
+    text-align: center;
+    padding: 2rem;
+    background: white;
+    border-radius: 8px;
+    border: 2px dashed #dee2e6;
+}
+
+.empty-content.student-empty p,
+.rubric-empty.student-empty p {
+    margin: 0;
+    color: #6c757d;
+    font-size: 1rem;
+}
+
+/* ボタンスタイル */
+.btn {
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.btn-primary { background: #007bff; color: white; }
+.btn-secondary { background: #6c757d; color: white; }
+.btn-sm { padding: 0.375rem 0.75rem; font-size: 0.875rem; }
+
+.btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* レスポンシブ対応 */
+@media (max-width: 768px) {
+    .curriculum-detail-container {
+        padding: 1rem;
+    }
+    
+    .page-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 1rem;
+    }
+    
+    .curriculum-meta {
+        justify-content: center;
+    }
+    
+    .aspect-grid.student-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .rubric-levels {
+        grid-template-columns: 1fr;
+    }
+    
+    .lesson-item.student-lesson {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 1rem;
+    }
+    
+    .lesson-actions {
+        text-align: center;
+    }
+}
+</style>
+{% endblock %}

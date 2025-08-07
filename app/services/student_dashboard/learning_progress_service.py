@@ -15,6 +15,12 @@ from sqlalchemy import func
 
 from app.models import ClassEnrollment, CurriculumUnit, db
 
+logger = logging.getLogger(__name__)
+
+# レッスンシステムモデル（共通ローダー使用）
+from app.utils.lesson_model_loader import get_lesson_models
+CurriculumLesson, LessonTask, StudentLessonProgress, StudentTaskCheck, TaskCheckStatus, LESSON_SYSTEM_AVAILABLE = get_lesson_models()
+
 # Curriculumモデル（SQLAlchemy has()フィルター用）
 try:
     from app.models import Curriculum
@@ -23,22 +29,6 @@ except ImportError:
     logger.warning("Curriculum model not available")
     Curriculum = None
     CURRICULUM_MODEL_AVAILABLE = False
-
-logger = logging.getLogger(__name__)
-
-# レッスンシステムモデル（エラー保護）
-try:
-    from app.modules.lesson_system.models.lesson_models import (
-        CurriculumLesson, StudentLessonProgress, LessonTask, StudentTaskCheck
-    )
-    LESSON_SYSTEM_AVAILABLE = True
-except ImportError:
-    logger.warning("Lesson system models not available")
-    CurriculumLesson = None
-    StudentLessonProgress = None
-    LessonTask = None
-    StudentTaskCheck = None
-    LESSON_SYSTEM_AVAILABLE = False
 
 # StudentUnitSelection（Phase5対応）
 try:

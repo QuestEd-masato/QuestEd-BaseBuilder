@@ -3,7 +3,7 @@ import logging
 import logging.handlers
 import os
 
-from flask import Flask, abort, make_response, redirect, send_from_directory, url_for
+from flask import Flask, abort, make_response, redirect, request, send_from_directory, url_for
 from flask_login import current_user, login_required
 
 from config import get_config
@@ -91,7 +91,7 @@ def create_app(config_object=None):
     init_version(app)
 
     with app.app_context():
-        # モデルをインポート
+        # メインモデルをインポート
         from app.models import (
             ActivityLog,
             ChatHistory,
@@ -115,6 +115,16 @@ def create_app(config_object=None):
             Todo,
             User,
         )
+        
+        # レッスンシステムモデルを明示的にインポート（循環インポート防止）
+        try:
+            from app.modules.lesson_system.models.lesson_models import (
+                CurriculumLesson, LessonTask, StudentLessonProgress, 
+                StudentTaskCheck, TaskCheckStatus
+            )
+            app.logger.info("Lesson system models registered successfully")
+        except ImportError as e:
+            app.logger.warning(f"Lesson system models not available: {e}")
 
         # ユーザーローダーを設定
         @login_manager.user_loader
@@ -201,6 +211,13 @@ def register_template_filters(app):
             return json.loads(value)
         except (json.JSONDecodeError, TypeError):
             return {}
+
+    @app.template_filter("as_curriculum")
+    def as_curriculum_filter(curriculum_data):
+        """カリキュラムデータ正規化フィルター（Phase8 Service Layer対応）"""
+        if isinstance(curriculum_data, dict) and 'curriculum' in curriculum_data:
+            return curriculum_data['curriculum']
+        return curriculum_data
 
 
 def register_admin_views():
@@ -404,7 +421,19 @@ def setup_error_handling_and_security(app):
 
     @app.after_request
     def log_request_end(response):
-        """各リクエスト終了時のログ記録"""
+        """各リクエスト終了時のログ記録と静的ファイルキャッシュ設定"""
+        
+        # 静的ファイルのキャッシュヘッダー設定（重複読み込み問題の解決）
+        if request.path.startswith('/static/'):
+            # CSS/JSファイルは1時間キャッシュ（開発環境での304/200問題を解決）
+            if request.path.endswith('.css') or request.path.endswith('.js'):
+                response.headers['Cache-Control'] = 'public, max-age=3600'
+                # ETag削除で不安定な挙動を回避
+                response.headers.pop('ETag', None)
+            # 画像ファイルは24時間キャッシュ
+            elif request.path.endswith(('.png', '.jpg', '.jpeg', '.gif', '.svg', '.ico')):
+                response.headers['Cache-Control'] = 'public, max-age=86400'
+        
         return RequestContextLogger.log_request_end(response)
 
     logging.info("エラーハンドリングとセキュリティ機能を初期化しました")

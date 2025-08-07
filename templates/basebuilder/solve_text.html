@@ -281,6 +281,9 @@
         // AJAX送信
         fetch(form.action, {
           method: 'POST',
+          headers: {
+            'X-CSRFToken': getCsrfToken(),
+          },
           body: formData
         })
         .then(response => response.json())

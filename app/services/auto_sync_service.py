@@ -174,6 +174,15 @@ class AutoSyncService:
         self, curriculum_id: int, trigger_type: str, user_id: Optional[int] = None
     ) -> Dict[str, Any]:
         """自動同期を実行 (エグゼキューターサービスに委譲)"""
+        # Phase 6: 同期無効化チェック
+        if not current_app.config.get('ENABLE_CURRICULUM_DATA_SYNC', True):
+            logger.info(f"Curriculum sync disabled by config for curriculum {curriculum_id}")
+            return {
+                "success": True,
+                "message": "同期は設定により無効化されています",
+                "skipped": True
+            }
+        
         # 事前検証
         validation_result = self.validator.validate_sync_prerequisites(curriculum_id)
         if not validation_result["valid"]:

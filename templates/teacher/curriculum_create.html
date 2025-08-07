@@ -1,0 +1,313 @@
+{% extends 'base.html' %}
+
+{% block title %}カリキュラム作成 - {{ data.class.name }} | QuestEd{% endblock %}
+
+{% block content %}
+<div class="curriculum-list-container">
+    <div class="page-header">
+        <h2>カリキュラム作成 - {{ data.class.name }}</h2>
+        <div class="header-actions">
+            <a href="{{ url_for('teacher_curriculum_management.view_curriculums', class_id=data.class.id) }}" 
+               class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> 一覧に戻る
+            </a>
+        </div>
+    </div>
+
+    <div class="curriculum-card">
+        <form method="post" action="{{ url_for('teacher_curriculum_management.create_curriculum', class_id=data.class.id) }}" id="curriculum-create-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            
+            <!-- 基本情報セクション -->
+            <div class="form-section">
+                <h3><i class="fas fa-info-circle"></i> 基本情報</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="title" class="form-label">
+                            カリキュラムタイトル <span class="required">*</span>
+                        </label>
+                        <input type="text" class="form-control" id="title" name="title" required
+                               placeholder="例: 探究学習基礎カリキュラム">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="description" class="form-label">説明</label>
+                        <textarea class="form-control" id="description" name="description" rows="3"
+                                  placeholder="このカリキュラムの概要や目的を入力してください"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 設定セクション -->
+            <div class="form-section">
+                <h3><i class="fas fa-cog"></i> 設定</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="difficulty_level" class="form-label">難易度レベル</label>
+                        <select class="form-control" id="difficulty_level" name="difficulty_level">
+                            <option value="1">1 - 基礎</option>
+                            <option value="2" selected>2 - 標準</option>
+                            <option value="3">3 - 応用</option>
+                        </select>
+                        <small class="form-text">学習進度フィルタリングで使用されます</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="total_hours" class="form-label">予定時間数</label>
+                        <div class="input-group">
+                            <input type="number" class="form-control" id="total_hours" name="total_hours" 
+                                   min="1" value="{{ data.form_defaults.total_hours }}" step="0.5">
+                            <span class="input-group-text">時間</span>
+                        </div>
+                        <small class="form-text">総学習予定時間</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 詳細内容セクション -->
+            <div class="form-section">
+                <h3><i class="fas fa-edit"></i> 詳細内容</h3>
+                <div class="form-group">
+                    <label for="content" class="form-label">カリキュラム詳細</label>
+                    <textarea class="form-control content-editor" id="content" name="content" rows="6"
+                              placeholder="カリキュラムの詳細内容、学習目標、活動内容などを記述してください"></textarea>
+                </div>
+            </div>
+
+            <!-- フォームアクション -->
+            <div class="form-actions">
+                <button type="button" class="btn btn-secondary" onclick="history.back()">
+                    <i class="fas fa-times"></i> キャンセル
+                </button>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> 作成
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<!-- 既存のcurriculum_list.htmlスタイルを継承・拡張（重複排除） -->
+<style>
+.curriculum-list-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #e9ecef;
+}
+
+.page-header h2 {
+    color: #0056b3;
+    margin: 0;
+}
+
+.header-actions {
+    display: flex;
+    gap: 1rem;
+}
+
+.curriculum-card {
+    background: white;
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e9ecef;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+/* フォーム専用スタイル */
+.form-section {
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.form-section:last-of-type {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+.form-section h3 {
+    color: #0056b3;
+    margin: 0 0 1.5rem 0;
+    font-size: 1.2rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+}
+
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-group.full-width {
+    grid-column: 1 / -1;
+}
+
+.form-label {
+    display: block;
+    font-weight: bold;
+    color: #495057;
+    margin-bottom: 0.5rem;
+}
+
+.required {
+    color: #dc3545;
+}
+
+.form-control {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    font-size: 1rem;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.form-control:focus {
+    outline: 0;
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.input-group {
+    display: flex;
+}
+
+.input-group .form-control {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.input-group-text {
+    background: #e9ecef;
+    border: 1px solid #ced4da;
+    border-left: none;
+    padding: 0.75rem;
+    border-top-right-radius: 6px;
+    border-bottom-right-radius: 6px;
+    color: #495057;
+}
+
+.form-text {
+    font-size: 0.875rem;
+    color: #6c757d;
+    margin-top: 0.25rem;
+    display: block;
+}
+
+.content-editor {
+    min-height: 150px;
+    resize: vertical;
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #e9ecef;
+}
+
+.btn {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.btn-primary {
+    background: #007bff;
+    color: white;
+}
+
+.btn-secondary {
+    background: #6c757d;
+    color: white;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* レスポンシブ対応 */
+@media (max-width: 768px) {
+    .curriculum-list-container {
+        padding: 1rem;
+    }
+    
+    .page-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 1rem;
+    }
+    
+    .header-actions {
+        justify-content: center;
+    }
+    
+    .form-row {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .form-actions {
+        flex-direction: column;
+    }
+    
+    .btn {
+        justify-content: center;
+    }
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('curriculum-create-form');
+    
+    // フォーム送信前のバリデーション
+    form.addEventListener('submit', function(e) {
+        const title = document.getElementById('title').value.trim();
+        
+        if (!title) {
+            e.preventDefault();
+            alert('カリキュラムタイトルは必須です。');
+            document.getElementById('title').focus();
+            return false;
+        }
+        
+        // 送信ボタンの無効化（二重送信防止）
+        const submitBtn = form.querySelector('button[type="submit"]');
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 作成中...';
+    });
+});
+</script>
+{% endblock %}

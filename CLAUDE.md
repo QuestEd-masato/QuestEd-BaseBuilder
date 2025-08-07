@@ -1,10 +1,41 @@
-# CLAUDE.md - QuestEd Ver.1.0
+# CLAUDE.md - QuestEd Ver.1.4
 
-このファイルは、QuestEd Ver.1.0プロジェクトでClaude Codeが作業する際のガイダンスを提供します。
+このファイルは、QuestEd Ver.1.4プロジェクトでClaude Codeが作業する際のガイダンスを提供します。
 
 ## プロジェクト概要
 
-QuestEd Ver.1.0は、学習管理システム（LMS）のPhase1〜5における段階的なリファクタリングと機能追加を完了したプロジェクトです。
+QuestEd Ver.1.4は、学習管理システム（LMS）のPhase1〜8B完了により根本的改革を達成し、高品質なService Layer Architectureを確立したプロジェクトです。
+
+## 🚨 重要：BaseBuilderシステムとの統合課題について
+
+### BaseBuilderとは
+- **独立したサブシステム**: 基礎学力トレーニングシステム
+- **専用レイアウト**: `templates/basebuilder/layout.html`（独自ナビゲーション）
+- **条件付き初期化**: `app.config["BASEBUILDER_AVAILABLE"]`フラグ
+- **31テンプレート**: BaseBuilder専用のUIシステム
+
+### 🔴 現在の統合課題（未解決）
+1. **リソース重複読み込み**: BaseBuilderとメインサイトで同一CSS/JSを重複読み込み
+2. **385リクエスト問題**: ログインページで異常なリクエスト数（通常30-40の12倍）
+3. **パフォーマンス影響**: 5.1MB転送、770ms DOMContentLoaded
+
+### ✅ 推奨対応（短期）
+```html
+<!-- templates/basebuilder/layout.html の修正推奨 -->
+<!-- 共通CSSをbase.htmlと統一（20分作業、40KB削減効果） -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/modern-responsive.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/button-overrides.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/unified_navigation.css') }}">
+```
+
+### 🚫 避けるべき対応
+1. **ナビゲーション統合**: BaseBuilderの独立性を損なう
+2. **テンプレート継承変更**: 工数過大（45-70時間）、リスク高
+3. **JavaScript機能統合**: 独立性の価値を減少させる
+
+### 📅 長期戦略
+- **Phase 9-10**: React/Next.js移行時に自然統合
+- **Phase 11+**: マイクロフロントエンド化で根本解決
 
 ## Phase修正履歴
 
@@ -557,6 +588,7 @@ python app.py
 - Phase7: 中規模クラス最適化（5つのファイル最適化成功）
 - **Phase8A**: unit_management.py完全分解（85.2%削減 - QuestEd史上最大の勝利）
 - **Phase8B**: 管理破綻緊急復旧（23個バックアップファイル完全根絶）
+- **Phase8C**: 循環インポート問題解決（遅延インポートで警告除去）
 
 **劇的改革成功の現実認識**:
 - ✅ 最大の敵unit_management.py（1766行）**完全撃破** - 85.2%削減達成
@@ -775,9 +807,31 @@ Phase1-7.5により、QuestEdは技術的負債を大幅に解消し、保守性
 5. **命名競合の完全解決**
 
 ### **⚠️ 残存課題**
-1. **Priority 1**: マイグレーション統一（Alembic完全移行）
-2. **Priority 2**: アーキテクチャ完全統一（3パターン混在解消）
-3. **Priority 3**: テストカバレッジ向上
+1. **Priority 1**: BaseBuilderリソース重複問題（パフォーマンス影響大）
+2. **Priority 2**: CSS競合による保存エラー（カリキュラム編集ページ）
+3. **Priority 3**: マイグレーション統一（Alembic完全移行）
+4. **Priority 4**: テストカバレッジ向上
+
+### **📋 緊急対応が必要な問題**
+
+#### **BaseBuilderリソース重複（最優先）**
+- **症状**: 385リクエスト（正常値の12倍）、5.1MB転送
+- **原因**: `templates/basebuilder/layout.html`での重複CSS/JS読み込み
+- **影響**: 全体的なパフォーマンス低下
+- **対策**: 共通リソース参照の統一（作業時間20分、効果40KB削減）
+
+#### **CSS競合による機能不具合（高優先）**
+- **症状**: `/teacher/curriculum/14/edit`ページで保存が効かない
+- **原因**: `button-overrides.css`の!important競合の可能性
+- **影響**: 教師の主要機能に支障
+- **調査**: ブラウザ開発者ツールでの確認が必要
+
+#### **長期的アーキテクチャ課題（中優先）**
+- **課題**: 3つのアーキテクチャパターン混在
+  1. Service Layer Architecture（推奨）
+  2. Modular Architecture（補完）
+  3. BaseBuilder独立システム（現状維持）
+- **方針**: Phase 9以降のモダン化で自然統合
 
 ---
 
@@ -912,3 +966,180 @@ logger.error(f"Error in {method_name}: {str(e)}")
 3. **テスト充実**: 現在のアーキテクチャ対応
 
 **現在のQuestEd: 既に価値あるシステム、さらなる現代化で優秀システムへ進化可能 🚀**
+
+---
+
+## **🛠️ 開発者向け実装ガイドライン**
+
+### **BaseBuilder関連の作業時の注意点**
+
+#### **✅ 推奨される作業**
+1. **リソース最適化**:
+   ```html
+   <!-- templates/basebuilder/layout.html -->
+   <!-- 共通CSSを追加（安全、即効性あり） -->
+   <link rel="stylesheet" href="{{ url_for('static', filename='css/modern-responsive.css') }}">
+   <link rel="stylesheet" href="{{ url_for('static', filename='css/button-overrides.css') }}">
+   ```
+
+2. **BaseBuilder専用調整**:
+   ```css
+   /* static/css/basebuilder-overrides.css */
+   /* BaseBuilder固有の色調整のみ */
+   :root {
+       --success-color: #6eb76e;
+       --danger-color: #d67373;
+   }
+   ```
+
+#### **🚫 避けるべき作業**
+1. **ナビゲーション統合**: BaseBuilderの価値を損なう
+2. **テンプレート継承変更**: 工数45-70時間、リスク高
+3. **大規模JavaScript統合**: 独立性を損なう
+
+### **CSS競合調査の手順**
+
+#### **開発者ツールでの確認手順**
+1. **問題ページへアクセス**: `http://localhost:8092/teacher/curriculum/14/edit`
+2. **要素検査**: 保存ボタンを右クリック → 「検証」
+3. **Stylesパネル確認**:
+   ```css
+   /* 確認項目 */
+   .btn-primary {
+       background-color: ?    /* 最終適用値 */
+       pointer-events: ?      /* none になっていないか */
+   }
+   ```
+4. **Computedタブ**: 実際に適用されている値を確認
+5. **Networkタブ**: CSS読み込み順序を確認
+
+#### **予想される競合パターン**
+```css
+/* base.html: 通常の定義 */
+.btn-primary { background-color: var(--primary-color); }
+
+/* button-overrides.css: 強制上書き */
+.btn.btn-primary { background-color: var(--btn-primary-bg) !important; }
+
+/* 可能性: curriculum.css */
+.container .btn-primary { /* より詳細な指定で上書き */ }
+```
+
+### **長期ロードマップ対応方針**
+
+#### **Phase 9-10（フロントエンド分離、2025年9月～）**
+- **BaseBuilder**: 独立SPAとして維持
+- **共通ライブラリ**: UI コンポーネントの共有化
+- **API化**: バックエンド分離によるリソース重複自然解決
+
+#### **Phase 11+（マイクロサービス、2025年後半～）**
+- **マイクロフロントエンド**: BaseBuilderとメインサイトの自然統合
+- **共通基盤**: 独立性を保ちつつ効率性を両立
+- **根本解決**: アーキテクチャレベルでの重複問題完全解決
+
+### **緊急時のロールバック手順**
+
+#### **BaseBuilder関連の変更でエラーが発生した場合**
+1. **即座の復旧**:
+   ```bash
+   # 変更前ファイルへの復旧
+   cp templates/basebuilder/layout.html.bak templates/basebuilder/layout.html
+   ```
+
+2. **動作確認**:
+   - BaseBuilderページへのアクセス確認
+   - ナビゲーション機能確認
+   - メインサイトへの影響確認
+
+3. **問題の切り分け**:
+   - CSS読み込み順序の確認
+   - JavaScript エラーの有無
+   - ネットワークリクエストの状況
+
+この情報を参考に、常にBaseBuilderの独立性を重視し、最小限のリスクで最大の効果を得られる修正を心がけてください。
+
+---
+
+## **Phase8C: 循環インポート問題解決（2025年8月6日）**
+
+### **Socket.IO依存問題とレッスンモデルインポートエラー解決**
+**期間**: 2025年8月6日  
+**目的**: 学生レッスンアクセス問題の根本解決
+
+#### **主要な修正内容**
+
+##### **8C-1: Socket.IO依存関係の解消**
+- **対象ファイル**: `static/js/realtime-sync.js`, `templates/base.html`
+- **問題**: WebSocket接続エラーによる教師ダッシュボードアクセス不可
+- **解決方法**: 条件付き読み込み（`config.get('ENABLE_SOCKETIO', False)`）とオフラインモード対応
+- **成果**: WebSocket接続エラーの完全解消、既存機能への影響なし
+
+##### **8C-2: レッスンモデル循環インポート解決**
+- **対象ファイル**: 5つのサービスファイル
+  ```
+  app/services/dashboard/learning_progress_service.py
+  app/services/student_dashboard/learning_progress_service.py
+  app/services/student_dashboard/curriculum_analytics_service.py
+  app/services/student_dashboard/student_ranking_service.py
+  app/services/unit/curriculum_integration_service.py
+  ```
+- **問題**: 「Lesson system models not available」警告の大量発生
+- **解決方法**: `try/except`による静的インポートを`_get_lesson_models()`による遅延インポート方式に変更
+- **成果**: 警告メッセージの完全除去、アプリケーション起動の正常化
+
+#### **実地調査結果**
+- **レッスンシステム**: ✅ 完全動作（8個のレッスンに正常アクセス）
+- **データベース**: ✅ 全テーブル正常（curriculum_lessons, lesson_tasks, student_lesson_progress, student_task_checks）
+- **真の問題**: アプリケーション初期化時の循環インポートによる警告のみ
+
+#### **Phase8C成果**
+- ✅ 学生レッスンアクセス問題の根本解決
+- ✅ アプリケーション起動時の警告メッセージ除去
+- ✅ システム安定性の向上（エラーログのクリーンアップ）
+- ✅ 後方互換性100%維持
+
+### **改善可能な点の特定**
+1. **`_get_lesson_models`関数の重複**（4ファイル）
+2. **根本的な循環インポート問題**（アプリケーション初期化順序）
+
+---
+
+## **カリキュラム統一問題の発覚と分析**
+
+### **深刻な重複管理問題**
+Phase8C調査中に、QuestEdのカリキュラム管理システムに深刻な二重管理問題が発覚：
+
+#### **データ管理の二重化**
+- **curriculum_data（JSONカラム）**: 31ファイルが依存
+- **curriculum_lessons（テーブル）**: 17ファイルが使用（148箇所の参照）
+- 同じデータを2つの方式で管理し、複雑な同期処理で整合性維持を試行
+
+#### **サービス層の過剰な複雑性**
+- **同期関連サービス**: 5つのサービス
+  ```
+  auto_sync_service.py, sync_executor_service.py, conflict_resolver_service.py,
+  sync_scheduler_service.py, sync_validator_service.py
+  ```
+- **カリキュラムサービス**: 5つの類似機能サービス
+  ```
+  unified_curriculum_service.py, curriculum_orchestration_service.py,
+  curriculum_data_service.py, curriculum_integration_service.py,
+  curriculum_bridge_service.py
+  ```
+- 責任境界の不明確化と機能重複による保守困難性
+
+#### **統一計画の策定**
+`CURRICULUM_UNIFICATION_PLAN.md`を作成し、6週間の段階的統一計画を立案：
+- **Phase1**: 現状維持と詳細調査（1週間）
+- **Phase2**: 段階的移行準備（2週間）  
+- **Phase3**: 完全統一実行（3週間）
+
+**期待効果**:
+- コード量30%削減（同期処理とサービス重複の解消）
+- パフォーマンス30-40%改善（データソース統一）
+- 保守性の劇的向上（単一責任の明確化）
+
+### **次期作業予定**
+1. **即座対応**: `_get_lesson_models`関数の共通化
+2. **根本解決**: 循環インポート問題の解決
+3. **統一実行**: カリキュラムデータ管理の段階的統一

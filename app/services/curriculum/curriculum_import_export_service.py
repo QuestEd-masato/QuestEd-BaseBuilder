@@ -103,12 +103,20 @@ class CurriculumImportExportService:
                     unit.duration_weeks or 1
                 ])
         
-        # ルーブリック情報（curriculum_dataから取得）
-        if curriculum.curriculum_data:
+        # ルーブリック情報（移行アダプター経由で取得）
+        from .migration_adapter import CurriculumMigrationAdapter
+        content = CurriculumMigrationAdapter.read_curriculum_content(curriculum.id)
+        rubric_info = {}
+        evaluation_aspects = {}
+        
+        if content and content.get('table_content'):
+            # アダプターから取得したデータを解析
             try:
-                data = json.loads(curriculum.curriculum_data)
-                rubric_info = data.get('rubric', {})
-                evaluation_aspects = data.get('evaluation_aspects', {})
+                # table_contentから元のcurriculum_data形式の情報を抽出
+                for item in content.get('table_content', []):
+                    if isinstance(item, dict):
+                        rubric_info = item.get('rubric', rubric_info)
+                        evaluation_aspects = item.get('evaluation_aspects', evaluation_aspects)
                 
                 if rubric_info or evaluation_aspects:
                     writer.writerow(['', ''])  # 空行
@@ -450,3 +458,32 @@ class CurriculumImportExportService:
                 ]
             }
         }
+
+    # エイリアスメソッド（既存コード活用・重複排除）
+    def import_curriculum(self, class_id: int, file) -> Dict[str, Any]:
+        """import_curriculum_from_fileのエイリアス"""
+        try:
+            return self.import_curriculum_from_file(file, 'json', class_id)
+        except Exception as e:
+            logger.error(f"Error in import_curriculum alias: {str(e)}")
+            return {
+                "success": False,
+                "message": f"インポート処理中にエラーが発生しました: {str(e)}"
+            }
+
+    def generate_template(self) -> Dict[str, Any]:
+        """テンプレート生成（create_curriculum_templateのエイリアス）"""
+        try:
+            template_result = self.create_curriculum_template()
+            if template_result['success']:
+                return {
+                    "success": True,
+                    "content": template_result.get('json_template', {})
+                }
+            return template_result
+        except Exception as e:
+            logger.error(f"Error in generate_template alias: {str(e)}")
+            return {
+                "success": False,
+                "message": f"テンプレート生成中にエラーが発生しました: {str(e)}"
+            }

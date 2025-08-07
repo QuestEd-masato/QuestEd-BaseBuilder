@@ -47,17 +47,9 @@ def add_security_headers(app):
                 "Strict-Transport-Security"
             ] = "max-age=31536000; includeSubDomains; preload"
 
-        # コンテンツセキュリティポリシー（基本設定）
-        csp_policy = (
-            "default-src 'self'; "
-            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com; "
-            "style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; "
-            "img-src 'self' data: https:; "
-            "font-src 'self' https://cdnjs.cloudflare.com; "
-            "connect-src 'self'; "
-            "frame-ancestors 'none';"
-        )
-        response.headers["Content-Security-Policy"] = csp_policy
+        # CSP統一管理: security_config.pyから統一設定を取得
+        from app.config.security_config import get_unified_csp_policy
+        response.headers["Content-Security-Policy"] = get_unified_csp_policy()
 
         # 参照元ポリシー
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"

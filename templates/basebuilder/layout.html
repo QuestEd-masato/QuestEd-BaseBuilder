@@ -7,6 +7,11 @@
     <title>{% block title %}BaseBuilder{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/responsive.css') }}">
+    <!-- Phase2: 共通リソース統一 - パフォーマンス改善のため追加 -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/modern-responsive.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/button-overrides.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/unified_navigation.css') }}">
+    <!-- BaseBuilder専用CSS（独立性維持） -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/speech_input.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">

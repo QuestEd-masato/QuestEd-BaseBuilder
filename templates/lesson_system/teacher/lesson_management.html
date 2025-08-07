@@ -76,7 +76,7 @@
                             <option value="">全てのカリキュラム</option>
                             {% if curriculums %}
                                 {% for curriculum in curriculums %}
-                                <option value="{{ curriculum.id }}">{{ curriculum.title }}</option>
+                                <option value="{{ (curriculum|as_curriculum).id }}">{{ (curriculum|as_curriculum).title }}</option>
                                 {% endfor %}
                             {% endif %}
                         </select>
@@ -737,6 +737,7 @@ function bulkUpdateStatus(lessonIds, status) {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
+            'X-CSRFToken': getCsrfToken(),
         },
         body: JSON.stringify({
             lesson_ids: lessonIds,
@@ -762,6 +763,7 @@ function bulkDeleteLessons(lessonIds) {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
+            'X-CSRFToken': getCsrfToken(),
         },
         body: JSON.stringify({
             lesson_ids: lessonIds

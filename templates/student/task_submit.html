@@ -437,10 +437,5 @@ function showToast(message, type = 'info') {
         toast.remove();
     }, 5000);
 }
-
-function getCsrfToken() {
-    const tokenElement = document.querySelector('meta[name=csrf-token]');
-    return tokenElement ? tokenElement.getAttribute('content') : '';
-}
 </script>
 {% endblock %}

@@ -530,10 +530,5 @@ function updateStats(approvals) {
 function refreshApprovals() {
     loadPendingApprovals();
 }
-
-function getCsrfToken() {
-    const csrfToken = document.querySelector('meta[name=csrf-token]');
-    return csrfToken ? csrfToken.getAttribute('content') : '';
-}
 </script>
 {% endblock %}

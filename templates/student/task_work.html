@@ -856,11 +856,6 @@ function showToast(message, type = 'info') {
     }, 3000);
 }
 
-function getCsrfToken() {
-    const tokenElement = document.querySelector('meta[name=csrf-token]');
-    return tokenElement ? tokenElement.getAttribute('content') : '';
-}
-
 // ページ離脱時の確認
 window.addEventListener('beforeunload', function(event) {
     if (document.getElementById('text-content').value.trim()) {

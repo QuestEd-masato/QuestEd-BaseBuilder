@@ -274,7 +274,7 @@ class SyncExecutorService:
             active_selections = (
                 db.session.query(StudentUnitSelection)
                 .join(CurriculumUnit)
-                .filter(CurriculumUnit.curriculum_id == curriculum_id)
+                .filter(CurriculumUnit.legacy_curriculum_id == curriculum_id)
                 .count()
             )
 

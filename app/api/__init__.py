@@ -27,6 +27,12 @@ from .student_tools import student_tools_bp
 from .unit_management import unit_management_bp
 from .task_management import task_management_bp
 
+# BaseBuilderコンテンツAPI
+from .basebuilder_content_api import basebuilder_content_api_bp
+
+# カリキュラム・レッスン直接編集API (Phase 1統合)
+from .curriculum_lesson_direct import curriculum_lesson_api
+
 # メインAPIブループリント
 api_bp = Blueprint("api", __name__, url_prefix="/api")
 
@@ -47,6 +53,12 @@ def register_api_routes(app):
     api_bp.register_blueprint(review_system_bp)
     api_bp.register_blueprint(student_tools_bp)
     api_bp.register_blueprint(admin_teacher_bp)
+    
+    # BaseBuilderコンテンツAPIを登録（/api/basebuilder）
+    app.register_blueprint(basebuilder_content_api_bp)
+    
+    # カリキュラム・レッスン直接編集APIを登録 (Phase 1統合)
+    api_bp.register_blueprint(curriculum_lesson_api)
 
     # メインAPIブループリントをアプリに登録
     app.register_blueprint(api_bp)

@@ -362,7 +362,7 @@ class SyncValidatorService:
         try:
             # 孤立した単元をチェック
             orphaned_units = db.session.query(CurriculumUnit).filter(
-                ~CurriculumUnit.curriculum_id.in_(
+                ~CurriculumUnit.legacy_curriculum_id.in_(
                     db.session.query(Curriculum.id)
                 )
             ).count()
@@ -378,7 +378,7 @@ class SyncValidatorService:
             invalid_selections = db.session.query(StudentUnitSelection).join(
                 CurriculumUnit
             ).filter(
-                CurriculumUnit.curriculum_id == curriculum_id,
+                CurriculumUnit.legacy_curriculum_id == curriculum_id,
                 StudentUnitSelection.curriculum_unit_id.is_(None)
             ).count()
 
@@ -409,8 +409,9 @@ class SyncValidatorService:
                 curriculum_id=curriculum_id
             ).count()
 
-            # 各クラスでの単元数チェック
-            classes = Class.query.filter_by(curriculum_id=curriculum_id).all()
+            # 各クラスでの単元数チェック - カリキュラムに関連するクラスを取得
+            curriculum = Curriculum.query.get(curriculum_id)
+            classes = [curriculum.class_obj] if curriculum and curriculum.class_obj else []
             
             for class_obj in classes:
                 # このクラスに関連する学生選択数をチェック

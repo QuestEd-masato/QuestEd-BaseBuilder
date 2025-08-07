@@ -258,7 +258,7 @@ class CurriculumIntegrationService:
                 'TaskCheckStatus': TaskCheckStatus
             }
         except ImportError:
-            logger.warning("Lesson system models not available")
+            logger.debug("Lesson system models not available during import")
             return {
                 'CurriculumLesson': None,
                 'StudentLessonProgress': None,

@@ -301,6 +301,7 @@
         <h3><i class="fas fa-cogs"></i> 自動同期設定</h3>
         
         <form method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="row">
                 <div class="col-md-6">
                     <div class="form-group">
@@ -469,6 +470,7 @@ function manualSync() {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
+            'X-CSRFToken': getCsrfToken(),
         },
         body: JSON.stringify({})
     })

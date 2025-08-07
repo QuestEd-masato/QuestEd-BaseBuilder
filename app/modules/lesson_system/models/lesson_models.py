@@ -48,7 +48,7 @@ class CurriculumLesson(db.Model):
     lesson_number = db.Column(db.Integer, nullable=False)  # 第○時間目
     title = db.Column(db.String(200), nullable=False)     # レッスンタイトル
     description = db.Column(db.Text)                      # レッスン説明
-    lesson_type = db.Column(db.Enum(LessonType), default=LessonType.LECTURE)
+    lesson_type = db.Column(db.Enum(LessonType, values_callable=lambda x: [e.value for e in x]), default=LessonType.LECTURE)
     
     # 時間設定
     duration_minutes = db.Column(db.Integer, default=50)   # 授業時間（分）
@@ -112,11 +112,11 @@ class LessonTask(db.Model):
     
     # タスク詳細
     instructions = db.Column(db.Text)                     # 具体的な指示
-    expected_time_minutes = db.Column(db.Integer, default=10) # 予想所要時間
+    estimated_minutes = db.Column(db.Integer, default=10) # 予想所要時間
     
     # 必須・選択
     is_required = db.Column(db.Boolean, default=True)     # 必須タスクかどうか
-    weight = db.Column(db.Float, default=1.0)             # 評価重み
+    # weight = db.Column(db.Float, default=1.0)             # 評価重み（DBに存在しない）
     
     # 管理情報
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -137,9 +137,9 @@ class LessonTask(db.Model):
             'title': self.title,
             'description': self.description,
             'instructions': self.instructions,
-            'expected_time_minutes': self.expected_time_minutes,
+            'expected_time_minutes': self.estimated_minutes,
             'is_required': self.is_required,
-            'weight': self.weight,
+            # 'weight': self.weight,  # DBに存在しない
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'updated_at': self.updated_at.isoformat() if self.updated_at else None
         }
@@ -153,19 +153,20 @@ class StudentLessonProgress(db.Model):
     student_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
     lesson_id = db.Column(db.Integer, db.ForeignKey('curriculum_lessons.id', ondelete='CASCADE'), nullable=False)
     
-    # 進捗状況
+    # 進捗状況（実際のDBスキーマに合わせて修正）
     started_at = db.Column(db.DateTime)                   # 開始時刻
     completed_at = db.Column(db.DateTime)                 # 完了時刻
-    time_spent_minutes = db.Column(db.Integer, default=0) # 実際の学習時間
+    # time_spent_minutes は実際のDBに存在しないためコメントアウト
+    # time_spent_minutes = db.Column(db.Integer, default=0) # 実際の学習時間
     
-    # 理解度・振り返り
-    understanding_level = db.Column(db.Integer)           # 理解度(1-5)
-    difficulty_level = db.Column(db.Integer)              # 難易度(1-5)
-    reflection = db.Column(db.Text)                       # 振り返りコメント
+    # 理解度・振り返り（実際のDBスキーマに存在しないためコメントアウト）
+    # understanding_level = db.Column(db.Integer)           # 理解度(1-5)
+    # difficulty_level = db.Column(db.Integer)              # 難易度(1-5)
+    # reflection = db.Column(db.Text)                       # 振り返りコメント
     
-    # 状況
-    is_completed = db.Column(db.Boolean, default=False)   # 完了フラグ
-    completion_percentage = db.Column(db.Integer, default=0) # 完了率
+    # 状況（実際のDBスキーマに存在しないためコメントアウト）
+    # is_completed = db.Column(db.Boolean, default=False)   # 完了フラグ
+    # completion_percentage = db.Column(db.Integer, default=0) # 完了率
     
     # 承認ワークフロー機能
     approval_status = db.Column(
@@ -177,8 +178,7 @@ class StudentLessonProgress(db.Model):
     teacher_comments = db.Column(db.Text, comment='教師コメント')
     approved_by = db.Column(db.Integer, db.ForeignKey('users.id'), comment='承認者ID')
     
-    # タイムスタンプ
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    # タイムスタンプ（実際のDBスキーマに存在するもののみ）
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     # リレーション
@@ -189,14 +189,15 @@ class StudentLessonProgress(db.Model):
     __table_args__ = (db.UniqueConstraint('student_id', 'lesson_id', name='unique_student_lesson'),)
     
     def __repr__(self):
-        return f'<StudentLessonProgress {self.student_id}-{self.lesson_id}: {self.completion_percentage}%>'
+        return f'<StudentLessonProgress {self.student_id}-{self.lesson_id}: {self.approval_status}>'
     
     def request_completion(self, notes=None):
         """完了申請を送信"""
         self.approval_status = 'pending'
         self.completion_request_date = datetime.utcnow()
+        # notes は teacher_comments に保存
         if notes:
-            self.reflection = notes
+            self.teacher_comments = notes
         db.session.commit()
     
     def approve_completion(self, teacher_id, comments=None):
@@ -204,7 +205,8 @@ class StudentLessonProgress(db.Model):
         self.approval_status = 'approved'
         self.approved_by = teacher_id
         self.teacher_comments = comments
-        self.is_completed = True
+        # is_completed フィールドは存在しないためコメントアウト
+        # self.is_completed = True
         db.session.commit()
     
     def reject_completion(self, teacher_id, reason):
@@ -217,8 +219,9 @@ class StudentLessonProgress(db.Model):
     def can_request_completion(self):
         """完了申請が可能かチェック"""
         return (
-            self.completion_percentage >= 80
-            and self.approval_status in ['none', 'rejected']
+            # completion_percentage フィールドは存在しないため、常にTrueとする
+            # self.completion_percentage >= 80
+            self.approval_status in ['none', 'rejected']
         )
     
     def get_approval_status_label(self):
@@ -232,25 +235,26 @@ class StudentLessonProgress(db.Model):
         return status_labels.get(self.approval_status, '不明')
     
     def to_dict(self):
-        """辞書形式で返す"""
+        """辞書形式で返す（実際のDBスキーマに合わせて修正）"""
         return {
             'id': self.id,
             'student_id': self.student_id,
             'lesson_id': self.lesson_id,
             'started_at': self.started_at.isoformat() if self.started_at else None,
             'completed_at': self.completed_at.isoformat() if self.completed_at else None,
-            'time_spent_minutes': self.time_spent_minutes,
-            'understanding_level': self.understanding_level,
-            'difficulty_level': self.difficulty_level,
-            'reflection': self.reflection,
-            'is_completed': self.is_completed,
-            'completion_percentage': self.completion_percentage,
+            # 存在しないフィールドはコメントアウト
+            # 'time_spent_minutes': self.time_spent_minutes,
+            # 'understanding_level': self.understanding_level,
+            # 'difficulty_level': self.difficulty_level,
+            # 'reflection': self.reflection,
+            # 'is_completed': self.is_completed,
+            # 'completion_percentage': self.completion_percentage,
             'approval_status': self.approval_status,
             'approval_status_label': self.get_approval_status_label(),
             'completion_request_date': self.completion_request_date.isoformat() if self.completion_request_date else None,
             'teacher_comments': self.teacher_comments,
             'approved_by': self.approved_by,
-            'created_at': self.created_at.isoformat() if self.created_at else None,
+            # 'created_at': self.created_at.isoformat() if self.created_at else None,
             'updated_at': self.updated_at.isoformat() if self.updated_at else None
         }
 

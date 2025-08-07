@@ -209,7 +209,7 @@ class TeacherCurriculumUnitService:
             # 順序インデックス重複チェック（自分以外）
             if "order_index" in update_data:
                 existing_unit = CurriculumUnit.query.filter(
-                    CurriculumUnit.curriculum_id == unit.curriculum_id,
+                    CurriculumUnit.legacy_curriculum_id == unit.legacy_curriculum_id,
                     CurriculumUnit.order_index == update_data["order_index"],
                     CurriculumUnit.id != unit_id
                 ).first()
@@ -282,7 +282,7 @@ class TeacherCurriculumUnitService:
             
             # 後続の単元の順序を調整
             subsequent_units = CurriculumUnit.query.filter(
-                CurriculumUnit.curriculum_id == curriculum_id,
+                CurriculumUnit.legacy_curriculum_id == curriculum_id,
                 CurriculumUnit.order_index > order_index
             ).all()
             

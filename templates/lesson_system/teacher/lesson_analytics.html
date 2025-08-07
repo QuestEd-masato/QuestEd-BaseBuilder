@@ -46,7 +46,7 @@
                     <option value="">全てのカリキュラム</option>
                     {% if curriculums %}
                         {% for curriculum in curriculums %}
-                        <option value="{{ curriculum.id }}">{{ curriculum.title }}</option>
+                        <option value="{{ (curriculum|as_curriculum).id }}">{{ (curriculum|as_curriculum).title }}</option>
                         {% endfor %}
                     {% endif %}
                 </select>

@@ -175,6 +175,7 @@
         <div id="alert-container"></div>
 
         <form id="rubric-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <!-- 評価観点（①②③） -->
             <div class="evaluation-aspects">
                 <h3>評価観点の配分</h3>
@@ -182,21 +183,21 @@
                     <div class="aspect-item">
                         <label for="knowledge">①知識・技能</label>
                         <input type="number" id="knowledge" name="knowledge" 
-                               value="{{ rubric_info.evaluation_aspects.knowledge or 30 }}" 
+                               value="{{ rubric_info.get('evaluation_aspects', {}).get('knowledge', 30) }}" 
                                min="0" max="100" step="5">
                         <small>%</small>
                     </div>
                     <div class="aspect-item">
                         <label for="thinking">②思考・判断・表現</label>
                         <input type="number" id="thinking" name="thinking" 
-                               value="{{ rubric_info.evaluation_aspects.thinking or 40 }}" 
+                               value="{{ rubric_info.get('evaluation_aspects', {}).get('thinking', 40) }}" 
                                min="0" max="100" step="5">
                         <small>%</small>
                     </div>
                     <div class="aspect-item">
                         <label for="attitude">③主体的に学習に取り組む態度</label>
                         <input type="number" id="attitude" name="attitude" 
-                               value="{{ rubric_info.evaluation_aspects.attitude or 30 }}" 
+                               value="{{ rubric_info.get('evaluation_aspects', {}).get('attitude', 30) }}" 
                                min="0" max="100" step="5">
                         <small>%</small>
                     </div>
@@ -253,7 +254,7 @@
             <div class="form-actions">
                 <a href="{{ url_for('teacher_curriculum_management.view_curriculums', class_id=curriculum.class_id) }}" 
                    class="btn btn-secondary">キャンセル</a>
-                <button type="submit" class="btn btn-primary">保存</button>
+                <button type="submit" class="btn btn-primary" id="save-button">保存</button>
             </div>
         </form>
     </div>
@@ -313,10 +314,15 @@ function showAlert(message, type) {
 document.getElementById('rubric-form').addEventListener('submit', function(e) {
     e.preventDefault();
     
+    console.log('ルーブリック保存処理開始');
+    
     // バリデーション
     const total = parseInt(document.getElementById('total-value').textContent);
+    console.log('評価観点の合計:', total);
+    
     if (total !== 100) {
-        showAlert('評価観点の合計は100%である必要があります。', 'danger');
+        console.log('バリデーションエラー: 合計が100%ではない');
+        showAlert('評価観点の合計は100%である必要があります。現在: ' + total + '%', 'danger');
         return;
     }
     
@@ -348,11 +354,16 @@ document.getElementById('rubric-form').addEventListener('submit', function(e) {
         }
     }
     
+    // CSRFトークンを取得
+    const csrfToken = document.querySelector('input[name="csrf_token"]').value;
+    console.log('CSRF Token:', csrfToken ? 'あり' : 'なし');
+    
     // サーバーに送信
     fetch(window.location.pathname, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken,
         },
         body: JSON.stringify(rubricData)
     })
@@ -368,12 +379,54 @@ document.getElementById('rubric-form').addEventListener('submit', function(e) {
         }
     })
     .catch(error => {
-        showAlert('保存中にエラーが発生しました。', 'danger');
-        console.error('Error:', error);
+        console.error('保存エラー詳細:', error);
+        if (error.message && error.message.includes('CSRF')) {
+            showAlert('セキュリティトークンの問題です。ページを再読み込みして再試行してください。', 'danger');
+            setTimeout(() => location.reload(), 2000);
+        } else {
+            showAlert('保存中にエラーが発生しました。', 'danger');
+        }
     });
 });
 
 // 初期化
 updatePercentageTotal();
+
+// 保存ボタンの状態をチェック
+function checkSaveButtonState() {
+    const saveButton = document.getElementById('save-button');
+    const total = parseInt(document.getElementById('total-value').textContent);
+    
+    console.log('保存ボタン状態チェック - 合計:', total);
+    console.log('保存ボタン要素:', saveButton);
+    console.log('保存ボタン無効状態:', saveButton.disabled);
+    
+    if (total === 100) {
+        saveButton.disabled = false;
+        saveButton.style.opacity = '1';
+        saveButton.title = '';
+    } else {
+        saveButton.disabled = true;
+        saveButton.style.opacity = '0.6';
+        saveButton.title = `評価観点の合計が${total}%です。100%にしてください。`;
+    }
+}
+
+// 評価観点入力時に保存ボタン状態を更新
+document.getElementById('knowledge').addEventListener('input', function() {
+    updatePercentageTotal();
+    checkSaveButtonState();
+});
+document.getElementById('thinking').addEventListener('input', function() {
+    updatePercentageTotal();
+    checkSaveButtonState();
+});
+document.getElementById('attitude').addEventListener('input', function() {
+    updatePercentageTotal();
+    checkSaveButtonState();
+});
+
+// 初期状態で保存ボタンをチェック
+checkSaveButtonState();
 </script>
 {% endblock %}

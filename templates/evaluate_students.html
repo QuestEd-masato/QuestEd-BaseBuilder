@@ -27,8 +27,8 @@
                     <select id="curriculum_id" name="curriculum_id" class="form-control custom-select shadow-sm" onchange="this.form.submit()">
                         <option value="">カリキュラムを選択してください</option>
                         {% for curriculum in curriculums %}
-                            <option value="{{ curriculum.id }}" {% if selected_curriculum_id == curriculum.id %}selected{% endif %}>
-                                {{ curriculum.title }}
+                            <option value="{{ (curriculum|as_curriculum).id }}" {% if selected_curriculum_id == (curriculum|as_curriculum).id %}selected{% endif %}>
+                                {{ (curriculum|as_curriculum).title }}
                             </option>
                         {% endfor %}
                     </select>

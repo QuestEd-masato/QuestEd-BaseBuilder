@@ -395,3 +395,27 @@ class ThemeManagementService:
             "valid": True,
             "data": data
         }
+
+    def get_themes_by_curriculum(self, curriculum_id: int) -> List[Dict[str, Any]]:
+        """
+        カリキュラムに関連するテーマを取得
+        
+        Args:
+            curriculum_id: カリキュラムID
+            
+        Returns:
+            List[Dict]: テーマ一覧（現在は空のリストを返す安全な実装）
+        """
+        try:
+            logger.info(f"Getting themes for curriculum {curriculum_id}")
+            
+            # 現在のシステムではカリキュラムとメインテーマの直接的な関連はないため
+            # 安全な空のリストを返す（将来の拡張に備えた構造は維持）
+            themes = []
+            
+            return themes
+            
+        except Exception as e:
+            logger.error(f"Error getting themes for curriculum {curriculum_id}: {str(e)}")
+            # エラー時も安全に空のリストを返す
+            return []

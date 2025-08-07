@@ -3,7 +3,6 @@
 {% block title %}自由進度学習ポータル | QuestEd{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/speech_input.css') }}">
 <style>
 /* Chromebook最適化レイアウト (1366x768) */
 .learning-portal-container {
@@ -12,8 +11,8 @@
     padding: 1rem;
 }
 
-/* 推薦セクション */
-.recommendations-section {
+/* 統計情報セクション */
+.stats-section {
     background: linear-gradient(135deg, #0056b3 0%, #004494 100%);
     color: white;
     border-radius: 12px;
@@ -21,182 +20,95 @@
     margin-bottom: 2rem;
 }
 
-.recommendations-section h2 {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    margin-bottom: 1rem;
-    font-size: 1.5rem;
-}
-
-.recommendations-grid {
+.stats-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 1rem;
     margin-top: 1rem;
 }
 
-.recommendation-card {
+.stat-card {
     background: rgba(255, 255, 255, 0.1);
     border-radius: 8px;
     padding: 1rem;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    transition: all 0.3s ease;
-    cursor: pointer;
+    text-align: center;
 }
 
-.recommendation-card:hover {
-    background: rgba(255, 255, 255, 0.2);
-    transform: translateY(-2px);
-}
-
-.difficulty-stars {
-    display: flex;
-    gap: 2px;
+.stat-number {
+    font-size: 2rem;
+    font-weight: bold;
     margin-bottom: 0.5rem;
 }
 
-.star {
-    color: #ffd700;
+.stat-label {
     font-size: 0.9rem;
+    opacity: 0.9;
 }
 
-.star.empty {
-    color: rgba(255, 255, 255, 0.3);
-}
-
-/* メインコンテンツエリア */
-.main-content {
-    display: grid;
-    grid-template-columns: 300px 1fr;
-    gap: 2rem;
+/* カリキュラム一覧 */
+.curriculum-section {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     margin-bottom: 2rem;
 }
 
-/* フィルターサイドバー */
-.filter-sidebar {
-    background: white;
-    border-radius: 12px;
-    padding: 1.5rem;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    height: fit-content;
-    position: sticky;
-    top: 2rem;
-}
-
-.filter-group {
-    margin-bottom: 1.5rem;
-}
-
-.filter-group label {
-    display: block;
-    font-weight: 600;
-    color: #495057;
-    margin-bottom: 0.5rem;
-}
-
-.filter-group select,
-.filter-group input {
-    width: 100%;
-    padding: 0.5rem;
-    border: 1px solid #ddd;
-    border-radius: 6px;
-    font-size: 0.9rem;
-}
-
-/* 単元一覧 */
-.units-section {
-    background: white;
-    border-radius: 12px;
-    padding: 1.5rem;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-}
-
-.units-section h2 {
-    color: #0056b3;
-    margin-bottom: 1.5rem;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.units-grid {
+.curriculum-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
     gap: 1.5rem;
+    margin-top: 1rem;
 }
 
-.unit-card {
-    border: 1px solid #e9ecef;
+.curriculum-card {
+    background: #f8f9fa;
     border-radius: 8px;
     padding: 1.5rem;
+    border: 1px solid #e9ecef;
     transition: all 0.3s ease;
-    cursor: pointer;
     position: relative;
     overflow: hidden;
 }
 
-.unit-card:hover {
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+.curriculum-card:hover {
     transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
 
-.unit-card.completed {
-    border-color: #28a745;
-    background: #f8fff9;
-}
-
-.unit-card.in-progress {
-    border-color: #007bff;
-    background: #f8f9ff;
-}
-
-.unit-header {
+.curriculum-header {
     display: flex;
     justify-content: space-between;
-    align-items: flex-start;
+    align-items: start;
     margin-bottom: 1rem;
 }
 
-.unit-title {
-    font-size: 1.1rem;
-    font-weight: 600;
+.curriculum-title {
+    font-size: 1.2rem;
+    font-weight: bold;
     color: #212529;
     margin: 0;
-    line-height: 1.3;
 }
 
-.unit-difficulty {
-    background: #6c757d;
-    color: white;
-    padding: 0.25rem 0.5rem;
-    border-radius: 12px;
-    font-size: 0.75rem;
-    white-space: nowrap;
-}
-
-.unit-difficulty.easy { background: #28a745; }
-.unit-difficulty.normal { background: #007bff; }
-.unit-difficulty.hard { background: #dc3545; }
-
-.unit-description {
-    color: #6c757d;
-    font-size: 0.9rem;
-    line-height: 1.4;
-    margin-bottom: 1rem;
-}
-
-.unit-meta {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+.class-badge {
+    background: #e3f2fd;
+    color: #1976d2;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
     font-size: 0.8rem;
-    color: #6c757d;
-    margin-bottom: 1rem;
+    font-weight: 500;
 }
 
-.progress-section {
-    margin-top: 1rem;
+.curriculum-meta {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+    color: #6c757d;
+}
+
+.curriculum-meta i {
+    color: #007bff;
 }
 
 .progress-bar {
@@ -225,13 +137,13 @@
     color: #6c757d;
 }
 
-.unit-actions {
+.curriculum-actions {
     display: flex;
     gap: 0.5rem;
     margin-top: 1rem;
 }
 
-.btn-unit {
+.btn-curriculum {
     flex: 1;
     padding: 0.5rem 1rem;
     border: none;
@@ -239,6 +151,8 @@
     font-size: 0.9rem;
     cursor: pointer;
     transition: all 0.2s ease;
+    text-align: center;
+    text-decoration: none;
 }
 
 .btn-start {
@@ -251,180 +165,17 @@
 }
 
 .btn-continue {
-    background: #28a745;
+    background: #17a2b8;
     color: white;
 }
 
 .btn-continue:hover {
-    background: #1e7e34;
+    background: #138496;
 }
 
-.btn-review {
-    background: #6c757d;
+.btn-completed {
+    background: #28a745;
     color: white;
-}
-
-.btn-review:hover {
-    background: #545b62;
-}
-
-.btn-outline-secondary {
-    background: transparent;
-    color: #6c757d;
-    border: 1px solid #6c757d;
-}
-
-.btn-outline-secondary:hover {
-    background: #6c757d;
-    color: white;
-}
-
-.btn-outline-danger {
-    background: transparent;
-    color: #dc3545;
-    border: 1px solid #dc3545;
-    font-size: 0.8rem;
-}
-
-.btn-outline-danger:hover {
-    background: #dc3545;
-    color: white;
-    transform: translateY(-1px);
-}
-
-/* 3状態レッスン管理システム用スタイル */
-.status-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.25rem;
-    padding: 0.25rem 0.5rem;
-    border-radius: 4px;
-    font-size: 0.8rem;
-    font-weight: 500;
-    text-align: center;
-    width: 100%;
-    justify-content: center;
-}
-
-.status-badge.completed {
-    background: #d4edda;
-    color: #155724;
-    border: 1px solid #c3e6cb;
-}
-
-.status-badge.rejected {
-    background: #f8d7da;
-    color: #721c24;
-    border: 1px solid #f5c6cb;
-}
-
-.status-badge.pending {
-    background: #fff3cd;
-    color: #856404;
-    border: 1px solid #ffeaa7;
-}
-
-.btn-warning {
-    background: #ffc107;
-    color: #212529;
-    border: 1px solid #ffc107;
-}
-
-.btn-warning:hover {
-    background: #e0a800;
-    color: #212529;
-    transform: translateY(-1px);
-}
-
-.rejection-reason {
-    font-size: 0.8rem;
-    color: #dc3545;
-    padding: 0.5rem;
-    background: #f8d7da;
-    border-radius: 4px;
-    border-left: 3px solid #dc3545;
-    margin-bottom: 0.5rem;
-}
-
-.rejection-reason strong {
-    display: block;
-    margin-bottom: 0.25rem;
-}
-
-/* ローディング状態 */
-.loading {
-    text-align: center;
-    padding: 2rem;
-    color: #6c757d;
-}
-
-.spinner {
-    display: inline-block;
-    width: 32px;
-    height: 32px;
-    border: 3px solid #f3f3f3;
-    border-top: 3px solid #007bff;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-
-/* レスポンシブ対応 */
-@media (max-width: 1400px) {
-    .recommendations-grid {
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    }
-}
-
-@media (max-width: 1200px) {
-    .main-content {
-        grid-template-columns: 250px 1fr;
-        gap: 1.5rem;
-    }
-    
-    .units-grid {
-        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    }
-}
-
-@media (max-width: 768px) {
-    .main-content {
-        grid-template-columns: 1fr;
-        gap: 1rem;
-    }
-    
-    .filter-sidebar {
-        position: static;
-    }
-    
-    .recommendations-grid {
-        grid-template-columns: 1fr;
-    }
-    
-    .units-grid {
-        grid-template-columns: 1fr;
-    }
-    
-    .unit-header {
-        flex-direction: column;
-        gap: 0.5rem;
-    }
-}
-
-@media (max-width: 576px) {
-    .learning-portal-container {
-        padding: 0.5rem;
-    }
-    
-    .recommendations-section,
-    .filter-sidebar,
-    .units-section {
-        padding: 1rem;
-    }
 }
 
 /* 空状態 */
@@ -444,153 +195,126 @@
     color: #495057;
     margin-bottom: 0.5rem;
 }
+
+/* レスポンシブ対応 */
+@media (max-width: 768px) {
+    .curriculum-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="learning-portal-container">
-    <!-- AI推薦セクション -->
-    <div class="recommendations-section" id="recommendations-section">
-        <h2><i class="fas fa-robot"></i> あなたへのおすすめ</h2>
-        <p>AIがあなたの学習状況を分析して最適な単元を推薦します</p>
+    <h2><i class="fas fa-graduation-cap"></i> 自由進度学習ポータル</h2>
+
+    <!-- 学習統計セクション -->
+    {% if learning_stats %}
+    <div class="stats-section">
+        <h3><i class="fas fa-chart-line"></i> あなたの学習状況</h3>
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-number">{{ learning_stats.total_available }}</div>
+                <div class="stat-label">利用可能なカリキュラム</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">{{ learning_stats.selected_count }}</div>
+                <div class="stat-label">選択中のカリキュラム</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">{{ learning_stats.in_progress_count }}</div>
+                <div class="stat-label">学習中</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">{{ learning_stats.completed_count }}</div>
+                <div class="stat-label">完了済み</div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- カリキュラム一覧 -->
+    <div class="curriculum-section">
+        <h3><i class="fas fa-book"></i> 利用可能なカリキュラム</h3>
         
-        <div class="recommendations-grid" id="recommendations-grid">
-            <!-- 推薦カードがJavaScriptで動的に挿入される -->
-            <div class="loading">
-                <div class="spinner"></div>
-                <p>推薦を生成しています...</p>
-            </div>
-        </div>
-    </div>
-
-    <!-- メインコンテンツ -->
-    <div class="main-content">
-        <!-- フィルターサイドバー -->
-        <div class="filter-sidebar">
-            <h3><i class="fas fa-filter"></i> フィルター</h3>
-            
-            <div class="filter-group">
-                <label for="search-input">検索</label>
-                <div style="position: relative;">
-                    <input type="text" id="search-input" placeholder="単元名で検索..." class="form-control" style="padding-right: 40px;">
-                    <button type="button" id="search-speech-btn" class="search-speech-btn" 
-                            title="音声で検索" aria-label="音声で検索">
-                        <i class="fas fa-microphone"></i>
-                    </button>
+        {% if available_curricula %}
+            <div class="curriculum-grid">
+                {% for curriculum_data in available_curricula %}
+                <div class="curriculum-card">
+                    <div class="curriculum-header">
+                        <h4 class="curriculum-title">{{ curriculum_data.curriculum.title }}</h4>
+                        <span class="class-badge">{{ curriculum_data.class_name }}</span>
+                    </div>
+                    
+                    <div class="curriculum-meta">
+                        <span><i class="fas fa-layer-group"></i> {{ curriculum_data.total_lessons }} レッスン</span>
+                        <span><i class="fas fa-clock"></i> 約{{ curriculum_data.curriculum.total_hours or 20 }}時間</span>
+                    </div>
+                    
+                    <!-- 進捗状況 -->
+                    {% set progress_data = my_progress | selectattr('curriculum_id', 'equalto', curriculum_data.curriculum.id) | first %}
+                    {% if progress_data %}
+                        <div class="progress-bar">
+                            <div class="progress-fill {% if progress_data.progress_percentage >= 100 %}completed{% endif %}" 
+                                 style="width: {{ progress_data.progress_percentage }}%"></div>
+                        </div>
+                        <div class="progress-text">
+                            <span>進捗: {{ progress_data.progress_percentage }}%</span>
+                            <span>{{ progress_data.completed_tasks }} / {{ progress_data.total_tasks }} 完了</span>
+                        </div>
+                    {% else %}
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 0%"></div>
+                        </div>
+                        <div class="progress-text">
+                            <span>未開始</span>
+                        </div>
+                    {% endif %}
+                    
+                    <div class="curriculum-actions">
+                        {% if progress_data and progress_data.progress_percentage > 0 %}
+                            {% if progress_data.progress_percentage >= 100 %}
+                                <a href="{{ url_for('lesson_system.curriculum_lessons', curriculum_id=curriculum_data.curriculum.id) }}" 
+                                   class="btn-curriculum btn-completed">
+                                    <i class="fas fa-check-circle"></i> 完了済み
+                                </a>
+                            {% else %}
+                                <a href="{{ url_for('lesson_system.curriculum_lessons', curriculum_id=curriculum_data.curriculum.id) }}" 
+                                   class="btn-curriculum btn-continue">
+                                    <i class="fas fa-play-circle"></i> 学習を続ける
+                                </a>
+                            {% endif %}
+                        {% else %}
+                            <a href="{{ url_for('lesson_system.curriculum_lessons', curriculum_id=curriculum_data.curriculum.id) }}" 
+                               class="btn-curriculum btn-start">
+                                <i class="fas fa-rocket"></i> 学習を開始
+                            </a>
+                        {% endif %}
+                    </div>
                 </div>
+                {% endfor %}
             </div>
-            
-            <div class="filter-group">
-                <label for="difficulty-filter">難易度</label>
-                <select id="difficulty-filter" class="form-select">
-                    <option value="">すべて</option>
-                    <option value="1">基礎 ⭐</option>
-                    <option value="2">標準 ⭐⭐</option>
-                    <option value="3">応用 ⭐⭐⭐</option>
-                </select>
+        {% else %}
+            <div class="empty-state">
+                <i class="fas fa-book-open"></i>
+                <h3>カリキュラムが見つかりません</h3>
+                <p>現在、利用可能なカリキュラムがありません。<br>担当の先生にお問い合わせください。</p>
             </div>
-            
-            <div class="filter-group">
-                <label for="status-filter">進捗状況</label>
-                <select id="status-filter" class="form-select">
-                    <option value="">すべて</option>
-                    <option value="not_started">未開始</option>
-                    <option value="in_progress">学習中</option>
-                    <option value="completed">完了</option>
-                </select>
-            </div>
-            
-            <div class="filter-group">
-                <label for="time-filter">学習時間</label>
-                <select id="time-filter" class="form-select">
-                    <option value="">すべて</option>
-                    <option value="short">短時間 (～30分)</option>
-                    <option value="medium">中程度 (30-60分)</option>
-                    <option value="long">長時間 (60分～)</option>
-                </select>
-            </div>
-            
-            <button class="btn btn-outline-primary w-100 mt-3" onclick="clearFilters()">
-                <i class="fas fa-undo"></i> フィルターをクリア
-            </button>
-        </div>
-
-        <!-- 単元一覧 -->
-        <div class="units-section">
-            <h2><i class="fas fa-book"></i> 学習単元一覧</h2>
-            
-            <!-- デバッグ情報セクション (開発時のみ表示) -->
-            <div id="debug-info" style="display: none; background: #f8f9fa; padding: 1rem; margin-bottom: 1rem; border-radius: 4px; border-left: 4px solid #007bff;">
-                <h5>デバッグ情報</h5>
-                <p id="debug-text"></p>
-                <button onclick="document.getElementById('debug-info').style.display='none'" class="btn btn-sm btn-secondary">閉じる</button>
-            </div>
-            
-            <div class="units-grid" id="units-grid">
-                <!-- 単元カードがJavaScriptで動的に挿入される -->
-                <div class="loading">
-                    <div class="spinner"></div>
-                    <p>単元を読み込んでいます...</p>
-                </div>
-            </div>
-            
-            <!-- ページネーション -->
-            <nav aria-label="単元ページナビゲーション" class="mt-4">
-                <ul class="pagination justify-content-center" id="pagination">
-                    <!-- ページネーションがJavaScriptで動的に挿入される -->
-                </ul>
-            </nav>
-        </div>
-    </div>
-</div>
-
-<!-- 単元詳細モーダル -->
-<div class="modal fade" id="unitModal" tabindex="-1" aria-labelledby="unitModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="unitModalLabel">単元詳細</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="閉じる"></button>
-            </div>
-            <div class="modal-body" id="unitModalBody">
-                <!-- 単元詳細がJavaScriptで動的に挿入される -->
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">キャンセル</button>
-                <button type="button" class="btn btn-primary" id="selectUnitBtn">この単元を選択</button>
-            </div>
-        </div>
+        {% endif %}
     </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
-<script src="{{ url_for('static', filename='js/speech_input.js') }}"></script>
-<script src="{{ url_for('static', filename='js/learning_portal.js') }}"></script>
 <script>
-// CSRFトークンをグローバルに設定
-window.csrfToken = '{{ csrf_token() }}';
-
-// 音声入力機能の初期化
+// SSR化により、JavaScriptは最小限に
 document.addEventListener('DOMContentLoaded', function() {
-    // 検索フィールド用音声入力を初期化
-    const searchSpeechButton = initSpeechInput('#search-speech-btn', '#search-input', {
-        context: 'search',
-        language: 'ja-JP',
-        continuous: false,
-        interimResults: true
-    });
-    
-    // 音声入力が利用できない場合は非表示
-    if (!searchSpeechButton) {
-        document.body.classList.add('speech-not-supported');
-    }
-    
-    // learning_portal.js の初期化を確認
-    console.log('Learning portal object:', typeof learningPortal);
-    if (typeof learningPortal === 'undefined') {
-        console.error('learningPortal object not initialized');
-    }
+    console.log('Learning portal loaded with SSR');
 });
 </script>
 {% endblock %}

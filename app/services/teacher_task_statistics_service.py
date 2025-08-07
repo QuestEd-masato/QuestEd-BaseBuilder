@@ -128,7 +128,7 @@ class TeacherTaskStatisticsService(BaseService):
             student_ids = self._get_students_in_classes(target_class_ids)
             
             # カリキュラム関連の単元取得
-            curriculum_units = CurriculumUnit.query.filter_by(curriculum_id=curriculum_id).all()
+            curriculum_units = CurriculumUnit.query.filter_by(legacy_curriculum_id=curriculum_id).all()
             unit_ids = [u.id for u in curriculum_units]
             
             # 統計計算

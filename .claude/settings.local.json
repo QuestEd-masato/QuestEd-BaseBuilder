@@ -1,4 +1,5 @@
 {
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
   "permissions": {
     "allow": [
       "Bash(find:*)",
@@ -76,7 +77,32 @@
       "Bash(export FLASK_APP=app.py)",
       "Bash(ip route:*)",
       "Bash(./run_flask.sh)",
-      "Bash(crontab:*)"
+      "Bash(crontab:*)",
+      "Bash(./venv/bin/python --version)",
+      "Bash(# 現在のBaseBuilder構造を記録\nfind /home/masat/claude-projects/QuestEd/basebuilder -type f -name \"\"*.py\"\" | sort > /tmp/basebuilder_structure_before.txt\necho \"\"✅ BaseBuilder構造記録完了\"\"\n\n# 現在のインポート状況を記録\ngrep -r \"\"from basebuilder\"\" /home/masat/claude-projects/QuestEd/app --include=\"\"*.py\"\" > /tmp/basebuilder_imports_before.txt\necho \"\"✅ インポート状況記録完了\"\")",
+      "Bash(# QuestEd標準モジュール構造作成\nmkdir -p /home/masat/claude-projects/QuestEd/app/modules/basebuilder_system\nmkdir -p /home/masat/claude-projects/QuestEd/app/modules/basebuilder_system/models\nmkdir -p /home/masat/claude-projects/QuestEd/app/modules/basebuilder_system/services\nmkdir -p /home/masat/claude-projects/QuestEd/app/modules/basebuilder_system/routes\n\necho \"\"✅ BaseBuilder標準モジュール構造作成完了\"\")",
+      "Bash(# 新しいモジュール構造の確認\necho \"\"=== 新しいBaseBuilderモジュール構造 ===\"\"\nfind /home/masat/claude-projects/QuestEd/app/modules/basebuilder_system -type f -name \"\"*.py\"\" | sort\n\necho -e \"\"\\n=== 作成されたファイル数 ===\"\"\nfind /home/masat/claude-projects/QuestEd/app/modules/basebuilder_system -type f -name \"\"*.py\"\" | wc -l)",
+      "Bash(# 正しくカウント\nfind /home/masat/claude-projects/QuestEd/app/modules/basebuilder_system -name \"\"*.py\"\" | wc -l)",
+      "Bash(# ファイル存在確認\nls -la /home/masat/claude-projects/QuestEd/app/modules/basebuilder_system/)",
+      "Bash(# 一時記録ファイルをクリーンアップ\nrm -f /tmp/basebuilder_structure_before.txt /tmp/basebuilder_imports_before.txt\necho \"\"✅ 一時ファイルクリーンアップ完了\"\")",
+      "Bash(# Phase Bで作成したファイルの確認\necho \"\"=== Phase Bで作成したファイル一覧 ===\"\"\nfind /home/masat/claude-projects/QuestEd/app/modules/basebuilder_system -type f -name \"\"*.py\"\" 2>/dev/null | sort)",
+      "Bash(# ディレクトリ構造確認\nls -la /home/masat/claude-projects/QuestEd/app/modules/basebuilder_system/ 2>/dev/null || echo \"\"ディレクトリが存在しません\"\")",
+      "Bash(# Phase Bで作成した不要なディレクトリとファイルを削除\nrm -rf /home/masat/claude-projects/QuestEd/app/modules/basebuilder_system\necho \"\"✅ Phase Bの過剰実装を削除完了\"\")",
+      "Bash(ps:*)",
+      "Bash(for file in templates/teacher/approval_detail.html templates/teacher/task_management.html templates/teacher/approval_management.html)",
+      "Bash(do)",
+      "Bash(if grep -q \"X-CSRFToken\" \"$file\")",
+      "Bash(then)",
+      "Bash(else)",
+      "Bash(fi)",
+      "Bash(if grep -q 'csrf_token' \"$file\")",
+      "Bash(done)",
+      "Bash(for file in \"approval_detail.html\" \"approval_management.html\" \"auto_sync_settings.html\" \"edit_unit.html\" \"integrated_management.html\" \"sync_status_widget.html\")",
+      "Bash(__NEW_LINE__ if grep -q \"X-CSRFToken.*getCsrfToken\" \"templates/teacher/$file\")",
+      "Bash(__NEW_LINE__ if grep -q \"function getCsrfToken\" \"templates/teacher/$file\")",
+      "Bash(for file in /home/masat/claude-projects/QuestEd/templates/teacher/approval_detail.html /home/masat/claude-projects/QuestEd/templates/teacher/edit_unit.html)",
+      "Bash(do echo \"Processing: $file\")",
+      "Bash(pip show:*)"
     ],
     "deny": []
   }
