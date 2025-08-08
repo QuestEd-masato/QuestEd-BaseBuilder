@@ -130,14 +130,15 @@ def learning_portal():
                         except Exception as e:
                             current_app.logger.error(f"Error reading curriculum content for {curriculum.id}: {e}")
                     
-                    # レッスンがあるカリキュラムのみ表示
-                    if total_lessons > 0:
-                        available_curricula.append({
-                            'curriculum': curriculum,
-                            'class_name': class_obj.name,
-                            'total_lessons': total_lessons,
-                            'system_type': 'lessons'
-                        })
+                    # Fix: 新規カリキュラム対応 - レッスンが0でもカリキュラムを表示
+                    # レッスン数に関わらず、すべてのカリキュラムを表示対象にする
+                    available_curricula.append({
+                        'curriculum': curriculum,
+                        'class_name': class_obj.name,
+                        'total_lessons': total_lessons,
+                        'system_type': 'lessons' if total_lessons > 0 else 'empty',
+                        'is_empty': total_lessons == 0
+                    })
 
         # 学生の進捗状況を取得（レッスンシステムのみ）
         my_progress = []
@@ -218,7 +219,8 @@ def learning_portal():
                 'submitted_tasks': 0,  # レッスンシステムでは提出概念なし
                 'progress_percentage': progress_percentage,
                 'can_start': total_lessons > 0,
-                'system_type': 'lessons' if lessons else 'curriculum_data',
+                'system_type': curriculum_data.get('system_type', 'lessons'),
+                'is_empty': curriculum_data.get('is_empty', False),
                 'total_lessons': total_lessons,
                 'completed_lessons': completed_lessons,
                 'in_progress_lessons': in_progress_lessons
