@@ -46,7 +46,7 @@ class NavigationConfig:
                 icon="fas fa-graduation-cap",
                 submenu=[
                     NavigationItem("学習ポータル", "student_learning.learning_portal", "fas fa-book-open"),
-                    NavigationItem("進捗確認", "student_learning.progress", "fas fa-chart-line")
+                    NavigationItem("進捗確認", "student_dashboard.dashboard", "fas fa-chart-line")
                 ]
             ),
             NavigationItem(
@@ -65,10 +65,10 @@ class NavigationConfig:
                 url="#",
                 icon="fas fa-chart-line",
                 submenu=[
-                    NavigationItem("学習進捗", "student_learning.progress", "fas fa-tasks"),
-                    NavigationItem("成績記録", "student_learning.grades", "fas fa-graduation-cap"),
-                    NavigationItem("マイルストーン", "student_learning.milestones", "fas fa-flag"),
-                    NavigationItem("達成状況", "student_learning.achievements", "fas fa-medal")
+                    NavigationItem("学習進捗", "student_dashboard.dashboard", "fas fa-tasks"),
+                    NavigationItem("成績記録", "student_dashboard.dashboard", "fas fa-graduation-cap"),
+                    NavigationItem("マイルストーン", "student_dashboard.dashboard", "fas fa-flag"),
+                    NavigationItem("達成状況", "student_dashboard.dashboard", "fas fa-medal")
                 ]
             ),
             NavigationItem(
