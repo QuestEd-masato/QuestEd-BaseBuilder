@@ -54,10 +54,9 @@ class NavigationConfig:
                 url="#",
                 icon="fas fa-lightbulb",
                 submenu=[
-                    NavigationItem("探究テーマ", "student_themes.themes", "fas fa-search"),
                     NavigationItem("活動記録", "student_activities.activities", "fas fa-clipboard"),
                     NavigationItem("アンケート", "student_surveys.surveys", "fas fa-poll"),
-                    NavigationItem("目標・TODO", "student_goals_todos.goals", "fas fa-flag-checkered")
+                    NavigationItem("目標・TODO", "student_goals_todos_secure.goals", "fas fa-flag-checkered")
                 ]
             ),
             NavigationItem(
@@ -65,10 +64,9 @@ class NavigationConfig:
                 url="#",
                 icon="fas fa-chart-line",
                 submenu=[
-                    NavigationItem("学習進捗", "student_dashboard.dashboard", "fas fa-tasks"),
-                    NavigationItem("成績記録", "student_dashboard.dashboard", "fas fa-graduation-cap"),
-                    NavigationItem("マイルストーン", "student_dashboard.dashboard", "fas fa-flag"),
-                    NavigationItem("達成状況", "student_dashboard.dashboard", "fas fa-medal")
+                    NavigationItem("学習進捗", "student_ranking.ranking", "fas fa-tasks"),
+                    NavigationItem("活動記録", "student_activities.activities", "fas fa-clipboard"),
+                    NavigationItem("達成状況", "student_ranking.ranking_analysis", "fas fa-medal")
                 ]
             ),
             NavigationItem(
@@ -77,9 +75,8 @@ class NavigationConfig:
                 icon="fas fa-comments",
                 submenu=[
                     NavigationItem("AIチャット", "student_chat.chat", "fas fa-robot"),
-                    NavigationItem("クラス情報", "student_class_management.class_info", "fas fa-users"),
-                    NavigationItem("ランキング", "ranking_system.student_ranking_dashboard", "fas fa-trophy"),
-                    NavigationItem("通知", "student_notifications.notifications", "fas fa-bell")
+                    NavigationItem("ランキング", "student_ranking.ranking", "fas fa-trophy"),
+                    NavigationItem("テーマ選択", "student_themes.themes", "fas fa-lightbulb")
                 ]
             ),
             NavigationItem(
