@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QuestEd学習システム - アクセス案内</title>
+    <style>
+        body {
+            font-family: 'Hiragino Kaku Gothic Pro', 'ヒラギノ角ゴ Pro', 'Yu Gothic Medium', '游ゴシック Medium', YuGothic, '游ゴシック体', 'メイリオ', Meiryo, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            line-height: 1.6;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .logo {
+            font-size: 28px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        .notice {
+            background-color: #e8f4f8;
+            border-left: 5px solid #3498db;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .warning {
+            background-color: #fff3cd;
+            border-left: 5px solid #ffc107;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .access-button {
+            display: block;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            padding: 15px 30px;
+            border-radius: 5px;
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            margin: 30px auto;
+            max-width: 400px;
+            transition: background-color 0.3s;
+        }
+        .access-button:hover {
+            background-color: #0056b3;
+            color: white;
+        }
+        .details {
+            margin-top: 30px;
+            font-size: 14px;
+            color: #666;
+        }
+        .status {
+            margin: 20px 0;
+        }
+        .status-item {
+            margin: 10px 0;
+        }
+        .status-ok {
+            color: #28a745;
+            font-weight: bold;
+        }
+        .status-error {
+            color: #dc3545;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">QuestEd学習システム</div>
+            <p>Learning Management System</p>
+        </div>
+
+        <div class="warning">
+            <h2>🔧 重要なお知らせ</h2>
+            <p>現在、システムメンテナンス中のため、通常のドメインアクセス（quest-ed.jp）が一時的にご利用いただけません。</p>
+            <p>学習を継続するには、以下の代替URLをご利用ください。</p>
+        </div>
+
+        <a href="https://3.115.238.137" class="access-button">
+            🎓 QuestEd学習システムにアクセス
+        </a>
+
+        <div class="notice">
+            <h3>現在の状況</h3>
+            <div class="status">
+                <div class="status-item">
+                    <span class="status-error">❌ https://quest-ed.jp</span> - メンテナンス中
+                </div>
+                <div class="status-item">
+                    <span class="status-ok">✅ https://3.115.238.137</span> - 正常稼働中
+                </div>
+            </div>
+        </div>
+
+        <div class="details">
+            <h3>📋 重要な注意事項</h3>
+            <ul>
+                <li><strong>学習データへの影響はありません</strong> - アカウント情報、学習履歴、成績データは全て安全に保護されています</li>
+                <li><strong>全機能が正常に利用可能</strong> - ログイン、学習、テスト、成績確認など全ての機能が利用できます</li>
+                <li><strong>セキュリティ</strong> - HTTPSで暗号化通信により、データの安全性は確保されています</li>
+                <li><strong>復旧予定</strong> - 通常ドメイン（quest-ed.jp）は24-48時間以内に復旧予定です</li>
+            </ul>
+
+            <h3>📱 ブックマーク推奨</h3>
+            <p>スムーズなアクセスのため、以下のURLをブックマークに保存することをお勧めします：</p>
+            <div style="background-color: #f8f9fa; padding: 10px; border-radius: 5px; font-family: monospace;">
+                https://3.115.238.137
+            </div>
+
+            <h3>❓ ご質問・お問い合わせ</h3>
+            <p>このメンテナンスに関してご質問がございましたら、システム管理者までお問い合わせください。</p>
+            <p>学習の継続にご理解とご協力をお願いいたします。</p>
+        </div>
+
+        <div style="text-align: center; margin-top: 40px; color: #999; font-size: 12px;">
+            <p>QuestEd Learning Management System v1.4</p>
+            <p>更新日時: 2025年8月8日</p>
+        </div>
+    </div>
+</body>
+</html>
