@@ -101,7 +101,7 @@ class NavigationConfig:
                 icon="fas fa-users",
                 submenu=[
                     NavigationItem("クラス一覧", "teacher_class_management.classes", "fas fa-list"),
-                    NavigationItem("カリキュラム管理", "teacher_curriculum_management.view_curriculums", "fas fa-book"),
+                    NavigationItem("カリキュラム管理", "teacher_dashboard.dashboard", "fas fa-book"),
                     NavigationItem("レッスン管理", "lesson_system.lesson_management", "fas fa-chalkboard-teacher"),
                     NavigationItem("タスク管理", "teacher_task_management.task_dashboard", "fas fa-tasks")
                 ]
