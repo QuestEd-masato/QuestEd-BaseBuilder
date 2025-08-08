@@ -46,7 +46,6 @@ class NavigationConfig:
                 icon="fas fa-graduation-cap",
                 submenu=[
                     NavigationItem("学習ポータル", "student_learning.learning_portal", "fas fa-book-open"),
-                    NavigationItem("単元学習", "student_unit_learning.unit_dashboard", "fas fa-tasks"),
                     NavigationItem("進捗確認", "student_learning.progress", "fas fa-chart-line")
                 ]
             ),
