@@ -33,7 +33,7 @@ class NavigationConfig:
     
     @staticmethod
     def get_student_navigation() -> List[NavigationItem]:
-        """学生用ナビゲーション"""
+        """学生用ナビゲーション（完全版：17項目をドロップダウンで整理）"""
         return [
             NavigationItem(
                 title="ダッシュボード",
@@ -41,108 +41,58 @@ class NavigationConfig:
                 icon="fas fa-tachometer-alt"
             ),
             NavigationItem(
-                title="学習システム",
-                url="#",
-                icon="fas fa-book-open",
-                submenu=[
-                    NavigationItem(
-                        title="レッスン",
-                        url="student_learning.learning_portal",
-                        icon="fas fa-tasks"
-                    ),
-                    NavigationItem(
-                        title="進捗確認",
-                        url="student_ranking.ranking",
-                        icon="fas fa-chart-line"
-                    ),
-                    NavigationItem(
-                        title="ランキング",
-                        url="ranking_system.student_ranking_dashboard",
-                        icon="fas fa-trophy"
-                    )
-                ]
-            ),
-            NavigationItem(
-                title="探究活動",
-                url="#",
-                icon="fas fa-search",
-                submenu=[
-                    NavigationItem(
-                        title="探究テーマ",
-                        url="student_themes.themes",
-                        icon="fas fa-lightbulb"
-                    ),
-                    NavigationItem(
-                        title="活動記録",
-                        url="student_activities.activities",
-                        icon="fas fa-journal-whills"
-                    )
-                ]
-            ),
-            NavigationItem(
-                title="基礎学力",
+                title="学習活動",
                 url="#",
                 icon="fas fa-graduation-cap",
                 submenu=[
-                    NavigationItem(
-                        title="テキスト一覧",
-                        url="texts.my_texts",
-                        icon="fas fa-book"
-                    ),
-                    NavigationItem(
-                        title="問題に挑戦",
-                        url="problems.problems",
-                        icon="fas fa-puzzle-piece"
-                    ),
-                    NavigationItem(
-                        title="熟練度確認",
-                        url="progress.view_proficiency",
-                        icon="fas fa-chart-bar"
-                    ),
-                    NavigationItem(
-                        title="理解度分析",
-                        url="analytics.analytics",
-                        icon="fas fa-analytics"
-                    )
+                    NavigationItem("学習ポータル", "student_learning.learning_portal", "fas fa-book-open"),
+                    NavigationItem("単元学習", "student_unit_learning.unit_dashboard", "fas fa-tasks"),
+                    NavigationItem("進捗確認", "student_learning.progress", "fas fa-chart-line")
                 ]
             ),
             NavigationItem(
-                title="ツール",
+                title="探究・活動",
                 url="#",
-                icon="fas fa-tools",
+                icon="fas fa-lightbulb",
                 submenu=[
-                    NavigationItem(
-                        title="AIチャット",
-                        url="student_chat.select_class",
-                        icon="fas fa-comments"
-                    ),
-                    NavigationItem(
-                        title="アンケート",
-                        url="student_surveys.surveys",
-                        icon="fas fa-poll"
-                    ),
-                    NavigationItem(
-                        title="To Doリスト",
-                        url="student_goals_todos_secure.todos",
-                        icon="fas fa-check-square"
-                    ),
-                    NavigationItem(
-                        title="目標管理",
-                        url="student_goals_todos_secure.goals",
-                        icon="fas fa-bullseye"
-                    )
+                    NavigationItem("探究テーマ", "student_themes.themes", "fas fa-search"),
+                    NavigationItem("活動記録", "student_activities.activities", "fas fa-clipboard"),
+                    NavigationItem("アンケート", "student_surveys.surveys", "fas fa-poll"),
+                    NavigationItem("目標・TODO", "student_goals_todos.goals", "fas fa-flag-checkered")
                 ]
             ),
             NavigationItem(
-                title="クラス",
-                url="teacher_class_management.classes",
-                icon="fas fa-users"
+                title="成績・進捗",
+                url="#",
+                icon="fas fa-chart-line",
+                submenu=[
+                    NavigationItem("学習進捗", "student_learning.progress", "fas fa-tasks"),
+                    NavigationItem("成績記録", "student_learning.grades", "fas fa-graduation-cap"),
+                    NavigationItem("マイルストーン", "student_learning.milestones", "fas fa-flag"),
+                    NavigationItem("達成状況", "student_learning.achievements", "fas fa-medal")
+                ]
+            ),
+            NavigationItem(
+                title="コミュニケーション",
+                url="#",
+                icon="fas fa-comments",
+                submenu=[
+                    NavigationItem("AIチャット", "student_chat.chat", "fas fa-robot"),
+                    NavigationItem("クラス情報", "student_class_management.class_info", "fas fa-users"),
+                    NavigationItem("ランキング", "ranking_system.student_ranking_dashboard", "fas fa-trophy"),
+                    NavigationItem("通知", "student_notifications.notifications", "fas fa-bell")
+                ]
+            ),
+            NavigationItem(
+                title="BaseBuilder",
+                url="basebuilder.index", 
+                icon="fas fa-building"
             )
         ]
     
     @staticmethod
     def get_teacher_navigation() -> List[NavigationItem]:
-        """教師用ナビゲーション"""
+        """教師用ナビゲーション（完全版：11項目を3グループに整理）"""
         return [
             NavigationItem(
                 title="ダッシュボード",
@@ -150,77 +100,39 @@ class NavigationConfig:
                 icon="fas fa-tachometer-alt"
             ),
             NavigationItem(
-                title="教育システム",
+                title="クラス・カリキュラム管理",
                 url="#",
-                icon="fas fa-chalkboard-teacher",
+                icon="fas fa-users",
                 submenu=[
-                    NavigationItem(
-                        title="承認管理",
-                        url="approval_system.teacher_pending_approvals",
-                        icon="fas fa-clipboard-check"
-                    ),
-                    NavigationItem(
-                        title="クラスランキング",
-                        url="ranking_system.teacher_class_ranking",
-                        icon="fas fa-trophy"
-                    )
+                    NavigationItem("クラス一覧", "teacher_class_management.classes", "fas fa-list"),
+                    NavigationItem("カリキュラム管理", "teacher_curriculum_management.view_curriculums", "fas fa-book"),
+                    NavigationItem("レッスン管理", "lesson_system.lesson_management", "fas fa-chalkboard-teacher"),
+                    NavigationItem("タスク管理", "teacher_task_management.task_dashboard", "fas fa-tasks")
                 ]
             ),
             NavigationItem(
-                title="探究活動",
+                title="評価・承認システム",
                 url="#",
-                icon="fas fa-search",
+                icon="fas fa-clipboard-check", 
                 submenu=[
-                    NavigationItem(
-                        title="テーマ管理",
-                        url="teacher_student_evaluation.teacher_themes",
-                        icon="fas fa-lightbulb"
-                    ),
-                    NavigationItem(
-                        title="クラス管理",
-                        url="teacher_class_management.classes",
-                        icon="fas fa-users"
-                    )
+                    NavigationItem("承認待ち一覧", "approval_system.teacher_pending_approvals", "fas fa-clock"),
+                    NavigationItem("学生評価", "teacher_student_evaluation.teacher_themes", "fas fa-star"),
+                    NavigationItem("同期管理", "teacher_synchronization.sync_dashboard", "fas fa-sync")
                 ]
             ),
             NavigationItem(
-                title="基礎学力",
+                title="分析・レポート",
                 url="#",
-                icon="fas fa-graduation-cap",
+                icon="fas fa-chart-bar",
                 submenu=[
-                    NavigationItem(
-                        title="基礎学力ホーム",
-                        url="texts.dashboard",
-                        icon="fas fa-home"
-                    ),
-                    NavigationItem(
-                        title="問題管理",
-                        url="problems.problems",
-                        icon="fas fa-puzzle-piece"
-                    ),
-                    NavigationItem(
-                        title="テキスト一覧",
-                        url="texts.text_sets",
-                        icon="fas fa-book"
-                    ),
-                    NavigationItem(
-                        title="理解度分析",
-                        url="analytics.analytics",
-                        icon="fas fa-analytics"
-                    )
+                    NavigationItem("クラス分析", "teacher_analytics.class_analytics", "fas fa-chart-line"),
+                    NavigationItem("ランキング管理", "ranking_system.teacher_class_ranking", "fas fa-trophy")
                 ]
             ),
             NavigationItem(
-                title="ツール",
-                url="#",
-                icon="fas fa-tools",
-                submenu=[
-                    NavigationItem(
-                        title="AIチャット",
-                        url="teacher_dashboard.chat_page",
-                        icon="fas fa-comments"
-                    )
-                ]
+                title="BaseBuilder",
+                url="basebuilder.index",
+                icon="fas fa-building"
             )
         ]
     

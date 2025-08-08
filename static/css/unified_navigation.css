@@ -1,5 +1,127 @@
 /* 統合ナビゲーション用スタイル */
 
+/* 🔥 モダンなドロップダウンUI - 矢印重複完全解決 */
+.dropdown-arrow {
+    font-size: 0.75rem;
+    margin-left: 0.5rem;
+    display: inline-block;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transform-origin: center;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+/* ブートストラップのデフォルト矢印を完全無効化 */
+.dropdown-toggle::after {
+    display: none !important;
+}
+
+/* ドロップダウン開閉時のアニメーション */
+.nav-item.dropdown.open .dropdown-arrow {
+    transform: rotate(180deg);
+    color: rgba(255, 255, 255, 1);
+}
+
+/* モバイル用ドロップダウン矢印の統一 */
+.mobile-dropdown .dropdown-arrow {
+    float: right;
+    font-size: 0.75rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.mobile-dropdown.open .dropdown-arrow {
+    transform: rotate(180deg);
+}
+
+/* 🎨 モダンなナビゲーションリンクデザイン */
+.nav-link {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+    border-radius: 6px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.nav-link:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.nav-link i {
+    margin-right: 0.5rem;
+    width: 16px;
+    text-align: center;
+}
+
+/* 🚀 レスポンシブ1段レイアウト（768px以上で） */
+@media (min-width: 768px) {
+    .navbar-nav {
+        flex-direction: row !important;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        overflow-y: hidden;
+        gap: 0.25rem;
+        scrollbar-width: none; /* Firefox */
+        -ms-overflow-style: none; /* IE/Edge */
+    }
+    
+    .navbar-nav::-webkit-scrollbar {
+        display: none; /* Chrome/Safari */
+    }
+    
+    .navbar-nav .nav-item {
+        flex-shrink: 0;
+    }
+    
+    /* ドロップダウンメニューの改善 */
+    .dropdown-menu {
+        min-width: 220px;
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+        backdrop-filter: blur(10px);
+        background: rgba(255, 255, 255, 0.95);
+        margin-top: 0.5rem;
+        animation: dropdownSlide 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    @keyframes dropdownSlide {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .dropdown-menu .dropdown-item {
+        padding: 0.75rem 1rem;
+        border-radius: 8px;
+        margin: 0.25rem;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+    }
+    
+    .dropdown-menu .dropdown-item:hover {
+        background-color: #f8f9fa;
+        transform: translateX(4px);
+    }
+    
+    .dropdown-menu .dropdown-item i {
+        margin-right: 0.75rem;
+        width: 16px;
+        color: var(--primary-color);
+    }
+}
+
 /* モジュール指示器 */
 .module-indicator {
     position: fixed;
@@ -55,28 +177,33 @@
     color: white;
 }
 
-/* ナビゲーション項目のアクティブ状態 */
+/* 🎯 アクティブ状態のモダンデザイン */
 .nav-item.active > .nav-link {
-    color: var(--primary-color) !important;
-    background-color: rgba(93, 168, 232, 0.1);
-    border-radius: 4px;
+    background: linear-gradient(135deg, rgba(93, 168, 232, 0.2), rgba(74, 154, 224, 0.15));
+    border-radius: 8px;
+    color: white !important;
+    box-shadow: 0 2px 8px rgba(93, 168, 232, 0.3);
 }
 
 .nav-item.active > .nav-link::before {
     content: '';
     position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
+    left: 2px;
+    top: 50%;
+    transform: translateY(-50%);
     width: 3px;
-    background-color: var(--primary-color);
-    border-radius: 0 2px 2px 0;
+    height: 20px;
+    background: linear-gradient(180deg, #fff, rgba(255, 255, 255, 0.8));
+    border-radius: 2px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
-/* モバイルナビゲーションのアクティブ状態 */
+/* 📱 モバイルナビゲーションのモダンアクティブ状態 */
 .mobile-menu-item.active {
-    background-color: rgba(255, 255, 255, 0.2);
-    border-left: 3px solid rgba(255, 255, 255, 0.8);
+    background: linear-gradient(90deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.1));
+    border-left: 4px solid rgba(255, 255, 255, 0.9);
+    border-radius: 0 8px 8px 0;
+    transform: translateX(4px);
 }
 
 /* パンくずリストのスタイル改善 */

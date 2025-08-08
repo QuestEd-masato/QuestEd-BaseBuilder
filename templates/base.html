@@ -220,38 +220,50 @@
             display: none;
         }
 
-        /* モバイルメニュートグル */
+        /* 🍔 モダンなハンバーガーメニュートグル - 重複解決 */
         .menu-toggle {
             display: none;
             align-items: center;
             justify-content: center;
-            width: 40px;
-            height: 40px;
+            width: 44px;
+            height: 44px;
             cursor: pointer;
             z-index: 1001;
-            background: none;
-            border: 1px solid rgba(255,255,255,0.3);
-            border-radius: 4px;
-            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            backdrop-filter: blur(10px);
         }
 
         .menu-toggle:hover {
-            background-color: rgba(255,255,255,0.1);
-            border-color: rgba(255,255,255,0.5);
+            background-color: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.4);
+            transform: scale(1.05);
         }
 
+        .menu-toggle:active {
+            transform: scale(0.95);
+        }
+
+        /* アニメーション付きハンバーガーアイコン */
         .menu-toggle .menu-icon {
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             color: white;
-            transition: all 0.3s ease;
-            font-family: Arial, sans-serif;
-            font-weight: normal;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-family: 'Font Awesome 6 Free', sans-serif;
+            font-weight: 900;
             display: inline-block;
         }
 
-        /* レガシー対応: 古いspan要素を非表示 */
+        /* メニューが開いている時のアイコン変更 */
+        .menu-toggle.active .menu-icon {
+            transform: rotate(90deg);
+        }
+
+        /* レガシー対応: 古いspan要素を完全非表示 */
         .menu-toggle span:not(.menu-icon) {
-            display: none;
+            display: none !important;
         }
 
         /* ボタンの色を統一 */
@@ -638,9 +650,9 @@
                 <span class="admin-title">管理画面</span>
             </a>
             
-            <div class="menu-toggle" id="menu-toggle" aria-expanded="false" aria-label="メニュー">
-                <span class="menu-icon">&equiv;</span>
-            </div>
+            <button class="menu-toggle" id="menu-toggle" type="button" aria-expanded="false" aria-label="メニューを開く">
+                <i class="menu-icon fas fa-bars"></i>
+            </button>
             
             <div class="main-nav">
                 <ul id="main-menu">
@@ -716,9 +728,9 @@
                 <img src="{{ url_for('static', filename='logo.png') }}" alt="QuestEd Logo" class="logo-img" />
             </a>
             
-            <div class="menu-toggle" id="menu-toggle" aria-expanded="false" aria-label="メニュー">
-                <span class="menu-icon">&equiv;</span>
-            </div>
+            <button class="menu-toggle" id="menu-toggle" type="button" aria-expanded="false" aria-label="メニューを開く">
+                <i class="menu-icon fas fa-bars"></i>
+            </button>
             
             <div class="main-nav">
                 <ul id="main-menu">
@@ -834,12 +846,12 @@
                 overlay.classList.toggle('active');
                 document.body.classList.toggle('menu-open');
                 
-                // アイコンの切り替え
+                // 🎆 モダンアイコンアニメーション
                 const icon = menuToggle.querySelector('.menu-icon');
                 if (mainMenu.classList.contains('active')) {
-                    icon.innerHTML = '&times;';
+                    icon.className = 'menu-icon fas fa-times';
                 } else {
-                    icon.innerHTML = '&equiv;';
+                    icon.className = 'menu-icon fas fa-bars';
                 }
                 
                 menuToggle.setAttribute('aria-expanded', 
@@ -856,7 +868,7 @@
                 // アイコンをハンバーガーに戻す
                 const icon = menuToggle.querySelector('.menu-icon');
                 if (icon) {
-                    icon.textContent = '☰';
+                    icon.className = 'menu-icon fas fa-bars';
                 }
                 
                 // すべてのモバイルサブメニューを閉じる
