@@ -101,9 +101,9 @@ class NavigationConfig:
                 icon="fas fa-users",
                 submenu=[
                     NavigationItem("クラス一覧", "teacher_class_management.classes", "fas fa-list"),
-                    NavigationItem("カリキュラム管理", "teacher_dashboard.dashboard", "fas fa-book"),
+                    NavigationItem("カリキュラム管理", "teacher_class_management.classes", "fas fa-book"),
                     NavigationItem("レッスン管理", "lesson_system.lesson_management", "fas fa-chalkboard-teacher"),
-                    NavigationItem("タスク管理", "teacher_task_management.task_dashboard", "fas fa-tasks")
+                    NavigationItem("タスク管理", "teacher_task_management.task_management", "fas fa-tasks")
                 ]
             ),
             NavigationItem(
@@ -113,7 +113,7 @@ class NavigationConfig:
                 submenu=[
                     NavigationItem("承認待ち一覧", "approval_system.teacher_pending_approvals", "fas fa-clock"),
                     NavigationItem("学生評価", "teacher_student_evaluation.teacher_themes", "fas fa-star"),
-                    NavigationItem("同期管理", "teacher_synchronization.sync_dashboard", "fas fa-sync")
+                    NavigationItem("同期管理", "teacher_synchronization.integrated_management", "fas fa-sync")
                 ]
             ),
             NavigationItem(
@@ -121,7 +121,7 @@ class NavigationConfig:
                 url="#",
                 icon="fas fa-chart-bar",
                 submenu=[
-                    NavigationItem("クラス分析", "teacher_analytics.class_analytics", "fas fa-chart-line"),
+                    NavigationItem("クラス分析", "teacher_class_management.classes", "fas fa-chart-line"),
                     NavigationItem("ランキング管理", "ranking_system.teacher_class_ranking", "fas fa-trophy")
                 ]
             ),
