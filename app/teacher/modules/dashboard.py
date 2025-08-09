@@ -163,19 +163,23 @@ def _build_legacy_compatible_data(teacher_id):
             }
             
             for curriculum in curriculums:
-                # 変換状況をチェック
-                conversion_status = CurriculumBridgeService.get_conversion_status(curriculum.id)
-                if conversion_status.get("is_converted", False):
-                    curriculum_stats["converted_count"] += 1
-                    curriculum_stats["total_units"] += conversion_status.get("converted_units", 0)
-                    
-                    # 最近の変換履歴
-                    if conversion_status.get("conversion_date"):
-                        curriculum_stats["recent_conversions"].append({
-                            "curriculum_title": curriculum.title,
-                            "conversion_date": conversion_status["conversion_date"],
-                            "units_count": conversion_status.get("converted_units", 0),
-                        })
+                # 変換状況をチェック（エラー処理追加）
+                try:
+                    conversion_status = CurriculumBridgeService.get_conversion_status(curriculum.id)
+                    if conversion_status.get("is_converted", False):
+                        curriculum_stats["converted_count"] += 1
+                        curriculum_stats["total_units"] += conversion_status.get("converted_units", 0)
+                        
+                        # 最近の変換履歴
+                        if conversion_status.get("conversion_date"):
+                            curriculum_stats["recent_conversions"].append({
+                                "curriculum_title": curriculum.title,
+                                "conversion_date": conversion_status["conversion_date"],
+                                "units_count": conversion_status.get("converted_units", 0),
+                            })
+                except Exception as e:
+                    current_app.logger.warning(f"Conversion status error for curriculum {curriculum.id}: {str(e)}")
+                    # エラーの場合は変換されていないとみなして継続
             
             # 統合統計に加算
             integrated_stats["total_curriculums"] += curriculum_stats["total_curriculums"]
