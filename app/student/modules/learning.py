@@ -16,7 +16,7 @@ from flask import (
 from flask_login import current_user, login_required
 from sqlalchemy import desc, func
 
-from app.models import CurriculumUnit, StudentUnitSelection, User, Curriculum, db
+from app.models import CurriculumUnit, StudentUnitSelection, User, Curriculum, db, ClassEnrollment, Class
 
 # レッスンシステムのモデルは遅延インポート
 CurriculumLesson = None
@@ -86,21 +86,47 @@ learning_bp = Blueprint("student_learning", __name__)
 @student_required
 def learning_portal():
     """統合学習ポータル - レッスンシステムのみ"""
+    # ✅ Phase 1: 緊急診断ログ実装
+    current_app.logger.info(f"[DEBUG] learning_portal:start user_id={current_user.id}")
+
     try:
-        # レッスンモデルの遅延インポート
-        LESSON_SYSTEM_AVAILABLE = get_lesson_models()
-        # 学生が所属するクラスの取得
-        from app.models import ClassEnrollment
-        enrollments = ClassEnrollment.query.filter_by(student_id=current_user.id).all()
-        class_ids = [e.class_id for e in enrollments]
+        # 🔍 Phase 1: レッスンモデルインポート診断
+        try:
+            LESSON_SYSTEM_AVAILABLE = get_lesson_models()
+            current_app.logger.info(f"[DEBUG] lesson_models_import: success={LESSON_SYSTEM_AVAILABLE}")
+
+            if not LESSON_SYSTEM_AVAILABLE:
+                current_app.logger.error("[CRITICAL] lesson_models_import failed - cannot proceed")
+                flash("システムの初期化中にエラーが発生しました。管理者にお問い合わせください。", "error")
+                return redirect(url_for("student_dashboard.dashboard"))
+
+        except Exception as import_error:
+            current_app.logger.error(f"[CRITICAL] lesson_models_import exception: {str(import_error)}")
+            import traceback
+            current_app.logger.error(f"[CRITICAL] lesson_models_import traceback: {traceback.format_exc()}")
+            raise import_error
+        # 🔍 Phase 1: クラス所属診断
+        try:
+            enrollments = ClassEnrollment.query.filter_by(
+                student_id=current_user.id,
+                is_active=True  # ✅ 修正: is_activeフィルタ追加
+            ).all()
+            class_ids = [e.class_id for e in enrollments]
+            current_app.logger.info(f"[DEBUG] enrollment_check: user_id={current_user.id} classes={len(class_ids)}")
+
+        except Exception as enrollment_error:
+            current_app.logger.error(f"[CRITICAL] enrollment_query failed: user_id={current_user.id} error={str(enrollment_error)}")
+            import traceback
+            current_app.logger.error(f"[CRITICAL] enrollment_query traceback: {traceback.format_exc()}")
+            raise enrollment_error
         
         if not class_ids:
+            current_app.logger.warning(f"[WARN] no_enrollment: user_id={current_user.id}")
             flash("所属クラスが見つかりません。管理者にお問い合わせください。", "warning")
-            return render_template("student/learning_portal.html", 
+            return render_template("student/learning_portal.html",
                                  available_curricula=[], my_progress=[])
         
         # 利用可能なカリキュラムを取得（クラス単位）
-        from app.models import Class
         available_curricula = []
         for class_id in class_ids:
             class_obj = Class.query.get(class_id)
@@ -239,6 +265,10 @@ def learning_portal():
             "in_progress_count": in_progress_curricula,
         }
 
+        # ✅ Phase 1: 成功ログ
+        current_app.logger.info(f"[DEBUG] learning_portal:success user_id={current_user.id} "
+                               f"curricula={total_available} progress_items={total_my_progress}")
+
         return render_template(
             "student/learning_portal.html",
             available_curricula=available_curricula,
@@ -248,24 +278,11 @@ def learning_portal():
 
     except Exception as e:
         import traceback
-        current_app.logger.error(f"Learning portal error: {str(e)}")
-        current_app.logger.error(f"Traceback: {traceback.format_exc()}")
+        # ✅ Phase 1: 詳細エラーログ改善
+        current_app.logger.error(f"[CRITICAL] learning_portal_error: user_id={current_user.id} error={str(e)}")
+        current_app.logger.error(f"[CRITICAL] learning_portal_traceback: {traceback.format_exc()}")
         flash("学習ポータルの読み込み中にエラーが発生しました。", "error")
         return redirect(url_for("student_dashboard.dashboard"))
-
-
-@learning_bp.route("/curriculum/<int:curriculum_id>/lessons")
-@login_required
-@student_required
-def curriculum_lessons(curriculum_id):
-    """カリキュラムレッスン一覧表示 - lesson_systemへのリダイレクト"""
-    try:
-        # lesson_systemのcurriculum_lessonsにリダイレクト
-        return redirect(url_for('lesson_system.curriculum_lessons', curriculum_id=curriculum_id))
-    except Exception as e:
-        current_app.logger.error(f"Error in curriculum_lessons redirect: {e}")
-        flash("レッスン一覧の読み込み中にエラーが発生しました。", "error")
-        return redirect(url_for('student_learning.learning_portal'))
 
 
 @learning_bp.route("/lesson/<int:lesson_id>")
@@ -308,7 +325,6 @@ def unit_detail(unit_id):
             curriculum = Curriculum.query.get(unit_id)
             if curriculum:
                 # クラス配信チェック
-                from app.models import ClassEnrollment
                 enrollments = ClassEnrollment.query.filter_by(student_id=current_user.id).all()
                 class_ids = [e.class_id for e in enrollments]
                 
@@ -347,7 +363,6 @@ def unit_detail(unit_id):
             # クラス配信チェック
             curriculum = Curriculum.query.get(curriculum_id)
             if curriculum:
-                from app.models import ClassEnrollment
                 enrollments = ClassEnrollment.query.filter_by(student_id=current_user.id).all()
                 class_ids = [e.class_id for e in enrollments]
                 
@@ -403,7 +418,6 @@ def curriculum_direct_access(curriculum_id):
         curriculum = Curriculum.query.get_or_404(curriculum_id)
         
         # クラス配信チェック
-        from app.models import ClassEnrollment
         enrollments = ClassEnrollment.query.filter_by(student_id=current_user.id).all()
         class_ids = [e.class_id for e in enrollments]
         
@@ -441,7 +455,6 @@ def curriculum_direct_access(curriculum_id):
 def curriculum_detail(curriculum_id):
     """学生用カリキュラム詳細表示"""
     try:
-        from app.models import Curriculum, ClassEnrollment
         
         # カリキュラムの存在確認
         curriculum = Curriculum.query.get_or_404(curriculum_id)
@@ -463,7 +476,6 @@ def curriculum_detail(curriculum_id):
                 current_app.logger.error(f"Failed to get lessons for curriculum {curriculum_id}: {e}")
         
         # クラス情報取得
-        from app.models import Class
         class_obj = Class.query.get(curriculum.class_id)
         
         return render_template(

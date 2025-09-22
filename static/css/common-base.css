@@ -1,0 +1,28 @@
+/**
+ * QuestEd Common Base CSS
+ * 多角的調査に基づく慎重な改善実装
+ * 
+ * Purpose: BaseBuilderとメインアプリケーション間のCSS重複を解決
+ * Strategy: CSS import を使用してリクエスト数削減
+ * Safety: 既存機能を完全に維持
+ */
+
+/* Core Application Styles */
+@import url('style.css');
+
+/* Responsive Design */
+@import url('responsive.css');
+
+/* Modern Responsive Enhancements */
+@import url('modern-responsive.css');
+
+/* Button Styling Overrides */
+@import url('button-overrides.css');
+
+/* Navigation Unified Styles */
+@import url('unified_navigation.css');
+
+/* 
+ * NOTE: speech_input.css は BaseBuilder専用として個別読み込み維持
+ * これにより BaseBuilder の独立性を尊重
+ */

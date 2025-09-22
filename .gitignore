@@ -101,3 +101,6 @@ backup_endpoint_fix_*/
 
 # Whitelist environment file
 .env.whitelist
+# QuestEd機密情報
+.env.quested
+

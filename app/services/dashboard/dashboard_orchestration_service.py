@@ -13,7 +13,7 @@ from flask import current_app, flash, url_for, redirect
 from flask_login import current_user
 
 from .student_dashboard_data_service import StudentDashboardDataService
-from .learning_progress_service import LearningProgressService
+from app.services.student_dashboard.learning_progress_service import LearningProgressService
 from .activity_analytics_service import ActivityAnalyticsService
 from app.services.student_dashboard.basebuilder_analytics_service import BaseBuilderAnalyticsService as BaseBuilderIntegrationService
 

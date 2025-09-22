@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}BaseBuilder{% endblock %}</title>
+    <!-- PERFORMANCE OPTIMIZATION: Remove duplicate CSS loading -->
+    <!-- <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"> -->
+    <!-- <link rel="stylesheet" href="{{ url_for('static', filename='css/responsive.css') }}"> -->
+    <!-- Phase2: 共通リソース統一 - パフォーマンス改善のため追加 -->
+    <!-- <link rel="stylesheet" href="{{ url_for('static', filename='css/modern-responsive.css') }}"> -->
+    <!-- <link rel="stylesheet" href="{{ url_for('static', filename='css/button-overrides.css') }}"> -->
+    <!-- <link rel="stylesheet" href="{{ url_for('static', filename='css/unified_navigation.css') }}"> -->
+    <!-- BaseBuilder専用CSS（独立性維持） -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/speech_input.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        /* カラーパレット定義 - 落ち着いた学習向けの色調 */
+        :root {
+            --primary-color: #5da8e8;  /* メインの薄い青色 */
+            --primary-hover: #4a95d5;
+            --primary-soft: #e8f3fc;   /* 薄い青の背景用 */
+            --secondary-color: #7db8e8;
+            --accent-color: #4a6da7;
+            --success-color: #6eb76e;
+            --danger-color: #d67373;
+            --warning-color: #e6a756;
+            --info-color: #87b1cc;
+            --light-bg: #fafbfc;
+            --border-color: #e1e4e8;
+            --text-muted: #6c757d;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+            --shadow-md: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        /* ヘッダーとナビゲーション基本スタイル */
+        header {
+            background-color: var(--primary-color);
+            box-shadow: var(--shadow-md);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 1rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: white;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+        }
+        
+        /* ロゴスタイル */
+        .logo-img {
+            height: 50px;
+            width: auto;
+            margin-right: 10px;
+            filter: drop-shadow(2px 2px 3px rgba(0,0,0,0.3));
+            transition: all 0.3s ease;
+        }
+
+        /* メインナビゲーション */
+        .main-nav {
+            display: flex;
+            align-items: center;
+        }
+
+        .main-nav ul {
+            display: flex;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .main-nav li {
+            margin: 0 0.5rem;
+            position: relative;
+        }
+
+        .main-nav a {
+            color: white;
+            text-decoration: none;
+            padding: 0.5rem 0.75rem;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+            display: block;
+            font-size: 0.95rem;
+        }
+
+        .main-nav a:hover {
+            background-color: rgba(255,255,255,0.2);
+        }
+
+        /* ドロップダウンメニュー */
+        .dropdown-menu {
+            background-color: white;
+            border-radius: 4px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            min-width: 200px;
+            padding: 0.5rem 0;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            z-index: 1000;
+            display: none !important;
+        }
+
+        .dropdown-menu a {
+            color: #333;
+            padding: 0.5rem 1rem;
+            display: block;
+        }
+
+        .dropdown-menu a:hover {
+            background-color: #f8f9fa;
+        }
+
+        .nav-item.dropdown.open .dropdown-menu {
+            display: block !important;
+        }
+
+        .nav-link.dropdown-toggle::after {
+            content: "\f107";
+            font-family: "Font Awesome 5 Free";
+            font-weight: 900;
+            margin-left: 0.5rem;
+            vertical-align: middle;
+        }
+
+        /* モバイルメニュートグル */
+        .menu-toggle {
+            display: none;
+            flex-direction: column;
+            justify-content: space-between;
+            width: 30px;
+            height: 21px;
+            cursor: pointer;
+            z-index: 1001;
+        }
+
+        .menu-toggle span {
+            height: 3px;
+            width: 100%;
+            background-color: white;
+            border-radius: 3px;
+            transition: all 0.3s ease;
+        }
+
+        .menu-toggle.active span:first-child {
+            transform: rotate(45deg) translate(5px, 5px);
+        }
+        
+        .menu-toggle.active span:nth-child(2) {
+            opacity: 0;
+        }
+        
+        .menu-toggle.active span:last-child {
+            transform: rotate(-45deg) translate(5px, -5px);
+        }
+
+        /* ボタンスタイル */
+        .btn {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background-color 0.3s;
+        }
+
+        .btn-primary {
+            background-color: #5da8e8;
+            color: white;
+            border: none;
+        }
+
+        .btn-primary:hover {
+            background-color: #4393d7;
+        }
+
+        .btn-outline {
+            background-color: transparent;
+            border: 1px solid #5da8e8;
+            color: #5da8e8;
+        }
+
+        .btn-outline:hover {
+            background-color: #f0f7ff;
+        }
+
+        /* BaseBuilderの特徴的なコンポーネント */
+        .proficiency-meter {
+            width: 100%;
+            height: 10px;
+            background-color: #e9ecef;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-bottom: 5px;
+        }
+
+        .proficiency-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #4e73df 0%, #36b9cc 100%);
+            border-radius: 5px;
+            transition: width 0.5s ease;
+        }
+
+        .problem-difficulty {
+            display: inline-block;
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-size: 0.8rem;
+            color: #fff;
+            margin: 0 0.5rem;
+        }
+
+        .difficulty-1 { background-color: #28a745; }
+        .difficulty-2 { background-color: #17a2b8; }
+        .difficulty-3 { background-color: #ffc107; color: #343a40; }
+        .difficulty-4 { background-color: #fd7e14; }
+        .difficulty-5 { background-color: #dc3545; }
+
+        /* レスポンシブ対応 */
+        @media (max-width: 992px) {
+            nav {
+                padding: 0.3rem 0.5rem;
+            }
+            
+            .menu-toggle {
+                display: flex;
+            }
+
+            .main-nav ul {
+                position: fixed;
+                top: 60px;
+                left: -100%;
+                width: 80%;
+                max-width: 300px;
+                height: calc(100vh - 60px);
+                background-color: #5da8e8;
+                flex-direction: column;
+                padding: 1rem;
+                transition: left 0.3s ease;
+                overflow-y: auto;
+                box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+                z-index: 1000;
+            }
+
+            .main-nav ul.active {
+                left: 0;
+            }
+
+            .main-nav li {
+                margin: 0.5rem 0;
+                width: 100%;
+            }
+
+            .main-nav a {
+                padding: 0.75rem;
+                width: 100%;
+            }
+
+            .dropdown-menu {
+                position: static;
+                box-shadow: none;
+                width: 100%;
+                padding-left: 1rem;
+                background-color: rgba(255,255,255,0.05);
+                margin-top: 0.5rem;
+                margin-bottom: 0.5rem;
+            }
+
+            .dropdown-menu a {
+                color: white;
+                border-left: 2px solid rgba(255,255,255,0.2);
+            }
+
+            .dropdown-menu a:hover {
+                background-color: rgba(255,255,255,0.1);
+            }
+            
+            .nav-link.dropdown-toggle {
+                position: relative;
+            }
+            
+            .nav-link.dropdown-toggle::after {
+                position: absolute;
+                right: 1rem;
+                top: 50%;
+                transform: translateY(-50%);
+            }
+            
+            .nav-item.dropdown.open > .nav-link {
+                background-color: rgba(255,255,255,0.1);
+            }
+        }
+
+        /* 中間デバイス用調整 */
+        @media (min-width: 768px) and (max-width: 992px) {
+            .main-nav ul {
+                width: 60%;
+            }
+            
+            .logo-img {
+                height: 50px;
+            }
+        }
+
+        /* モバイルメニュー用オーバーレイ */
+        .mobile-nav-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 999;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .mobile-nav-overlay.active {
+            display: block;
+            opacity: 1;
+        }
+        
+        /* モバイルサイズでの調整 */
+        @media (max-width: 767px) {
+            nav {
+                justify-content: flex-start;
+                padding: 0.3rem 0.5rem;
+            }
+            
+            .logo {
+                margin-right: auto;
+            }
+            
+            .logo-img {
+                height: 45px;
+                margin-right: 0;
+            }
+            
+            .menu-toggle {
+                margin-left: 10px;
+            }
+        }
+        
+        /* BaseBuilderのブランドカラーを少し変更して区別 */
+        .basebuilder-color {
+            color: #3498db;
+        }
+        
+        .bg-basebuilder {
+            background-color: #3498db;
+        }
+        
+        /* カード要素のスタイル */
+        .card {
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            margin-bottom: 1.5rem;
+        }
+        
+        .card-header {
+            background-color: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+            padding: 0.75rem 1.25rem;
+            border-radius: 8px 8px 0 0;
+        }
+        
+        .card-body {
+            padding: 1.25rem;
+        }
+        
+        .section-title {
+            border-bottom: 1px solid #dee2e6;
+            padding-bottom: 0.5rem;
+            margin-bottom: 1.5rem;
+            color: #333;
+        }
+        /* Bootstrapコンポーネントのオーバーライド */
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            transition: all 0.2s ease;
+        }
+        
+        .btn-primary:hover, .btn-primary:focus {
+            background-color: var(--primary-hover);
+            border-color: var(--primary-hover);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+        
+        .btn-success {
+            background-color: var(--success-color);
+            border-color: var(--success-color);
+        }
+        
+        .btn-success:hover {
+            background-color: #5ea65e;
+            border-color: #5ea65e;
+        }
+        
+        .btn-danger {
+            background-color: var(--danger-color);
+            border-color: var(--danger-color);
+        }
+        
+        .btn-warning {
+            background-color: var(--warning-color);
+            border-color: var(--warning-color);
+            color: white;
+        }
+        
+        .btn-info {
+            background-color: var(--info-color);
+            border-color: var(--info-color);
+        }
+        
+        /* カードのスタイル改善 */
+        .card {
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-sm);
+            transition: box-shadow 0.2s ease;
+            background-color: white;
+        }
+        
+        .card:hover {
+            box-shadow: var(--shadow-md);
+        }
+        
+        .card-header {
+            background-color: var(--primary-soft);
+            border-bottom: 1px solid var(--border-color);
+            color: var(--accent-color);
+            font-weight: 600;
+        }
+        
+        /* バッジの色調整 */
+        .badge-primary {
+            background-color: var(--primary-color);
+        }
+        
+        .badge-success {
+            background-color: var(--success-color);
+        }
+        
+        .badge-danger {
+            background-color: var(--danger-color);
+        }
+        
+        .badge-warning {
+            background-color: var(--warning-color);
+        }
+        
+        .badge-info {
+            background-color: var(--info-color);
+        }
+        
+        /* プログレスバーの色調整 */
+        .progress {
+            background-color: var(--light-bg);
+            border: 1px solid var(--border-color);
+        }
+        
+        .progress-bar {
+            background-color: var(--primary-color);
+        }
+        
+        .bg-success {
+            background-color: var(--success-color) !important;
+        }
+        
+        .bg-primary {
+            background-color: var(--primary-color) !important;
+        }
+        
+        .bg-info {
+            background-color: var(--info-color) !important;
+        }
+        
+        .bg-warning {
+            background-color: var(--warning-color) !important;
+        }
+        
+        /* フォーム要素の色調整 */
+        .form-control {
+            border-color: var(--border-color);
+            background-color: var(--light-bg);
+        }
+        
+        .form-control:focus {
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 0 0.2rem rgba(93, 168, 232, 0.15);
+            background-color: white;
+        }
+        
+        /* テーブルの色調整 */
+        .table {
+            color: var(--text-color);
+        }
+        
+        .table thead th {
+            background-color: var(--primary-soft);
+            color: var(--accent-color);
+            border-color: var(--border-color);
+            font-weight: 600;
+        }
+        
+        .table-striped tbody tr:nth-of-type(odd) {
+            background-color: var(--light-bg);
+        }
+        
+        /* アラートの色調整 */
+        .alert-primary {
+            background-color: var(--primary-soft);
+            border-color: var(--primary-color);
+            color: var(--accent-color);
+        }
+        
+        .alert-success {
+            background-color: rgba(110, 183, 110, 0.1);
+            border-color: var(--success-color);
+            color: #2d5a2d;
+        }
+        
+        /* リンクの色 */
+        a {
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+        
+        a:hover {
+            color: var(--primary-hover);
+            text-decoration: underline;
+        }
+        
+        /* セクションタイトル */
+        .section-title {
+            color: var(--accent-color);
+            border-bottom: 2px solid var(--primary-soft);
+            padding-bottom: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <header>
+        <nav>
+            <a href="{{ url_for('index') }}" class="logo">
+                <img src="{{ url_for('static', filename='logo-basebuilder.png') }}" alt="BaseBuilder Logo" class="logo-img" />
+            </a>
+            
+            <div class="menu-toggle" id="menu-toggle">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+            
+            <!-- ナビゲーションの修正部分 -->
+            <div class="main-nav">
+                <ul id="main-menu">
+                    <li><a href="/basebuilder/"><i class="fas fa-home"></i> ホーム</a></li>
+        
+                    {% if current_user.role == 'student' %}
+                        <li><a href="/basebuilder/problems"><i class="fas fa-book"></i> 問題を検索</a></li>
+                        <li><a href="/basebuilder/history"><i class="fas fa-history"></i> 学習履歴</a></li>
+                        <li><a href="/basebuilder/learning_paths"><i class="fas fa-road"></i> 学習パス</a></li>
+                    {% elif current_user.role == 'teacher' %}
+                        <li><a href="/basebuilder/categories"><i class="fas fa-folder"></i> カテゴリ管理</a></li>
+                        <li><a href="/basebuilder/problems"><i class="fas fa-tasks"></i> 問題管理</a></li>
+                        <li><a href="/basebuilder/text_sets"><i class="fas fa-file-alt"></i> テキスト管理</a></li>
+                        <li><a href="/basebuilder/learning_paths"><i class="fas fa-road"></i> 学習パス</a></li>
+                        <li><a href="/basebuilder/theme_relations"><i class="fas fa-link"></i> テーマ関連付け</a></li>
+                        <li><a href="/basebuilder/analysis"><i class="fas fa-chart-bar"></i> 理解度分析</a></li>
+                    {% endif %}
+        
+                    <li><a href="{{ url_for('index') }}"><i class="fas fa-arrow-left"></i> QuestEdに戻る</a></li>
+                </ul>
+            </div>
+        </nav>
+        <div class="mobile-nav-overlay" id="mobile-overlay"></div>
+    </header>
+
+    <main>
+        <div class="container my-4">
+            <div class="flash-messages">
+                {% with messages = get_flashed_messages() %}
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-info alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+            </div>
+            
+            {% block basebuilder_content %}{% endblock %}
+        </div>
+    </main>
+
+    <footer class="bg-light py-4 mt-5">
+        <div class="container text-center">
+            <p class="mb-0">&copy; 2025 BaseBuilder - 探究を支える基礎学力定着アプリ</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 初期化 - すべてのドロップダウンを確実に閉じる
+            document.querySelectorAll('.dropdown-menu').forEach(menu => {
+                menu.style.display = 'none';
+            });
+            
+            // メニュートグル
+            const menuToggle = document.getElementById('menu-toggle');
+            const mainMenu = document.getElementById('main-menu');
+            const overlay = document.getElementById('mobile-overlay');
+            
+            // メニュートグルのクリックイベント
+            if (menuToggle) {
+                menuToggle.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    menuToggle.classList.toggle('active');
+                    mainMenu.classList.toggle('active');
+                    overlay.classList.toggle('active');
+                    document.body.classList.toggle('menu-open');
+                });
+            }
+            
+            // オーバーレイのクリックイベント
+            if (overlay) {
+                overlay.addEventListener('click', function() {
+                    menuToggle.classList.remove('active');
+                    mainMenu.classList.remove('active');
+                    overlay.classList.remove('active');
+                    document.body.classList.remove('menu-open');
+                    
+                    // ドロップダウンもすべて閉じる
+                    document.querySelectorAll('.nav-item.dropdown.open').forEach(item => {
+                        item.classList.remove('open');
+                    });
+                });
+            }
+            
+            // ドロップダウントグルのクリックイベント
+            const dropdownToggles = document.querySelectorAll('.js-dropdown-toggle');
+            dropdownToggles.forEach(toggle => {
+                toggle.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    const parentLi = this.closest('.nav-item.dropdown');
+                    
+                    // 他のドロップダウンを閉じる
+                    document.querySelectorAll('.nav-item.dropdown.open').forEach(item => {
+                        if (item !== parentLi) {
+                            item.classList.remove('open');
+                        }
+                    });
+                    
+                    // ドロップダウンの開閉を切り替え
+                    parentLi.classList.toggle('open');
+                });
+            });
+            
+            // デスクトップでのホバー動作
+            const dropdownItems = document.querySelectorAll('.nav-item.dropdown');
+            dropdownItems.forEach(item => {
+                // ホバー開始時
+                item.addEventListener('mouseenter', function() {
+                    if (window.innerWidth > 992) {
+                        // 他のすべての開いているドロップダウンを閉じる
+                        document.querySelectorAll('.nav-item.dropdown.open').forEach(openItem => {
+                            if (openItem !== this) {
+                                openItem.classList.remove('open');
+                            }
+                        });
+                        
+                        // このドロップダウンを開く
+                        this.classList.add('open');
+                    }
+                });
+                
+                // ホバー終了時
+                item.addEventListener('mouseleave', function() {
+                    if (window.innerWidth > 992) {
+                        // ドロップダウンを閉じる
+                        this.classList.remove('open');
+                    }
+                });
+            });
+            
+            // リサイズ時の処理
+            window.addEventListener('resize', function() {
+                if (window.innerWidth > 992 && menuToggle) {
+                    // モバイルメニューをリセット
+                    menuToggle.classList.remove('active');
+                    mainMenu.classList.remove('active');
+                    overlay.classList.remove('active');
+                    document.body.classList.remove('menu-open');
+                    
+                    // ドロップダウンはホバーで動作するようにリセット
+                    document.querySelectorAll('.nav-item.dropdown.open').forEach(item => {
+                        item.classList.remove('open');
+                    });
+                }
+            });
+        });
+    </script>
+    <script src="{{ url_for('static', filename='js/speech_input.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/speech_fallback.js') }}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

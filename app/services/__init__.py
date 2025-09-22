@@ -19,11 +19,11 @@ from .pattern_analyzer import (
     SubjectStrengthAnalyzer,
     TimePreferenceAnalyzer,
 )
-from .spaced_repetition import (
-    AdaptiveDifficultyAdjuster,
-    SpacedRepetitionEngine,
-    SuperMemoAlgorithm,
-)
+# from .spaced_repetition import (
+#     AdaptiveDifficultyAdjuster,
+#     SpacedRepetitionEngine,
+#     SuperMemoAlgorithm,
+# )  # Phase9-3: BaseBuilder統合により削除
 from .user_service import UserService
 # Phase6-A: 新しい分割済みWeaknessAnalyzer使用
 from .weakness import WeaknessAnalyzer, WeaknessRecommendationEngine
@@ -60,9 +60,9 @@ __all__ = [
     "RecommendationAnalytics",
     "WeaknessAnalyzer",
     "WeaknessRecommendationEngine",
-    "SpacedRepetitionEngine",
-    "SuperMemoAlgorithm",
-    "AdaptiveDifficultyAdjuster",
+    # "SpacedRepetitionEngine",
+    # "SuperMemoAlgorithm", 
+    # "AdaptiveDifficultyAdjuster",  # Phase9-3: BaseBuilder統合により削除
     # Phase8C: Curriculum Management関連サービス
     "CurriculumDataService",
     "CurriculumValidationService",
