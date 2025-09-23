@@ -28,7 +28,7 @@ class TeacherDashboardService:
         """サービス初期化"""
         # Phase8D既存サービスとの統合
         from .dashboard_orchestration_service import DashboardOrchestrationService
-        from .learning_progress_service import LearningProgressService
+        from app.services.student_dashboard.learning_progress_service import LearningProgressService
         from .activity_analytics_service import ActivityAnalyticsService
         from app.services.student_dashboard.basebuilder_analytics_service import BaseBuilderAnalyticsService as BaseBuilderIntegrationService
         from .student_dashboard_data_service import StudentDashboardDataService
