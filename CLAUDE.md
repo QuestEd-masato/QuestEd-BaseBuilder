@@ -11,7 +11,7 @@ QuestEd Ver.1.4は、学習管理システム（LMS）として **完全に運�
 - **技術的負債**: Grade D+ → Grade B+ （劇的改善達成）
 - **アーキテクチャ**: Service Layer Architecture確立
 - **データ**: 46ユーザー、8カリキュラム、完全保護
-- **最終更新**: 2025年8月26日（文書管理Phase 2完了）
+- **最終更新**: 2025年9月23日（レッスン一覧エラー修正完了）
 
 ### 技術スタック
 - **Python**: 3.12.3（ローカル）/ 3.9.20（本番）
@@ -55,13 +55,22 @@ source venv/bin/activate
 mysql -u QuestEd -p'[.env.quested: QUESTED_DB_PASSWORD]' -h localhost -P 3306 quested
 ```
 
-## ⚠️ 現在の運用状況（2025年8月24日更新）
+## ⚠️ 現在の運用状況（2025年9月23日更新）
 
 ### 稼働状況
 - **本番URL**: http://[.env.quested: QUESTED_EC2_HOST] (DNSは未設定)
 - **サーバー**: EC2 [.env.quested: QUESTED_EC2_HOST] (Amazon Linux 2023)
 - **データベース**: RDS [.env.quested: QUESTED_RDS_HOST]
 - **状態**: ✅ 全機能正常動作
+
+### 解決済み課題（2025年9月23日）
+
+#### ~~レッスン一覧読み込みエラー~~ ✅ 解決済み
+- **症状**: https://quest-ed.jp/student/learning で「レッスン一覧の読み込み中にエラーが発生しました」エラー
+- **原因**: `/student/curriculum/<id>/lessons`の冗長リダイレクトルートによる302リダイレクト
+- **修正内容**: `app/student/modules/learning.py:288-299`の12行削除（Plan A実施）
+- **結果**: エラー完全解消、レッスンページへの直接アクセス正常化
+- **影響**: なし（テンプレートは既に`lesson_system.curriculum_lessons`を直接使用）
 
 ### 継続中の課題
 
@@ -940,18 +949,24 @@ mysql -u QuestEd -p -h localhost quested
 
 ---
 
-**最終更新**: 2025年8月26日  
-**作成者**: Claude (Anthropic)  
-**プロジェクト**: QuestEd Ver.1.4 Service Layer Architecture  
-**稼働URL**: EC2インスタンス稼働中 (nginx/1.26.3)  
+**最終更新**: 2025年9月23日
+**作成者**: Claude (Anthropic)
+**プロジェクト**: QuestEd Ver.1.4 Service Layer Architecture
+**稼働URL**: EC2インスタンス稼働中 (nginx/1.26.3)
 
-**📊 現在の状況**: 
+**📊 現在の状況**:
 - Phase1-8C完了（根本的改革達成）
 - Grade B+レベル達成（技術債務劇的改善）
 - 文書管理アーカイブ化完了（34ファイルを安全保管）
+- レッスン一覧エラー解消（2025年9月23日修正）
 - 全機能正常動作、BaseBuilderリソース最適化のみ残存
 
-**🎯 2025年8月26日作業完了**: 
+**🎯 2025年9月23日作業完了**:
+- レッスン一覧読み込みエラー根本解決（302リダイレクト問題修正）
+- learning.py:288-299の冗長ルート削除（12行削減）
+- 影響なし・後方互換性100%維持
+
+**🎯 2025年8月26日作業完了**:
 - CLAUDE.md統合最適化（1,291行→237行、81.6%削減）
 - 文書管理正常化（重複排除、アーカイブ体系確立）
 - プロジェクト構造の明確化達成
